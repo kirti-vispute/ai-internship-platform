@@ -7,11 +7,11 @@
                     "build":  "next build",
                     "start":  "next start",
                     "lint":  "next lint",
-                    "server:dev":  "npm --prefix server run dev",
-                    "server:start":  "npm --prefix server run start",
-                    "server:seed":  "npm --prefix server run seed",
-                    "scorer:install":  "npm --prefix server run scorer:install",
-                    "scorer:dev":  "npm --prefix server run scorer:dev"
+                    "server:dev":  "npm --prefix ../backend run dev",
+                    "server:start":  "npm --prefix ../backend run start",
+                    "server:seed":  "npm --prefix ../backend run seed",
+                    "scorer:install":  "npm --prefix ../backend run scorer:install",
+                    "scorer:dev":  "npm --prefix ../backend run scorer:dev"
                 },
     "dependencies":  {
                          "next":  "^15.3.0",
