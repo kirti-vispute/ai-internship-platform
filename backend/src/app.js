@@ -17,9 +17,13 @@ const { notFoundMiddleware, errorMiddleware } = require("./middleware/error.midd
 
 const app = express();
 
-const configuredClientUrl = process.env.CLIENT_URL;
+const configuredClientUrls = String(process.env.CLIENT_URL || "")
+  .split(",")
+  .map((url) => url.trim())
+  .filter(Boolean);
+const allowVercelPreview = String(process.env.ALLOW_VERCEL_PREVIEW || "false").toLowerCase() === "true";
 const allowedOrigins = [
-  configuredClientUrl,
+  ...configuredClientUrls,
   "http://localhost:3000",
   "http://127.0.0.1:3000",
   "http://localhost:3001",
@@ -33,6 +37,14 @@ app.use(
       if (!origin) return callback(null, true);
       if (process.env.NODE_ENV !== "production") return callback(null, true);
       if (allowedOrigins.includes(origin)) return callback(null, true);
+      if (allowVercelPreview) {
+        try {
+          const hostname = new URL(origin).hostname;
+          if (hostname.endsWith(".vercel.app")) return callback(null, true);
+        } catch {
+          // Ignore malformed origins and continue to deny.
+        }
+      }
       return callback(new Error("CORS origin denied"));
     },
     credentials: true
