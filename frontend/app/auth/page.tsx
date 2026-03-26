@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { PasswordStrength } from "@/components/ui/password-strength";
 import { RoleSelector, UserRole } from "@/components/ui/role-selector";
-import { apiRequest } from "@/lib/api-client";
+import { apiRequest, testBackendConnectivity } from "@/lib/api-client";
 import { clearAuthSession, setAuthSession } from "@/lib/session";
 import { validateEmail, validateGST, validatePhone, validateUrl } from "@/lib/validation";
 
@@ -83,6 +83,14 @@ export default function AuthPage() {
     if (params.get("role") === "company") {
       setRole("company");
     }
+
+    testBackendConnectivity()
+      .then((result) => {
+        console.info("[auth] Backend connectivity ok", result);
+      })
+      .catch((error) => {
+        console.error("[auth] Backend connectivity failed", error);
+      });
   }, []);
 
   function handleRoleChange(nextRole: UserRole) {
