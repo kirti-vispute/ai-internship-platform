@@ -14,9 +14,9 @@
         "scorer:dev": "npm --prefix ../backend run scorer:dev"
     },
     "dependencies": {
-        "next": "^15.3.0",
-        "react": "^19.0.0",
-        "react-dom": "^19.0.0"
+        "next": "15.5.7",
+        "react": "19.2.1",
+        "react-dom": "19.2.1"
     },
     "devDependencies": {
         "@netlify/plugin-nextjs": "^5.15.9",
