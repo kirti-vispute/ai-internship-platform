@@ -1,0 +1,227 @@
+﻿const path = require("path");
+
+const ReportedCompany = require("../models/ReportedCompany");
+const InternProfile = require("../models/InternProfile");
+const Internship = require("../models/Internship");
+const Application = require("../models/Application");
+const CompanyProfile = require("../models/CompanyProfile");
+const asyncHandler = require("../utils/asyncHandler");
+const AppError = require("../utils/AppError");
+const { parseResumeText, getSkillGap, recommendInternships } = require("../services/ai.service");
+const { computeResumeScore } = require("../services/scorer.service");
+const { parseResumeFile } = require("../services/resume-parser.service");
+
+function toProfilePayload(profileDoc) {
+  const profile = profileDoc.toObject ? profileDoc.toObject() : profileDoc;
+  const resumeUploaded = Boolean(profile?.resume?.filePath || profile?.resume?.text);
+  return { ...profile, resumeUploaded };
+}
+
+async function getInternProfileByUserId(userId) {
+  const profile = await InternProfile.findOne({ user: userId });
+  if (!profile) {
+    throw new AppError("Intern profile not found", 404);
+  }
+  return profile;
+}
+
+async function refreshProfileScore(profile, resumeTextOverride = "") {
+  const result = await computeResumeScore({
+    profile,
+    resumeText: resumeTextOverride || profile.resume?.text || ""
+  });
+
+  profile.resume.score = result.resumeScore;
+  profile.resume.scoreSource = result.scoreSource;
+  profile.resume.predictedCategory = result.predictedCategory || "";
+  profile.resume.confidence = typeof result.confidence === "number" ? result.confidence : null;
+  profile.resume.analysis = result.analysis || null;
+}
+
+exports.getProfile = asyncHandler(async (req, res) => {
+  const profile = await getInternProfileByUserId(req.user._id);
+  res.json({ profile: toProfilePayload(profile) });
+});
+
+exports.updateProfile = asyncHandler(async (req, res) => {
+  const profile = await getInternProfileByUserId(req.user._id);
+
+  const allowed = ["fullName", "mobile", "skills", "education", "projects", "certifications", "interests", "completedCourses"];
+
+  allowed.forEach((field) => {
+    if (req.body[field] !== undefined) {
+      profile[field] = req.body[field];
+    }
+  });
+
+  if (profile.resume?.text) {
+    await refreshProfileScore(profile);
+  }
+
+  await profile.save();
+
+  res.json({ message: "Profile updated", profile: toProfilePayload(profile) });
+});
+
+exports.uploadResume = asyncHandler(async (req, res) => {
+  if (!req.file) {
+    throw new AppError("Resume file is required", 400);
+  }
+
+  const profile = await getInternProfileByUserId(req.user._id);
+
+  let resumeText = await parseResumeFile(req.file);
+  if (!resumeText) {
+    // Keep a deterministic fallback rather than saving empty text for unsupported formats.
+    resumeText = `Resume uploaded: ${req.file.originalname}`;
+  }
+
+  const parsed = parseResumeText(resumeText);
+
+  profile.resume.filePath = path.relative(path.join(__dirname, "../.."), req.file.path);
+  profile.resume.text = resumeText;
+  profile.skills = [...new Set([...(profile.skills || []), ...(parsed.skills || [])])];
+  profile.education = [...new Set([...(profile.education || []), ...(parsed.education || [])])];
+  profile.projects = [...new Set([...(profile.projects || []), ...(parsed.projects || [])])];
+  profile.certifications = [...new Set([...(profile.certifications || []), ...(parsed.certifications || [])])];
+
+  await refreshProfileScore(profile, resumeText);
+  await profile.save();
+
+  res.json({
+    message: "Resume uploaded and parsed",
+    resumeUploaded: true,
+    profile: toProfilePayload(profile),
+    parsed
+  });
+});
+
+exports.getResumeScore = asyncHandler(async (req, res) => {
+  const profile = await getInternProfileByUserId(req.user._id);
+
+  await refreshProfileScore(profile);
+  await profile.save();
+
+  res.json({
+    score: profile.resume.score,
+    scoreSource: profile.resume.scoreSource,
+    predictedCategory: profile.resume.predictedCategory,
+    confidence: profile.resume.confidence,
+    analysis: profile.resume.analysis
+  });
+});
+
+exports.getSkillGap = asyncHandler(async (req, res) => {
+  const { internshipId } = req.body;
+  if (!internshipId) {
+    throw new AppError("internshipId is required", 400);
+  }
+
+  const profile = await getInternProfileByUserId(req.user._id);
+  const internship = await Internship.findById(internshipId);
+  if (!internship) {
+    throw new AppError("Internship not found", 404);
+  }
+
+  const analysis = getSkillGap(profile.skills || [], internship.skillsRequired || []);
+  res.json({ internshipId, analysis });
+});
+
+exports.getRecommendations = asyncHandler(async (req, res) => {
+  const profile = await getInternProfileByUserId(req.user._id);
+
+  if (profile.resume?.text) {
+    await refreshProfileScore(profile);
+    await profile.save();
+  }
+
+  const internships = await Internship.find({ isActive: true }).populate("company");
+  const ranked = recommendInternships(profile, internships);
+
+  res.json({
+    recommendations: ranked.map((item) => ({
+      internship: item.internship,
+      recommendationScore: item.recommendationScore,
+      skillGap: item.skillGap
+    }))
+  });
+});
+
+exports.applyToInternship = asyncHandler(async (req, res) => {
+  const { internshipId } = req.params;
+
+  const profile = await getInternProfileByUserId(req.user._id);
+  const internship = await Internship.findById(internshipId).populate("company");
+
+  if (!internship || !internship.isActive) {
+    throw new AppError("Internship not found or inactive", 404);
+  }
+
+  const company = await CompanyProfile.findById(internship.company);
+  if (!company) {
+    throw new AppError("Internship company not found", 404);
+  }
+
+  const existingApplication = await Application.findOne({ intern: profile._id, internship: internship._id });
+  if (existingApplication) {
+    throw new AppError("You have already applied to this internship", 409);
+  }
+
+  const analysis = getSkillGap(profile.skills || [], internship.skillsRequired || []);
+
+  const application = await Application.create({
+    intern: profile._id,
+    internship: internship._id,
+    matchScore: analysis.matchPercent,
+    stageHistory: [{ stage: "applied", note: "Application submitted" }]
+  });
+
+  res.status(201).json({ message: "Application submitted", application });
+});
+
+exports.getMyApplications = asyncHandler(async (req, res) => {
+  const profile = await getInternProfileByUserId(req.user._id);
+
+  const applications = await Application.find({ intern: profile._id })
+    .populate({
+      path: "internship",
+      populate: { path: "company" }
+    })
+    .sort({ createdAt: -1 });
+
+  res.json({ applications });
+});
+
+exports.getMyFeedback = asyncHandler(async (req, res) => {
+  const profile = await getInternProfileByUserId(req.user._id);
+
+  const applications = await Application.find({ intern: profile._id })
+    .populate("internship")
+    .select("internship hrFeedback status updatedAt");
+
+  const feedback = applications
+    .filter((item) => (item.hrFeedback || []).length > 0)
+    .map((item) => ({
+      internship: item.internship,
+      status: item.status,
+      feedback: item.hrFeedback
+    }));
+
+  res.json({ feedback });
+});
+
+exports.reportCompany = asyncHandler(async (req, res) => {
+  const { companyId, reason } = req.body;
+
+  if (!companyId || !reason) {
+    throw new AppError("companyId and reason are required", 400);
+  }
+
+  const report = await ReportedCompany.create({
+    company: companyId,
+    reason,
+    reportedBy: req.user._id
+  });
+
+  res.status(201).json({ message: "Company reported", report });
+});

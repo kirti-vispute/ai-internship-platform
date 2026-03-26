@@ -1,0 +1,29 @@
+﻿# Dependencies
+node_modules/
+server/node_modules/
+
+# Build output
+.next/
+out/
+server/uploads/
+
+# Env files
+.env
+.env.*
+server/.env
+server/.env.*
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Python cache
+server/scorer/__pycache__/
