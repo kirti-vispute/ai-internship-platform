@@ -22,23 +22,36 @@ async function extractDocxText(filePath) {
 
 async function parseResumeFile(file) {
   if (!file?.path) return "";
+  if (!fs.existsSync(file.path)) return "";
 
   const ext = path.extname(file.originalname || "").toLowerCase();
   const mime = String(file.mimetype || "").toLowerCase();
 
   if (mime === "text/plain" || ext === ".txt") {
-    return fs.readFileSync(file.path, "utf8").trim();
+    try {
+      return fs.readFileSync(file.path, "utf8").trim();
+    } catch {
+      return "";
+    }
   }
 
   if (mime === "application/pdf" || ext === ".pdf") {
-    return extractPdfText(file.path);
+    try {
+      return await extractPdfText(file.path);
+    } catch {
+      return "";
+    }
   }
 
   if (
     mime === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
     ext === ".docx"
   ) {
-    return extractDocxText(file.path);
+    try {
+      return await extractDocxText(file.path);
+    } catch {
+      return "";
+    }
   }
 
   // Legacy .doc extraction is not reliable without external tools.
