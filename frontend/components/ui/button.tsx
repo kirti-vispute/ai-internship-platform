@@ -12,10 +12,10 @@ const baseClasses =
 
 const variants = {
   primary:
-    "bg-gradient-to-r from-primary-500 to-blue-500 text-white shadow-glow hover:from-primary-600 hover:to-blue-600 hover:-translate-y-0.5",
+    "bg-gradient-to-r from-primary-500 to-blue-500 text-white shadow-glow hover:from-primary-600 hover:to-blue-600 hover:-translate-y-0.5 dark:from-primary-600 dark:to-cyan-500 dark:hover:from-primary-500 dark:hover:to-cyan-400",
   secondary:
-    "border border-slate-200 bg-white text-slate-900 shadow-soft hover:border-slate-300 hover:bg-slate-50",
-  ghost: "bg-transparent text-slate-700 hover:bg-slate-100"
+    "border border-slate-200 bg-white text-slate-900 shadow-soft hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-slate-600 dark:hover:bg-slate-800",
+  ghost: "bg-transparent text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
 };
 
 const sizes = {

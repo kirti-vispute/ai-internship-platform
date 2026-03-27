@@ -20,12 +20,12 @@ export function PasswordStrength({ password }: PasswordStrengthProps) {
                   : score <= 3
                     ? "bg-amber-500"
                     : "bg-emerald-500"
-                : "bg-slate-200"
+                : "bg-slate-200 dark:bg-slate-700"
             }`}
           />
         ))}
       </div>
-      <p className="text-xs text-slate-500">Password strength: {label}</p>
+      <p className="text-xs text-slate-500 dark:text-slate-400">Password strength: {label}</p>
     </div>
   );
 }

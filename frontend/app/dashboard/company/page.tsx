@@ -38,10 +38,10 @@ export default function CompanyDashboardPage() {
           <div className="mb-8 flex flex-wrap items-center justify-between gap-3 animate-fade-up">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wider text-primary-600">Company Dashboard</p>
-              <h1 className="text-3xl font-black tracking-tight text-ink sm:text-4xl">Manage your hiring pipeline</h1>
+              <h1 className="text-3xl font-black tracking-tight text-ink dark:text-slate-100 sm:text-4xl">Manage your hiring pipeline</h1>
             </div>
             <div className="flex items-center gap-2">
-              <Link href="/auth?role=company" className="rounded-full bg-white px-3 py-1 text-sm font-medium text-primary-600 shadow-soft hover:text-primary-700">
+              <Link href="/auth?role=company" className="rounded-full bg-white px-3 py-1 text-sm font-medium text-primary-600 shadow-soft hover:text-primary-700 dark:bg-slate-900 dark:text-primary-300 dark:hover:text-primary-200">
                 Switch account
               </Link>
               <Button type="button" variant="secondary" size="sm" onClick={handleLogout}>
@@ -51,21 +51,21 @@ export default function CompanyDashboardPage() {
           </div>
 
           <div className="mb-5 grid gap-4 sm:grid-cols-3">
-            <Card className="border-none bg-white">
-              <p className="text-xs font-semibold uppercase tracking-wider text-slate-600">Verification Status</p>
-              <p className="mt-2 text-2xl font-black text-ink">Verified</p>
+            <Card className="border-none bg-white dark:bg-slate-900">
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">Verification Status</p>
+              <p className="mt-2 text-2xl font-black text-ink dark:text-slate-100">Verified</p>
               <p className="mt-2 text-xs text-emerald-600">Company profile approved</p>
             </Card>
-            <Card className="border-none bg-white">
-              <p className="text-xs font-semibold uppercase tracking-wider text-slate-600">Active Internship Posts</p>
-              <p className="mt-2 text-2xl font-black text-ink">6</p>
-              <div className="mt-3 h-2 rounded-full bg-slate-100">
+            <Card className="border-none bg-white dark:bg-slate-900">
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">Active Internship Posts</p>
+              <p className="mt-2 text-2xl font-black text-ink dark:text-slate-100">6</p>
+              <div className="mt-3 h-2 rounded-full bg-slate-100 dark:bg-slate-700">
                 <div className="h-2 w-3/4 rounded-full bg-gradient-to-r from-primary-500 to-blue-500" />
               </div>
             </Card>
-            <Card className="border-none bg-white">
-              <p className="text-xs font-semibold uppercase tracking-wider text-slate-600">Applicants This Week</p>
-              <p className="mt-2 text-2xl font-black text-ink">132</p>
+            <Card className="border-none bg-white dark:bg-slate-900">
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">Applicants This Week</p>
+              <p className="mt-2 text-2xl font-black text-ink dark:text-slate-100">132</p>
               <p className="mt-2 text-xs text-primary-600">+14% vs last week</p>
             </Card>
           </div>
@@ -84,19 +84,19 @@ export default function CompanyDashboardPage() {
               <Card title="Candidate Tracking" subtitle="Hiring pipeline overview">
                 <div className="grid gap-3 sm:grid-cols-2">
                   {hiringPipeline.map((item) => (
-                    <div key={item.stage} className="rounded-xl border border-slate-200 bg-gradient-to-b from-white to-slate-50 p-3">
-                      <p className="text-xs text-slate-500">{item.stage}</p>
-                      <p className="mt-1 text-2xl font-bold text-slate-900">{item.count}</p>
+                    <div key={item.stage} className="rounded-xl border border-slate-200 bg-gradient-to-b from-white to-slate-50 p-3 dark:border-slate-700 dark:from-slate-900 dark:to-slate-800">
+                      <p className="text-xs text-slate-500 dark:text-slate-400">{item.stage}</p>
+                      <p className="mt-1 text-2xl font-bold text-slate-900 dark:text-slate-100">{item.count}</p>
                     </div>
                   ))}
                 </div>
               </Card>
 
               <Card title="Post Internship" subtitle="Manage your current openings">
-                <div className="space-y-2 text-sm text-slate-700">
-                  <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">AI Product Intern - Applications Open</p>
-                  <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">ML Operations Intern - Draft Mode</p>
-                  <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">Data Analyst Intern - Closing in 3 days</p>
+                <div className="space-y-2 text-sm text-slate-700 dark:text-slate-300">
+                  <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-800/70">AI Product Intern - Applications Open</p>
+                  <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-800/70">ML Operations Intern - Draft Mode</p>
+                  <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-800/70">Data Analyst Intern - Closing in 3 days</p>
                 </div>
               </Card>
             </div>
@@ -105,22 +105,22 @@ export default function CompanyDashboardPage() {
               <Card title="AI Matched Candidates" subtitle="Top profile recommendations">
                 <div className="space-y-2">
                   {matchedCandidates.map((candidate) => (
-                    <div key={candidate.name} className="flex items-center justify-between rounded-xl border border-slate-200 bg-gradient-to-r from-white to-slate-50 px-3 py-2">
-                      <p className="text-sm font-semibold text-slate-900">{candidate.name}</p>
-                      <p className="rounded-full bg-primary-50 px-2 py-1 text-sm font-semibold text-primary-700">{candidate.score}</p>
+                    <div key={candidate.name} className="flex items-center justify-between rounded-xl border border-slate-200 bg-gradient-to-r from-white to-slate-50 px-3 py-2 dark:border-slate-700 dark:from-slate-900 dark:to-slate-800">
+                      <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{candidate.name}</p>
+                      <p className="rounded-full bg-primary-50 px-2 py-1 text-sm font-semibold text-primary-700 dark:bg-primary-900/20 dark:text-primary-300">{candidate.score}</p>
                     </div>
                   ))}
                 </div>
               </Card>
 
               <Card title="Applicants" subtitle="Latest applicant activity">
-                <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
+                <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-800/70 dark:text-slate-300">
                   18 new applicants in the last 24 hours across active openings.
                 </p>
               </Card>
 
               <Card title="Feedback" subtitle="Hiring cycle notes">
-                <p className="rounded-lg border border-amber-100 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                <p className="rounded-lg border border-amber-100 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-900/70 dark:bg-amber-950/30 dark:text-amber-300">
                   Candidate quality is high. Consider increasing slots for data-focused roles.
                 </p>
               </Card>

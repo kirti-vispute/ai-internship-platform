@@ -70,18 +70,18 @@ export default function InternResumePage() {
     <RoleDashboardGuard expectedRole="intern">
       <InternShell welcomeName={profile?.fullName} onLogout={handleLogout}>
         {loading ? (
-          <div className="rounded-2xl border border-slate-200 bg-white p-5">
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900">
             <Skeleton className="h-4 w-52" />
             <Skeleton className="mt-3 h-16 w-full" />
             <Skeleton className="mt-3 h-10 w-40" />
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-7">
             <SectionPanel title="Resume" subtitle="Upload and manage your resume file.">
-              {error && <div className="mb-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</div>}
-              {message && <div className="mb-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{message}</div>}
+              {error && <div className="mb-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300">{error}</div>}
+              {message && <div className="mb-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300">{message}</div>}
 
-              <div className="grid gap-3 text-sm text-slate-700 sm:grid-cols-2">
+              <div className="grid gap-3 text-sm text-slate-700 dark:text-slate-300 sm:grid-cols-2">
                 <p>
                   Uploaded file: <span className="font-semibold">{profile?.resume?.filePath || "No resume uploaded"}</span>
                 </p>
@@ -109,13 +109,13 @@ export default function InternResumePage() {
 
             <SectionPanel title="Parsed Resume Details" subtitle="Structured extraction from your latest uploaded resume.">
               {!profile?.resumeUploaded ? (
-                <p className="text-sm text-slate-600">Upload resume to view parsed details.</p>
+                <p className="text-sm text-slate-600 dark:text-slate-300">Upload resume to view parsed details.</p>
               ) : (
                 <div className="space-y-5">
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Summary</p>
-                    <p className="mt-1 text-sm text-slate-700">{parsed?.summary || profile?.summary || "No summary extracted."}</p>
-                    {parsed?.location && <p className="mt-1 text-xs text-slate-500">{parsed.location}</p>}
+                    <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">{parsed?.summary || profile?.summary || "No summary extracted."}</p>
+                    {parsed?.location && <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{parsed.location}</p>}
                   </div>
 
                   <div>
@@ -126,16 +126,16 @@ export default function InternResumePage() {
                   </div>
 
                   <div className="grid gap-4 lg:grid-cols-2">
-                    <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Projects</p>
+                    <div className="surface-subtle p-3.5">
+                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">Projects</p>
                       {projects.length === 0 ? (
                         <p className="mt-2 text-sm text-slate-600">No projects extracted.</p>
                       ) : (
                         <div className="mt-2 space-y-2">
                           {projects.slice(0, 5).map((project, idx) => (
-                            <div key={`project-${idx}`} className="rounded-lg border border-slate-200 bg-white p-2">
-                              <p className="text-sm font-semibold text-slate-900">{project.title || "Project"}</p>
-                              {project.description && <p className="mt-1 text-xs text-slate-600">{project.description}</p>}
+                            <div key={`project-${idx}`} className="surface-subtle p-2.5">
+                              <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{project.title || "Project"}</p>
+                              {project.description && <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">{project.description}</p>}
                               {project.techStack && project.techStack.length > 0 && <div className="mt-2"><SkillChips skills={project.techStack} /></div>}
                               {project.demoLink && <a href={project.demoLink} target="_blank" rel="noreferrer" className="mt-1 inline-block text-xs font-medium text-blue-700 hover:underline">View demo</a>}
                             </div>
@@ -144,16 +144,16 @@ export default function InternResumePage() {
                       )}
                     </div>
 
-                    <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Education</p>
+                    <div className="surface-subtle p-3.5">
+                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">Education</p>
                       {education.length === 0 ? (
                         <p className="mt-2 text-sm text-slate-600">No education extracted.</p>
                       ) : (
                         <div className="mt-2 space-y-2">
                           {education.slice(0, 5).map((edu, idx) => (
-                            <div key={`edu-${idx}`} className="rounded-lg border border-slate-200 bg-white p-2">
-                              <p className="text-sm font-semibold text-slate-900">{edu.degree || "Education"}</p>
-                              <p className="mt-1 text-xs text-slate-600">{edu.institution || edu.raw || "-"}</p>
+                            <div key={`edu-${idx}`} className="surface-subtle p-2.5">
+                              <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{edu.degree || "Education"}</p>
+                              <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">{edu.institution || edu.raw || "-"}</p>
                               {(edu.startYear || edu.endYear) && <p className="mt-1 text-xs text-slate-500">{[edu.startYear, edu.endYear].filter(Boolean).join(" - ")}</p>}
                               {edu.grade && <p className="mt-1 text-xs text-slate-500">Grade: {edu.grade}</p>}
                             </div>
@@ -164,15 +164,15 @@ export default function InternResumePage() {
                   </div>
 
                   <div className="grid gap-4 lg:grid-cols-2">
-                    <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Certifications</p>
+                    <div className="surface-subtle p-3.5">
+                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">Certifications</p>
                       {certifications.length === 0 ? (
                         <p className="mt-2 text-sm text-slate-600">No certifications extracted.</p>
                       ) : (
                         <ul className="mt-2 space-y-2">
                           {certifications.slice(0, 6).map((cert, idx) => (
-                            <li key={`cert-${idx}`} className="rounded-lg border border-slate-200 bg-white p-2">
-                              <p className="text-sm font-semibold text-slate-900">{cert.name || cert.raw || "Certification"}</p>
+                            <li key={`cert-${idx}`} className="surface-subtle p-2.5">
+                              <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{cert.name || cert.raw || "Certification"}</p>
                               {(cert.issuer || cert.year) && <p className="text-xs text-slate-500">{[cert.issuer, cert.year].filter(Boolean).join(" | ")}</p>}
                             </li>
                           ))}
@@ -180,14 +180,14 @@ export default function InternResumePage() {
                       )}
                     </div>
 
-                    <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Achievements</p>
+                    <div className="surface-subtle p-3.5">
+                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">Achievements</p>
                       {achievements.length === 0 ? (
                         <p className="mt-2 text-sm text-slate-600">No achievements extracted.</p>
                       ) : (
                         <ul className="mt-2 space-y-2">
                           {achievements.slice(0, 8).map((item, idx) => (
-                            <li key={`achievement-${idx}`} className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-sm text-slate-700">
+                            <li key={`achievement-${idx}`} className="surface-subtle px-2.5 py-1.5 text-sm text-slate-700 dark:text-slate-200">
                               {item}
                             </li>
                           ))}
@@ -197,8 +197,8 @@ export default function InternResumePage() {
                   </div>
 
                   {languages.length > 0 && (
-                    <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Languages</p>
+                    <div className="surface-subtle p-3.5">
+                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">Languages</p>
                       <div className="mt-2">
                         <SkillChips skills={languages} />
                       </div>

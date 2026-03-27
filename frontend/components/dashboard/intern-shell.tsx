@@ -1,9 +1,10 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { cn } from "@/lib/utils";
 
 type SidebarItem = {
@@ -25,7 +26,7 @@ type InternShellProps = {
 
 function BaseIcon({ children }: { children: React.ReactNode }) {
   return (
-    <span className="inline-flex h-5 w-5 items-center justify-center text-slate-500" aria-hidden="true">
+    <span className="inline-flex h-5 w-5 items-center justify-center text-slate-500 transition-colors dark:text-slate-400" aria-hidden="true">
       {children}
     </span>
   );
@@ -189,10 +190,19 @@ function IconHelp() {
     </BaseIcon>
   );
 }
+
 function IconBell() {
   return (
-    <svg viewBox="0 0 24 24" className="h-5 w-5 text-slate-600" fill="none" stroke="currentColor" strokeWidth="1.8">
+    <svg viewBox="0 0 24 24" className="h-5 w-5 text-slate-600 dark:text-slate-300" fill="none" stroke="currentColor" strokeWidth="1.8">
       <path d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2a2 2 0 0 1-.6 1.4L4 17h5m6 0a3 3 0 1 1-6 0" />
+    </svg>
+  );
+}
+
+function IconMenu() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <path d="M4 7h16M4 12h16M4 17h16" />
     </svg>
   );
 }
@@ -255,24 +265,24 @@ export function InternShell({ welcomeName, onLogout, children }: InternShellProp
   const sections = useMemo(() => buildSections(), []);
 
   return (
-    <div className="min-h-screen bg-slate-100/80">
+    <div className="min-h-screen bg-slate-100/70 transition-colors dark:bg-slate-950/60">
       <div className="mx-auto flex max-w-[1600px]">
         <aside
           className={cn(
-            "fixed inset-y-0 left-0 z-40 w-72 border-r border-slate-200 bg-white p-4 shadow-soft transition-transform lg:static lg:translate-x-0",
+            "sidebar-surface fixed inset-y-0 left-0 z-40 w-72 p-5 shadow-[0_12px_36px_rgba(15,23,42,0.12)] transition-transform duration-300 lg:static lg:translate-x-0 dark:shadow-[0_16px_44px_rgba(2,6,23,0.55)]",
             mobileOpen ? "translate-x-0" : "-translate-x-full"
           )}
         >
-          <div className="mb-6 rounded-2xl bg-gradient-to-r from-primary-600 to-blue-600 p-4 text-white">
+          <div className="mb-6 rounded-2xl bg-gradient-to-r from-primary-600 to-blue-600 p-4 text-white shadow-glow dark:from-primary-700 dark:to-cyan-600">
             <p className="text-xs uppercase tracking-[0.18em] text-primary-100">Intern Portal</p>
             <h2 className="mt-2 text-xl font-black tracking-tight">AI Internship Platform</h2>
           </div>
 
-          <nav className="space-y-4">
+          <nav className="space-y-5">
             {sections.map((section) => (
-              <div key={section.title}>
-                <p className="px-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">{section.title}</p>
-                <ul className="mt-2 space-y-1">
+              <div key={section.title} className="animate-reveal">
+                <p className="px-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500">{section.title}</p>
+                <ul className="mt-2.5 space-y-1.5">
                   {section.items.map((item) => {
                     const active = isItemActive(pathname, item.href);
                     return (
@@ -281,8 +291,10 @@ export function InternShell({ welcomeName, onLogout, children }: InternShellProp
                           href={item.href}
                           onClick={() => setMobileOpen(false)}
                           className={cn(
-                            "flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium transition",
-                            active ? "bg-primary-50 text-primary-700" : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                            "flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
+                            active
+                              ? "bg-primary-50 text-primary-700 shadow-[0_4px_14px_rgba(37,99,235,0.12)] dark:bg-primary-900/20 dark:text-primary-300"
+                              : "text-slate-600 hover:bg-white hover:text-slate-900 hover:shadow-[0_4px_14px_rgba(15,23,42,0.08)] dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
                           )}
                         >
                           {item.icon}
@@ -300,24 +312,25 @@ export function InternShell({ welcomeName, onLogout, children }: InternShellProp
         {mobileOpen && <button aria-label="Close menu" className="fixed inset-0 z-30 bg-slate-900/40 lg:hidden" onClick={() => setMobileOpen(false)} />}
 
         <div className="min-w-0 flex-1">
-          <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/90 px-4 py-3 backdrop-blur lg:px-6">
+          <header className="sticky top-0 z-20 border-b border-slate-200/80 bg-white/82 px-4 py-3.5 backdrop-blur-xl lg:px-6 dark:border-slate-800 dark:bg-slate-950/78">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={() => setMobileOpen(true)}
-                  className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-slate-600 lg:hidden"
+                  className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-slate-600 transition hover:bg-slate-50 lg:hidden dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
                 >
-                  ☰
+                  <IconMenu />
                 </button>
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary-600">Welcome</p>
-                  <h1 className="text-lg font-bold text-slate-900">{welcomeName || "Intern"}</h1>
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary-600 dark:text-primary-300">Welcome</p>
+                  <h1 className="text-lg font-bold text-slate-900 dark:text-slate-100">{welcomeName || "Intern"}</h1>
                 </div>
               </div>
 
               <div className="flex items-center gap-2">
-                <button type="button" className="rounded-xl border border-slate-200 bg-white p-2">
+                <ThemeToggle />
+                <button type="button" className="rounded-xl border border-slate-200 bg-white p-2 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800">
                   <IconBell />
                 </button>
                 <Button href="/auth?role=intern" type="button" variant="secondary" size="sm">
@@ -330,7 +343,7 @@ export function InternShell({ welcomeName, onLogout, children }: InternShellProp
             </div>
           </header>
 
-          <main className="p-4 lg:p-6">{children}</main>
+          <main className="animate-reveal p-5 lg:p-7">{children}</main>
         </div>
       </div>
     </div>

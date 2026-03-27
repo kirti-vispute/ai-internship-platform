@@ -219,13 +219,13 @@ export default function AuthPage() {
       <Navbar />
       <section className="container-shell py-10 sm:py-14">
         <div className="mx-auto max-w-2xl">
-          <Card>
+          <Card className="animate-reveal">
             <div className="mb-6">
-              <h1 className="text-3xl font-black tracking-tight text-ink">Welcome to InternAI</h1>
-              <p className="mt-2 text-sm text-slate-600">Create your account or log in to continue.</p>
+              <h1 className="text-3xl font-black tracking-tight text-ink dark:text-slate-100">Welcome to InternAI</h1>
+              <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">Create your account or log in to continue.</p>
             </div>
 
-            <div className="mb-4 grid grid-cols-2 rounded-xl bg-slate-100 p-1">
+            <div className="mb-4 grid grid-cols-2 rounded-xl bg-slate-100 p-1 dark:bg-slate-800">
               <button
                 type="button"
                 onClick={() => {
@@ -234,7 +234,7 @@ export default function AuthPage() {
                   setErrors({});
                 }}
                 className={`rounded-lg px-3 py-2 text-sm font-semibold transition ${
-                  mode === "signup" ? "bg-white text-slate-900 shadow-soft" : "text-slate-500"
+                  mode === "signup" ? "bg-white text-slate-900 shadow-soft dark:bg-slate-900 dark:text-slate-100" : "text-slate-500 dark:text-slate-400"
                 }`}
               >
                 Signup
@@ -247,7 +247,7 @@ export default function AuthPage() {
                   setErrors({});
                 }}
                 className={`rounded-lg px-3 py-2 text-sm font-semibold transition ${
-                  mode === "login" ? "bg-white text-slate-900 shadow-soft" : "text-slate-500"
+                  mode === "login" ? "bg-white text-slate-900 shadow-soft dark:bg-slate-900 dark:text-slate-100" : "text-slate-500 dark:text-slate-400"
                 }`}
               >
                 Login
@@ -286,7 +286,7 @@ export default function AuthPage() {
                   >
                     {showPassword ? "Hide Password" : "Show Password"}
                   </button>
-                  <button type="button" className="text-slate-500 hover:text-slate-700">
+                  <button type="button" className="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">
                     Forgot password?
                   </button>
                 </div>
@@ -409,9 +409,9 @@ export default function AuthPage() {
                     />
 
                     <label className="block">
-                      <span className="mb-2 block text-sm font-medium text-slate-700">Company Description</span>
+                      <span className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">Company Description</span>
                       <textarea
-                        className="min-h-28 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
+                        className="min-h-28 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-primary-500 focus:ring-2 focus:ring-primary-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-primary-400 dark:focus:ring-primary-500/20"
                         placeholder="Tell us about your company"
                         value={companyData.description}
                         onChange={(event) => setCompanyData((prev) => ({ ...prev, description: event.target.value }))}
@@ -420,21 +420,21 @@ export default function AuthPage() {
                     </label>
 
                     <label className="block">
-                      <span className="mb-2 block text-sm font-medium text-slate-700">Upload Verification Document</span>
+                      <span className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">Upload Verification Document</span>
                       <input
                         type="file"
-                        className="block w-full rounded-xl border border-dashed border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-600"
+                        className="block w-full rounded-xl border border-dashed border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
                         onChange={(event) => {
                           const name = event.target.files?.[0]?.name ?? "";
                           setCompanyData((prev) => ({ ...prev, fileName: name }));
                         }}
                       />
-                      <span className="mt-1 block text-xs text-slate-500">
+                      <span className="mt-1 block text-xs text-slate-500 dark:text-slate-400">
                         {companyData.fileName ? `Selected file: ${companyData.fileName}` : "File upload placeholder for KYC documents."}
                       </span>
                     </label>
 
-                    <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+                    <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-300">
                       Verification info: Company accounts are reviewed before posting internships.
                     </p>
 
@@ -468,7 +468,7 @@ export default function AuthPage() {
                     <PasswordStrength password={companyData.password} />
 
                     {verificationPending && (
-                      <p className="rounded-xl border border-primary-200 bg-primary-50 px-3 py-2 text-sm text-primary-700">
+                      <p className="rounded-xl border border-primary-200 bg-primary-50 px-3 py-2 text-sm text-primary-700 dark:border-primary-800/70 dark:bg-primary-950/40 dark:text-primary-300">
                         Verification pending: Your company profile is under review.
                       </p>
                     )}

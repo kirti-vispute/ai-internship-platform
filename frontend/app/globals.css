@@ -3,9 +3,19 @@
 @tailwind utilities;
 
 :root {
-  --bg: #f5f9ff;
+  --bg: #f4f8ff;
+  --bg-soft: #ffffff;
   --text: #0f172a;
   --muted: #475569;
+  --ring: rgba(37, 99, 235, 0.35);
+}
+
+.dark {
+  --bg: #070d1a;
+  --bg-soft: #0f172a;
+  --text: #e2e8f0;
+  --muted: #94a3b8;
+  --ring: rgba(59, 130, 246, 0.45);
 }
 
 * {
@@ -22,6 +32,14 @@ body {
     radial-gradient(circle at 5% 5%, rgba(31, 111, 255, 0.12), transparent 28%),
     radial-gradient(circle at 95% 0%, rgba(14, 165, 233, 0.1), transparent 30%),
     linear-gradient(180deg, #f6faff 0%, #f8fbff 40%, #f4f8ff 100%);
+  transition: background 300ms ease, color 300ms ease;
+}
+
+.dark body {
+  background:
+    radial-gradient(circle at 8% 10%, rgba(37, 99, 235, 0.2), transparent 30%),
+    radial-gradient(circle at 95% 0%, rgba(14, 165, 233, 0.16), transparent 34%),
+    linear-gradient(180deg, #060b16 0%, #0a1222 50%, #060b16 100%);
 }
 
 a {
@@ -39,8 +57,13 @@ a {
   background-size: 24px 24px;
 }
 
+.dark .grid-pattern {
+  background-image: linear-gradient(rgba(148, 163, 184, 0.12) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.12) 1px, transparent 1px);
+}
+
 .section-glass {
-  @apply border border-white/60 bg-white/75 backdrop-blur;
+  @apply border border-white/60 bg-white/75 backdrop-blur dark:border-slate-700/70 dark:bg-slate-900/70;
 }
 
 @keyframes fade-up {
@@ -56,4 +79,35 @@ a {
 
 .animate-fade-up {
   animation: fade-up 0.5s ease-out both;
+}
+
+@keyframes reveal {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-reveal {
+  animation: reveal 0.55s ease-out both;
+}
+
+.surface-card {
+  @apply rounded-2xl border border-slate-200/80 bg-white/90 shadow-soft dark:border-slate-700/70 dark:bg-slate-900/80;
+}
+
+.surface-muted {
+  @apply rounded-2xl border border-slate-200/70 bg-gradient-to-b from-white to-slate-50/70 shadow-[0_8px_24px_rgba(15,23,42,0.06)] dark:border-slate-700/70 dark:from-slate-900 dark:to-slate-900/70 dark:shadow-[0_10px_28px_rgba(2,6,23,0.45)];
+}
+
+.surface-subtle {
+  @apply rounded-xl border border-slate-200/70 bg-white/85 shadow-[0_4px_16px_rgba(15,23,42,0.05)] dark:border-slate-700/70 dark:bg-slate-900/75 dark:shadow-[0_6px_20px_rgba(2,6,23,0.4)];
+}
+
+.sidebar-surface {
+  @apply border-r border-slate-200/80 bg-gradient-to-b from-white to-slate-50/80 dark:border-slate-800 dark:from-slate-950 dark:to-slate-900;
 }
