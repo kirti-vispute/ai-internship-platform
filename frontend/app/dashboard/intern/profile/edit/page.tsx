@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { clearAuthSession } from "@/lib/session";
 import { apiRequest } from "@/lib/api-client";
-import { InternProfile, fetchInternProfile } from "@/lib/intern-portal";
+import { InternProfile, fetchInternProfile, invalidateInternCache } from "@/lib/intern-portal";
 
 export default function EditInternProfilePage() {
   const router = useRouter();
@@ -26,7 +26,7 @@ export default function EditInternProfilePage() {
     async function load() {
       try {
         setLoading(true);
-        const data = await fetchInternProfile();
+      const data = await fetchInternProfile(true);
         setProfile(data);
         setFullName(data.fullName || "");
         setMobile(data.mobile || "");
@@ -50,6 +50,7 @@ export default function EditInternProfilePage() {
         method: "PUT",
         body: JSON.stringify({ fullName, mobile, skills: payloadSkills })
       });
+      invalidateInternCache();
       setProfile(response.profile);
       setMessage("Profile updated successfully.");
     } catch (err) {

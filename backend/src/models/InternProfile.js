@@ -15,6 +15,9 @@ const internProfileSchema = new mongoose.Schema(
     education: [{ type: String, trim: true }],
     projects: [{ type: String, trim: true }],
     certifications: [{ type: String, trim: true }],
+    experience: [{ type: String, trim: true }],
+    links: [{ type: String, trim: true }],
+    summary: { type: String, default: "", trim: true },
     interests: [{ type: String, trim: true }],
     completedCourses: [{ type: String, trim: true }],
     resume: {
@@ -24,7 +27,8 @@ const internProfileSchema = new mongoose.Schema(
       scoreSource: { type: String, default: "none" },
       predictedCategory: { type: String, default: "" },
       confidence: { type: Number, default: null },
-      analysis: { type: mongoose.Schema.Types.Mixed, default: null }
+      analysis: { type: mongoose.Schema.Types.Mixed, default: null },
+      parsed: { type: mongoose.Schema.Types.Mixed, default: null }
     }
   },
   { timestamps: true }

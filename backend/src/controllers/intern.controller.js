@@ -7,9 +7,10 @@ const Application = require("../models/Application");
 const CompanyProfile = require("../models/CompanyProfile");
 const asyncHandler = require("../utils/asyncHandler");
 const AppError = require("../utils/AppError");
-const { parseResumeText, getSkillGap, recommendInternships } = require("../services/ai.service");
+const { getSkillGap, recommendInternships } = require("../services/ai.service");
 const { computeResumeScore } = require("../services/scorer.service");
 const { parseResumeFile } = require("../services/resume-parser.service");
+const { structuredResumeParse } = require("../services/resume-structured-parser.service");
 
 function toProfilePayload(profileDoc) {
   const profile = profileDoc.toObject ? profileDoc.toObject() : profileDoc;
@@ -46,7 +47,7 @@ exports.getProfile = asyncHandler(async (req, res) => {
 exports.updateProfile = asyncHandler(async (req, res) => {
   const profile = await getInternProfileByUserId(req.user._id);
 
-  const allowed = ["fullName", "mobile", "skills", "education", "projects", "certifications", "interests", "completedCourses"];
+  const allowed = ["fullName", "mobile", "skills", "education", "projects", "certifications", "experience", "links", "summary", "interests", "completedCourses"];
 
   allowed.forEach((field) => {
     if (req.body[field] !== undefined) {
@@ -76,14 +77,20 @@ exports.uploadResume = asyncHandler(async (req, res) => {
     resumeText = `Resume uploaded: ${req.file.originalname}`;
   }
 
-  const parsed = parseResumeText(resumeText);
+  const parsed = structuredResumeParse(resumeText);
 
   profile.resume.filePath = path.relative(path.join(__dirname, "../.."), req.file.path);
   profile.resume.text = resumeText;
+  profile.resume.parsed = parsed;
   profile.skills = [...new Set([...(profile.skills || []), ...(parsed.skills || [])])];
-  profile.education = [...new Set([...(profile.education || []), ...(parsed.education || [])])];
-  profile.projects = [...new Set([...(profile.projects || []), ...(parsed.projects || [])])];
-  profile.certifications = [...new Set([...(profile.certifications || []), ...(parsed.certifications || [])])];
+  profile.education = [...new Set([...(profile.education || []), ...((parsed.education || []).map((item) => item.raw || "").filter(Boolean))])];
+  profile.projects = [...new Set([...(profile.projects || []), ...((parsed.projects || []).map((item) => item.title || item.description || "").filter(Boolean))])];
+  profile.certifications = [...new Set([...(profile.certifications || []), ...((parsed.certifications || []).map((item) => item.name || item.raw || "").filter(Boolean))])];
+  profile.experience = [...new Set([...(profile.experience || []), ...((parsed.experience || []).map((item) => item.description || item.role || "").filter(Boolean))])];
+  profile.links = [...new Set([...(profile.links || []), ...(parsed.links || [])])];
+  if (!profile.summary && parsed.summary) {
+    profile.summary = parsed.summary;
+  }
 
   await refreshProfileScore(profile, resumeText);
   await profile.save();

@@ -32,6 +32,9 @@ export type InternProfile = {
   education: string[];
   projects: string[];
   certifications: string[];
+  experience?: string[];
+  links?: string[];
+  summary?: string;
   completedCourses: string[];
   resume: {
     filePath: string;
@@ -41,6 +44,18 @@ export type InternProfile = {
     predictedCategory?: string;
     confidence?: number | null;
     analysis?: ResumeAnalysis | null;
+    parsed?: {
+      fullName?: string;
+      email?: string;
+      mobile?: string;
+      skills?: string[];
+      projects?: Array<{ title?: string; techStack?: string[]; description?: string }>;
+      education?: Array<{ degree?: string; college?: string; year?: string; raw?: string }>;
+      certifications?: Array<{ name?: string; issuer?: string; year?: string; raw?: string }>;
+      experience?: Array<{ role?: string; company?: string; duration?: string; description?: string }>;
+      links?: string[];
+      summary?: string;
+    } | null;
   };
   resumeUploaded: boolean;
 };
@@ -70,13 +85,39 @@ export type Recommendation = {
   skillGap: { matched: string[]; missing: string[]; matchPercent: number };
 };
 
-export async function fetchInternProfile() {
+const CACHE_TTL_MS = 60 * 1000;
+const cacheStore = new Map<string, { ts: number; data: unknown }>();
+
+function getCache<T>(key: string): T | null {
+  const entry = cacheStore.get(key);
+  if (!entry) return null;
+  if (Date.now() - entry.ts > CACHE_TTL_MS) {
+    cacheStore.delete(key);
+    return null;
+  }
+  return entry.data as T;
+}
+
+function setCache<T>(key: string, data: T) {
+  cacheStore.set(key, { ts: Date.now(), data });
+}
+
+export function invalidateInternCache() {
+  cacheStore.clear();
+}
+
+export async function fetchInternProfile(force = false) {
+  if (!force) {
+    const cached = getCache<InternProfile>("intern:profile");
+    if (cached) return cached;
+  }
   const response = await apiRequest<{ profile: InternProfile }>("/api/intern/profile");
+  setCache("intern:profile", response.profile);
   return response.profile;
 }
 
-export async function fetchInternProfileWithScore() {
-  const profile = await fetchInternProfile();
+export async function fetchInternProfileWithScore(force = false) {
+  const profile = await fetchInternProfile(force);
   if (!profile.resumeUploaded) return profile;
 
   try {
@@ -88,7 +129,7 @@ export async function fetchInternProfileWithScore() {
       analysis?: ResumeAnalysis;
     }>("/api/intern/resume/score");
 
-    return {
+    const hydrated = {
       ...profile,
       resume: {
         ...profile.resume,
@@ -99,18 +140,31 @@ export async function fetchInternProfileWithScore() {
         analysis: scoreResp.analysis || profile.resume.analysis
       }
     };
+    setCache("intern:profile", hydrated);
+    return hydrated;
   } catch {
     return profile;
   }
 }
 
-export async function fetchInternApplications() {
+export async function fetchInternApplications(force = false) {
+  if (!force) {
+    const cached = getCache<Application[]>("intern:applications");
+    if (cached) return cached;
+  }
   const response = await apiRequest<{ applications: Application[] }>("/api/intern/applications");
-  return response.applications || [];
+  const applications = response.applications || [];
+  setCache("intern:applications", applications);
+  return applications;
 }
 
-export async function fetchInternRecommendations() {
+export async function fetchInternRecommendations(force = false) {
+  if (!force) {
+    const cached = getCache<Recommendation[]>("intern:recommendations");
+    if (cached) return cached;
+  }
   const response = await apiRequest<{ recommendations: Recommendation[] }>("/api/intern/recommendations");
-  return response.recommendations || [];
+  const recommendations = response.recommendations || [];
+  setCache("intern:recommendations", recommendations);
+  return recommendations;
 }
-
