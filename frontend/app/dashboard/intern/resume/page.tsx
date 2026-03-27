@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -59,6 +59,8 @@ export default function InternResumePage() {
     router.push("/auth?role=intern");
   }
 
+  const parsed = profile?.resume?.parsed;
+
   return (
     <RoleDashboardGuard expectedRole="intern">
       <InternShell welcomeName={profile?.fullName} onLogout={handleLogout}>
@@ -74,9 +76,13 @@ export default function InternResumePage() {
               {error && <div className="mb-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</div>}
               {message && <div className="mb-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{message}</div>}
 
-              <div className="space-y-3 text-sm text-slate-700">
-                <p>Uploaded: <span className="font-semibold">{profile?.resume?.filePath || "No resume uploaded"}</span></p>
-                <p>Resume uploaded status: <span className="font-semibold">{profile?.resumeUploaded ? "Yes" : "No"}</span></p>
+              <div className="grid gap-3 text-sm text-slate-700 sm:grid-cols-2">
+                <p>
+                  Uploaded file: <span className="font-semibold">{profile?.resume?.filePath || "No resume uploaded"}</span>
+                </p>
+                <p>
+                  Resume uploaded status: <span className="font-semibold">{profile?.resumeUploaded ? "Yes" : "No"}</span>
+                </p>
               </div>
 
               <div className="mt-4">
@@ -103,39 +109,84 @@ export default function InternResumePage() {
                 <div className="space-y-5">
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Summary</p>
-                    <p className="mt-1 text-sm text-slate-700">{profile?.resume?.parsed?.summary || profile?.summary || "No summary extracted."}</p>
+                    <p className="mt-1 text-sm text-slate-700">{parsed?.summary || profile?.summary || "No summary extracted."}</p>
                   </div>
 
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Skills</p>
                     <div className="mt-2">
-                      <SkillChips skills={profile?.resume?.parsed?.skills || profile?.skills || []} />
+                      <SkillChips skills={parsed?.skills || profile?.skills || []} />
                     </div>
                   </div>
 
                   <div className="grid gap-4 lg:grid-cols-2">
                     <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
                       <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Projects</p>
-                      <ul className="mt-2 space-y-1 text-sm text-slate-700">
-                        {(profile?.resume?.parsed?.projects || []).slice(0, 5).map((project, idx) => (
-                          <li key={`project-${idx}`} className="rounded bg-white px-2 py-1">
-                            {project.title || project.description || "Project"}
-                          </li>
-                        ))}
-                        {(profile?.resume?.parsed?.projects || []).length === 0 && <li>No projects extracted.</li>}
-                      </ul>
+                      {(parsed?.projects || []).length === 0 ? (
+                        <p className="mt-2 text-sm text-slate-600">No projects extracted.</p>
+                      ) : (
+                        <div className="mt-2 space-y-2">
+                          {(parsed?.projects || []).slice(0, 5).map((project, idx) => (
+                            <div key={`project-${idx}`} className="rounded-lg border border-slate-200 bg-white p-2">
+                              <p className="text-sm font-semibold text-slate-900">{project.title || "Project"}</p>
+                              {project.description && <p className="mt-1 text-xs text-slate-600">{project.description}</p>}
+                              {project.techStack && project.techStack.length > 0 && <div className="mt-2"><SkillChips skills={project.techStack} /></div>}
+                              {project.demoLink && <a href={project.demoLink} target="_blank" rel="noreferrer" className="mt-1 inline-block text-xs font-medium text-blue-700 hover:underline">View demo</a>}
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
 
                     <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
                       <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Education</p>
-                      <ul className="mt-2 space-y-1 text-sm text-slate-700">
-                        {(profile?.resume?.parsed?.education || []).slice(0, 5).map((edu, idx) => (
-                          <li key={`edu-${idx}`} className="rounded bg-white px-2 py-1">
-                            {[edu.degree, edu.college, edu.year].filter(Boolean).join(" • ") || edu.raw || "Education entry"}
-                          </li>
-                        ))}
-                        {(profile?.resume?.parsed?.education || []).length === 0 && <li>No education extracted.</li>}
-                      </ul>
+                      {(parsed?.education || []).length === 0 ? (
+                        <p className="mt-2 text-sm text-slate-600">No education extracted.</p>
+                      ) : (
+                        <div className="mt-2 space-y-2">
+                          {(parsed?.education || []).slice(0, 5).map((edu, idx) => (
+                            <div key={`edu-${idx}`} className="rounded-lg border border-slate-200 bg-white p-2">
+                              <p className="text-sm font-semibold text-slate-900">{edu.degree || "Education"}</p>
+                              <p className="mt-1 text-xs text-slate-600">{edu.institution || edu.raw || "-"}</p>
+                              {(edu.startYear || edu.endYear) && <p className="mt-1 text-xs text-slate-500">{[edu.startYear, edu.endYear].filter(Boolean).join(" - ")}</p>}
+                              {edu.grade && <p className="mt-1 text-xs text-slate-500">Grade: {edu.grade}</p>}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="grid gap-4 lg:grid-cols-2">
+                    <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Certifications</p>
+                      {(parsed?.certifications || []).length === 0 ? (
+                        <p className="mt-2 text-sm text-slate-600">No certifications extracted.</p>
+                      ) : (
+                        <ul className="mt-2 space-y-2">
+                          {(parsed?.certifications || []).slice(0, 6).map((cert, idx) => (
+                            <li key={`cert-${idx}`} className="rounded-lg border border-slate-200 bg-white p-2">
+                              <p className="text-sm font-semibold text-slate-900">{cert.name || cert.raw || "Certification"}</p>
+                              {(cert.issuer || cert.year) && <p className="text-xs text-slate-500">{[cert.issuer, cert.year].filter(Boolean).join(" | ")}</p>}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+
+                    <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Achievements</p>
+                      {(parsed?.achievements || []).length === 0 ? (
+                        <p className="mt-2 text-sm text-slate-600">No achievements extracted.</p>
+                      ) : (
+                        <ul className="mt-2 space-y-2">
+                          {(parsed?.achievements || []).slice(0, 8).map((item, idx) => (
+                            <li key={`achievement-${idx}`} className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-sm text-slate-700">
+                              {item}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
                     </div>
                   </div>
                 </div>

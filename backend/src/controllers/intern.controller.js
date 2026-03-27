@@ -47,7 +47,7 @@ exports.getProfile = asyncHandler(async (req, res) => {
 exports.updateProfile = asyncHandler(async (req, res) => {
   const profile = await getInternProfileByUserId(req.user._id);
 
-  const allowed = ["fullName", "mobile", "skills", "education", "projects", "certifications", "experience", "links", "summary", "interests", "completedCourses"];
+  const allowed = ["fullName", "mobile", "skills", "education", "projects", "certifications", "experience", "achievements", "links", "summary", "interests", "completedCourses"];
 
   allowed.forEach((field) => {
     if (req.body[field] !== undefined) {
@@ -87,6 +87,7 @@ exports.uploadResume = asyncHandler(async (req, res) => {
   profile.projects = [...new Set([...(profile.projects || []), ...((parsed.projects || []).map((item) => item.title || item.description || "").filter(Boolean))])];
   profile.certifications = [...new Set([...(profile.certifications || []), ...((parsed.certifications || []).map((item) => item.name || item.raw || "").filter(Boolean))])];
   profile.experience = [...new Set([...(profile.experience || []), ...((parsed.experience || []).map((item) => item.description || item.role || "").filter(Boolean))])];
+  profile.achievements = [...new Set([...(profile.achievements || []), ...(parsed.achievements || [])])];
   profile.links = [...new Set([...(profile.links || []), ...(parsed.links || [])])];
   if (!profile.summary && parsed.summary) {
     profile.summary = parsed.summary;

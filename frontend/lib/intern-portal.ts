@@ -33,6 +33,7 @@ export type InternProfile = {
   projects: string[];
   certifications: string[];
   experience?: string[];
+  achievements?: string[];
   links?: string[];
   summary?: string;
   completedCourses: string[];
@@ -48,13 +49,14 @@ export type InternProfile = {
       fullName?: string;
       email?: string;
       mobile?: string;
+      summary?: string;
       skills?: string[];
-      projects?: Array<{ title?: string; techStack?: string[]; description?: string }>;
-      education?: Array<{ degree?: string; college?: string; year?: string; raw?: string }>;
+      projects?: Array<{ title?: string; techStack?: string[]; description?: string; demoLink?: string }>;
+      education?: Array<{ degree?: string; institution?: string; startYear?: string; endYear?: string; grade?: string; raw?: string }>;
       certifications?: Array<{ name?: string; issuer?: string; year?: string; raw?: string }>;
       experience?: Array<{ role?: string; company?: string; duration?: string; description?: string }>;
+      achievements?: string[];
       links?: string[];
-      summary?: string;
     } | null;
   };
   resumeUploaded: boolean;
