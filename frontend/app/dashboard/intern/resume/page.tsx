@@ -60,6 +60,11 @@ export default function InternResumePage() {
   }
 
   const parsed = profile?.resume?.parsed;
+  const projects = parsed?.projects || [];
+  const education = parsed?.education || [];
+  const certifications = parsed?.certifications || [];
+  const achievements = parsed?.achievements || profile?.achievements || [];
+  const languages = parsed?.languages || [];
 
   return (
     <RoleDashboardGuard expectedRole="intern">
@@ -110,6 +115,7 @@ export default function InternResumePage() {
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Summary</p>
                     <p className="mt-1 text-sm text-slate-700">{parsed?.summary || profile?.summary || "No summary extracted."}</p>
+                    {parsed?.location && <p className="mt-1 text-xs text-slate-500">{parsed.location}</p>}
                   </div>
 
                   <div>
@@ -122,11 +128,11 @@ export default function InternResumePage() {
                   <div className="grid gap-4 lg:grid-cols-2">
                     <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
                       <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Projects</p>
-                      {(parsed?.projects || []).length === 0 ? (
+                      {projects.length === 0 ? (
                         <p className="mt-2 text-sm text-slate-600">No projects extracted.</p>
                       ) : (
                         <div className="mt-2 space-y-2">
-                          {(parsed?.projects || []).slice(0, 5).map((project, idx) => (
+                          {projects.slice(0, 5).map((project, idx) => (
                             <div key={`project-${idx}`} className="rounded-lg border border-slate-200 bg-white p-2">
                               <p className="text-sm font-semibold text-slate-900">{project.title || "Project"}</p>
                               {project.description && <p className="mt-1 text-xs text-slate-600">{project.description}</p>}
@@ -140,11 +146,11 @@ export default function InternResumePage() {
 
                     <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
                       <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Education</p>
-                      {(parsed?.education || []).length === 0 ? (
+                      {education.length === 0 ? (
                         <p className="mt-2 text-sm text-slate-600">No education extracted.</p>
                       ) : (
                         <div className="mt-2 space-y-2">
-                          {(parsed?.education || []).slice(0, 5).map((edu, idx) => (
+                          {education.slice(0, 5).map((edu, idx) => (
                             <div key={`edu-${idx}`} className="rounded-lg border border-slate-200 bg-white p-2">
                               <p className="text-sm font-semibold text-slate-900">{edu.degree || "Education"}</p>
                               <p className="mt-1 text-xs text-slate-600">{edu.institution || edu.raw || "-"}</p>
@@ -160,11 +166,11 @@ export default function InternResumePage() {
                   <div className="grid gap-4 lg:grid-cols-2">
                     <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
                       <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Certifications</p>
-                      {(parsed?.certifications || []).length === 0 ? (
+                      {certifications.length === 0 ? (
                         <p className="mt-2 text-sm text-slate-600">No certifications extracted.</p>
                       ) : (
                         <ul className="mt-2 space-y-2">
-                          {(parsed?.certifications || []).slice(0, 6).map((cert, idx) => (
+                          {certifications.slice(0, 6).map((cert, idx) => (
                             <li key={`cert-${idx}`} className="rounded-lg border border-slate-200 bg-white p-2">
                               <p className="text-sm font-semibold text-slate-900">{cert.name || cert.raw || "Certification"}</p>
                               {(cert.issuer || cert.year) && <p className="text-xs text-slate-500">{[cert.issuer, cert.year].filter(Boolean).join(" | ")}</p>}
@@ -176,11 +182,11 @@ export default function InternResumePage() {
 
                     <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
                       <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Achievements</p>
-                      {(parsed?.achievements || []).length === 0 ? (
+                      {achievements.length === 0 ? (
                         <p className="mt-2 text-sm text-slate-600">No achievements extracted.</p>
                       ) : (
                         <ul className="mt-2 space-y-2">
-                          {(parsed?.achievements || []).slice(0, 8).map((item, idx) => (
+                          {achievements.slice(0, 8).map((item, idx) => (
                             <li key={`achievement-${idx}`} className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-sm text-slate-700">
                               {item}
                             </li>
@@ -189,6 +195,15 @@ export default function InternResumePage() {
                       )}
                     </div>
                   </div>
+
+                  {languages.length > 0 && (
+                    <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Languages</p>
+                      <div className="mt-2">
+                        <SkillChips skills={languages} />
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </SectionPanel>

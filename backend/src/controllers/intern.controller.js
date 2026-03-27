@@ -73,8 +73,7 @@ exports.uploadResume = asyncHandler(async (req, res) => {
 
   let resumeText = await parseResumeFile(req.file);
   if (!resumeText) {
-    // Keep a deterministic fallback rather than saving empty text for unsupported formats.
-    resumeText = `Resume uploaded: ${req.file.originalname}`;
+    throw new AppError("Could not extract text from resume. Please upload a clear PDF/DOCX/TXT file.", 400);
   }
 
   const parsed = structuredResumeParse(resumeText);

@@ -49,6 +49,7 @@ export type InternProfile = {
       fullName?: string;
       email?: string;
       mobile?: string;
+      location?: string;
       summary?: string;
       skills?: string[];
       projects?: Array<{ title?: string; techStack?: string[]; description?: string; demoLink?: string }>;
@@ -56,6 +57,7 @@ export type InternProfile = {
       certifications?: Array<{ name?: string; issuer?: string; year?: string; raw?: string }>;
       experience?: Array<{ role?: string; company?: string; duration?: string; description?: string }>;
       achievements?: string[];
+      languages?: string[];
       links?: string[];
     } | null;
   };

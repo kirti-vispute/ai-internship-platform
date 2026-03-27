@@ -1,7 +1,19 @@
-const fs = require("fs");
+﻿const fs = require("fs");
 const path = require("path");
 const { PDFParse } = require("pdf-parse");
 const mammoth = require("mammoth");
+
+function normalizeExtractedText(text = "") {
+  return String(text || "")
+    .replace(/\r/g, "")
+    .replace(/\u00A0/g, " ")
+    .split("\n")
+    .map((line) => line.replace(/[ \t]{2,}/g, " ").trim())
+    .filter(Boolean)
+    .filter((line) => !/^--\s*\d+\s+of\s+\d+\s*--$/i.test(line))
+    .join("\n")
+    .trim();
+}
 
 async function extractPdfText(filePath) {
   const buffer = fs.readFileSync(filePath);
@@ -9,7 +21,21 @@ async function extractPdfText(filePath) {
 
   try {
     const result = await parser.getText();
-    return String(result?.text || "").trim();
+
+    // Keep per-page boundaries to reduce line shuffle side-effects.
+    const pageText = (result.pages || [])
+      .map((page) => String(page?.text || "").trim())
+      .filter(Boolean)
+      .join("\n\n");
+
+    const normalized = normalizeExtractedText(pageText || result.text || "");
+
+    if (process.env.RESUME_PARSER_DEBUG === "true") {
+      // eslint-disable-next-line no-console
+      console.log("[resume-parser] raw-pdf-preview", JSON.stringify(normalized.split("\n").slice(0, 80)));
+    }
+
+    return normalized;
   } finally {
     await parser.destroy().catch(() => undefined);
   }
@@ -17,7 +43,7 @@ async function extractPdfText(filePath) {
 
 async function extractDocxText(filePath) {
   const result = await mammoth.extractRawText({ path: filePath });
-  return String(result?.value || "").trim();
+  return normalizeExtractedText(result?.value || "");
 }
 
 async function parseResumeFile(file) {
@@ -29,7 +55,7 @@ async function parseResumeFile(file) {
 
   if (mime === "text/plain" || ext === ".txt") {
     try {
-      return fs.readFileSync(file.path, "utf8").trim();
+      return normalizeExtractedText(fs.readFileSync(file.path, "utf8"));
     } catch {
       return "";
     }
@@ -54,8 +80,7 @@ async function parseResumeFile(file) {
     }
   }
 
-  // Legacy .doc extraction is not reliable without external tools.
   return "";
 }
 
-module.exports = { parseResumeFile };
+module.exports = { parseResumeFile, normalizeExtractedText };

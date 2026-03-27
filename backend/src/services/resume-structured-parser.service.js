@@ -1,4 +1,4 @@
-const YEAR_REGEX = /\b(?:19|20)\d{2}\b/g;
+﻿const YEAR_REGEX = /\b(?:19|20)\d{2}\b/g;
 const EMAIL_REGEX = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-z]{2,}/i;
 const PHONE_REGEX = /(?:\+?\d{1,3}[\s-]?)?(?:\(?\d{3,5}\)?[\s-]?)?\d[\d\s-]{7,13}\d/;
 const URL_REGEX = /https?:\/\/[^\s)]+|www\.[^\s)]+|(?:linkedin\.com|github\.com)\/[^\s)]+/gi;
@@ -23,9 +23,11 @@ const SKILL_ALIASES = {
   mysql: "mysql",
   postgresql: "postgresql",
   postgres: "postgresql",
+  html: "html",
+  css: "css",
   nodejs: "node.js",
-  node: "node.js",
   "node js": "node.js",
+  node: "node.js",
   expressjs: "express.js",
   express: "express.js",
   reactjs: "react",
@@ -51,6 +53,8 @@ const DISPLAY_OVERRIDES = {
   "express.js": "Express.js",
   "next.js": "Next.js",
   sql: "SQL",
+  html: "HTML",
+  css: "CSS",
   aws: "AWS",
   gcp: "GCP",
   mongodb: "MongoDB",
@@ -64,8 +68,13 @@ const KNOWN_SKILLS = new Set([
   "javascript", "typescript", "react", "next.js", "node.js", "express.js", "html", "css", "tailwind css", "bootstrap",
   "python", "java", "c++", "c#", "sql", "mysql", "postgresql", "mongodb", "firebase", "docker", "kubernetes",
   "git", "github", "aws", "gcp", "machine learning", "artificial intelligence", "deep learning", "natural language processing",
-  "data analysis", "excel", "power bi", "tableau", "tensorflow", "pytorch", "scikit-learn", "pandas", "numpy", "figma", "postman"
+  "data analysis", "data structure", "oops", "excel", "power bi", "tableau", "tensorflow", "pytorch", "scikit-learn",
+  "pandas", "numpy", "figma", "postman", "matplotlib", "azure", "microsoft azure", "data mining", "data warehousing"
 ]);
+
+const DEGREE_REGEX = /\b(?:b\.?\s?tech|m\.?\s?tech|b\.?\s?e|m\.?\s?e|bca|mca|bsc|msc|mba|ph\.?d|diploma|bachelor[^,|;]*|master[^,|;]*|higher secondary|secondary school)\b/i;
+const INSTITUTE_REGEX = /(university|college|institute|school|academy|polytechnic|vidyalankar|mahavidyalaya)/i;
+const PROJECT_ACTION_REGEX = /(developed|built|designed|implemented|deployed|trained|created|engineered|simulated|optimized)/i;
 
 function cleanLine(input = "") {
   return String(input || "")
@@ -79,7 +88,8 @@ function toLines(rawText = "") {
   return String(rawText || "")
     .split(/\n/)
     .map(cleanLine)
-    .filter(Boolean);
+    .filter(Boolean)
+    .filter((line) => !/^--\s*\d+\s+of\s+\d+\s*--$/i.test(line));
 }
 
 function normalizeHeaderText(line = "") {
@@ -116,6 +126,30 @@ function detectSection(line = "") {
   return null;
 }
 
+function classifyLine(line = "") {
+  const lower = line.toLowerCase();
+
+  if (/^languages?\s*:/i.test(line)) return "additional";
+  if (/award|winner|rank|achievement|finalist|hackathon|scholar|medal|honor|1st place|2nd place|3rd place|competition/i.test(line)) return "achievements";
+  if (/demo\s*link|github\.com|portfolio|behance|dribbble|linkedin\.com/i.test(line)) return "projects";
+  if (/tech\s*stack|technologies?\s*:/i.test(line)) return "skills";
+  if (DEGREE_REGEX.test(line) || INSTITUTE_REGEX.test(line) || /cgpa|gpa|semester|aggregate|percentage|%/i.test(line) || /\b(?:19|20)\d{2}\s*-\s*(?:19|20)\d{2}\b/.test(line)) return "education";
+  if (/cert|credential|course completion|nptel|coursera|udemy/i.test(lower)) return "certifications";
+  if (/intern|internship|experience|worked at|company|role|responsibilit/i.test(lower)) return "experience";
+  if (/^[A-Z][A-Za-z0-9 '&()+.#/-]{2,70}$/.test(line) && /(model|simulator|application|app|system|prediction|dashboard|portal)/i.test(line)) return "projects";
+  if (PROJECT_ACTION_REGEX.test(line)) return "projects";
+
+  const skillTokens = line
+    .split(/[|,;/()]/)
+    .map((token) => token.trim())
+    .filter(Boolean)
+    .map(canonicalSkill)
+    .filter(Boolean);
+  if (skillTokens.some((token) => KNOWN_SKILLS.has(token))) return "skills";
+
+  return null;
+}
+
 function splitSections(lines = []) {
   const sections = {
     header: [],
@@ -138,15 +172,10 @@ function splitSections(lines = []) {
       continue;
     }
 
-    if (current === "header" && isLikelyHeading(line)) {
-      const maybeSection = detectSection(line);
-      if (maybeSection) {
-        current = maybeSection;
-        continue;
-      }
-    }
-
-    sections[current].push(line);
+    // Recover from mixed-order PDFs by semantic reassignment.
+    const semantic = classifyLine(line);
+    const target = semantic || current;
+    sections[target].push(line);
   }
 
   return sections;
@@ -158,10 +187,12 @@ function extractEmail(text = "") {
 }
 
 function extractMobile(text = "") {
-  const match = String(text).match(PHONE_REGEX);
-  if (!match) return "";
-  const compact = match[0].replace(/[^\d+]/g, "");
-  return compact.length >= 10 ? compact : "";
+  const matches = [...String(text).matchAll(new RegExp(PHONE_REGEX.source, "g"))].map((m) => m[0]);
+  const candidate = matches
+    .map((value) => value.replace(/[^\d]/g, ""))
+    .filter((digits) => digits.length >= 10 && digits.length <= 12)
+    .sort((a, b) => b.length - a.length)[0];
+  return candidate || "";
 }
 
 function extractLinks(text = "") {
@@ -169,14 +200,21 @@ function extractLinks(text = "") {
   return [...new Set(links.map((link) => (link.startsWith("http") ? link : `https://${link}`)))];
 }
 
+function extractLocation(lines = []) {
+  const cityLine = lines.find((line) => /(mumbai|nagpur|pune|india)/i.test(line) && !INSTITUTE_REGEX.test(line));
+  if (!cityLine) return "";
+  const match = cityLine.match(/([A-Za-z\s]+,\s*(?:India|Maharashtra|Mumbai|Nagpur|Pune))/i);
+  return match ? cleanLine(match[1]) : cleanLine(cityLine);
+}
+
 function extractFullName(lines = []) {
-  const candidates = lines.slice(0, 10);
+  const candidates = lines.slice(0, 16);
   for (const line of candidates) {
     if (EMAIL_REGEX.test(line) || PHONE_REGEX.test(line) || URL_REGEX.test(line)) continue;
     const words = line.split(/\s+/).filter(Boolean);
     if (words.length < 2 || words.length > 5) continue;
     if (!/^[a-zA-Z.\s]+$/.test(line)) continue;
-    return line.trim();
+    if (line.toUpperCase() === line || /^[A-Z][a-z]+\s+[A-Z][a-z]+/.test(line)) return line.trim();
   }
   return "";
 }
@@ -201,32 +239,35 @@ function displaySkill(skill = "") {
     .join(" ");
 }
 
-function extractSkills(rawText = "", sections = {}) {
-  const skillSource = [...(sections.skills || []), ...(sections.additional || [])].join(" | ");
-  const parts = skillSource
-    .split(/[|,;/]/)
-    .map((part) => part.replace(/^[-*]\s*/, "").trim())
-    .filter(Boolean);
+function collectSkillCandidates(sourceLines = []) {
+  const tokens = [];
+  for (const line of sourceLines) {
+    const parts = line
+      .split(/[|,;/()]/)
+      .map((part) => part.replace(/^[-*]\s*/, "").trim())
+      .filter(Boolean);
+
+    for (const part of parts) {
+      const normalized = canonicalSkill(part);
+      if (normalized) tokens.push(normalized);
+    }
+  }
+  return tokens;
+}
+
+function extractSkills(rawText = "", sections = {}, extraSource = "") {
+  const skillLines = [
+    ...(sections.skills || []),
+    ...((sections.projects || []).filter((line) => /tech\s*stack|using|technologies?/i.test(line))),
+    ...((sections.additional || []).filter((line) => /skill|tech/i.test(line)))
+  ];
 
   const normalized = new Set();
-
-  for (const token of parts) {
-    const normalizedToken = canonicalSkill(token);
-    if (KNOWN_SKILLS.has(normalizedToken)) {
-      normalized.add(normalizedToken);
-      continue;
-    }
-
-    token
-      .split(/\s+/)
-      .map(canonicalSkill)
-      .filter(Boolean)
-      .forEach((piece) => {
-        if (KNOWN_SKILLS.has(piece)) normalized.add(piece);
-      });
+  for (const token of collectSkillCandidates(skillLines)) {
+    if (KNOWN_SKILLS.has(token)) normalized.add(token);
   }
 
-  const fullText = `${rawText}\n${skillSource}`.toLowerCase();
+  const fullText = `${rawText}\n${extraSource}`.toLowerCase();
   for (const skill of KNOWN_SKILLS) {
     const escaped = skill.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     if (new RegExp(`\\b${escaped}\\b`, "i").test(fullText)) {
@@ -238,14 +279,15 @@ function extractSkills(rawText = "", sections = {}) {
 }
 
 function extractSummary(sections = {}, lines = []) {
-  const summaryLines = sections.summary || [];
-  if (summaryLines.length > 0) return summaryLines.slice(0, 4).join(" ");
+  const explicit = sections.summary || [];
+  if (explicit.length > 0) {
+    const long = explicit.filter((line) => line.length > 60);
+    if (long.length > 0) return long.slice(0, 3).join(" ");
+    return explicit.slice(0, 4).join(" ");
+  }
 
-  const headerLong = (sections.header || []).find((line) => line.length > 70);
-  if (headerLong) return headerLong;
-
-  const longLine = lines.find((line) => line.length > 80 && !isLikelyHeading(line));
-  return longLine || "";
+  const candidate = lines.find((line) => line.length > 80 && !detectSection(line) && !EMAIL_REGEX.test(line));
+  return candidate || "";
 }
 
 function splitBlocks(lines = []) {
@@ -259,17 +301,19 @@ function splitBlocks(lines = []) {
     }
   };
 
-  for (const line of lines) {
-    const bullet = /^[-*]\s+/.test(line) || /^\d+[.)]\s+/.test(line);
-    const titleLike = /^[A-Za-z][A-Za-z0-9 '&()+.#/-]{2,70}(?:\s*[:|-].*)?$/.test(line) && !line.endsWith(".") && line.split(" ").length <= 12;
+  for (const rawLine of lines) {
+    const line = rawLine.replace(/^[-*]\s+|^\d+[.)]\s+/, "").trim();
+    if (!line) continue;
 
-    if ((bullet || titleLike) && current.length > 0) {
-      flush();
-    }
-    current.push(line.replace(/^[-*]\s+|^\d+[.)]\s+/, "").trim());
+    const startNew =
+      (/^[A-Z][A-Za-z0-9 '&()+.#/-]{2,70}$/.test(line) && !PROJECT_ACTION_REGEX.test(line) && !/tech stack|demo link/i.test(line)) ||
+      /^project\s*[:\-]/i.test(line);
+
+    if (startNew && current.length > 0) flush();
+    current.push(line);
   }
-  flush();
 
+  flush();
   return blocks;
 }
 
@@ -287,76 +331,118 @@ function extractTechStack(text = "") {
   return [...found].sort((a, b) => a.localeCompare(b));
 }
 
-function pickProjectTitle(firstLine = "", fallbackIndex = 1) {
-  const stripped = firstLine.replace(/^project\s*[:\-]?/i, "").trim();
-  if (!stripped) return `Project ${fallbackIndex}`;
-
-  const bySeparator = stripped.split(/[:|-]/)[0].trim();
-  if (bySeparator.split(" ").length <= 10 && bySeparator.length <= 80) {
-    return bySeparator;
-  }
-  return stripped.slice(0, 70);
-}
-
 function extractProjects(sections = {}) {
-  const sourceLines = sections.projects || [];
-  if (sourceLines.length === 0) return [];
+  const projectLines = [
+    ...(sections.projects || []),
+    ...((sections.additional || []).filter((line) => /demo\s*link|github\.com|deployed|developed|built|model|simulator|prediction/i.test(line))),
+    ...((sections.education || []).filter((line) => /demo\s*link|deployed|developed|built|trained|model|simulator|prediction/i.test(line)))
+  ];
 
-  return splitBlocks(sourceLines)
-    .slice(0, 10)
+  if (projectLines.length === 0) return [];
+
+  return splitBlocks(projectLines)
+    .slice(0, 12)
     .map((block, index) => {
       const combined = block.join(" ");
       const first = block[0] || "";
-      const urls = combined.match(URL_REGEX) || [];
-      const demoLink = urls[0] ? (urls[0].startsWith("http") ? urls[0] : `https://${urls[0]}`) : "";
+
+      let title = first.replace(/^project\s*[:\-]?/i, "").trim();
+      if (title.length < 3 || /developed|built|trained|used/i.test(title)) {
+        const titleCandidate = block.find((line) => line.split(" ").length <= 8 && !PROJECT_ACTION_REGEX.test(line) && !/tech stack|demo link/i.test(line));
+        title = titleCandidate || `Project ${index + 1}`;
+      }
+
+      const demoMatch = combined.match(/https?:\/\/[^\s)]+|www\.[^\s)]+/i);
+      const demoLink = demoMatch ? (demoMatch[0].startsWith("http") ? demoMatch[0] : `https://${demoMatch[0]}`) : "";
 
       const techMatch = combined.match(/(?:tech(?:nologies|\s*stack)?|stack|built with|using)\s*[:\-]\s*([^.;]+)/i);
       const techStack = techMatch ? extractTechStack(techMatch[1]) : extractTechStack(combined);
 
       return {
-        title: pickProjectTitle(first, index + 1),
+        title: cleanLine(title),
         description: combined,
         techStack,
         demoLink
       };
     })
-    .filter((project) => project.title || project.description);
+    .filter((item) => item.title || item.description)
+    .filter((item, idx, arr) => arr.findIndex((cmp) => cmp.title === item.title) === idx);
 }
 
 function extractEducation(sections = {}) {
-  const sourceLines = sections.education || [];
-  if (sourceLines.length === 0) return [];
+  const source = [...(sections.education || []), ...(sections.additional || []).filter((line) => /cgpa|%|semester|higher secondary|secondary/i.test(line))];
+  if (source.length === 0) return [];
 
-  return splitBlocks(sourceLines)
-    .slice(0, 10)
-    .map((block) => {
-      const raw = block.join(" | ");
-      const line = block.join(" ");
-      const years = line.match(YEAR_REGEX) || [];
-      const degreeMatch = line.match(/(b\.?\s?tech|m\.?\s?tech|b\.?\s?e|m\.?\s?e|bca|mca|bsc|msc|mba|ph\.?d|diploma|bachelor[^,|;]*|master[^,|;]*)/i);
-      const gradeMatch = line.match(/(?:cgpa|gpa|grade|percentage|percent|marks?)\s*[:\-]?\s*([0-9]+(?:\.[0-9]+)?\s*%?)/i);
+  const items = [];
+  let current = null;
 
-      const institutionPart = block.find((item) => /(university|college|institute|school|academy|polytechnic)/i.test(item)) || "";
-      const degree = degreeMatch ? degreeMatch[0].trim() : "";
-      const institution = institutionPart || line.replace(degree, "").replace(/(?:19|20)\d{2}/g, "").trim();
+  const flush = () => {
+    if (!current) return;
+    if (current.degree || current.institution || current.grade || current.startYear || current.endYear) {
+      items.push({ ...current, raw: current.raw.filter(Boolean).join(" | ") });
+    }
+    current = null;
+  };
 
-      return {
-        degree,
-        institution: institution.replace(/^[|,:\-\s]+|[|,:\-\s]+$/g, ""),
+  for (const line of source) {
+    if (/demo\s*link|developed|built|trained|model|simulator|prediction/i.test(line)) continue;
+    if (/detail-oriented|proven ability|eager to|data-driven/i.test(line)) continue;
+
+    const years = line.match(YEAR_REGEX) || [];
+    const degreeMatch = line.match(DEGREE_REGEX);
+    const gradeMatch = line.match(/(?:cgpa|gpa|grade|percentage|percent|aggregate)\s*[:\-]?\s*([0-9]+(?:\.[0-9]+)?\s*%?)/i);
+    const looksInstitution = INSTITUTE_REGEX.test(line) && line.split(/\s+/).length <= 10 && !/[.]/.test(line) && !/student/i.test(line);
+    const newEntry = Boolean(degreeMatch || looksInstitution || /higher secondary|secondary school/i.test(line));
+
+    if (newEntry) {
+      flush();
+      current = {
+        degree: degreeMatch ? cleanLine(degreeMatch[0]) : "",
+        institution: looksInstitution ? cleanLine(line) : "",
         startYear: years[0] || "",
         endYear: years[1] || years[0] || "",
-        grade: gradeMatch ? gradeMatch[1].trim() : "",
-        raw
+        grade: gradeMatch ? cleanLine(gradeMatch[1]) : "",
+        raw: [line]
       };
-    })
-    .filter((item) => item.degree || item.institution || item.raw);
+      continue;
+    }
+
+    if (!current) continue;
+    if (/^[A-Z][A-Za-z0-9 '&()+.#/-]{2,70}$/.test(line) && /(model|simulator|application|app|system|prediction)/i.test(line)) {
+      flush();
+      continue;
+    }
+    current.raw.push(line);
+    if (!current.startYear && years[0]) current.startYear = years[0];
+    if (!current.endYear && (years[1] || years[0])) current.endYear = years[1] || years[0];
+    if (!current.grade && gradeMatch) current.grade = cleanLine(gradeMatch[1]);
+    if (!current.institution && INSTITUTE_REGEX.test(line)) current.institution = cleanLine(line);
+
+    if (!current.institution && /[:]/.test(line) && !/cgpa|gpa|aggregate/i.test(line)) {
+      current.institution = cleanLine(line.split(":")[0]);
+      if (!current.grade) {
+        const inlineGrade = line.match(/([0-9]+(?:\.[0-9]+)?\s*%?)/);
+        if (inlineGrade) current.grade = cleanLine(inlineGrade[1]);
+      }
+    }
+  }
+  flush();
+
+  return items
+    .filter((item) => !/competition|innovation lounge|hackathon/i.test(item.raw))
+    .filter((item) => !/detail-oriented|proven ability|student at/i.test(item.raw))
+    .filter((item, idx, arr) => arr.findIndex((cmp) => cmp.raw === item.raw) === idx);
 }
 
 function extractCertifications(sections = {}) {
-  const sourceLines = [...(sections.certifications || []), ...(sections.additional || []).filter((line) => /cert|course|credential|license/i.test(line))];
-  if (sourceLines.length === 0) return [];
+  const lines = [
+    ...(sections.certifications || []),
+    ...((sections.additional || []).filter((line) => /cert|credential|course completion|workshop/i.test(line)))
+  ];
 
-  return splitBlocks(sourceLines)
+  if (lines.length === 0) return [];
+
+  return splitBlocks(lines)
     .slice(0, 12)
     .map((block) => {
       const text = block.join(" ");
@@ -373,17 +459,16 @@ function extractCertifications(sections = {}) {
 }
 
 function extractExperience(sections = {}) {
-  const sourceLines = sections.experience || [];
-  if (sourceLines.length === 0) return [];
+  const lines = sections.experience || [];
+  if (lines.length === 0) return [];
 
-  return splitBlocks(sourceLines)
+  return splitBlocks(lines)
     .slice(0, 12)
     .map((block) => {
       const text = block.join(" ");
       const years = text.match(YEAR_REGEX) || [];
       const first = block[0] || "";
       const pieces = first.split(/[:|-]/).map((part) => part.trim()).filter(Boolean);
-
       return {
         role: pieces[0] || "",
         company: pieces[1] || "",
@@ -394,20 +479,42 @@ function extractExperience(sections = {}) {
     .filter((item) => item.role || item.company || item.description);
 }
 
-function extractAchievements(sections = {}) {
-  const sourceLines = [
-    ...(sections.achievements || []),
-    ...(sections.additional || []).filter((line) => /award|winner|rank|achievement|finalist|hackathon|scholar|medal|honor/i.test(line))
-  ];
+function extractAchievementsAndLanguages(sections = {}) {
+  const lines = [...(sections.achievements || []), ...(sections.additional || []), ...(sections.education || [])];
 
-  return sourceLines
-    .map((line) => line.replace(/^[-*]\s*/, "").trim())
-    .filter((line) => line.length >= 4)
-    .slice(0, 20);
+  const achievements = [];
+  const languages = [];
+
+  for (const raw of lines) {
+    const line = raw.replace(/^[-*]\s*/, "").trim();
+    if (!line) continue;
+
+    if (/^languages?\s*:/i.test(line)) {
+      const values = line
+        .split(":")
+        .slice(1)
+        .join(":")
+        .split(/[|,;/]/)
+        .map((item) => cleanLine(item))
+        .filter(Boolean);
+      languages.push(...values);
+      continue;
+    }
+
+    if (/award|winner|rank|achievement|finalist|hackathon|scholar|medal|honor|place/i.test(line)) {
+      achievements.push(line);
+    }
+  }
+
+  return {
+    achievements: [...new Set(achievements)].slice(0, 20),
+    languages: [...new Set(languages)].slice(0, 20)
+  };
 }
 
-function parserDebugSnapshot(sections = {}, parsed = {}) {
+function parserDebugSnapshot(sections = {}, parsed = {}, rawText = "") {
   return {
+    rawPreview: String(rawText || "").split(/\n/).slice(0, 60),
     sectionCounts: Object.fromEntries(Object.entries(sections).map(([key, value]) => [key, Array.isArray(value) ? value.length : 0])),
     extractionCounts: {
       skills: parsed.skills?.length || 0,
@@ -416,10 +523,11 @@ function parserDebugSnapshot(sections = {}, parsed = {}) {
       certifications: parsed.certifications?.length || 0,
       experience: parsed.experience?.length || 0,
       achievements: parsed.achievements?.length || 0,
+      languages: parsed.languages?.length || 0,
       links: parsed.links?.length || 0
     },
     sectionPreview: Object.fromEntries(
-      Object.entries(sections).map(([key, value]) => [key, Array.isArray(value) ? value.slice(0, 5) : []])
+      Object.entries(sections).map(([key, value]) => [key, Array.isArray(value) ? value.slice(0, 12) : []])
     )
   };
 }
@@ -429,24 +537,33 @@ function structuredResumeParse(text = "") {
   const lines = toLines(rawText);
   const sections = splitSections(lines);
 
+  const projects = extractProjects(sections);
+  const projectText = projects.map((project) => `${project.title} ${project.description} ${project.techStack.join(" ")}`).join("\n");
+  const skills = extractSkills(rawText, sections, projectText);
+  const education = extractEducation(sections);
+  const certs = extractCertifications(sections);
+  const experience = extractExperience(sections);
+  const { achievements, languages } = extractAchievementsAndLanguages(sections);
+
   const parsed = {
     fullName: extractFullName(lines),
     email: extractEmail(rawText),
     mobile: extractMobile(rawText),
+    location: extractLocation(lines),
     summary: extractSummary(sections, lines),
-    skills: extractSkills(rawText, sections),
-    projects: extractProjects(sections),
-    education: extractEducation(sections),
-    certifications: extractCertifications(sections),
-    experience: extractExperience(sections),
-    achievements: extractAchievements(sections),
+    skills,
+    projects,
+    education,
+    certifications: certs,
+    experience,
+    achievements,
+    languages,
     links: extractLinks(rawText)
   };
 
   // Future integration point: replace/augment this with Gemini/OpenAI structured extraction.
   if (process.env.RESUME_PARSER_DEBUG === "true") {
-    const snapshot = parserDebugSnapshot(sections, parsed);
-    // Keep logs compact and section-oriented for debugging extractor behavior.
+    const snapshot = parserDebugSnapshot(sections, parsed, rawText);
     // eslint-disable-next-line no-console
     console.log("[resume-parser] debug", JSON.stringify(snapshot));
   }

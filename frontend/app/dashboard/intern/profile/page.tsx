@@ -37,6 +37,11 @@ export default function InternProfilePage() {
   }
 
   const parsed = profile?.resume?.parsed;
+  const projectList = parsed?.projects || [];
+  const educationList = parsed?.education || [];
+  const certificationList = parsed?.certifications || [];
+  const achievementList = parsed?.achievements || profile?.achievements || [];
+  const languages = parsed?.languages || [];
   const initials = (profile?.fullName || "I")
     .split(" ")
     .filter(Boolean)
@@ -68,12 +73,13 @@ export default function InternProfilePage() {
                       <p className="text-lg font-semibold text-slate-900">{profile?.fullName || "Intern"}</p>
                       <p className="mt-0.5 text-sm text-slate-600">{profile?.email || "-"}</p>
                       <p className="text-sm text-slate-600">{profile?.mobile || "-"}</p>
+                      {parsed?.location && <p className="text-sm text-slate-600">{parsed.location}</p>}
                     </div>
                   </div>
                   <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                     <div className="rounded-xl border border-slate-200 bg-white px-3 py-2">
                       <p className="text-xs uppercase tracking-[0.14em] text-slate-500">Education</p>
-                      <p className="mt-1 text-base font-semibold text-slate-900">{(parsed?.education || []).length}</p>
+                      <p className="mt-1 text-base font-semibold text-slate-900">{educationList.length}</p>
                     </div>
                     <div className="rounded-xl border border-slate-200 bg-white px-3 py-2">
                       <p className="text-xs uppercase tracking-[0.14em] text-slate-500">Courses</p>
@@ -81,11 +87,11 @@ export default function InternProfilePage() {
                     </div>
                     <div className="rounded-xl border border-slate-200 bg-white px-3 py-2">
                       <p className="text-xs uppercase tracking-[0.14em] text-slate-500">Projects</p>
-                      <p className="mt-1 text-base font-semibold text-slate-900">{(parsed?.projects || []).length}</p>
+                      <p className="mt-1 text-base font-semibold text-slate-900">{projectList.length}</p>
                     </div>
                     <div className="rounded-xl border border-slate-200 bg-white px-3 py-2">
                       <p className="text-xs uppercase tracking-[0.14em] text-slate-500">Certifications</p>
-                      <p className="mt-1 text-base font-semibold text-slate-900">{(parsed?.certifications || []).length}</p>
+                      <p className="mt-1 text-base font-semibold text-slate-900">{certificationList.length}</p>
                     </div>
                   </div>
                 </div>
@@ -98,11 +104,11 @@ export default function InternProfilePage() {
 
             <div className="grid gap-6 xl:grid-cols-3">
               <SectionPanel title="Projects" subtitle="Resume project highlights.">
-                {(parsed?.projects || []).length === 0 ? (
+                {projectList.length === 0 ? (
                   <p className="text-sm text-slate-500">No projects extracted yet.</p>
                 ) : (
                   <div className="space-y-2">
-                    {(parsed?.projects || []).slice(0, 6).map((project, idx) => (
+                    {projectList.slice(0, 6).map((project, idx) => (
                       <div key={`${project.title || "project"}-${idx}`} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
                         <p className="text-sm font-semibold text-slate-900">{project.title || "Project"}</p>
                         {project.techStack && project.techStack.length > 0 && (
@@ -123,11 +129,11 @@ export default function InternProfilePage() {
               </SectionPanel>
 
               <SectionPanel title="Education" subtitle="Extracted academic details.">
-                {(parsed?.education || []).length === 0 ? (
+                {educationList.length === 0 ? (
                   <p className="text-sm text-slate-500">No education entries extracted yet.</p>
                 ) : (
                   <div className="space-y-2">
-                    {(parsed?.education || []).slice(0, 6).map((item, idx) => (
+                    {educationList.slice(0, 6).map((item, idx) => (
                       <div key={`${item.degree || "education"}-${idx}`} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
                         <p className="text-sm font-semibold text-slate-900">{item.degree || "Education"}</p>
                         <p className="text-xs text-slate-600">{item.institution || item.raw || "-"}</p>
@@ -142,11 +148,11 @@ export default function InternProfilePage() {
               </SectionPanel>
 
               <SectionPanel title="Certifications" subtitle="Extracted certification records.">
-                {(parsed?.certifications || []).length === 0 ? (
+                {certificationList.length === 0 ? (
                   <p className="text-sm text-slate-500">No certifications extracted yet.</p>
                 ) : (
                   <div className="space-y-2">
-                    {(parsed?.certifications || []).slice(0, 6).map((item, idx) => (
+                    {certificationList.slice(0, 6).map((item, idx) => (
                       <div key={`${item.name || "cert"}-${idx}`} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
                         <p className="text-sm font-semibold text-slate-900">{item.name || item.raw || "Certification"}</p>
                         {(item.issuer || item.year) && (
@@ -160,11 +166,11 @@ export default function InternProfilePage() {
             </div>
 
             <SectionPanel title="Achievements" subtitle="Awards and notable accomplishments.">
-              {(parsed?.achievements || []).length === 0 ? (
+              {achievementList.length === 0 ? (
                 <p className="text-sm text-slate-500">No achievements extracted yet.</p>
               ) : (
                 <ul className="grid gap-2 md:grid-cols-2">
-                  {(parsed?.achievements || []).slice(0, 10).map((item, idx) => (
+                  {achievementList.slice(0, 10).map((item, idx) => (
                     <li key={`ach-${idx}`} className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
                       {item}
                     </li>
@@ -172,6 +178,12 @@ export default function InternProfilePage() {
                 </ul>
               )}
             </SectionPanel>
+
+            {languages.length > 0 && (
+              <SectionPanel title="Languages" subtitle="Detected from additional information.">
+                <SkillChips skills={languages} />
+              </SectionPanel>
+            )}
           </div>
         )}
       </InternShell>
