@@ -70,10 +70,10 @@ export default function InternDashboardOverviewPage() {
     <RoleDashboardGuard expectedRole="intern">
       <InternShell welcomeName={profile?.fullName} onLogout={handleLogout}>
         {loading ? (
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-600">Loading overview...</div>
+          <div className="surface-muted p-5 text-sm text-slate-700 dark:text-slate-300">Loading overview...</div>
         ) : (
-          <div className="space-y-6">
-            {error && <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div>}
+          <div className="space-y-7">
+            {error && <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300">{error}</div>}
 
             <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
               <SummaryStatCard title="Resume Score" value={summary.resumeScore} suffix="/100" />
@@ -84,9 +84,9 @@ export default function InternDashboardOverviewPage() {
 
             <SectionPanel title="Overview Notes" subtitle="Use the sidebar to navigate focused views.">
               <ul className="space-y-2 text-sm text-slate-700">
-                <li className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">Profile details and resume management are in My Profile.</li>
-                <li className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">Internship discovery and tracking are in Internships.</li>
-                <li className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">Learning resources and mock tests are in Learning.</li>
+                <li className="surface-subtle px-3 py-2 text-slate-700 dark:text-slate-300">Profile details and resume management are in My Profile.</li>
+                <li className="surface-subtle px-3 py-2 text-slate-700 dark:text-slate-300">Internship discovery and tracking are in Internships.</li>
+                <li className="surface-subtle px-3 py-2 text-slate-700 dark:text-slate-300">Learning resources and mock tests are in Learning.</li>
               </ul>
             </SectionPanel>
           </div>

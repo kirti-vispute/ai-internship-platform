@@ -105,7 +105,7 @@ export default function InternProfilePage() {
             <div className="grid gap-6 xl:grid-cols-3">
               <SectionPanel title="Projects" subtitle="Resume project highlights.">
                 {projectList.length === 0 ? (
-                  <p className="text-sm text-slate-500">No projects extracted yet.</p>
+                  <p className="text-sm text-slate-600 dark:text-slate-300">No projects extracted yet.</p>
                 ) : (
                   <div className="space-y-2">
                     {projectList.slice(0, 6).map((project, idx) => (
@@ -130,7 +130,7 @@ export default function InternProfilePage() {
 
               <SectionPanel title="Education" subtitle="Extracted academic details.">
                 {educationList.length === 0 ? (
-                  <p className="text-sm text-slate-500">No education entries extracted yet.</p>
+                  <p className="text-sm text-slate-600 dark:text-slate-300">No education entries extracted yet.</p>
                 ) : (
                   <div className="space-y-2">
                     {educationList.slice(0, 6).map((item, idx) => (
@@ -149,7 +149,7 @@ export default function InternProfilePage() {
 
               <SectionPanel title="Certifications" subtitle="Extracted certification records.">
                 {certificationList.length === 0 ? (
-                  <p className="text-sm text-slate-500">No certifications extracted yet.</p>
+                  <p className="text-sm text-slate-600 dark:text-slate-300">No certifications extracted yet.</p>
                 ) : (
                   <div className="space-y-2">
                     {certificationList.slice(0, 6).map((item, idx) => (
@@ -167,7 +167,7 @@ export default function InternProfilePage() {
 
             <SectionPanel title="Achievements" subtitle="Awards and notable accomplishments.">
               {achievementList.length === 0 ? (
-                <p className="text-sm text-slate-500">No achievements extracted yet.</p>
+                <p className="text-sm text-slate-600 dark:text-slate-300">No achievements extracted yet.</p>
               ) : (
                 <ul className="grid gap-2 md:grid-cols-2">
                   {achievementList.slice(0, 10).map((item, idx) => (
@@ -190,3 +190,4 @@ export default function InternProfilePage() {
     </RoleDashboardGuard>
   );
 }
+

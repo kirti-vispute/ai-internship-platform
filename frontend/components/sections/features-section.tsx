@@ -8,7 +8,7 @@ export function FeaturesSection() {
         <div className="animate-reveal flex flex-wrap items-end justify-between gap-3">
           <div>
             <h2 className="text-3xl font-black tracking-tight text-ink dark:text-slate-100 sm:text-4xl">Platform Features</h2>
-            <p className="mt-2 max-w-2xl text-slate-600 dark:text-slate-300">
+            <p className="mt-2 max-w-2xl text-slate-700 dark:text-slate-200">
               Everything required to streamline internship hiring and candidate growth.
             </p>
           </div>
@@ -22,7 +22,7 @@ export function FeaturesSection() {
             <Card key={item.title} className="animate-reveal" >
               <p className="text-xs font-semibold uppercase tracking-wider text-primary-600 dark:text-primary-300">Feature {index + 1}</p>
               <h3 className="mt-2 text-lg font-bold text-slate-900 dark:text-slate-100">{item.title}</h3>
-              <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{item.description}</p>
+              <p className="mt-2 text-sm text-slate-700 dark:text-slate-300">{item.description}</p>
               <div className="mt-3 h-1.5 rounded-full bg-slate-100 dark:bg-slate-700">
                 <div className="h-1.5 w-2/3 rounded-full bg-gradient-to-r from-primary-500 to-cyan-500" />
               </div>

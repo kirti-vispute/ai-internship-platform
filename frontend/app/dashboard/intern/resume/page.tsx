@@ -129,7 +129,7 @@ export default function InternResumePage() {
                     <div className="surface-subtle p-3.5">
                       <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">Projects</p>
                       {projects.length === 0 ? (
-                        <p className="mt-2 text-sm text-slate-600">No projects extracted.</p>
+                        <p className="mt-2 text-sm text-slate-700 dark:text-slate-300">No projects extracted.</p>
                       ) : (
                         <div className="mt-2 space-y-2">
                           {projects.slice(0, 5).map((project, idx) => (
@@ -147,7 +147,7 @@ export default function InternResumePage() {
                     <div className="surface-subtle p-3.5">
                       <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">Education</p>
                       {education.length === 0 ? (
-                        <p className="mt-2 text-sm text-slate-600">No education extracted.</p>
+                        <p className="mt-2 text-sm text-slate-700 dark:text-slate-300">No education extracted.</p>
                       ) : (
                         <div className="mt-2 space-y-2">
                           {education.slice(0, 5).map((edu, idx) => (
@@ -167,7 +167,7 @@ export default function InternResumePage() {
                     <div className="surface-subtle p-3.5">
                       <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">Certifications</p>
                       {certifications.length === 0 ? (
-                        <p className="mt-2 text-sm text-slate-600">No certifications extracted.</p>
+                        <p className="mt-2 text-sm text-slate-700 dark:text-slate-300">No certifications extracted.</p>
                       ) : (
                         <ul className="mt-2 space-y-2">
                           {certifications.slice(0, 6).map((cert, idx) => (
@@ -183,7 +183,7 @@ export default function InternResumePage() {
                     <div className="surface-subtle p-3.5">
                       <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">Achievements</p>
                       {achievements.length === 0 ? (
-                        <p className="mt-2 text-sm text-slate-600">No achievements extracted.</p>
+                        <p className="mt-2 text-sm text-slate-700 dark:text-slate-300">No achievements extracted.</p>
                       ) : (
                         <ul className="mt-2 space-y-2">
                           {achievements.slice(0, 8).map((item, idx) => (
@@ -213,3 +213,4 @@ export default function InternResumePage() {
     </RoleDashboardGuard>
   );
 }
+
