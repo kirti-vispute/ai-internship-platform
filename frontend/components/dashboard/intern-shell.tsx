@@ -23,56 +23,171 @@ type InternShellProps = {
   children: React.ReactNode;
 };
 
-function IconDashboard() {
-  return <span className="text-base">📊</span>;
+function BaseIcon({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="inline-flex h-5 w-5 items-center justify-center text-slate-500" aria-hidden="true">
+      {children}
+    </span>
+  );
 }
-function IconProfile() {
-  return <span className="text-base">👤</span>;
+
+function IconGrid() {
+  return (
+    <BaseIcon>
+      <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <rect x="4" y="4" width="7" height="7" rx="1.5" />
+        <rect x="13" y="4" width="7" height="7" rx="1.5" />
+        <rect x="4" y="13" width="7" height="7" rx="1.5" />
+        <rect x="13" y="13" width="7" height="7" rx="1.5" />
+      </svg>
+    </BaseIcon>
+  );
 }
-function IconResume() {
-  return <span className="text-base">📄</span>;
+
+function IconUser() {
+  return (
+    <BaseIcon>
+      <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <circle cx="12" cy="8" r="3.2" />
+        <path d="M5 19c1.4-3.1 4.1-4.7 7-4.7s5.6 1.6 7 4.7" />
+      </svg>
+    </BaseIcon>
+  );
 }
-function IconScore() {
-  return <span className="text-base">🎯</span>;
+
+function IconFile() {
+  return (
+    <BaseIcon>
+      <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <path d="M7 3h7l4 4v14H7z" />
+        <path d="M14 3v4h4" />
+      </svg>
+    </BaseIcon>
+  );
 }
-function IconSkills() {
-  return <span className="text-base">🧠</span>;
+
+function IconSpark() {
+  return (
+    <BaseIcon>
+      <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <path d="M12 3l1.8 4.2L18 9l-4.2 1.8L12 15l-1.8-4.2L6 9l4.2-1.8z" />
+      </svg>
+    </BaseIcon>
+  );
 }
-function IconInternship() {
-  return <span className="text-base">💼</span>;
+
+function IconChart() {
+  return (
+    <BaseIcon>
+      <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <path d="M4 19h16" />
+        <path d="M7 16V9" />
+        <path d="M12 16V5" />
+        <path d="M17 16v-7" />
+      </svg>
+    </BaseIcon>
+  );
 }
+
 function IconSearch() {
-  return <span className="text-base">🔎</span>;
+  return (
+    <BaseIcon>
+      <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <circle cx="11" cy="11" r="6" />
+        <path d="M20 20l-3.2-3.2" />
+      </svg>
+    </BaseIcon>
+  );
 }
-function IconSaved() {
-  return <span className="text-base">⭐</span>;
+
+function IconBookmark() {
+  return (
+    <BaseIcon>
+      <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <path d="M7 4h10v16l-5-3-5 3z" />
+      </svg>
+    </BaseIcon>
+  );
 }
-function IconApps() {
-  return <span className="text-base">🗂️</span>;
+
+function IconList() {
+  return (
+    <BaseIcon>
+      <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <path d="M9 7h10M9 12h10M9 17h10" />
+        <circle cx="5" cy="7" r="1" />
+        <circle cx="5" cy="12" r="1" />
+        <circle cx="5" cy="17" r="1" />
+      </svg>
+    </BaseIcon>
+  );
 }
-function IconTrack() {
-  return <span className="text-base">📈</span>;
+
+function IconBook() {
+  return (
+    <BaseIcon>
+      <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <path d="M5 4h10a3 3 0 0 1 3 3v13H8a3 3 0 0 0-3 3z" />
+        <path d="M5 4v16a3 3 0 0 1 3-3h10" />
+      </svg>
+    </BaseIcon>
+  );
 }
-function IconCourse() {
-  return <span className="text-base">📚</span>;
+
+function IconBadge() {
+  return (
+    <BaseIcon>
+      <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <circle cx="12" cy="10" r="4" />
+        <path d="M9 14l-1 6 4-2 4 2-1-6" />
+      </svg>
+    </BaseIcon>
+  );
 }
-function IconCert() {
-  return <span className="text-base">🏅</span>;
+
+function IconClipboard() {
+  return (
+    <BaseIcon>
+      <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <rect x="6" y="4" width="12" height="16" rx="2" />
+        <path d="M9 4.5h6v3H9z" />
+      </svg>
+    </BaseIcon>
+  );
 }
-function IconTest() {
-  return <span className="text-base">📝</span>;
+
+function IconMessage() {
+  return (
+    <BaseIcon>
+      <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <path d="M20 15a3 3 0 0 1-3 3H9l-5 3V6a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3z" />
+      </svg>
+    </BaseIcon>
+  );
 }
-function IconInterview() {
-  return <span className="text-base">🎤</span>;
+
+function IconLightbulb() {
+  return (
+    <BaseIcon>
+      <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <path d="M9 18h6" />
+        <path d="M10 22h4" />
+        <path d="M8.3 14.5A6.2 6.2 0 1 1 15.7 14.5c-.8.8-1.2 1.6-1.3 2.5h-2.8c-.1-.9-.5-1.7-1.3-2.5z" />
+      </svg>
+    </BaseIcon>
+  );
 }
-function IconFeedback() {
-  return <span className="text-base">💬</span>;
-}
-function IconSuggest() {
-  return <span className="text-base">💡</span>;
-}
+
 function IconHelp() {
-  return <span className="text-base">🛟</span>;
+  return (
+    <BaseIcon>
+      <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <circle cx="12" cy="12" r="9" />
+        <path d="M9.5 9.5a2.5 2.5 0 1 1 4.2 1.8c-.8.7-1.7 1.2-1.7 2.7" />
+        <circle cx="12" cy="17.2" r=".8" fill="currentColor" stroke="none" />
+      </svg>
+    </BaseIcon>
+  );
 }
 function IconBell() {
   return (
@@ -86,53 +201,52 @@ function buildSections(): SidebarSection[] {
   return [
     {
       title: "Main",
-      items: [{ label: "Dashboard Overview", href: "/dashboard/intern", icon: <IconDashboard /> }]
+      items: [{ label: "Dashboard Overview", href: "/dashboard/intern", icon: <IconGrid /> }]
     },
     {
       title: "My Profile",
       items: [
-        { label: "Profile", href: "/dashboard/intern#profile", icon: <IconProfile /> },
-        { label: "Edit Profile", href: "/dashboard/intern#edit-profile", icon: <IconProfile /> },
-        { label: "Resume", href: "/dashboard/intern#resume", icon: <IconResume /> },
-        { label: "Resume Score", href: "/dashboard/intern#resume-score", icon: <IconScore /> },
-        { label: "Skill Gap Analysis", href: "/dashboard/intern#resume-analyzer", icon: <IconSkills /> }
+        { label: "Profile", href: "/dashboard/intern/profile", icon: <IconUser /> },
+        { label: "Edit Profile", href: "/dashboard/intern/profile/edit", icon: <IconUser /> },
+        { label: "Resume", href: "/dashboard/intern/resume", icon: <IconFile /> },
+        { label: "Resume Score", href: "/dashboard/intern/resume/score", icon: <IconSpark /> },
+        { label: "Skill Gap Analysis", href: "/dashboard/intern/skill-gap", icon: <IconChart /> }
       ]
     },
     {
       title: "Internships",
       items: [
-        { label: "Recommended Internships", href: "/dashboard/intern#recommended", icon: <IconInternship /> },
-        { label: "Search Internships", href: "/dashboard/intern#search", icon: <IconSearch /> },
-        { label: "Saved Internships", href: "/dashboard/intern#saved", icon: <IconSaved /> },
-        { label: "My Applications", href: "/dashboard/intern/applications", icon: <IconApps /> },
-        { label: "Track Progress", href: "/dashboard/intern#progress", icon: <IconTrack /> }
+        { label: "Recommended Internships", href: "/dashboard/intern/internships/recommended", icon: <IconSpark /> },
+        { label: "Search Internships", href: "/dashboard/intern/internships/search", icon: <IconSearch /> },
+        { label: "Saved Internships", href: "/dashboard/intern/internships/saved", icon: <IconBookmark /> },
+        { label: "My Applications", href: "/dashboard/intern/applications", icon: <IconList /> },
+        { label: "Track Progress", href: "/dashboard/intern/track-progress", icon: <IconChart /> }
       ]
     },
     {
       title: "Learning",
       items: [
-        { label: "Courses", href: "/dashboard/intern#courses", icon: <IconCourse /> },
-        { label: "Certifications", href: "/dashboard/intern#certifications", icon: <IconCert /> },
-        { label: "Mock Aptitude Test", href: "/dashboard/intern#mock-aptitude", icon: <IconTest /> },
-        { label: "Mock Technical Test", href: "/dashboard/intern#mock-technical", icon: <IconTest /> },
-        { label: "Mock Interview", href: "/dashboard/intern#mock-interview", icon: <IconInterview /> }
+        { label: "Courses", href: "/dashboard/intern/learning/courses", icon: <IconBook /> },
+        { label: "Certifications", href: "/dashboard/intern/learning/certifications", icon: <IconBadge /> },
+        { label: "Mock Aptitude Test", href: "/dashboard/intern/learning/mock-aptitude", icon: <IconClipboard /> },
+        { label: "Mock Technical Test", href: "/dashboard/intern/learning/mock-technical", icon: <IconClipboard /> },
+        { label: "Mock Interview", href: "/dashboard/intern/learning/mock-interview", icon: <IconMessage /> }
       ]
     },
     {
       title: "Feedback & Support",
       items: [
-        { label: "HR Feedback", href: "/dashboard/intern#feedback", icon: <IconFeedback /> },
-        { label: "Suggestions", href: "/dashboard/intern#suggestions", icon: <IconSuggest /> },
-        { label: "Help / Support", href: "/dashboard/intern#support", icon: <IconHelp /> }
+        { label: "HR Feedback", href: "/dashboard/intern/feedback/hr", icon: <IconMessage /> },
+        { label: "Suggestions", href: "/dashboard/intern/feedback/suggestions", icon: <IconLightbulb /> },
+        { label: "Help / Support", href: "/dashboard/intern/support", icon: <IconHelp /> }
       ]
     }
   ];
 }
 
 function isItemActive(pathname: string, href: string) {
-  const baseHref = href.split("#")[0];
-  if (baseHref === "/dashboard/intern" && pathname === "/dashboard/intern") return true;
-  return pathname === baseHref;
+  if (href === "/dashboard/intern") return pathname === "/dashboard/intern";
+  return pathname === href || pathname.startsWith(`${href}/`);
 }
 
 export function InternShell({ welcomeName, onLogout, children }: InternShellProps) {
