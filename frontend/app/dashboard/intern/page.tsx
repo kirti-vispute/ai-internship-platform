@@ -1,16 +1,15 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Footer } from "@/components/layout/footer";
-import { Navbar } from "@/components/layout/navbar";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { RoleDashboardGuard } from "@/components/ui/role-dashboard-guard";
 import { apiRequest } from "@/lib/api-client";
 import { clearAuthSession } from "@/lib/session";
+import { InternShell } from "@/components/dashboard/intern-shell";
+import { SummaryStatCard } from "@/components/dashboard/summary-stat-card";
+import { SectionPanel } from "@/components/dashboard/section-panel";
 
 type ResumeSection = { key: string; label: string; score: number };
 
@@ -81,17 +80,9 @@ type Recommendation = {
   skillGap: { matched: string[]; missing: string[]; matchPercent: number };
 };
 
-function scoreColor(score: number) {
-  if (score >= 80) return "text-emerald-700 bg-emerald-100";
-  if (score >= 60) return "text-amber-700 bg-amber-100";
-  return "text-rose-700 bg-rose-100";
-}
-
 export default function InternDashboardPage() {
   const router = useRouter();
   const resumeInputRef = useRef<HTMLInputElement | null>(null);
-  const recommendationsRef = useRef<HTMLDivElement | null>(null);
-  const progressRef = useRef<HTMLDivElement | null>(null);
 
   const [profile, setProfile] = useState<InternProfile | null>(null);
   const [applications, setApplications] = useState<Application[]>([]);
@@ -110,6 +101,7 @@ export default function InternDashboardPage() {
   const [editableSkills, setEditableSkills] = useState("");
 
   const resumeUploaded = Boolean(profile?.resumeUploaded);
+  const resumeAnalysis = profile?.resume?.analysis;
 
   const summary = useMemo(() => {
     const resumeScore = profile?.resume?.score || 0;
@@ -117,9 +109,9 @@ export default function InternDashboardPage() {
     const avgMatchScore = recommendations.length
       ? Math.round(recommendations.reduce((sum, item) => sum + item.recommendationScore, 0) / recommendations.length)
       : 0;
-
-    return { resumeScore, openOpportunities, avgMatchScore };
-  }, [profile, recommendations]);
+    const applicationsCount = applications.length;
+    return { resumeScore, openOpportunities, avgMatchScore, applicationsCount };
+  }, [profile, recommendations, applications]);
 
   const applicationStats = useMemo(() => {
     const total = applications.length;
@@ -155,7 +147,7 @@ export default function InternDashboardPage() {
             analysis: scoreResp.analysis || hydratedProfile.resume.analysis
           };
         } catch {
-          // Keep dashboard usable even if score refresh endpoint is down.
+          // Keep dashboard stable if live score refresh fails.
         }
       }
 
@@ -227,7 +219,7 @@ export default function InternDashboardPage() {
         body: formData
       });
 
-      setInfoMessage("Resume uploaded successfully. Analyzer has been refreshed.");
+      setInfoMessage("Resume uploaded successfully.");
       await loadData();
     } catch (err) {
       setError((err as Error).message || "Resume upload failed");
@@ -241,209 +233,113 @@ export default function InternDashboardPage() {
     router.push("/auth?role=intern");
   }
 
-  if (loading) {
-    return (
-      <main>
-        <Navbar />
-        <RoleDashboardGuard expectedRole="intern">
-          <section className="container-shell py-12">
-            <Card>
-              <p className="text-sm text-slate-600">Loading your dashboard...</p>
-            </Card>
-          </section>
-        </RoleDashboardGuard>
-        <Footer />
-      </main>
-    );
-  }
-
-  const resumeAnalysis = profile?.resume?.analysis;
-
   return (
-    <main>
-      <Navbar />
-      <RoleDashboardGuard expectedRole="intern">
-        <section className="container-shell py-10 sm:py-14">
-          <div className="mb-8 flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-primary-600">Intern Dashboard</p>
-              <h1 className="text-3xl font-black tracking-tight text-ink sm:text-4xl">Welcome, {profile?.fullName || "Intern"}</h1>
-            </div>
-            <div className="flex items-center gap-2">
-              <Link href="/auth?role=intern" className="rounded-full bg-white px-3 py-1 text-sm font-medium text-primary-600 shadow-soft hover:text-primary-700">
-                Switch account
-              </Link>
-              <Button type="button" variant="secondary" size="sm" onClick={handleLogout}>
-                LogOut
-              </Button>
-            </div>
-          </div>
+    <RoleDashboardGuard expectedRole="intern">
+      <InternShell welcomeName={profile?.fullName} onLogout={handleLogout}>
+        {loading ? (
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-600">Loading your dashboard...</div>
+        ) : (
+          <div className="space-y-6">
+            {error && <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div>}
+            {infoMessage && <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{infoMessage}</div>}
 
-          {error && (
-            <div className="mb-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-              {error}
-            </div>
-          )}
-          {infoMessage && (
-            <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-              {infoMessage}
-            </div>
-          )}
+            <section id="resume-score" className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+              <SummaryStatCard title="Resume Score" value={summary.resumeScore} suffix="/100" hint={`Source: ${profile?.resume?.scoreSource || "fallback"}`} />
+              <SummaryStatCard title="Open Opportunities" value={summary.openOpportunities} />
+              <SummaryStatCard title="Avg Match Score" value={summary.avgMatchScore} suffix="%" />
+              <SummaryStatCard title="Applications Count" value={summary.applicationsCount} />
+            </section>
 
-          <div className="mb-4 rounded-2xl border border-primary-100 bg-gradient-to-r from-primary-600 to-blue-600 p-4 text-white shadow-glow">
-            <p className="text-sm font-semibold">Quick Actions</p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <button className="rounded-full bg-white/20 px-3 py-1 text-xs font-semibold hover:bg-white/30" onClick={() => setEditMode((prev) => !prev)}>
-                Edit Profile
-              </button>
-              <button
-                className="rounded-full bg-white/20 px-3 py-1 text-xs font-semibold hover:bg-white/30"
-                onClick={() => resumeInputRef.current?.click()}
-                disabled={uploadingResume}
-              >
-                {uploadingResume ? "Uploading..." : "Upload Resume"}
-              </button>
-              <button className="rounded-full bg-white/20 px-3 py-1 text-xs font-semibold hover:bg-white/30" onClick={() => router.push("/dashboard/intern/applications")}>
-                View Applications
-              </button>
-              <button className="rounded-full bg-white/20 px-3 py-1 text-xs font-semibold hover:bg-white/30" onClick={() => progressRef.current?.scrollIntoView({ behavior: "smooth" })}>
-                Track Progress
-              </button>
-              <button className="rounded-full bg-white/20 px-3 py-1 text-xs font-semibold hover:bg-white/30" onClick={() => recommendationsRef.current?.scrollIntoView({ behavior: "smooth" })}>
-                View Recommendations
-              </button>
-            </div>
-            <input
-              ref={resumeInputRef}
-              type="file"
-              accept=".pdf,.doc,.docx,.txt"
-              className="hidden"
-              onChange={(event) => {
-                const file = event.target.files?.[0];
-                if (file) handleResumeUpload(file);
-              }}
-            />
-          </div>
-
-          {editMode && (
-            <Card className="mb-4" title="Edit Profile">
-              <div className="grid gap-3 sm:grid-cols-3">
-                <Input label="Full Name" value={editableName} onChange={(e) => setEditableName(e.target.value)} />
-                <Input label="Mobile" value={editableMobile} onChange={(e) => setEditableMobile(e.target.value)} />
-                <Input label="Skills (comma separated)" value={editableSkills} onChange={(e) => setEditableSkills(e.target.value)} />
-              </div>
-              <div className="mt-3 flex gap-2">
-                <Button type="button" size="sm" onClick={handleSaveProfile} disabled={savingProfile}>
-                  {savingProfile ? "Saving..." : "Save Changes"}
+            <SectionPanel id="edit-profile" title="Quick Actions" subtitle="Manage your profile, resume, and applications from one place.">
+              <div className="flex flex-wrap gap-2">
+                <Button type="button" size="sm" variant="secondary" onClick={() => setEditMode((prev) => !prev)}>
+                  {editMode ? "Close Edit Profile" : "Edit Profile"}
                 </Button>
-                <Button type="button" size="sm" variant="secondary" onClick={() => setEditMode(false)}>
-                  Cancel
+                <Button type="button" size="sm" variant="secondary" onClick={() => resumeInputRef.current?.click()} disabled={uploadingResume}>
+                  {uploadingResume ? "Uploading..." : "Upload Resume"}
+                </Button>
+                <Button type="button" size="sm" variant="secondary" onClick={() => router.push("/dashboard/intern/applications")}>
+                  View Applications
                 </Button>
               </div>
-            </Card>
-          )}
+              <input
+                ref={resumeInputRef}
+                type="file"
+                accept=".pdf,.doc,.docx,.txt"
+                className="hidden"
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  if (file) handleResumeUpload(file);
+                }}
+              />
+            </SectionPanel>
 
-          {resumeUploaded ? (
-            <div className="mb-5 grid gap-4 sm:grid-cols-3">
-              <Card className="border-none bg-white">
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-600">Resume Score</p>
-                <div className="mt-2 flex items-center gap-2">
-                  <p className="text-2xl font-black text-ink">{summary.resumeScore}/100</p>
-                  <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${scoreColor(summary.resumeScore)}`}>
-                    {summary.resumeScore >= 80 ? "Strong" : summary.resumeScore >= 60 ? "Good" : "Needs Work"}
-                  </span>
+            {editMode && (
+              <SectionPanel id="profile" title="Edit Profile" subtitle="Update your profile details used for matching.">
+                <div className="grid gap-3 md:grid-cols-3">
+                  <Input label="Full Name" value={editableName} onChange={(e) => setEditableName(e.target.value)} />
+                  <Input label="Mobile" value={editableMobile} onChange={(e) => setEditableMobile(e.target.value)} />
+                  <Input label="Skills (comma separated)" value={editableSkills} onChange={(e) => setEditableSkills(e.target.value)} />
                 </div>
-                <p className="mt-2 text-xs text-slate-500">Source: {profile?.resume?.scoreSource || "fallback"}</p>
-              </Card>
-              <Card className="border-none bg-white">
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-600">Open Opportunities</p>
-                <p className="mt-2 text-2xl font-black text-ink">{summary.openOpportunities}</p>
-              </Card>
-              <Card className="border-none bg-white">
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-600">Avg Match Score</p>
-                <p className="mt-2 text-2xl font-black text-ink">{summary.avgMatchScore}%</p>
-              </Card>
-            </div>
-          ) : (
-            <Card className="mb-5 border-primary-100 bg-primary-50/60">
-              <p className="text-sm font-semibold text-primary-700">Upload your resume to unlock resume score, match analysis, and recommendations.</p>
-            </Card>
-          )}
+                <div className="mt-3 flex gap-2">
+                  <Button type="button" size="sm" onClick={handleSaveProfile} disabled={savingProfile}>
+                    {savingProfile ? "Saving..." : "Save Changes"}
+                  </Button>
+                  <Button type="button" size="sm" variant="secondary" onClick={() => setEditMode(false)}>
+                    Cancel
+                  </Button>
+                </div>
+              </SectionPanel>
+            )}
 
-          <div className="grid gap-4 lg:grid-cols-3">
-            <div className="space-y-4 lg:col-span-2">
-              <Card title="Profile" subtitle="Your real account data from database">
-                {profile ? (
-                  <div className="grid gap-2 text-sm sm:grid-cols-2">
-                    <p className="text-slate-700">
-                      Email: <span className="font-semibold">{profile.email}</span>
-                    </p>
-                    <p className="text-slate-700">
-                      Mobile: <span className="font-semibold">{profile.mobile || "-"}</span>
-                    </p>
-                    <p className="text-slate-700">
-                      Skills: <span className="font-semibold">{(profile.skills || []).join(", ") || "-"}</span>
-                    </p>
-                    <p className="text-slate-700">
-                      Courses: <span className="font-semibold">{(profile.completedCourses || []).length}</span>
-                    </p>
-                  </div>
-                ) : (
-                  <p className="text-sm text-slate-600">No profile data found.</p>
-                )}
-              </Card>
+            <div className="grid gap-6 xl:grid-cols-3">
+              <div className="space-y-6 xl:col-span-2">
+                <SectionPanel id="resume-analyzer" title="Resume Analyzer" subtitle="Structured analysis of your uploaded resume.">
+                  {!resumeUploaded ? (
+                    <p className="text-sm text-slate-600">Upload your resume to unlock resume score, match analysis, and recommendations.</p>
+                  ) : !resumeAnalysis ? (
+                    <p className="text-sm text-slate-600">Resume analysis is loading.</p>
+                  ) : (
+                    <>
+                      <div className="space-y-2">
+                        {(resumeAnalysis.sectionBreakdown || []).map((section) => (
+                          <div key={section.key}>
+                            <div className="mb-1 flex items-center justify-between text-xs text-slate-600">
+                              <span>{section.label}</span>
+                              <span className="font-semibold text-slate-800">{section.score}/100</span>
+                            </div>
+                            <div className="h-2 rounded-full bg-slate-100">
+                              <div className="h-2 rounded-full bg-gradient-to-r from-primary-500 to-blue-500" style={{ width: `${Math.max(6, section.score)}%` }} />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
 
-              {resumeUploaded && resumeAnalysis && (
-                <Card title="Resume Analyzer" subtitle="Enhancv-style section breakdown and improvements">
-                  <div className="space-y-2">
-                    {(resumeAnalysis.sectionBreakdown || []).map((section) => (
-                      <div key={section.key}>
-                        <div className="mb-1 flex items-center justify-between text-xs text-slate-600">
-                          <span>{section.label}</span>
-                          <span className="font-semibold text-slate-800">{section.score}/100</span>
+                      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                        <div className="rounded-xl border border-emerald-100 bg-emerald-50/70 p-3">
+                          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-700">Strengths</p>
+                          <ul className="mt-2 space-y-1 text-xs text-emerald-900">
+                            {(resumeAnalysis.strengths || []).slice(0, 3).map((item, idx) => (
+                              <li key={`strength-${idx}`}>• {item}</li>
+                            ))}
+                            {(resumeAnalysis.strengths || []).length === 0 && <li>• Add more measurable project outcomes.</li>}
+                          </ul>
                         </div>
-                        <div className="h-2 rounded-full bg-slate-100">
-                          <div className="h-2 rounded-full bg-gradient-to-r from-primary-500 to-blue-500" style={{ width: `${Math.max(6, section.score)}%` }} />
+                        <div className="rounded-xl border border-rose-100 bg-rose-50/70 p-3">
+                          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-rose-700">Critical Fixes</p>
+                          <ul className="mt-2 space-y-1 text-xs text-rose-900">
+                            {(resumeAnalysis.criticalIssues || []).slice(0, 3).map((item, idx) => (
+                              <li key={`issue-${idx}`}>• {item}</li>
+                            ))}
+                            {(resumeAnalysis.criticalIssues || []).length === 0 && <li>• No critical issue detected.</li>}
+                          </ul>
                         </div>
                       </div>
-                    ))}
-                  </div>
+                    </>
+                  )}
+                </SectionPanel>
 
-                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                    <div className="rounded-xl border border-emerald-100 bg-emerald-50/70 p-3">
-                      <p className="text-xs font-semibold uppercase tracking-wider text-emerald-700">Strengths</p>
-                      <ul className="mt-2 space-y-1 text-xs text-emerald-900">
-                        {(resumeAnalysis.strengths || []).slice(0, 3).map((item, idx) => (
-                          <li key={`strength-${idx}`}>• {item}</li>
-                        ))}
-                        {(resumeAnalysis.strengths || []).length === 0 && <li>• Add more measurable project outcomes.</li>}
-                      </ul>
-                    </div>
-
-                    <div className="rounded-xl border border-rose-100 bg-rose-50/70 p-3">
-                      <p className="text-xs font-semibold uppercase tracking-wider text-rose-700">Critical Fixes</p>
-                      <ul className="mt-2 space-y-1 text-xs text-rose-900">
-                        {(resumeAnalysis.criticalIssues || []).slice(0, 3).map((item, idx) => (
-                          <li key={`issue-${idx}`}>• {item}</li>
-                        ))}
-                        {(resumeAnalysis.criticalIssues || []).length === 0 && <li>• No critical issue detected.</li>}
-                      </ul>
-                    </div>
-                  </div>
-
-                  <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-600">Top Improvements</p>
-                    <ul className="mt-2 space-y-1 text-xs text-slate-700">
-                      {(resumeAnalysis.improvements || []).slice(0, 4).map((item, idx) => (
-                        <li key={`improvement-${idx}`}>• {item}</li>
-                      ))}
-                    </ul>
-                  </div>
-                </Card>
-              )}
-
-              <div ref={recommendationsRef}>
-                <Card title="Recommended Internships" subtitle="Ranked from backend AI recommendation logic">
+                <SectionPanel id="recommended" title="Recommended Internships" subtitle="Prioritized opportunities based on your profile and resume score.">
                   {!resumeUploaded ? (
                     <p className="text-sm text-slate-600">Upload resume to view recommendations.</p>
                   ) : recommendations.length === 0 ? (
@@ -462,11 +358,9 @@ export default function InternDashboardPage() {
                       ))}
                     </div>
                   )}
-                </Card>
-              </div>
+                </SectionPanel>
 
-              <div ref={progressRef}>
-                <Card title="Application Progress" subtitle="Live statuses from your real applications">
+                <SectionPanel id="progress" title="Application Progress" subtitle="Track your pipeline status across all applications.">
                   {applications.length === 0 ? (
                     <p className="text-sm text-slate-600">No applications yet. Apply to internships to track progress.</p>
                   ) : (
@@ -476,50 +370,57 @@ export default function InternDashboardPage() {
                       <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">Rejected: {applicationStats.rejected}</div>
                     </div>
                   )}
-                </Card>
+                </SectionPanel>
+              </div>
+
+              <div className="space-y-6">
+                <SectionPanel id="resume" title="Resume" subtitle="Uploaded resume and extraction status.">
+                  {resumeUploaded ? (
+                    <>
+                      <p className="text-sm text-slate-700">Stored file: {profile?.resume?.filePath || "Uploaded"}</p>
+                      {profile?.resume?.predictedCategory && (
+                        <p className="mt-2 text-xs text-slate-600">Predicted category: {profile.resume.predictedCategory}</p>
+                      )}
+                    </>
+                  ) : (
+                    <p className="text-sm text-slate-600">No resume uploaded yet.</p>
+                  )}
+                </SectionPanel>
+
+                <SectionPanel id="feedback" title="Feedback" subtitle="Latest HR feedback from your applications.">
+                  {applications.some((app) => (app.hrFeedback || []).length > 0) ? (
+                    <div className="space-y-2">
+                      {applications
+                        .flatMap((app) =>
+                          (app.hrFeedback || []).map((f) => ({
+                            internshipRole: app.internship?.role || "Internship",
+                            feedback: f.feedback
+                          }))
+                        )
+                        .slice(0, 3)
+                        .map((item, index) => (
+                          <p key={`${item.internshipRole}-${index}`} className="rounded-lg border border-amber-100 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                            {item.internshipRole}: {item.feedback}
+                          </p>
+                        ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-slate-600">No HR feedback yet.</p>
+                  )}
+                </SectionPanel>
+
+                <SectionPanel id="support" title="Suggestions & Support" subtitle="Learning and support actions for your growth.">
+                  <ul className="space-y-2 text-sm text-slate-700">
+                    <li className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">Search Internships and Saved Internships sections are ready for integration.</li>
+                    <li className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">Courses, Certifications, and Mock tests can be plugged to APIs next.</li>
+                    <li className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">Use Help / Support for platform-related issues and mentor guidance.</li>
+                  </ul>
+                </SectionPanel>
               </div>
             </div>
-
-            <div className="space-y-4">
-              <Card title="Resume" subtitle="Uploaded resume details">
-                {resumeUploaded ? (
-                  <>
-                    <p className="text-sm text-slate-700">Stored file: {profile?.resume?.filePath || "Uploaded"}</p>
-                    {profile?.resume?.predictedCategory && (
-                      <p className="mt-2 text-xs text-slate-600">Predicted category: {profile.resume.predictedCategory}</p>
-                    )}
-                  </>
-                ) : (
-                  <p className="text-sm text-slate-600">No resume uploaded yet.</p>
-                )}
-              </Card>
-
-              <Card title="Feedback" subtitle="Latest HR feedback">
-                {applications.some((app) => (app.hrFeedback || []).length > 0) ? (
-                  <div className="space-y-2">
-                    {applications
-                      .flatMap((app) =>
-                        (app.hrFeedback || []).map((f) => ({
-                          internshipRole: app.internship?.role || "Internship",
-                          feedback: f.feedback
-                        }))
-                      )
-                      .slice(0, 3)
-                      .map((item, index) => (
-                        <p key={`${item.internshipRole}-${index}`} className="rounded-lg border border-amber-100 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-                          {item.internshipRole}: {item.feedback}
-                        </p>
-                      ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-slate-600">No HR feedback yet.</p>
-                )}
-              </Card>
-            </div>
           </div>
-        </section>
-      </RoleDashboardGuard>
-      <Footer />
-    </main>
+        )}
+      </InternShell>
+    </RoleDashboardGuard>
   );
 }
