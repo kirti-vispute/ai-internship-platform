@@ -395,12 +395,6 @@ export default function InternDashboardPage() {
 
               {resumeUploaded && resumeAnalysis && (
                 <Card title="Resume Analyzer" subtitle="Enhancv-style section breakdown and improvements">
-                  {Array.isArray(resumeAnalysis.warnings) && resumeAnalysis.warnings.length > 0 && (
-                    <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
-                      {resumeAnalysis.warnings[0]}
-                    </div>
-                  )}
-
                   <div className="space-y-2">
                     {(resumeAnalysis.sectionBreakdown || []).map((section) => (
                       <div key={section.key}>
