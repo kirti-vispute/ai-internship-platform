@@ -172,34 +172,6 @@ function AIEngineNode({ active }: { active: boolean }) {
   );
 }
 
-function DepthParallaxLayer() {
-  const groupRef = useRef<THREE.Group>(null);
-
-  useFrame((state) => {
-    if (!groupRef.current) return;
-    groupRef.current.position.x = lerp(groupRef.current.position.x, state.pointer.x * 0.28, 0.03);
-    groupRef.current.position.y = lerp(groupRef.current.position.y, state.pointer.y * 0.18, 0.03);
-    groupRef.current.rotation.z = lerp(groupRef.current.rotation.z, state.pointer.x * 0.05, 0.02);
-  });
-
-  return (
-    <group ref={groupRef} position={[0, 0, -2.8]}>
-      <mesh position={[-1.2, 1, -0.1]}>
-        <sphereGeometry args={[1.15, 24, 24]} />
-        <meshBasicMaterial color="#2563eb" transparent opacity={0.07} />
-      </mesh>
-      <mesh position={[2.2, -0.6, -0.2]}>
-        <sphereGeometry args={[0.95, 24, 24]} />
-        <meshBasicMaterial color="#0ea5e9" transparent opacity={0.06} />
-      </mesh>
-      <mesh position={[0.5, 0.1, -0.35]}>
-        <sphereGeometry args={[1.35, 24, 24]} />
-        <meshBasicMaterial color="#4338ca" transparent opacity={0.05} />
-      </mesh>
-    </group>
-  );
-}
-
 function ResumeScoreNode({ active }: { active: boolean }) {
   const groupRef = useRef<THREE.Group>(null);
 
@@ -364,6 +336,34 @@ function HiringPipelineNode({ active }: { active: boolean }) {
   );
 }
 
+function DepthParallaxLayer() {
+  const groupRef = useRef<THREE.Group>(null);
+
+  useFrame((state) => {
+    if (!groupRef.current) return;
+    groupRef.current.position.x = lerp(groupRef.current.position.x, state.pointer.x * 0.28, 0.03);
+    groupRef.current.position.y = lerp(groupRef.current.position.y, state.pointer.y * 0.18, 0.03);
+    groupRef.current.rotation.z = lerp(groupRef.current.rotation.z, state.pointer.x * 0.05, 0.02);
+  });
+
+  return (
+    <group ref={groupRef} position={[0, 0, -2.8]}>
+      <mesh position={[-1.2, 1, -0.1]}>
+        <sphereGeometry args={[1.15, 24, 24]} />
+        <meshBasicMaterial color="#2563eb" transparent opacity={0.07} />
+      </mesh>
+      <mesh position={[2.2, -0.6, -0.2]}>
+        <sphereGeometry args={[0.95, 24, 24]} />
+        <meshBasicMaterial color="#0ea5e9" transparent opacity={0.06} />
+      </mesh>
+      <mesh position={[0.5, 0.1, -0.35]}>
+        <sphereGeometry args={[1.35, 24, 24]} />
+        <meshBasicMaterial color="#4338ca" transparent opacity={0.05} />
+      </mesh>
+    </group>
+  );
+}
+
 function FlowMap({
   reducedMotion,
   activeModule
@@ -400,17 +400,17 @@ function FlowMap({
       groupRef.current.scale.x = lerp(groupRef.current.scale.x, targetScale, 0.05);
       groupRef.current.scale.y = lerp(groupRef.current.scale.y, targetScale, 0.05);
       groupRef.current.scale.z = lerp(groupRef.current.scale.z, targetScale, 0.05);
-      groupRef.current.rotation.y = lerp(groupRef.current.rotation.y, px * 0.18, 0.045);
-      groupRef.current.rotation.x = lerp(groupRef.current.rotation.x, py * 0.1, 0.045);
+      groupRef.current.rotation.y = lerp(groupRef.current.rotation.y, px * 0.2, 0.04);
+      groupRef.current.rotation.x = lerp(groupRef.current.rotation.x, py * 0.12, 0.04);
       groupRef.current.position.y = lerp(
         groupRef.current.position.y,
-        reducedMotion ? 0 : Math.sin(state.clock.elapsedTime * 0.4) * 0.07,
+        reducedMotion ? 0 : Math.sin(state.clock.elapsedTime * 0.42) * 0.07,
         0.04
       );
     }
 
-    state.camera.position.x = lerp(state.camera.position.x, px * 0.35, 0.04);
-    state.camera.position.y = lerp(state.camera.position.y, py * 0.2, 0.04);
+    state.camera.position.x = lerp(state.camera.position.x, px * 0.38, 0.04);
+    state.camera.position.y = lerp(state.camera.position.y, py * 0.22, 0.04);
     state.camera.lookAt(0.45, 0, 0);
 
     lineMaterials.current.forEach((material, idx) => {
@@ -467,11 +467,7 @@ function FlowMap({
           }}
         >
           <sphereGeometry args={[0.042, 12, 12]} />
-          <meshStandardMaterial
-            color={idx % 2 === 0 ? "#93c5fd" : "#67e8f9"}
-            emissive="#22d3ee"
-            emissiveIntensity={1.15}
-          />
+          <meshStandardMaterial color={idx % 2 === 0 ? "#93c5fd" : "#67e8f9"} emissive="#22d3ee" emissiveIntensity={1.15} />
         </mesh>
       ))}
     </group>

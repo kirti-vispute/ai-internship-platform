@@ -21,19 +21,13 @@ const workflowModules: Array<{
     id: "resume-upload",
     label: "Resume Upload",
     detail: "Student profile enters the AI system.",
-    className: "left-[3%] top-[20%]"
-  },
-  {
-    id: "ai-engine",
-    label: "AI Engine",
-    detail: "Model analyzes resume structure and fit.",
-    className: "left-[41%] top-[44%]"
+    className: "left-[2%] top-[11%]"
   },
   {
     id: "resume-score",
     label: "Resume Score",
     detail: "Strength score and ATS signal generated.",
-    className: "right-[8%] top-[11%]"
+    className: "right-[3%] top-[11%]"
   },
   {
     id: "skill-gap",
@@ -44,19 +38,19 @@ const workflowModules: Array<{
   {
     id: "verified-match",
     label: "Verified Match",
-    detail: "Only trusted company matches are surfaced.",
-    className: "right-[3%] top-[56%]"
+    detail: "Trusted company matches are surfaced.",
+    className: "right-[2%] top-[56%]"
   },
   {
     id: "hiring-pipeline",
     label: "Hiring Pipeline",
-    detail: "Applications move through real-time stages.",
-    className: "bottom-[12%] right-[11%]"
+    detail: "Applications move through live stages.",
+    className: "bottom-[9%] right-[8%]"
   }
 ];
 
 export function HeroSection() {
-  const [activeModule, setActiveModule] = useState<WorkflowModule | null>(null);
+  const [activeModule, setActiveModule] = useState<WorkflowModule | null>("ai-engine");
 
   return (
     <section className="relative z-0 overflow-hidden bg-slate-950 pb-16 pt-24 sm:pb-20 sm:pt-28">
@@ -124,8 +118,8 @@ export function HeroSection() {
                   key={module.id}
                   type="button"
                   onMouseEnter={() => setActiveModule(module.id)}
-                  onMouseLeave={() => setActiveModule(null)}
-                  className={`group absolute max-w-[170px] rounded-2xl border px-3 py-2 text-left backdrop-blur-md transition-all duration-300 ${module.className} ${
+                  onMouseLeave={() => setActiveModule("ai-engine")}
+                  className={`group absolute w-[182px] rounded-2xl border px-3 py-2 text-left backdrop-blur-md transition-all duration-300 ${module.className} ${
                     isActive
                       ? "border-cyan-300/70 bg-slate-900/80 shadow-[0_18px_34px_rgba(34,211,238,0.28)]"
                       : "border-slate-500/40 bg-slate-900/56 shadow-[0_12px_24px_rgba(2,6,23,0.36)]"
@@ -138,6 +132,26 @@ export function HeroSection() {
             })}
           </div>
         </motion.div>
+
+        <div className="grid gap-3 rounded-2xl border border-slate-700/60 bg-slate-900/55 p-3 shadow-[0_14px_26px_rgba(2,6,23,0.35)] sm:grid-cols-2 lg:hidden">
+          {workflowModules.map((module) => {
+            const isActive = activeModule === module.id;
+            return (
+              <button
+                key={`mobile-${module.id}`}
+                type="button"
+                onMouseEnter={() => setActiveModule(module.id)}
+                onMouseLeave={() => setActiveModule("ai-engine")}
+                className={`rounded-xl border px-3 py-2 text-left transition-all duration-300 ${
+                  isActive ? "border-cyan-300/70 bg-slate-900/82" : "border-slate-600/50 bg-slate-900/62"
+                }`}
+              >
+                <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-cyan-200">{module.label}</p>
+                <p className="mt-1 text-xs leading-5 text-slate-200/90">{module.detail}</p>
+              </button>
+            );
+          })}
+        </div>
       </div>
     </section>
   );
