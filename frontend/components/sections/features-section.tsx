@@ -1,5 +1,5 @@
-import { Card } from "@/components/ui/card";
 import { ScrollReveal } from "@/components/animations/ScrollReveal";
+import { EqualHeightCardGrid } from "@/components/home/EqualHeightCardGrid";
 import { SectionAnimator } from "@/components/home/SectionAnimator";
 import { features } from "@/data/dummy";
 
@@ -21,18 +21,14 @@ export function FeaturesSection() {
           </p>
         </SectionAnimator>
 
-        <ScrollReveal className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-3" variant="stagger-children" delayMs={110} distance={14} staggerMs={90}>
-          {features.map((item) => (
-            <div key={item.title}>
-              <Card className="group">
-                <h3 className="mt-2 text-lg font-bold text-slate-900 dark:text-slate-100">{item.title}</h3>
-                <p className="mt-2 text-sm text-slate-700 dark:text-slate-300">{item.description}</p>
-                <div className="mt-4 h-1.5 rounded-full bg-slate-100 dark:bg-slate-700">
-                  <div className="h-1.5 w-2/3 rounded-full bg-gradient-to-r from-primary-500 to-cyan-500 transition-all duration-300 group-hover:w-5/6" />
-                </div>
-              </Card>
-            </div>
-          ))}
+        <ScrollReveal className="mt-5" variant="stagger-children" delayMs={110} distance={14} staggerMs={90}>
+          <EqualHeightCardGrid
+            items={features.map((item, index) => ({
+              title: item.title,
+              description: item.description,
+              accent: index % 2 === 0 ? "cyan" : "indigo"
+            }))}
+          />
         </ScrollReveal>
       </div>
     </section>

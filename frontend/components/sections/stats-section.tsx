@@ -1,5 +1,6 @@
 import { stats } from "@/data/dummy";
 import { ScrollReveal } from "@/components/animations/ScrollReveal";
+import { EqualHeightCardGrid } from "@/components/home/EqualHeightCardGrid";
 import { SectionAnimator } from "@/components/home/SectionAnimator";
 
 const trustedCompanies = ["Acme Labs", "NovaTech", "OrbitWorks", "PixelForge", "CloudNest"];
@@ -14,9 +15,12 @@ export function StatsSection() {
             <h2 className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">
               Trusted by interns and companies building future-ready teams
             </h2>
+            <p className="mt-3 max-w-2xl text-sm text-white/75">
+              Ecosystem momentum across active intern profiles, trusted companies, and hiring pipeline performance.
+            </p>
           </SectionAnimator>
 
-          <ScrollReveal className="mt-5 flex flex-wrap gap-2" variant="slide-right" distance={16} delayMs={70}>
+          <ScrollReveal className="mt-4 flex flex-wrap gap-2" variant="slide-right" distance={16} delayMs={70}>
             {trustedCompanies.map((name) => (
               <span
                 key={name}
@@ -27,15 +31,19 @@ export function StatsSection() {
             ))}
           </ScrollReveal>
 
-          <ScrollReveal className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4" variant="stagger-children" delayMs={130} staggerMs={80} distance={12}>
-            {stats.map((stat) => (
-              <div key={stat.label}>
-                <div className="rounded-2xl border border-white/15 bg-white/5 p-4 shadow-[0_12px_28px_rgba(2,6,23,0.25)] backdrop-blur transition duration-300 hover:-translate-y-1 hover:bg-white/10 hover:shadow-[0_18px_36px_rgba(2,6,23,0.38)]">
-                  <p className="text-2xl font-black">{stat.value}</p>
-                  <p className="text-sm text-white/75">{stat.label}</p>
-                </div>
-              </div>
-            ))}
+          <ScrollReveal className="mt-5" variant="stagger-children" delayMs={120} staggerMs={80} distance={12}>
+            <EqualHeightCardGrid
+              tone="dark"
+              gridClassName="sm:grid-cols-2 lg:grid-cols-4"
+              minHeightClassName="min-h-[156px]"
+              titleClassName="text-2xl font-black text-white"
+              descriptionClassName="text-sm text-white/75"
+              items={stats.map((stat, index) => ({
+                title: stat.value,
+                description: stat.label,
+                accent: index % 2 === 0 ? "cyan" : "blue"
+              }))}
+            />
           </ScrollReveal>
         </div>
       </div>

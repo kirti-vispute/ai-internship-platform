@@ -1,6 +1,6 @@
 import { Footer } from "@/components/layout/footer";
 import { Navbar } from "@/components/layout/navbar";
-import { CommandCenterSection } from "@/components/sections/command-center-section";
+import { LiveHiringSection } from "@/components/home/LiveHiringSection";
 import { FeaturesSection } from "@/components/sections/features-section";
 import { HeroSection } from "@/components/sections/hero-section";
 import { StatsSection } from "@/components/sections/stats-section";
@@ -11,7 +11,7 @@ export default function HomePage() {
     <main className="relative overflow-x-clip overflow-y-visible">
       <Navbar />
       <HeroSection />
-      <CommandCenterSection />
+      <LiveHiringSection />
       <FeaturesSection />
       <WhyChooseSection />
       <StatsSection />
@@ -19,4 +19,3 @@ export default function HomePage() {
     </main>
   );
 }
-

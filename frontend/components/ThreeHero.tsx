@@ -355,4 +355,4 @@ export function ThreeHero() {
   return <div ref={mountRef} className="pointer-events-none absolute inset-0 z-0 opacity-95" aria-hidden="true" />;
 }
 
-export { InteractiveHeroScene } from "@/components/home/InteractiveHeroScene";
+export { HeroScene as InteractiveHeroScene } from "@/components/home/HeroScene";
