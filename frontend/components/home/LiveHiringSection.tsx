@@ -21,7 +21,7 @@ const liveHiringItems: GridItem[] = [
 
 export function LiveHiringSection() {
   return (
-    <section className="pb-12 pt-4 sm:pb-16 sm:pt-6">
+    <section className="pb-12 pt-1 sm:pb-16 sm:pt-2">
       <div className="container-shell">
         <div className="relative overflow-hidden rounded-3xl border border-slate-200/85 bg-white/92 p-6 shadow-[0_18px_44px_rgba(15,23,42,0.12)] dark:border-slate-700 dark:bg-slate-900/82 dark:shadow-[0_22px_48px_rgba(2,6,23,0.55)] sm:p-8">
           <div className="pointer-events-none absolute -right-16 -top-14 h-44 w-44 rounded-full bg-cyan-300/24 blur-3xl dark:bg-cyan-500/14" />
@@ -37,7 +37,7 @@ export function LiveHiringSection() {
             </p>
           </ScrollReveal>
 
-          <ScrollReveal variant="stagger-children" delayMs={70} staggerMs={90} className="relative z-10 mt-4" distance={12}>
+          <ScrollReveal variant="stagger-children" delayMs={70} staggerMs={90} className="relative z-10 mt-2" distance={12}>
             <EqualHeightCardGrid items={liveHiringItems} />
           </ScrollReveal>
         </div>

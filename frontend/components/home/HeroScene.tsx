@@ -2,90 +2,95 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { Float, Line } from "@react-three/drei";
+import { Line } from "@react-three/drei";
 import * as THREE from "three";
 
 function lerp(a: number, b: number, t: number) {
   return a + (b - a) * t;
 }
 
-const nodePositions = {
-  resume: new THREE.Vector3(-2.8, 0.8, 0.2),
-  ai: new THREE.Vector3(-0.6, 0, 0.3),
-  score: new THREE.Vector3(1.15, 1.05, 0.16),
-  company: new THREE.Vector3(2.55, 0.1, 0.1),
-  pipeline: new THREE.Vector3(3.35, -1.15, 0.12)
+const positions = {
+  resume: new THREE.Vector3(-2.7, 0.8, 0.1),
+  ai: new THREE.Vector3(-0.4, 0.1, 0.25),
+  score: new THREE.Vector3(1.85, 1.15, 0.05),
+  company: new THREE.Vector3(2.8, 0, 0.05),
+  pipeline: new THREE.Vector3(2.1, -1.3, 0.05)
 };
 
 const connections: [THREE.Vector3, THREE.Vector3][] = [
-  [nodePositions.resume, nodePositions.ai],
-  [nodePositions.ai, nodePositions.score],
-  [nodePositions.ai, nodePositions.company],
-  [nodePositions.score, nodePositions.company],
-  [nodePositions.company, nodePositions.pipeline],
-  [nodePositions.ai, nodePositions.pipeline]
+  [positions.resume, positions.ai],
+  [positions.ai, positions.score],
+  [positions.ai, positions.company],
+  [positions.ai, positions.pipeline]
 ];
+
+function buildCurvedPath(start: THREE.Vector3, end: THREE.Vector3, lift = 0.42) {
+  const control = start.clone().add(end).multiplyScalar(0.5);
+  control.y += lift;
+  return new THREE.CatmullRomCurve3([start.clone(), control, end.clone()]).getPoints(32);
+}
 
 function ResumeNode() {
   return (
-    <Float speed={1.02} floatIntensity={0.16} rotationIntensity={0.06}>
-      <group position={nodePositions.resume}>
-        <mesh>
-          <boxGeometry args={[1.05, 0.82, 0.09]} />
-          <meshPhysicalMaterial color="#38bdf8" emissive="#075985" emissiveIntensity={0.5} roughness={0.26} metalness={0.5} clearcoat={0.58} transparent opacity={0.94} />
-        </mesh>
-        <mesh position={[0, 0.2, 0.05]}>
-          <boxGeometry args={[0.62, 0.05, 0.01]} />
-          <meshBasicMaterial color="#e0f2fe" />
-        </mesh>
-        <mesh position={[0, 0.05, 0.05]}>
-          <boxGeometry args={[0.72, 0.05, 0.01]} />
-          <meshBasicMaterial color="#bae6fd" />
-        </mesh>
-        <mesh position={[0, -0.1, 0.05]}>
-          <boxGeometry args={[0.68, 0.05, 0.01]} />
-          <meshBasicMaterial color="#7dd3fc" />
-        </mesh>
-      </group>
-    </Float>
+    <group position={positions.resume}>
+      <mesh>
+        <boxGeometry args={[1.1, 0.88, 0.1]} />
+        <meshPhysicalMaterial color="#3b82f6" emissive="#0c4a6e" emissiveIntensity={0.5} roughness={0.24} metalness={0.52} clearcoat={0.6} transparent opacity={0.94} />
+      </mesh>
+      <mesh position={[0, 0.24, 0.06]}>
+        <boxGeometry args={[0.66, 0.05, 0.01]} />
+        <meshBasicMaterial color="#e0f2fe" />
+      </mesh>
+      <mesh position={[0, 0.09, 0.06]}>
+        <boxGeometry args={[0.74, 0.05, 0.01]} />
+        <meshBasicMaterial color="#bae6fd" />
+      </mesh>
+      <mesh position={[0, -0.06, 0.06]}>
+        <boxGeometry args={[0.7, 0.05, 0.01]} />
+        <meshBasicMaterial color="#93c5fd" />
+      </mesh>
+      <mesh position={[0, -0.21, 0.06]}>
+        <boxGeometry args={[0.52, 0.05, 0.01]} />
+        <meshBasicMaterial color="#60a5fa" />
+      </mesh>
+      <mesh position={[0.43, 0.36, 0.06]}>
+        <boxGeometry args={[0.13, 0.13, 0.01]} />
+        <meshBasicMaterial color="#dbeafe" />
+      </mesh>
+    </group>
   );
 }
 
-function AIEngineNode({ intensity }: { intensity: number }) {
+function AIEngineNode({ focus }: { focus: number }) {
   const coreRef = useRef<THREE.Mesh>(null);
   const ringARef = useRef<THREE.Mesh>(null);
   const ringBRef = useRef<THREE.Mesh>(null);
 
   useFrame((state, delta) => {
-    if (ringARef.current) {
-      ringARef.current.rotation.y += delta * 0.42;
-      ringARef.current.rotation.x += delta * 0.22;
-    }
-    if (ringBRef.current) {
-      ringBRef.current.rotation.y -= delta * 0.28;
-      ringBRef.current.rotation.z += delta * 0.17;
-    }
+    if (ringARef.current) ringARef.current.rotation.y += delta * 0.54;
+    if (ringBRef.current) ringBRef.current.rotation.x += delta * 0.33;
     if (coreRef.current) {
-      const pulse = 1 + Math.sin(state.clock.elapsedTime * 1.6) * 0.06;
+      const pulse = 1 + Math.sin(state.clock.elapsedTime * 1.65) * 0.07;
       coreRef.current.scale.setScalar(pulse);
-      const material = coreRef.current.material as THREE.MeshPhysicalMaterial;
-      material.emissiveIntensity = 1.1 + intensity * 0.9;
+      coreRef.current.rotation.y += delta * 0.26;
+      const mat = coreRef.current.material as THREE.MeshPhysicalMaterial;
+      mat.emissiveIntensity = 1.1 + focus * 1.2;
     }
   });
 
   return (
-    <group position={nodePositions.ai}>
+    <group position={positions.ai}>
       <mesh ref={coreRef}>
-        <sphereGeometry args={[0.48, 40, 40]} />
-        <meshPhysicalMaterial color="#818cf8" emissive="#4338ca" emissiveIntensity={1.25} roughness={0.16} metalness={0.58} clearcoat={0.8} />
+        <sphereGeometry args={[0.52, 40, 40]} />
+        <meshPhysicalMaterial color="#818cf8" emissive="#4338ca" emissiveIntensity={1.25} roughness={0.14} metalness={0.62} clearcoat={0.82} />
       </mesh>
-      <mesh ref={ringARef} rotation={[0.4, 0.2, 0]}>
-        <torusGeometry args={[0.8, 0.028, 14, 120]} />
-        <meshBasicMaterial color="#60a5fa" transparent opacity={0.55} />
+      <mesh ref={ringARef} rotation={[0.25, 0.2, 0]}>
+        <torusGeometry args={[0.88, 0.024, 12, 100]} />
+        <meshBasicMaterial color="#60a5fa" transparent opacity={0.52} />
       </mesh>
-      <mesh ref={ringBRef} rotation={[1.1, 0.6, 0.4]}>
-        <torusGeometry args={[0.95, 0.02, 14, 120]} />
-        <meshBasicMaterial color="#22d3ee" transparent opacity={0.46} />
+      <mesh ref={ringBRef} rotation={[1.05, 0.2, 0.5]}>
+        <torusGeometry args={[1.03, 0.017, 12, 100]} />
+        <meshBasicMaterial color="#22d3ee" transparent opacity={0.45} />
       </mesh>
     </group>
   );
@@ -93,179 +98,195 @@ function AIEngineNode({ intensity }: { intensity: number }) {
 
 function ScoreNode() {
   return (
-    <Float speed={1.08} floatIntensity={0.14} rotationIntensity={0.05}>
-      <group position={nodePositions.score}>
-        <mesh>
-          <boxGeometry args={[1.06, 0.76, 0.08]} />
-          <meshPhysicalMaterial color="#0ea5e9" emissive="#0c4a6e" emissiveIntensity={0.52} roughness={0.24} metalness={0.54} clearcoat={0.56} />
-        </mesh>
-        <mesh position={[-0.22, 0.16, 0.045]}>
-          <boxGeometry args={[0.18, 0.2, 0.01]} />
-          <meshBasicMaterial color="#e0f2fe" />
-        </mesh>
-        <mesh position={[0, 0.1, 0.045]}>
-          <boxGeometry args={[0.18, 0.34, 0.01]} />
-          <meshBasicMaterial color="#7dd3fc" />
-        </mesh>
-        <mesh position={[0.22, 0.04, 0.045]}>
-          <boxGeometry args={[0.18, 0.46, 0.01]} />
-          <meshBasicMaterial color="#0284c7" />
-        </mesh>
-      </group>
-    </Float>
+    <group position={positions.score}>
+      <mesh>
+        <boxGeometry args={[1.08, 0.8, 0.08]} />
+        <meshPhysicalMaterial color="#0ea5e9" emissive="#0c4a6e" emissiveIntensity={0.5} roughness={0.24} metalness={0.54} clearcoat={0.58} />
+      </mesh>
+      <mesh position={[-0.22, 0.12, 0.05]}>
+        <boxGeometry args={[0.18, 0.2, 0.01]} />
+        <meshBasicMaterial color="#dbeafe" />
+      </mesh>
+      <mesh position={[0, 0.06, 0.05]}>
+        <boxGeometry args={[0.18, 0.34, 0.01]} />
+        <meshBasicMaterial color="#93c5fd" />
+      </mesh>
+      <mesh position={[0.22, 0, 0.05]}>
+        <boxGeometry args={[0.18, 0.44, 0.01]} />
+        <meshBasicMaterial color="#2563eb" />
+      </mesh>
+      <mesh position={[0, -0.21, 0.05]}>
+        <boxGeometry args={[0.58, 0.05, 0.01]} />
+        <meshBasicMaterial color="#7dd3fc" />
+      </mesh>
+    </group>
   );
 }
 
 function CompanyNode() {
   return (
-    <Float speed={0.96} floatIntensity={0.12} rotationIntensity={0.04}>
-      <group position={nodePositions.company}>
-        <mesh>
-          <boxGeometry args={[1.08, 0.78, 0.08]} />
-          <meshPhysicalMaterial color="#60a5fa" emissive="#1e3a8a" emissiveIntensity={0.56} roughness={0.22} metalness={0.52} clearcoat={0.6} />
-        </mesh>
-        <mesh position={[0.24, 0.12, 0.045]}>
-          <cylinderGeometry args={[0.13, 0.13, 0.04, 20]} />
-          <meshBasicMaterial color="#86efac" />
-        </mesh>
-        <mesh position={[0.24, 0.12, 0.058]} rotation={[0, 0, -0.38]}>
-          <boxGeometry args={[0.1, 0.018, 0.01]} />
-          <meshBasicMaterial color="#14532d" />
-        </mesh>
-        <mesh position={[0.28, 0.08, 0.058]} rotation={[0, 0, 0.72]}>
-          <boxGeometry args={[0.06, 0.018, 0.01]} />
-          <meshBasicMaterial color="#14532d" />
-        </mesh>
-      </group>
-    </Float>
+    <group position={positions.company}>
+      <mesh>
+        <boxGeometry args={[1.12, 0.8, 0.08]} />
+        <meshPhysicalMaterial color="#60a5fa" emissive="#1e3a8a" emissiveIntensity={0.48} roughness={0.24} metalness={0.52} clearcoat={0.56} />
+      </mesh>
+      <mesh position={[0, 0.22, 0.05]}>
+        <boxGeometry args={[0.72, 0.06, 0.01]} />
+        <meshBasicMaterial color="#dbeafe" />
+      </mesh>
+      <mesh position={[0, 0.05, 0.05]}>
+        <boxGeometry args={[0.76, 0.06, 0.01]} />
+        <meshBasicMaterial color="#bfdbfe" />
+      </mesh>
+      <mesh position={[0, -0.12, 0.05]}>
+        <boxGeometry args={[0.52, 0.06, 0.01]} />
+        <meshBasicMaterial color="#93c5fd" />
+      </mesh>
+      <mesh position={[0.34, 0.18, 0.052]}>
+        <cylinderGeometry args={[0.1, 0.1, 0.03, 20]} />
+        <meshBasicMaterial color="#86efac" />
+      </mesh>
+    </group>
   );
 }
 
 function PipelineNode() {
   return (
-    <Float speed={0.92} floatIntensity={0.1} rotationIntensity={0.04}>
-      <group position={nodePositions.pipeline}>
-        <mesh>
-          <boxGeometry args={[1.2, 0.86, 0.09]} />
-          <meshPhysicalMaterial color="#38bdf8" emissive="#0e7490" emissiveIntensity={0.46} roughness={0.24} metalness={0.54} clearcoat={0.56} />
-        </mesh>
-        <mesh position={[-0.25, 0.17, 0.05]}>
-          <boxGeometry args={[0.3, 0.08, 0.012]} />
-          <meshBasicMaterial color="#dbeafe" />
-        </mesh>
-        <mesh position={[-0.1, 0.02, 0.05]}>
-          <boxGeometry args={[0.6, 0.08, 0.012]} />
-          <meshBasicMaterial color="#93c5fd" />
-        </mesh>
-        <mesh position={[0.14, -0.13, 0.05]}>
-          <boxGeometry args={[0.74, 0.08, 0.012]} />
-          <meshBasicMaterial color="#2563eb" />
-        </mesh>
-      </group>
-    </Float>
+    <group position={positions.pipeline}>
+      <mesh>
+        <boxGeometry args={[1.34, 0.84, 0.08]} />
+        <meshPhysicalMaterial color="#38bdf8" emissive="#0e7490" emissiveIntensity={0.44} roughness={0.24} metalness={0.54} clearcoat={0.56} />
+      </mesh>
+      <mesh position={[-0.3, 0.12, 0.05]}>
+        <boxGeometry args={[0.25, 0.1, 0.01]} />
+        <meshBasicMaterial color="#dbeafe" />
+      </mesh>
+      <mesh position={[0, 0.12, 0.05]}>
+        <boxGeometry args={[0.25, 0.1, 0.01]} />
+        <meshBasicMaterial color="#93c5fd" />
+      </mesh>
+      <mesh position={[0.3, 0.12, 0.05]}>
+        <boxGeometry args={[0.25, 0.1, 0.01]} />
+        <meshBasicMaterial color="#2563eb" />
+      </mesh>
+      <mesh position={[-0.15, 0.12, 0.055]}>
+        <boxGeometry args={[0.08, 0.018, 0.01]} />
+        <meshBasicMaterial color="#e0f2fe" />
+      </mesh>
+      <mesh position={[0.15, 0.12, 0.055]}>
+        <boxGeometry args={[0.08, 0.018, 0.01]} />
+        <meshBasicMaterial color="#bfdbfe" />
+      </mesh>
+    </group>
   );
 }
 
-function ConnectionPaths({ intensity }: { intensity: number }) {
+function FlowLines({ focus }: { focus: number }) {
+  const curvePoints = useMemo(() => connections.map(([a, b], idx) => buildCurvedPath(a, b, idx === 0 ? 0.45 : 0.32)), []);
+
   return (
     <group>
-      {connections.map((pair, index) => (
-        <Line key={`flow-${index}`} points={pair} color="#38bdf8" lineWidth={1.25} transparent opacity={0.24 + intensity * 0.16} />
+      {curvePoints.map((points, index) => (
+        <Line key={`line-${index}`} points={points} color="#38bdf8" lineWidth={1.3} transparent opacity={0.24 + focus * 0.16} />
       ))}
     </group>
   );
 }
 
-function TravelingSignals({ reducedMotion }: { reducedMotion: boolean }) {
-  const signalGroupRef = useRef<THREE.Group>(null);
-  const signalData = useMemo(() => {
-    return Array.from({ length: 16 }).map((_, index) => ({
-      path: connections[index % connections.length],
-      progress: (index % 7) / 7
-    }));
-  }, []);
+function FlowParticles({ reducedMotion }: { reducedMotion: boolean }) {
+  const particlesRef = useRef<THREE.Group>(null);
+  const paths = useMemo(() => connections.map(([a, b], idx) => buildCurvedPath(a, b, idx === 0 ? 0.45 : 0.32)), []);
+  const meta = useMemo(
+    () =>
+      Array.from({ length: 12 }).map((_, i) => ({
+        pathIdx: i % paths.length,
+        progress: (i % 4) / 4
+      })),
+    [paths.length]
+  );
 
   useFrame((state, delta) => {
-    if (!signalGroupRef.current) return;
-    signalGroupRef.current.children.forEach((child, index) => {
-      const signal = signalData[index];
-      signal.progress += delta * (reducedMotion ? 0.07 : 0.22);
-      if (signal.progress > 1) signal.progress = 0;
-      child.position.lerpVectors(signal.path[0], signal.path[1], signal.progress);
-      child.scale.setScalar(0.78 + Math.sin(state.clock.elapsedTime * 1.55 + index) * 0.16);
+    if (!particlesRef.current) return;
+    particlesRef.current.children.forEach((child, idx) => {
+      const m = meta[idx];
+      const path = paths[m.pathIdx];
+      m.progress += delta * (reducedMotion ? 0.07 : 0.2);
+      if (m.progress > 1) m.progress = 0;
+      const point = path[Math.floor(m.progress * (path.length - 1))];
+      child.position.copy(point);
+      child.scale.setScalar(0.8 + Math.sin(state.clock.elapsedTime * 1.45 + idx) * 0.14);
     });
   });
 
   return (
-    <group ref={signalGroupRef}>
-      {signalData.map((_, index) => (
-        <mesh key={`sig-${index}`}>
-          <sphereGeometry args={[0.04, 10, 10]} />
-          <meshStandardMaterial color={index % 2 ? "#67e8f9" : "#93c5fd"} emissive="#22d3ee" emissiveIntensity={0.95} />
+    <group ref={particlesRef}>
+      {meta.map((_, idx) => (
+        <mesh key={`p-${idx}`}>
+          <sphereGeometry args={[0.042, 10, 10]} />
+          <meshStandardMaterial color={idx % 2 ? "#67e8f9" : "#93c5fd"} emissive="#22d3ee" emissiveIntensity={0.95} />
         </mesh>
       ))}
     </group>
   );
 }
 
-function SceneRig({ reducedMotion, onIntensity, intensity }: { reducedMotion: boolean; onIntensity: (v: number) => void; intensity: number }) {
+function SceneGroup({ reducedMotion, onFocus, focus }: { reducedMotion: boolean; onFocus: (n: number) => void; focus: number }) {
   const groupRef = useRef<THREE.Group>(null);
 
   useFrame((state) => {
-    const pointerMag = Math.min(1, Math.hypot(state.pointer.x, state.pointer.y));
-    onIntensity(Math.max(0, 1 - pointerMag * 0.75));
+    const pointer = state.pointer;
+    const proximity = Math.max(0, 1 - Math.min(1, Math.hypot(pointer.x, pointer.y) / 0.55));
+    onFocus(proximity);
 
     if (groupRef.current) {
-      const targetX = state.pointer.x * 0.18;
-      const targetY = state.pointer.y * 0.1;
-      groupRef.current.rotation.y = lerp(groupRef.current.rotation.y, targetX, 0.04);
-      groupRef.current.rotation.x = lerp(groupRef.current.rotation.x, targetY, 0.04);
+      groupRef.current.rotation.y = lerp(groupRef.current.rotation.y, pointer.x * 0.14, 0.04);
+      groupRef.current.rotation.x = lerp(groupRef.current.rotation.x, pointer.y * 0.08, 0.04);
       if (!reducedMotion) {
-        groupRef.current.position.y = Math.sin(state.clock.elapsedTime * 0.38) * 0.04;
+        groupRef.current.position.y = Math.sin(state.clock.elapsedTime * 0.42) * 0.05;
       }
     }
 
-    state.camera.position.x = lerp(state.camera.position.x, state.pointer.x * 0.45, 0.035);
-    state.camera.position.y = lerp(state.camera.position.y, state.pointer.y * 0.3, 0.04);
-    state.camera.lookAt(0.6, 0, 0);
+    state.camera.position.x = lerp(state.camera.position.x, pointer.x * 0.42, 0.035);
+    state.camera.position.y = lerp(state.camera.position.y, pointer.y * 0.28, 0.04);
+    state.camera.lookAt(0.4, 0, 0);
   });
 
   return (
     <group ref={groupRef}>
       <ResumeNode />
-      <AIEngineNode intensity={intensity} />
+      <AIEngineNode focus={focus} />
       <ScoreNode />
       <CompanyNode />
       <PipelineNode />
-      <ConnectionPaths intensity={intensity} />
-      <TravelingSignals reducedMotion={reducedMotion} />
+      <FlowLines focus={focus} />
+      <FlowParticles reducedMotion={reducedMotion} />
     </group>
   );
 }
 
-function SceneLights({ focus }: { focus: number }) {
+function Lights({ focus }: { focus: number }) {
   const mainRef = useRef<THREE.PointLight>(null);
 
   useFrame((state) => {
     if (!mainRef.current) return;
-    const pulse = 0.72 + Math.sin(state.clock.elapsedTime * 1.3) * 0.12;
-    mainRef.current.intensity = 1.3 + focus * 0.95 + pulse;
+    const pulse = 0.78 + Math.sin(state.clock.elapsedTime * 1.3) * 0.14;
+    mainRef.current.intensity = 1.35 + focus * 1.05 + pulse;
   });
 
   return (
     <>
-      <ambientLight intensity={0.42} />
+      <ambientLight intensity={0.43} />
       <hemisphereLight args={["#7dd3fc", "#020617", 0.45]} />
-      <pointLight ref={mainRef} position={[0.1, 1.7, 4.1]} color="#818cf8" intensity={1.9} />
-      <pointLight position={[-3.2, 1.6, 3.1]} color="#22d3ee" intensity={1.15} />
-      <pointLight position={[4.4, -1.5, 2.6]} color="#60a5fa" intensity={1.05} />
+      <pointLight ref={mainRef} position={[0.2, 1.7, 4.1]} color="#818cf8" intensity={2} />
+      <pointLight position={[-3.2, 1.4, 2.9]} color="#22d3ee" intensity={1.05} />
+      <pointLight position={[4.2, -1.3, 2.4]} color="#60a5fa" intensity={0.98} />
     </>
   );
 }
 
 export function HeroScene() {
   const [reducedMotion, setReducedMotion] = useState(false);
-  const [focus, setFocus] = useState(0.58);
+  const [focus, setFocus] = useState(0.6);
 
   useEffect(() => {
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -277,11 +298,11 @@ export function HeroScene() {
 
   return (
     <div className="absolute inset-0 z-0">
-      <Canvas camera={{ position: [0.1, 0, 8.7], fov: 48 }} dpr={[1, 1.8]} gl={{ antialias: true, alpha: true }}>
+      <Canvas camera={{ position: [0.1, 0, 8.4], fov: 46 }} dpr={[1, 1.8]} gl={{ antialias: true, alpha: true }}>
         <color attach="background" args={["#020617"]} />
-        <fog attach="fog" args={["#020617", 7, 21]} />
-        <SceneLights focus={focus} />
-        <SceneRig reducedMotion={reducedMotion} onIntensity={setFocus} intensity={focus} />
+        <fog attach="fog" args={["#020617", 7, 18]} />
+        <Lights focus={focus} />
+        <SceneGroup reducedMotion={reducedMotion} onFocus={setFocus} focus={focus} />
       </Canvas>
     </div>
   );
