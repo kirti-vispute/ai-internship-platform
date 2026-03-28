@@ -5,23 +5,23 @@
 
 export const features: FeatureItem[] = [
   {
-    title: "AI-Powered Matchmaking",
-    description: "Automatically connect interns to high-fit roles and companies to high-potential candidates."
+    title: "AI-Powered Internship Matching",
+    description: "Match interns to high-fit opportunities and rank candidates for companies using role-skill intelligence."
   },
   {
-    title: "Smart Skill Gap Insights",
-    description: "Identify gaps in candidate readiness and improve outcomes with focused recommendations."
+    title: "Skill Gap Intelligence",
+    description: "Surface missing skills instantly and guide interns with focused improvements for better interview readiness."
   },
   {
-    title: "Fast Hiring Workflows",
-    description: "Track applicants, collaborate, and shorten the time from posting to offer."
+    title: "Faster, Structured Hiring",
+    description: "Manage posting, screening, and shortlisting in one flow to reduce time-to-hire without losing quality."
   }
 ];
 
 export const whyChoose = [
-  "Built for both interns and companies with role-specific workflows",
-  "Designed for verification-first trust and secure onboarding",
-  "Modular architecture ready for Firebase, MongoDB, and AI API integrations"
+  "Role-based dashboards built for intern growth and company hiring teams",
+  "Verification-first onboarding to ensure trusted internships and trusted employers",
+  "AI insights for resume quality, skill gap tracking, and high-confidence matching"
 ];
 
 export const stats = [

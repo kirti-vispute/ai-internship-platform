@@ -5,7 +5,9 @@ export function WhyChooseSection() {
     <section className="pb-16 sm:pb-20">
       <div className="container-shell rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-soft dark:border-slate-700 dark:bg-slate-900/80 sm:p-8">
         <h2 className="text-3xl font-black tracking-tight text-ink dark:text-slate-100 sm:text-4xl">Why Choose InternAI</h2>
-        <p className="mt-2 max-w-2xl text-sm text-slate-700 dark:text-slate-200">A focused experience for internship growth and company hiring excellence.</p>
+        <p className="mt-2 max-w-2xl text-sm text-slate-700 dark:text-slate-200">
+          A polished, AI-first platform designed for measurable intern outcomes and predictable hiring quality.
+        </p>
         <div className="mt-6 grid gap-4 md:grid-cols-3">
           {whyChoose.map((reason, index) => (
             <div

@@ -101,11 +101,11 @@ a {
 }
 
 .surface-muted {
-  @apply rounded-2xl border border-slate-200/70 bg-gradient-to-b from-white to-slate-50/70 shadow-[0_8px_24px_rgba(15,23,42,0.06)] dark:border-slate-700/70 dark:from-slate-900 dark:to-slate-900/70 dark:shadow-[0_10px_28px_rgba(2,6,23,0.45)];
+  @apply rounded-2xl border border-slate-200/75 bg-gradient-to-b from-white to-slate-50/75 shadow-[0_12px_30px_rgba(15,23,42,0.1)] dark:border-slate-700/70 dark:from-slate-900 dark:to-slate-900/70 dark:shadow-[0_16px_36px_rgba(2,6,23,0.55)];
 }
 
 .surface-subtle {
-  @apply rounded-xl border border-slate-200/70 bg-white/85 shadow-[0_4px_16px_rgba(15,23,42,0.05)] dark:border-slate-700/70 dark:bg-slate-900/75 dark:shadow-[0_6px_20px_rgba(2,6,23,0.4)];
+  @apply rounded-xl border border-slate-200/75 bg-white/90 shadow-[0_8px_22px_rgba(15,23,42,0.08)] dark:border-slate-700/70 dark:bg-slate-900/80 dark:shadow-[0_10px_24px_rgba(2,6,23,0.45)];
 }
 
 .sidebar-surface {
