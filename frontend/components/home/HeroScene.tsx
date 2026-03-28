@@ -112,14 +112,28 @@ function AIEngineNode({ active }: { active: boolean }) {
   const coreRef = useRef<THREE.Mesh>(null);
   const ringARef = useRef<THREE.Mesh>(null);
   const ringBRef = useRef<THREE.Mesh>(null);
+  const glowRef = useRef<THREE.Mesh>(null);
+  const outerGlowRef = useRef<THREE.Mesh>(null);
 
   useFrame((state, delta) => {
+    const pulseA = 1 + Math.sin(state.clock.elapsedTime * 1.95) * 0.1;
+    const pulseB = 1 + Math.sin(state.clock.elapsedTime * 1.2 + 0.6) * 0.08;
+
     if (coreRef.current) {
       coreRef.current.rotation.y += delta * 0.45;
-      const pulse = 1 + Math.sin(state.clock.elapsedTime * 1.95) * 0.1;
-      coreRef.current.scale.setScalar(pulse);
+      coreRef.current.scale.setScalar(pulseA);
       const material = coreRef.current.material as THREE.MeshPhysicalMaterial;
       material.emissiveIntensity = (active ? 2 : 1.45) + Math.sin(state.clock.elapsedTime * 2.1) * 0.2;
+    }
+    if (glowRef.current) {
+      glowRef.current.scale.setScalar(pulseA * 1.02);
+      const material = glowRef.current.material as THREE.MeshBasicMaterial;
+      material.opacity = active ? 0.2 : 0.14;
+    }
+    if (outerGlowRef.current) {
+      outerGlowRef.current.scale.setScalar(pulseB * 1.04);
+      const material = outerGlowRef.current.material as THREE.MeshBasicMaterial;
+      material.opacity = active ? 0.12 : 0.08;
     }
     if (ringARef.current) ringARef.current.rotation.z += delta * 0.55;
     if (ringBRef.current) ringBRef.current.rotation.x -= delta * 0.35;
@@ -127,9 +141,13 @@ function AIEngineNode({ active }: { active: boolean }) {
 
   return (
     <group position={nodePositions["ai-engine"].toArray()}>
-      <mesh>
-        <sphereGeometry args={[1, 34, 34]} />
-        <meshBasicMaterial color="#1d4ed8" transparent opacity={0.14} />
+      <mesh ref={outerGlowRef}>
+        <sphereGeometry args={[1.58, 34, 34]} />
+        <meshBasicMaterial color="#60a5fa" transparent opacity={0.08} />
+      </mesh>
+      <mesh ref={glowRef}>
+        <sphereGeometry args={[1.16, 34, 34]} />
+        <meshBasicMaterial color="#38bdf8" transparent opacity={0.14} />
       </mesh>
       <mesh ref={coreRef}>
         <sphereGeometry args={[0.6, 40, 40]} />
@@ -149,6 +167,34 @@ function AIEngineNode({ active }: { active: boolean }) {
       <mesh ref={ringBRef} rotation={[1, 0.4, 0]}>
         <torusGeometry args={[1.1, 0.02, 14, 120]} />
         <meshBasicMaterial color="#93c5fd" transparent opacity={0.45} />
+      </mesh>
+    </group>
+  );
+}
+
+function DepthParallaxLayer() {
+  const groupRef = useRef<THREE.Group>(null);
+
+  useFrame((state) => {
+    if (!groupRef.current) return;
+    groupRef.current.position.x = lerp(groupRef.current.position.x, state.pointer.x * 0.28, 0.03);
+    groupRef.current.position.y = lerp(groupRef.current.position.y, state.pointer.y * 0.18, 0.03);
+    groupRef.current.rotation.z = lerp(groupRef.current.rotation.z, state.pointer.x * 0.05, 0.02);
+  });
+
+  return (
+    <group ref={groupRef} position={[0, 0, -2.8]}>
+      <mesh position={[-1.2, 1, -0.1]}>
+        <sphereGeometry args={[1.15, 24, 24]} />
+        <meshBasicMaterial color="#2563eb" transparent opacity={0.07} />
+      </mesh>
+      <mesh position={[2.2, -0.6, -0.2]}>
+        <sphereGeometry args={[0.95, 24, 24]} />
+        <meshBasicMaterial color="#0ea5e9" transparent opacity={0.06} />
+      </mesh>
+      <mesh position={[0.5, 0.1, -0.35]}>
+        <sphereGeometry args={[1.35, 24, 24]} />
+        <meshBasicMaterial color="#4338ca" transparent opacity={0.05} />
       </mesh>
     </group>
   );
@@ -467,6 +513,7 @@ export function HeroScene({ activeModule = null }: HeroSceneProps) {
       <Canvas camera={{ position: [0.05, 0.02, 8.8], fov: 46 }} dpr={[1, 1.8]} gl={{ antialias: true, alpha: true }}>
         <fog attach="fog" args={["#020617", 8, 18]} />
         <SceneLights />
+        <DepthParallaxLayer />
         <FlowMap reducedMotion={reducedMotion} activeModule={activeModule} />
       </Canvas>
     </div>
