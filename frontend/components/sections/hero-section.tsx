@@ -1,15 +1,63 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import type { WorkflowModule } from "@/components/home/HeroScene";
 
 const HeroScene = dynamic(() => import("@/components/home/HeroScene").then((mod) => mod.HeroScene), {
   ssr: false,
   loading: () => null
 });
 
+const workflowModules: Array<{
+  id: WorkflowModule;
+  label: string;
+  detail: string;
+  className: string;
+}> = [
+  {
+    id: "resume-upload",
+    label: "Resume Upload",
+    detail: "Student profile enters the AI system.",
+    className: "left-[5%] top-[14%]"
+  },
+  {
+    id: "ai-engine",
+    label: "AI Engine",
+    detail: "Model analyzes resume structure and fit.",
+    className: "left-[39%] top-[43%]"
+  },
+  {
+    id: "resume-score",
+    label: "Resume Score",
+    detail: "Strength score and ATS signal generated.",
+    className: "right-[10%] top-[11%]"
+  },
+  {
+    id: "skill-gap",
+    label: "Skill Gap",
+    detail: "Missing skills mapped for target roles.",
+    className: "right-[4%] top-[33%]"
+  },
+  {
+    id: "verified-match",
+    label: "Verified Match",
+    detail: "Only trusted company matches are surfaced.",
+    className: "right-[6%] top-[55%]"
+  },
+  {
+    id: "hiring-pipeline",
+    label: "Hiring Pipeline",
+    detail: "Applications move through real-time stages.",
+    className: "bottom-[11%] right-[14%]"
+  }
+];
+
 export function HeroSection() {
+  const [activeModule, setActiveModule] = useState<WorkflowModule | null>(null);
+
   return (
     <section className="relative z-0 overflow-hidden bg-slate-950 pb-16 pt-24 sm:pb-20 sm:pt-28">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_8%,rgba(56,189,248,0.16),transparent_34%),radial-gradient(circle_at_82%_16%,rgba(99,102,241,0.14),transparent_32%),linear-gradient(180deg,rgba(2,6,23,0.2)_0%,rgba(15,23,42,0.3)_52%,rgba(2,6,23,0.5)_100%)]" />
@@ -23,16 +71,16 @@ export function HeroSection() {
           className="z-20 max-w-2xl"
         >
           <p className="inline-flex rounded-full border border-cyan-300/35 bg-slate-900/75 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-cyan-200 shadow-[0_10px_28px_rgba(6,182,212,0.2)]">
-            Verified AI Internship Network
+            AI Internship Workflow Map
           </p>
 
           <h1 className="mt-5 text-4xl font-black tracking-tight text-white sm:text-5xl lg:text-6xl">
-            Match the right intern to the right role with AI precision.
+            From resume upload to verified hiring, in one intelligent flow.
           </h1>
 
           <p className="mt-4 max-w-xl text-base text-slate-200 sm:text-lg">
-            InternAI unifies resume scoring, skill-gap intelligence, verified company discovery, and role-based dashboards
-            so students grow faster and hiring teams close internship roles with confidence.
+            InternAI maps every step: resume analysis, score generation, skill-gap detection, trusted company matching, and
+            pipeline progression with premium visibility for interns and recruiters.
           </p>
 
           <div className="mt-7 flex flex-wrap gap-3">
@@ -46,13 +94,13 @@ export function HeroSection() {
 
           <div className="mt-4 flex flex-wrap gap-2 text-xs">
             <span className="rounded-full border border-slate-700 bg-slate-900/75 px-3 py-1 text-slate-200 shadow-[0_8px_20px_rgba(2,6,23,0.5)]">
-              Resume score signals
+              Resume upload intelligence
             </span>
             <span className="rounded-full border border-slate-700 bg-slate-900/75 px-3 py-1 text-slate-200 shadow-[0_8px_20px_rgba(2,6,23,0.5)]">
-              Skill gap coaching
+              Skill gap detection
             </span>
             <span className="rounded-full border border-slate-700 bg-slate-900/75 px-3 py-1 text-slate-200 shadow-[0_8px_20px_rgba(2,6,23,0.5)]">
-              Hiring pipeline tracking
+              Verified hiring progress
             </span>
           </div>
         </motion.div>
@@ -64,11 +112,32 @@ export function HeroSection() {
           transition={{ duration: 0.95, ease: [0.22, 1, 0.36, 1], delay: 0.08 }}
           className="relative h-[440px] overflow-hidden rounded-3xl border border-slate-700/70 bg-slate-950/75 shadow-[0_30px_70px_rgba(2,6,23,0.6)] sm:h-[500px] lg:h-[560px]"
         >
-          <HeroScene />
+          <HeroScene activeModule={activeModule} />
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_12%,rgba(125,211,252,0.16),transparent_35%),radial-gradient(circle_at_78%_86%,rgba(129,140,248,0.14),transparent_36%)]" />
+
+          <div className="absolute inset-0 z-20 hidden lg:block">
+            {workflowModules.map((module) => {
+              const isActive = activeModule === module.id;
+              return (
+                <button
+                  key={module.id}
+                  type="button"
+                  onMouseEnter={() => setActiveModule(module.id)}
+                  onMouseLeave={() => setActiveModule(null)}
+                  className={`group absolute max-w-[170px] rounded-2xl border px-3 py-2 text-left backdrop-blur-md transition-all duration-300 ${module.className} ${
+                    isActive
+                      ? "border-cyan-300/70 bg-slate-900/86 shadow-[0_18px_36px_rgba(34,211,238,0.3)]"
+                      : "border-slate-500/40 bg-slate-900/65 shadow-[0_12px_28px_rgba(2,6,23,0.42)]"
+                  }`}
+                >
+                  <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-cyan-200">{module.label}</p>
+                  <p className="mt-1 text-[11px] leading-4 text-slate-200/90">{module.detail}</p>
+                </button>
+              );
+            })}
+          </div>
         </motion.div>
       </div>
     </section>
   );
 }
-
