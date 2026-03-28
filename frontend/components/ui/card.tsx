@@ -1,4 +1,5 @@
-﻿import { cn } from "@/lib/utils";
+import { TiltCard } from "@/components/dashboard/TiltCard";
+import { cn } from "@/lib/utils";
 
 type CardProps = {
   title?: string;
@@ -9,13 +10,7 @@ type CardProps = {
 
 export function Card({ title, subtitle, className, children }: CardProps) {
   return (
-    <div
-      data-cursor="card"
-      className={cn(
-        "tilt-3d surface-muted relative overflow-hidden p-5 transition duration-300 hover:-translate-y-1 hover:border-slate-300 hover:shadow-[0_20px_46px_rgba(15,23,42,0.16)] dark:hover:border-primary-500/50 dark:hover:shadow-[0_22px_46px_rgba(2,6,23,0.65)]",
-        className
-      )}
-    >
+    <TiltCard className={cn("surface-muted p-5 hover:border-slate-300 dark:hover:border-primary-500/50", className)}>
       <div className="pointer-events-none absolute inset-x-0 top-0 h-10 bg-gradient-to-b from-slate-50/80 to-transparent dark:from-slate-800/70" />
       {(title || subtitle) && (
         <div className="relative mb-4">
@@ -24,6 +19,7 @@ export function Card({ title, subtitle, className, children }: CardProps) {
         </div>
       )}
       <div className="relative">{children}</div>
-    </div>
+    </TiltCard>
   );
 }
+

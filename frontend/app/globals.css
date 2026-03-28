@@ -149,3 +149,40 @@ a {
 .animate-float-gentle {
   animation: float-gentle 6s ease-in-out infinite;
 }
+
+@keyframes pulse-slow {
+  0%,
+  100% {
+    opacity: 0.42;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.72;
+    transform: scale(1.08);
+  }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 7.6s ease-in-out infinite;
+}
+
+@keyframes signal-slide {
+  0% {
+    transform: translateX(-28%);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.7;
+  }
+  85% {
+    opacity: 0.7;
+  }
+  100% {
+    transform: translateX(28%);
+    opacity: 0;
+  }
+}
+
+.animate-signal-slide {
+  animation: signal-slide 5.8s ease-in-out infinite;
+}

@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { ScrollReveal } from "@/components/animations/ScrollReveal";
+import { AnimatedBackground } from "@/components/dashboard/AnimatedBackground";
 import { Footer } from "@/components/layout/footer";
 import { Navbar } from "@/components/layout/navbar";
 import { Button } from "@/components/ui/button";
@@ -34,8 +36,9 @@ export default function CompanyDashboardPage() {
     <main>
       <Navbar />
       <RoleDashboardGuard expectedRole="company">
-        <section className="container-shell py-10 sm:py-14">
-          <div className="mb-8 flex flex-wrap items-center justify-between gap-3 animate-fade-up">
+        <section className="container-shell relative overflow-hidden py-10 sm:py-14">
+          <AnimatedBackground className="opacity-70" />
+          <ScrollReveal className="relative z-10 mb-8 flex flex-wrap items-center justify-between gap-3" variant="fade-up">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wider text-primary-600">Company Dashboard</p>
               <h1 className="text-3xl font-black tracking-tight text-ink dark:text-slate-100 sm:text-4xl">Manage your hiring pipeline</h1>
@@ -44,13 +47,13 @@ export default function CompanyDashboardPage() {
               <Link href="/auth?role=company" data-cursor="link" className="tilt-3d rounded-full bg-white px-3 py-1 text-sm font-medium text-primary-600 shadow-soft hover:text-primary-700 dark:bg-slate-900 dark:text-primary-300 dark:hover:text-primary-200">
                 Switch account
               </Link>
-              <Button type="button" variant="secondary" size="sm" onClick={handleLogout}>
-                LogOut
-              </Button>
+                <Button type="button" variant="secondary" size="sm" onClick={handleLogout}>
+                  LogOut
+                </Button>
             </div>
-          </div>
+          </ScrollReveal>
 
-          <div className="mb-5 grid gap-4 sm:grid-cols-3">
+          <ScrollReveal className="relative z-10 mb-5 grid gap-4 sm:grid-cols-3" variant="stagger-children" distance={10}>
             <Card className="border-none bg-white dark:bg-slate-900">
               <p className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">Verification Status</p>
               <p className="mt-2 text-2xl font-black text-ink dark:text-slate-100">Verified</p>
@@ -68,18 +71,21 @@ export default function CompanyDashboardPage() {
               <p className="mt-2 text-2xl font-black text-ink dark:text-slate-100">132</p>
               <p className="mt-2 text-xs text-primary-600">+14% vs last week</p>
             </Card>
-          </div>
+          </ScrollReveal>
 
-          <div className="mb-4 rounded-2xl border border-primary-100 bg-gradient-to-r from-primary-600 to-blue-600 p-4 text-white shadow-glow">
+          <ScrollReveal className="relative z-10 mb-4" variant="soft-scale" distance={12}>
+            <div className="rounded-2xl border border-primary-100 bg-gradient-to-r from-primary-600 to-blue-600 p-4 text-white shadow-glow">
             <p className="text-sm font-semibold">Quick Actions</p>
             <div className="mt-3 flex flex-wrap gap-2">
               <button data-cursor="button" className="tilt-3d rounded-full bg-white/20 px-3 py-1 text-xs font-semibold hover:bg-white/30">Post New Internship</button>
               <button data-cursor="button" className="tilt-3d rounded-full bg-white/20 px-3 py-1 text-xs font-semibold hover:bg-white/30">View Shortlisted</button>
               <button data-cursor="button" className="tilt-3d rounded-full bg-white/20 px-3 py-1 text-xs font-semibold hover:bg-white/30">Export Candidate List</button>
             </div>
-          </div>
+            </div>
+          </ScrollReveal>
 
-          <div className="grid gap-4 lg:grid-cols-3">
+          <ScrollReveal className="relative z-10" variant="fade-up" distance={14}>
+            <div className="grid gap-4 lg:grid-cols-3">
             <div className="space-y-4 lg:col-span-2">
               <Card title="Candidate Tracking" subtitle="Hiring pipeline overview">
                 <div className="grid gap-3 sm:grid-cols-2">
@@ -126,6 +132,7 @@ export default function CompanyDashboardPage() {
               </Card>
             </div>
           </div>
+          </ScrollReveal>
         </section>
       </RoleDashboardGuard>
       <Footer />

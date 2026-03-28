@@ -1,4 +1,5 @@
 import { Card } from "@/components/ui/card";
+import { ScrollReveal } from "@/components/animations/ScrollReveal";
 
 type SectionPanelProps = {
   id?: string;
@@ -10,10 +11,12 @@ type SectionPanelProps = {
 
 export function SectionPanel({ id, title, subtitle, children, className }: SectionPanelProps) {
   return (
-    <section id={id}>
-      <Card title={title} subtitle={subtitle} className={className}>
-        {children}
-      </Card>
-    </section>
+    <ScrollReveal variant="fade-up" distance={14}>
+      <section id={id}>
+        <Card title={title} subtitle={subtitle} className={className}>
+          {children}
+        </Card>
+      </section>
+    </ScrollReveal>
   );
 }

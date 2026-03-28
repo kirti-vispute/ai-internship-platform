@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { AnimatedBackground } from "@/components/dashboard/AnimatedBackground";
 import { cn } from "@/lib/utils";
 
 type SidebarItem = {
@@ -311,7 +312,8 @@ export function InternShell({ welcomeName, onLogout, children }: InternShellProp
 
         {mobileOpen && <button aria-label="Close menu" className="fixed inset-0 z-30 bg-slate-900/40 lg:hidden" onClick={() => setMobileOpen(false)} />}
 
-        <div className="min-w-0 flex-1">
+        <div className="relative min-w-0 flex-1 overflow-hidden">
+          <AnimatedBackground className="opacity-75" />
           <header className="sticky top-0 z-20 border-b border-slate-200/80 bg-white/82 px-4 py-3.5 backdrop-blur-xl lg:px-6 dark:border-slate-800 dark:bg-slate-950/78">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2">
@@ -343,7 +345,7 @@ export function InternShell({ welcomeName, onLogout, children }: InternShellProp
             </div>
           </header>
 
-          <main className="animate-reveal p-5 lg:p-7">{children}</main>
+          <main className="animate-reveal relative z-10 p-5 lg:p-7">{children}</main>
         </div>
       </div>
     </div>

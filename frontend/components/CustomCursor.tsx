@@ -28,6 +28,7 @@ export function CustomCursor() {
 
     let hoverState: "default" | "link" | "button" | "card" | "text" = "default";
     let activeEl: HTMLElement | null = null;
+    let activeTiltElement: HTMLElement | null = null;
     let rafId = 0;
 
     const setHoverState = (target: HTMLElement | null) => {
@@ -64,6 +65,24 @@ export function CustomCursor() {
       mouse.x = event.clientX;
       mouse.y = event.clientY;
       setHoverState(event.target as HTMLElement | null);
+
+      const tiltCandidate = (event.target as HTMLElement | null)?.closest?.(".tilt-3d") as HTMLElement | null;
+      if (activeTiltElement && activeTiltElement !== tiltCandidate) {
+        activeTiltElement.style.setProperty("--tilt-x", "0deg");
+        activeTiltElement.style.setProperty("--tilt-y", "0deg");
+      }
+
+      if (tiltCandidate) {
+        const rect = tiltCandidate.getBoundingClientRect();
+        const px = (event.clientX - rect.left) / Math.max(rect.width, 1);
+        const py = (event.clientY - rect.top) / Math.max(rect.height, 1);
+        const tiltY = (px - 0.5) * 8;
+        const tiltX = (0.5 - py) * 8;
+        tiltCandidate.style.setProperty("--tilt-x", `${tiltX.toFixed(2)}deg`);
+        tiltCandidate.style.setProperty("--tilt-y", `${tiltY.toFixed(2)}deg`);
+      }
+
+      activeTiltElement = tiltCandidate || null;
     };
 
     const onFocusIn = (event: FocusEvent) => {
@@ -129,46 +148,25 @@ export function CustomCursor() {
     };
     animate();
 
-    const applyTilt = (element: HTMLElement, x: number, y: number) => {
-      element.style.setProperty("--tilt-x", `${x}deg`);
-      element.style.setProperty("--tilt-y", `${y}deg`);
+    const resetTiltState = () => {
+      if (!activeTiltElement) return;
+      activeTiltElement.style.setProperty("--tilt-x", "0deg");
+      activeTiltElement.style.setProperty("--tilt-y", "0deg");
+      activeTiltElement = null;
     };
-
-    const onTiltMove = (event: Event) => {
-      const target = event.currentTarget as HTMLElement;
-      const pointer = event as PointerEvent;
-      const rect = target.getBoundingClientRect();
-      const px = (pointer.clientX - rect.left) / rect.width;
-      const py = (pointer.clientY - rect.top) / rect.height;
-      const tiltY = (px - 0.5) * 8;
-      const tiltX = (0.5 - py) * 8;
-      applyTilt(target, tiltX, tiltY);
-    };
-
-    const onTiltLeave = (event: Event) => {
-      const target = event.currentTarget as HTMLElement;
-      applyTilt(target, 0, 0);
-    };
-
-    const tiltElements = Array.from(document.querySelectorAll<HTMLElement>(".tilt-3d"));
-    tiltElements.forEach((element) => {
-      element.addEventListener("pointermove", onTiltMove, { passive: true });
-      element.addEventListener("pointerleave", onTiltLeave, { passive: true });
-    });
 
     window.addEventListener("pointermove", onPointerMove, { passive: true });
+    window.addEventListener("pointerleave", resetTiltState, { passive: true });
     document.addEventListener("pointerover", onPointerOver, { passive: true });
     document.addEventListener("focusin", onFocusIn, { passive: true });
 
     return () => {
       window.cancelAnimationFrame(rafId);
       window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerleave", resetTiltState);
       document.removeEventListener("pointerover", onPointerOver);
       document.removeEventListener("focusin", onFocusIn);
-      tiltElements.forEach((element) => {
-        element.removeEventListener("pointermove", onTiltMove);
-        element.removeEventListener("pointerleave", onTiltLeave);
-      });
+      resetTiltState();
       document.body.classList.remove("cursor-3d-enabled");
     };
   }, [trailIndexes]);

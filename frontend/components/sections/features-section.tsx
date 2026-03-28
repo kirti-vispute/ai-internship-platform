@@ -1,12 +1,12 @@
 import { Card } from "@/components/ui/card";
-import { Reveal } from "@/components/ui/reveal";
+import { ScrollReveal } from "@/components/animations/ScrollReveal";
 import { features } from "@/data/dummy";
 
 export function FeaturesSection() {
   return (
     <section className="py-16 sm:py-20">
       <div className="container-shell">
-        <Reveal className="flex flex-wrap items-end justify-between gap-3">
+        <ScrollReveal className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h2 className="text-3xl font-black tracking-tight text-slate-900 dark:text-slate-100 sm:text-4xl">
               Product intelligence built for career outcomes
@@ -18,11 +18,11 @@ export function FeaturesSection() {
           <p className="rounded-full border border-primary-100 bg-primary-50 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-primary-700 dark:border-primary-500/40 dark:bg-primary-900/20 dark:text-primary-300">
             Core Capabilities
           </p>
-        </Reveal>
+        </ScrollReveal>
 
         <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {features.map((item, index) => (
-            <Reveal key={item.title} delayMs={120 + index * 90}>
+            <ScrollReveal key={item.title} delayMs={120 + index * 90} variant="soft-scale">
               <Card className="group">
                 <p className="text-xs font-semibold uppercase tracking-wider text-primary-600 dark:text-primary-300">Module {index + 1}</p>
                 <h3 className="mt-2 text-lg font-bold text-slate-900 dark:text-slate-100">{item.title}</h3>
@@ -31,7 +31,7 @@ export function FeaturesSection() {
                   <div className="h-1.5 w-2/3 rounded-full bg-gradient-to-r from-primary-500 to-cyan-500 transition-all duration-300 group-hover:w-5/6" />
                 </div>
               </Card>
-            </Reveal>
+            </ScrollReveal>
           ))}
         </div>
       </div>
