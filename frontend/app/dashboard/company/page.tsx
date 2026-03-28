@@ -41,7 +41,7 @@ export default function CompanyDashboardPage() {
               <h1 className="text-3xl font-black tracking-tight text-ink dark:text-slate-100 sm:text-4xl">Manage your hiring pipeline</h1>
             </div>
             <div className="flex items-center gap-2">
-              <Link href="/auth?role=company" className="rounded-full bg-white px-3 py-1 text-sm font-medium text-primary-600 shadow-soft hover:text-primary-700 dark:bg-slate-900 dark:text-primary-300 dark:hover:text-primary-200">
+              <Link href="/auth?role=company" data-cursor="link" className="tilt-3d rounded-full bg-white px-3 py-1 text-sm font-medium text-primary-600 shadow-soft hover:text-primary-700 dark:bg-slate-900 dark:text-primary-300 dark:hover:text-primary-200">
                 Switch account
               </Link>
               <Button type="button" variant="secondary" size="sm" onClick={handleLogout}>
@@ -73,9 +73,9 @@ export default function CompanyDashboardPage() {
           <div className="mb-4 rounded-2xl border border-primary-100 bg-gradient-to-r from-primary-600 to-blue-600 p-4 text-white shadow-glow">
             <p className="text-sm font-semibold">Quick Actions</p>
             <div className="mt-3 flex flex-wrap gap-2">
-              <button className="rounded-full bg-white/20 px-3 py-1 text-xs font-semibold hover:bg-white/30">Post New Internship</button>
-              <button className="rounded-full bg-white/20 px-3 py-1 text-xs font-semibold hover:bg-white/30">View Shortlisted</button>
-              <button className="rounded-full bg-white/20 px-3 py-1 text-xs font-semibold hover:bg-white/30">Export Candidate List</button>
+              <button data-cursor="button" className="tilt-3d rounded-full bg-white/20 px-3 py-1 text-xs font-semibold hover:bg-white/30">Post New Internship</button>
+              <button data-cursor="button" className="tilt-3d rounded-full bg-white/20 px-3 py-1 text-xs font-semibold hover:bg-white/30">View Shortlisted</button>
+              <button data-cursor="button" className="tilt-3d rounded-full bg-white/20 px-3 py-1 text-xs font-semibold hover:bg-white/30">Export Candidate List</button>
             </div>
           </div>
 
@@ -84,7 +84,7 @@ export default function CompanyDashboardPage() {
               <Card title="Candidate Tracking" subtitle="Hiring pipeline overview">
                 <div className="grid gap-3 sm:grid-cols-2">
                   {hiringPipeline.map((item) => (
-                    <div key={item.stage} className="rounded-xl border border-slate-200 bg-gradient-to-b from-white to-slate-50 p-3 dark:border-slate-700 dark:from-slate-900 dark:to-slate-800">
+                    <div key={item.stage} data-cursor="card" className="tilt-3d rounded-xl border border-slate-200 bg-gradient-to-b from-white to-slate-50 p-3 dark:border-slate-700 dark:from-slate-900 dark:to-slate-800">
                       <p className="text-xs text-slate-500 dark:text-slate-400">{item.stage}</p>
                       <p className="mt-1 text-2xl font-bold text-slate-900 dark:text-slate-100">{item.count}</p>
                     </div>
@@ -105,7 +105,7 @@ export default function CompanyDashboardPage() {
               <Card title="AI Matched Candidates" subtitle="Top profile recommendations">
                 <div className="space-y-2">
                   {matchedCandidates.map((candidate) => (
-                    <div key={candidate.name} className="flex items-center justify-between rounded-xl border border-slate-200 bg-gradient-to-r from-white to-slate-50 px-3 py-2 dark:border-slate-700 dark:from-slate-900 dark:to-slate-800">
+                    <div key={candidate.name} data-cursor="card" className="tilt-3d flex items-center justify-between rounded-xl border border-slate-200 bg-gradient-to-r from-white to-slate-50 px-3 py-2 dark:border-slate-700 dark:from-slate-900 dark:to-slate-800">
                       <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{candidate.name}</p>
                       <p className="rounded-full bg-primary-50 px-2 py-1 text-sm font-semibold text-primary-700 dark:bg-primary-900/20 dark:text-primary-300">{candidate.score}</p>
                     </div>

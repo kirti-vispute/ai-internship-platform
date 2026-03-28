@@ -1,10 +1,17 @@
+"use client";
+
+import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
-import { HeroThreeBackground } from "@/components/visuals/hero-three-background";
+
+const ThreeHero = dynamic(() => import("@/components/ThreeHero").then((mod) => mod.ThreeHero), {
+  ssr: false,
+  loading: () => null
+});
 
 export function HeroSection() {
   return (
     <section className="relative z-0 overflow-hidden bg-slate-950 pb-20 pt-24 sm:pb-24 sm:pt-28">
-      <HeroThreeBackground />
+      <ThreeHero />
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_10%,rgba(56,189,248,0.2),transparent_34%),radial-gradient(circle_at_84%_12%,rgba(59,130,246,0.18),transparent_28%),linear-gradient(180deg,rgba(2,6,23,0.96)_0%,rgba(15,23,42,0.94)_50%,rgba(2,6,23,0.98)_100%)]" />
 
       <div className="container-shell relative grid min-h-[calc(100svh-4rem)] items-center gap-10 lg:grid-cols-[1.06fr_1fr]">
