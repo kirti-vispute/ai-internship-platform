@@ -7,13 +7,15 @@ export function FeaturesSection() {
       <div className="container-shell">
         <div className="animate-reveal flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h2 className="text-3xl font-black tracking-tight text-ink dark:text-slate-100 sm:text-4xl">Platform Features</h2>
+            <h2 className="text-3xl font-black tracking-tight text-slate-900 dark:text-slate-100 sm:text-4xl">
+              Built for high-signal internship outcomes
+            </h2>
             <p className="mt-2 max-w-2xl text-slate-700 dark:text-slate-200">
-              Built to accelerate intern growth and reduce hiring friction with intelligent workflows.
+              From first profile to final offer, every workflow is optimized for intern growth and efficient hiring.
             </p>
           </div>
           <p className="rounded-full border border-primary-100 bg-primary-50 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-primary-700 dark:border-primary-500/40 dark:bg-primary-900/20 dark:text-primary-300">
-            Built for outcomes
+            AI Operating Layer
           </p>
         </div>
 

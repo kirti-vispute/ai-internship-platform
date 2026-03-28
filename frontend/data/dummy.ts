@@ -5,28 +5,28 @@
 
 export const features: FeatureItem[] = [
   {
-    title: "AI-Powered Internship Matching",
-    description: "Match interns to high-fit opportunities and rank candidates for companies using role-skill intelligence."
+    title: "Precision Matching Engine",
+    description: "Map intern capability, resume quality, and role requirements to surface high-fit opportunities in seconds."
   },
   {
     title: "Skill Gap Intelligence",
-    description: "Surface missing skills instantly and guide interns with focused improvements for better interview readiness."
+    description: "Turn resume and application data into actionable skill priorities with guided learning suggestions."
   },
   {
-    title: "Faster, Structured Hiring",
-    description: "Manage posting, screening, and shortlisting in one flow to reduce time-to-hire without losing quality."
+    title: "Hiring Flow Control",
+    description: "Run internship posting, candidate tracking, and feedback pipelines from one structured company workspace."
   }
 ];
 
 export const whyChoose = [
-  "Role-based dashboards built for intern growth and company hiring teams",
-  "Verification-first onboarding to ensure trusted internships and trusted employers",
-  "AI insights for resume quality, skill gap tracking, and high-confidence matching"
+  "Role-based portals built for intern growth journeys and company hiring velocity",
+  "Verification-first onboarding that keeps opportunities credible and hiring trusted",
+  "AI insights across resume strength, skill readiness, recommendations, and tracking"
 ];
 
 export const stats = [
-  { label: "Active Interns", value: "12K+" },
-  { label: "Verified Companies", value: "850+" },
-  { label: "Successful Placements", value: "4.2K+" },
-  { label: "Avg. Hiring Time Reduced", value: "38%" }
+  { label: "Active Intern Profiles", value: "12K+" },
+  { label: "Verified Hiring Companies", value: "850+" },
+  { label: "Internship Conversions", value: "4.2K+" },
+  { label: "Faster Hiring Pipeline", value: "38%" }
 ];
