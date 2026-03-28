@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { Float, Line, Text } from "@react-three/drei";
+import { Float, Line } from "@react-three/drei";
 import * as THREE from "three";
 
 function lerp(a: number, b: number, t: number) {
@@ -23,12 +23,12 @@ const coreNodePositions = {
 };
 
 const moduleNodes = [
-  { key: "resume", label: "Resume Score", position: new THREE.Vector3(1.5, 1.95, -0.45) },
-  { key: "skill-gap", label: "Skill Gap", position: new THREE.Vector3(3.55, 2.25, -0.25) },
-  { key: "verified", label: "Verified Company", position: new THREE.Vector3(5.1, 0.05, -0.35) },
-  { key: "pipeline", label: "Hiring Pipeline", position: new THREE.Vector3(4.25, -1.55, 0.05) },
-  { key: "recommendation", label: "Recommendation Confidence", position: new THREE.Vector3(2.35, -2.15, -0.35) },
-  { key: "progress", label: "Application Progress", position: new THREE.Vector3(0.4, -1.95, -0.45) }
+  { key: "resume", position: new THREE.Vector3(1.5, 1.95, -0.45) },
+  { key: "skill-gap", position: new THREE.Vector3(3.55, 2.25, -0.25) },
+  { key: "verified", position: new THREE.Vector3(5.1, 0.05, -0.35) },
+  { key: "pipeline", position: new THREE.Vector3(4.25, -1.55, 0.05) },
+  { key: "recommendation", position: new THREE.Vector3(2.35, -2.15, -0.35) },
+  { key: "progress", position: new THREE.Vector3(0.4, -1.95, -0.45) }
 ] as const;
 
 const pathwayPairs: [THREE.Vector3, THREE.Vector3][] = [
@@ -141,9 +141,6 @@ function DomainNodes({ reducedMotion }: { reducedMotion: boolean }) {
               metalness={0.5}
             />
           </mesh>
-          <Text position={[0, 0, 0.11]} fontSize={0.095} color="#e2e8f0" anchorX="center" anchorY="middle">
-            {module.label}
-          </Text>
         </group>
       ))}
     </group>
@@ -173,39 +170,15 @@ function SemanticSignalHalo({ intensity }: { intensity: number }) {
   );
 }
 
-function WorkflowLabels() {
-  const labels = [
-    { text: "Intern", pos: [0.4, -1.3, 0.9] as const },
-    { text: "AI Matching", pos: [2.2, -0.45, 0.68] as const },
-    { text: "Company / HR", pos: [4.2, 0.48, 0.82] as const }
-  ];
-
-  return (
-    <group position={[-1.35, 0, 0]}>
-      {labels.map((item) => (
-        <group key={item.text} position={item.pos}>
-          <mesh>
-            <planeGeometry args={[1.15, 0.27]} />
-            <meshBasicMaterial color="#0f172a" transparent opacity={0.56} />
-          </mesh>
-          <Text position={[0, 0, 0.02]} fontSize={0.095} color="#e2e8f0" anchorX="center" anchorY="middle">
-            {item.text}
-          </Text>
-        </group>
-      ))}
-    </group>
-  );
-}
-
 function CameraRig({ reducedMotion, onIntensity }: { reducedMotion: boolean; onIntensity: (value: number) => void }) {
   useFrame((state) => {
     const pointerMagnitude = Math.min(1, Math.sqrt(state.pointer.x * state.pointer.x + state.pointer.y * state.pointer.y));
     onIntensity(pointerMagnitude);
     const followX = reducedMotion ? state.pointer.x * 0.36 : state.pointer.x * 0.85;
     const followY = reducedMotion ? state.pointer.y * 0.24 : state.pointer.y * 0.62;
-    state.camera.position.x = lerp(state.camera.position.x, followX, 0.045);
+    state.camera.position.x = lerp(state.camera.position.x, 0.85 + followX, 0.045);
     state.camera.position.y = lerp(state.camera.position.y, followY, 0.05);
-    state.camera.lookAt(0, 0, 0);
+    state.camera.lookAt(1.1, 0, 0);
   });
   return null;
 }
@@ -224,7 +197,7 @@ export function InteractiveHeroScene() {
 
   return (
     <div className="absolute inset-0 z-0">
-      <Canvas camera={{ position: [0.2, 0, 8.8], fov: 52 }} dpr={[1, 1.6]} gl={{ antialias: true, alpha: true }}>
+      <Canvas camera={{ position: [1.2, 0, 8.8], fov: 52 }} dpr={[1, 1.6]} gl={{ antialias: true, alpha: true }}>
         <color attach="background" args={["#030712"]} />
         <fog attach="fog" args={["#020617", 8, 24]} />
 
@@ -238,7 +211,6 @@ export function InteractiveHeroScene() {
         <DomainNodes reducedMotion={reducedMotion} />
         <FlowSignals reducedMotion={reducedMotion} />
         <SemanticSignalHalo intensity={intensity} />
-        <WorkflowLabels />
       </Canvas>
     </div>
   );
