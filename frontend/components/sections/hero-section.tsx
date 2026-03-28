@@ -8,7 +8,7 @@ export function HeroSection() {
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_10%,rgba(56,189,248,0.2),transparent_34%),radial-gradient(circle_at_84%_12%,rgba(59,130,246,0.18),transparent_28%),linear-gradient(180deg,rgba(2,6,23,0.96)_0%,rgba(15,23,42,0.94)_50%,rgba(2,6,23,0.98)_100%)]" />
 
       <div className="container-shell relative grid min-h-[calc(100svh-4rem)] items-center gap-10 lg:grid-cols-[1.06fr_1fr]">
-        <div className="animate-reveal">
+        <div className="animate-reveal [animation-delay:80ms]">
           <p className="inline-flex rounded-full border border-cyan-300/35 bg-slate-900/75 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-cyan-200 shadow-[0_10px_28px_rgba(6,182,212,0.2)]">
             Verified AI Internship Network
           </p>
@@ -44,7 +44,9 @@ export function HeroSection() {
           </div>
         </div>
 
-        <div className="relative animate-reveal">
+        <div className="relative animate-reveal [animation-delay:180ms]">
+          <div className="pointer-events-none absolute -top-5 right-8 h-24 w-24 rounded-full bg-cyan-400/20 blur-3xl" />
+          <div className="pointer-events-none absolute bottom-8 left-10 h-20 w-20 rounded-full bg-indigo-400/20 blur-3xl" />
           <div className="grid-pattern rounded-3xl border border-slate-700/80 bg-slate-900/78 p-6 backdrop-blur-xl shadow-[0_24px_60px_rgba(2,6,23,0.62)]">
             <p className="text-xs font-semibold uppercase tracking-wider text-cyan-200">AI Internship Command Center</p>
             <div className="mt-4 space-y-3">
@@ -61,16 +63,6 @@ export function HeroSection() {
                 <p className="mt-1 text-sm text-slate-300">Track applicants from applied to selected with transparent company-side stages.</p>
               </div>
             </div>
-          </div>
-
-          <div className="pointer-events-none absolute -left-8 top-6 hidden rounded-2xl border border-cyan-400/35 bg-slate-900/85 px-4 py-3 shadow-[0_16px_34px_rgba(6,182,212,0.22)] md:block">
-            <p className="text-[11px] uppercase tracking-[0.2em] text-cyan-200">Resume Score</p>
-            <p className="mt-1 text-xl font-black text-white">84 / 100</p>
-          </div>
-
-          <div className="pointer-events-none absolute -right-8 bottom-8 hidden rounded-2xl border border-indigo-300/35 bg-slate-900/85 px-4 py-3 shadow-[0_16px_34px_rgba(99,102,241,0.28)] md:block">
-            <p className="text-[11px] uppercase tracking-[0.2em] text-indigo-200">Match Confidence</p>
-            <p className="mt-1 text-xl font-black text-white">91%</p>
           </div>
         </div>
       </div>

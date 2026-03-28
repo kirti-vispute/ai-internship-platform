@@ -111,3 +111,20 @@ a {
 .sidebar-surface {
   @apply border-r border-slate-200/80 bg-gradient-to-b from-white to-slate-50/80 dark:border-slate-800 dark:from-slate-950 dark:to-slate-900;
 }
+
+@media (pointer: fine) {
+  .homepage-cinematic,
+  .homepage-cinematic a,
+  .homepage-cinematic button,
+  .homepage-cinematic [role="button"],
+  .homepage-cinematic [data-cursor="interactive"] {
+    cursor: none !important;
+  }
+
+  .homepage-cinematic input,
+  .homepage-cinematic textarea,
+  .homepage-cinematic select,
+  .homepage-cinematic [contenteditable="true"] {
+    cursor: text !important;
+  }
+}
