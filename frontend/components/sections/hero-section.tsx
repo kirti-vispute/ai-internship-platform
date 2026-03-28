@@ -5,13 +5,13 @@ export function HeroSection() {
     <section className="relative z-0 overflow-visible bg-hero pb-16 pt-20 sm:pb-24 sm:pt-24">
       <div className="container-shell grid min-h-[calc(100svh-4rem)] items-center gap-10 lg:grid-cols-[1.1fr_1fr]">
         <div className="animate-reveal">
-          <p className="inline-flex rounded-full border border-primary-100 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-wider text-primary-600 dark:border-primary-500/40 dark:bg-slate-900 dark:text-primary-300">
+          <p className="inline-flex rounded-full border border-primary-200 bg-white/95 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-primary-700 dark:border-primary-500/40 dark:bg-slate-900 dark:text-primary-300">
             AI Internship Platform
           </p>
-          <h1 className="mt-5 text-4xl font-black tracking-tight text-ink dark:text-slate-100 sm:text-5xl lg:text-6xl">
+          <h1 className="mt-5 text-4xl font-black tracking-tight text-slate-900 dark:text-white sm:text-5xl lg:text-6xl">
             Find high-fit internships and hire top talent, faster.
           </h1>
-          <p className="mt-4 max-w-xl text-base text-slate-700 dark:text-slate-200 sm:text-lg">
+          <p className="mt-4 max-w-xl text-base text-slate-700 dark:text-slate-300 sm:text-lg">
             InternAI combines AI-powered matching, skill-gap intelligence, and verified company onboarding to help interns
             grow with clarity and help teams hire with confidence.
           </p>
@@ -24,9 +24,9 @@ export function HeroSection() {
             </Button>
           </div>
           <div className="mt-6 flex flex-wrap gap-2 text-xs text-slate-700 dark:text-slate-200">
-            <span className="rounded-full border border-slate-200 bg-white px-3 py-1 shadow-sm dark:border-slate-700 dark:bg-slate-900">AI internship matching</span>
-            <span className="rounded-full border border-slate-200 bg-white px-3 py-1 shadow-sm dark:border-slate-700 dark:bg-slate-900">Skill gap insights</span>
-            <span className="rounded-full border border-slate-200 bg-white px-3 py-1 shadow-sm dark:border-slate-700 dark:bg-slate-900">Verified company network</span>
+            <span className="rounded-full border border-slate-200 bg-white/95 px-3 py-1 shadow-sm dark:border-slate-700 dark:bg-slate-900">AI internship matching</span>
+            <span className="rounded-full border border-slate-200 bg-white/95 px-3 py-1 shadow-sm dark:border-slate-700 dark:bg-slate-900">Skill gap insights</span>
+            <span className="rounded-full border border-slate-200 bg-white/95 px-3 py-1 shadow-sm dark:border-slate-700 dark:bg-slate-900">Verified company network</span>
           </div>
         </div>
 
