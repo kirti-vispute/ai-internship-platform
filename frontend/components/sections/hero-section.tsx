@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 
-const ThreeHero = dynamic(() => import("@/components/ThreeHero").then((mod) => mod.ThreeHero), {
+const InteractiveHeroScene = dynamic(() => import("@/components/home/InteractiveHeroScene").then((mod) => mod.InteractiveHeroScene), {
   ssr: false,
   loading: () => null
 });
@@ -11,10 +11,11 @@ const ThreeHero = dynamic(() => import("@/components/ThreeHero").then((mod) => m
 export function HeroSection() {
   return (
     <section className="relative z-0 overflow-hidden bg-slate-950 pb-20 pt-24 sm:pb-24 sm:pt-28">
-      <ThreeHero />
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_10%,rgba(56,189,248,0.2),transparent_34%),radial-gradient(circle_at_84%_12%,rgba(59,130,246,0.18),transparent_28%),linear-gradient(180deg,rgba(2,6,23,0.84)_0%,rgba(15,23,42,0.86)_50%,rgba(2,6,23,0.9)_100%)]" />
+      <div className="relative min-h-[700px]">
+        <InteractiveHeroScene />
+        <div className="pointer-events-none absolute inset-0 z-10 bg-[radial-gradient(circle_at_18%_10%,rgba(56,189,248,0.14),transparent_34%),radial-gradient(circle_at_84%_12%,rgba(59,130,246,0.12),transparent_28%),linear-gradient(180deg,rgba(2,6,23,0.32)_0%,rgba(15,23,42,0.48)_50%,rgba(2,6,23,0.64)_100%)]" />
 
-      <div className="container-shell relative grid min-h-[calc(100svh-4rem)] items-center gap-10 lg:grid-cols-[1.06fr_1fr]">
+        <div className="container-shell relative z-20 grid min-h-[700px] items-center gap-10 lg:grid-cols-[1.06fr_1fr]">
         <div className="animate-reveal [animation-delay:80ms]">
           <p className="inline-flex rounded-full border border-cyan-300/35 bg-slate-900/75 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-cyan-200 shadow-[0_10px_28px_rgba(6,182,212,0.2)]">
             Verified AI Internship Network
@@ -72,6 +73,7 @@ export function HeroSection() {
             </div>
           </div>
         </div>
+      </div>
       </div>
     </section>
   );

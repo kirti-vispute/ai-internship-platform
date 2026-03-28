@@ -14,6 +14,8 @@
         "scorer:dev": "npm --prefix ../backend run scorer:dev"
     },
     "dependencies": {
+        "@react-three/drei": "^10.7.7",
+        "@react-three/fiber": "^9.5.0",
         "next": "15.5.7",
         "react": "19.2.1",
         "react-dom": "19.2.1",
