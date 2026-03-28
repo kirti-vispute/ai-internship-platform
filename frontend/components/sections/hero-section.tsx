@@ -23,15 +23,15 @@ export function HeroSection() {
               Join as Company
             </Button>
           </div>
-          <div className="mt-6 flex flex-wrap gap-2 text-xs text-slate-700 dark:text-slate-200">
-            <span className="rounded-full border border-slate-200 bg-white/95 px-3 py-1 shadow-sm dark:border-slate-700 dark:bg-slate-900">AI internship matching</span>
-            <span className="rounded-full border border-slate-200 bg-white/95 px-3 py-1 shadow-sm dark:border-slate-700 dark:bg-slate-900">Skill gap insights</span>
-            <span className="rounded-full border border-slate-200 bg-white/95 px-3 py-1 shadow-sm dark:border-slate-700 dark:bg-slate-900">Verified company network</span>
+          <div className="mt-6 flex flex-wrap gap-2 text-xs">
+            <span className="rounded-full border border-slate-200 bg-white/95 px-3 py-1 text-slate-700 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">AI internship matching</span>
+            <span className="rounded-full border border-slate-200 bg-white/95 px-3 py-1 text-slate-700 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">Skill gap insights</span>
+            <span className="rounded-full border border-slate-200 bg-white/95 px-3 py-1 text-slate-700 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">Verified company network</span>
           </div>
         </div>
 
         <div className="section-glass grid-pattern animate-reveal rounded-3xl p-6 shadow-[0_14px_34px_rgba(15,23,42,0.12)] dark:shadow-[0_18px_40px_rgba(2,6,23,0.55)]">
-          <p className="text-xs font-semibold uppercase tracking-wider text-primary-600 dark:text-primary-300">Platform Journey</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-primary-700 dark:text-primary-200">Platform Journey</p>
           <div className="mt-4 space-y-3">
             <div className="rounded-xl border border-slate-200 bg-white/92 p-4 shadow-[0_8px_20px_rgba(15,23,42,0.08)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_14px_28px_rgba(15,23,42,0.12)] dark:border-slate-700 dark:bg-slate-900/85 dark:shadow-[0_10px_24px_rgba(2,6,23,0.45)]">
               <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Create trusted profiles</p>
