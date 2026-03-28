@@ -1,45 +1,37 @@
-import { whyChoose } from "@/data/dummy";
 import { ScrollReveal } from "@/components/animations/ScrollReveal";
-import { EqualHeightCardGrid } from "@/components/home/EqualHeightCardGrid";
-import { SectionAnimator } from "@/components/home/SectionAnimator";
+import { EqualHeightCardGrid, type GridItem } from "@/components/home/EqualHeightCardGrid";
 
-const whyChooseCards = whyChoose.map((reason) => {
-  const parts = reason.split(" that ");
-  if (parts.length > 1) {
-    return {
-      title: parts[0],
-      description: `That ${parts.slice(1).join(" that ")}`
-    };
+const whyInternAIItems: GridItem[] = [
+  {
+    title: "Role-based dashboards",
+    description: "Dedicated intern and company workspaces keep every action contextual, focused, and easy to track.",
+    accent: "cyan"
+  },
+  {
+    title: "Verification-first trust layer",
+    description: "Company verification and transparent workflow states build reliability into every internship interaction.",
+    accent: "blue"
+  },
+  {
+    title: "Continuous AI insights",
+    description: "Resume, skill, and application intelligence keep improving recommendations across the full hiring journey.",
+    accent: "indigo"
   }
-
-  const words = reason.split(" ");
-  return {
-    title: words.slice(0, 3).join(" "),
-    description: words.slice(3).join(" ")
-  };
-});
+];
 
 export function WhyChooseSection() {
   return (
-    <section className="pb-16 sm:pb-20">
-      <div className="container-shell rounded-3xl border border-slate-200 bg-white/92 p-6 shadow-[0_20px_44px_rgba(15,23,42,0.14)] dark:border-slate-700 dark:bg-slate-900/82 dark:shadow-[0_20px_48px_rgba(2,6,23,0.55)] sm:p-8">
-        <SectionAnimator revealVariant="tilt-rise" distance={20} parallax={8}>
-          <h2 className="text-3xl font-black tracking-tight text-slate-900 dark:text-slate-100 sm:text-4xl">
-            Why InternAI stands out
-          </h2>
-          <p className="mt-2 max-w-2xl text-sm text-slate-700 dark:text-slate-200">
-            Designed for real internship conversion outcomes, not just dashboard visuals.
+    <section className="py-20 sm:py-24">
+      <div className="container-shell">
+        <ScrollReveal variant="slide-right" distance={18} className="max-w-3xl">
+          <h2 className="text-3xl font-black tracking-tight text-slate-900 dark:text-slate-100 sm:text-4xl">Why InternAI stands out</h2>
+          <p className="mt-3 text-sm leading-6 text-slate-700 dark:text-slate-300 sm:text-base">
+            Built for outcome-focused internship matching with consistency, trust, and intelligent iteration.
           </p>
-        </SectionAnimator>
+        </ScrollReveal>
 
-        <ScrollReveal className="mt-5" variant="stagger-children" delayMs={120} staggerMs={90} distance={16}>
-          <EqualHeightCardGrid
-            items={whyChooseCards.map((item, index) => ({
-              title: item.title,
-              description: item.description,
-              accent: index === 1 ? "blue" : "indigo"
-            }))}
-          />
+        <ScrollReveal className="mt-8" variant="stagger-children" delayMs={100} staggerMs={90} distance={14}>
+          <EqualHeightCardGrid items={whyInternAIItems} minHeightClassName="min-h-[210px]" gridClassName="md:grid-cols-3" />
         </ScrollReveal>
       </div>
     </section>

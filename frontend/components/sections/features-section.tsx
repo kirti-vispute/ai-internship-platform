@@ -1,33 +1,27 @@
 import { ScrollReveal } from "@/components/animations/ScrollReveal";
 import { EqualHeightCardGrid } from "@/components/home/EqualHeightCardGrid";
-import { SectionAnimator } from "@/components/home/SectionAnimator";
 import { features } from "@/data/dummy";
 
 export function FeaturesSection() {
   return (
-    <section className="py-16 sm:py-20">
+    <section className="py-20 sm:py-24">
       <div className="container-shell">
-        <SectionAnimator className="flex flex-wrap items-end justify-between gap-3" revealVariant="slide-left" parallax={10} distance={18}>
-          <div>
-            <h2 className="text-3xl font-black tracking-tight text-slate-900 dark:text-slate-100 sm:text-4xl">
-              Product intelligence built for career outcomes
-            </h2>
-            <p className="mt-2 max-w-2xl text-slate-700 dark:text-slate-200">
-              Each module is designed to improve internship discovery, candidate quality, and hiring speed.
-            </p>
-          </div>
-          <p className="rounded-full border border-primary-100 bg-primary-50 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-primary-700 dark:border-primary-500/40 dark:bg-primary-900/20 dark:text-primary-300">
-            Core Capabilities
+        <ScrollReveal variant="fade-up" distance={16} className="max-w-3xl">
+          <h2 className="text-3xl font-black tracking-tight text-slate-900 dark:text-slate-100 sm:text-4xl">Product Capabilities</h2>
+          <p className="mt-3 text-sm leading-6 text-slate-700 dark:text-slate-300 sm:text-base">
+            Core platform intelligence that improves candidate readiness and internship hiring outcomes.
           </p>
-        </SectionAnimator>
+        </ScrollReveal>
 
-        <ScrollReveal className="mt-5" variant="stagger-children" delayMs={110} distance={14} staggerMs={90}>
+        <ScrollReveal className="mt-8" variant="stagger-children" delayMs={100} distance={14} staggerMs={90}>
           <EqualHeightCardGrid
             items={features.map((item, index) => ({
               title: item.title,
               description: item.description,
-              accent: index % 2 === 0 ? "cyan" : "indigo"
+              accent: index === 2 ? "emerald" : index % 2 === 0 ? "cyan" : "indigo"
             }))}
+            minHeightClassName="min-h-[210px]"
+            gridClassName="md:grid-cols-3"
           />
         </ScrollReveal>
       </div>

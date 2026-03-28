@@ -21,23 +21,25 @@ const liveHiringItems: GridItem[] = [
 
 export function LiveHiringSection() {
   return (
-    <section className="pb-12 pt-1 sm:pb-16 sm:pt-2">
+    <section className="py-20 sm:py-24">
       <div className="container-shell">
-        <div className="relative overflow-hidden rounded-3xl border border-slate-200/85 bg-white/92 p-6 shadow-[0_18px_44px_rgba(15,23,42,0.12)] dark:border-slate-700 dark:bg-slate-900/82 dark:shadow-[0_22px_48px_rgba(2,6,23,0.55)] sm:p-8">
-          <div className="pointer-events-none absolute -right-16 -top-14 h-44 w-44 rounded-full bg-cyan-300/24 blur-3xl dark:bg-cyan-500/14" />
-          <div className="pointer-events-none absolute -left-12 bottom-0 h-36 w-36 rounded-full bg-indigo-300/22 blur-3xl dark:bg-indigo-500/14" />
+        <ScrollReveal variant="fade-up" distance={16} className="max-w-3xl">
+          <h2 className="text-3xl font-black tracking-tight text-slate-900 dark:text-slate-100 sm:text-4xl">
+            Live Hiring Intelligence
+          </h2>
+          <p className="mt-3 text-sm leading-6 text-slate-700 dark:text-slate-300 sm:text-base">
+            Real-time AI modules that evaluate, guide, and accelerate internship hiring.
+          </p>
+        </ScrollReveal>
 
-          <div className="relative z-10 max-w-3xl">
-            <h2 className="text-3xl font-black tracking-tight text-slate-900 dark:text-slate-100 sm:text-4xl">Live Hiring Intelligence</h2>
-            <p className="mt-3 text-sm leading-6 text-slate-700 dark:text-slate-300 sm:text-base">
-              Real-time AI modules for resume scoring, skill-gap mapping, and verified hiring workflows.
-            </p>
-          </div>
-
-          <ScrollReveal variant="stagger-children" delayMs={70} staggerMs={90} className="relative z-10 mt-6" distance={12}>
-            <EqualHeightCardGrid items={liveHiringItems} />
-          </ScrollReveal>
-        </div>
+        <ScrollReveal variant="stagger-children" delayMs={90} staggerMs={90} className="mt-8" distance={12}>
+          <EqualHeightCardGrid
+            items={liveHiringItems}
+            minHeightClassName="min-h-[210px]"
+            gridClassName="md:grid-cols-3"
+            cardClassName="rounded-2xl"
+          />
+        </ScrollReveal>
       </div>
     </section>
   );
