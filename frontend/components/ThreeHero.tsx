@@ -30,6 +30,10 @@ export function ThreeHero() {
       const moduleGroup = new THREE.Group();
       core.add(moduleGroup);
 
+      const networkGroup = new THREE.Group();
+      networkGroup.position.set(0, 0, -1.8);
+      core.add(networkGroup);
+
       const internNode = new THREE.Mesh(
         new THREE.SphereGeometry(0.45, 20, 20),
         new THREE.MeshBasicMaterial({ color: "#22d3ee" })
@@ -84,6 +88,49 @@ export function ThreeHero() {
       );
       pulseOrb.position.copy(aiNode.position);
       core.add(pulseOrb);
+
+      const networkNodeCount = 72;
+      const networkPositions = new Float32Array(networkNodeCount * 3);
+      const networkVelocities = new Float32Array(networkNodeCount * 3);
+      for (let i = 0; i < networkNodeCount; i += 1) {
+        const i3 = i * 3;
+        networkPositions[i3] = (Math.random() - 0.5) * 22;
+        networkPositions[i3 + 1] = (Math.random() - 0.5) * 13;
+        networkPositions[i3 + 2] = (Math.random() - 0.5) * 4;
+        networkVelocities[i3] = (Math.random() - 0.5) * 0.015;
+        networkVelocities[i3 + 1] = (Math.random() - 0.5) * 0.015;
+        networkVelocities[i3 + 2] = (Math.random() - 0.5) * 0.005;
+      }
+
+      const networkGeometry = new THREE.BufferGeometry();
+      const networkPositionAttr = new THREE.BufferAttribute(networkPositions, 3);
+      networkGeometry.setAttribute("position", networkPositionAttr);
+      const networkPoints = new THREE.Points(
+        networkGeometry,
+        new THREE.PointsMaterial({
+          color: "#67e8f9",
+          size: 0.08,
+          transparent: true,
+          opacity: 0.9
+        })
+      );
+      networkGroup.add(networkPoints);
+
+      const maxNetworkSegments = networkNodeCount * 6;
+      const networkLinePositions = new Float32Array(maxNetworkSegments * 2 * 3);
+      const networkLineGeometry = new THREE.BufferGeometry();
+      const networkLineAttr = new THREE.BufferAttribute(networkLinePositions, 3);
+      networkLineGeometry.setAttribute("position", networkLineAttr);
+      networkLineGeometry.setDrawRange(0, 0);
+      const networkLines = new THREE.LineSegments(
+        networkLineGeometry,
+        new THREE.LineBasicMaterial({
+          color: "#38bdf8",
+          transparent: true,
+          opacity: 0.2
+        })
+      );
+      networkGroup.add(networkLines);
 
       const curveA = new THREE.CatmullRomCurve3([
         internNode.position.clone(),
@@ -208,6 +255,52 @@ export function ThreeHero() {
 
         bgParticles.rotation.z += 0.00033;
 
+        const pullX = mouse.x * 0.0018;
+        const pullY = mouse.y * 0.0015;
+        for (let i = 0; i < networkNodeCount; i += 1) {
+          const i3 = i * 3;
+          networkVelocities[i3] += pullX;
+          networkVelocities[i3 + 1] += pullY;
+
+          networkPositions[i3] += networkVelocities[i3];
+          networkPositions[i3 + 1] += networkVelocities[i3 + 1];
+          networkPositions[i3 + 2] += networkVelocities[i3 + 2];
+
+          networkVelocities[i3] *= 0.985;
+          networkVelocities[i3 + 1] *= 0.985;
+          networkVelocities[i3 + 2] *= 0.985;
+
+          if (networkPositions[i3] > 11 || networkPositions[i3] < -11) networkVelocities[i3] *= -1;
+          if (networkPositions[i3 + 1] > 7 || networkPositions[i3 + 1] < -7) networkVelocities[i3 + 1] *= -1;
+          if (networkPositions[i3 + 2] > 2.5 || networkPositions[i3 + 2] < -2.5) networkVelocities[i3 + 2] *= -1;
+        }
+        networkPositionAttr.needsUpdate = true;
+
+        let segmentCursor = 0;
+        const linkDistance = 2.8;
+        for (let i = 0; i < networkNodeCount; i += 1) {
+          const i3 = i * 3;
+          for (let j = i + 1; j < networkNodeCount; j += 1) {
+            const j3 = j * 3;
+            const dx = networkPositions[i3] - networkPositions[j3];
+            const dy = networkPositions[i3 + 1] - networkPositions[j3 + 1];
+            const dz = networkPositions[i3 + 2] - networkPositions[j3 + 2];
+            const d = Math.sqrt(dx * dx + dy * dy + dz * dz);
+            if (d < linkDistance && segmentCursor < maxNetworkSegments) {
+              const offset = segmentCursor * 6;
+              networkLinePositions[offset] = networkPositions[i3];
+              networkLinePositions[offset + 1] = networkPositions[i3 + 1];
+              networkLinePositions[offset + 2] = networkPositions[i3 + 2];
+              networkLinePositions[offset + 3] = networkPositions[j3];
+              networkLinePositions[offset + 4] = networkPositions[j3 + 1];
+              networkLinePositions[offset + 5] = networkPositions[j3 + 2];
+              segmentCursor += 1;
+            }
+          }
+        }
+        networkLineAttr.needsUpdate = true;
+        networkLineGeometry.setDrawRange(0, segmentCursor * 2);
+
         for (const item of flowParticles) {
           const t = (item.offset + elapsed * item.speed) % 1;
           item.mesh.position.copy(item.curve.getPointAt(t));
@@ -229,6 +322,10 @@ export function ThreeHero() {
         pathGeoB.dispose();
         pathMatA.dispose();
         pathMatB.dispose();
+        networkGeometry.dispose();
+        networkLineGeometry.dispose();
+        (networkPoints.material as { dispose?: () => void }).dispose?.();
+        (networkLines.material as { dispose?: () => void }).dispose?.();
         bgParticleGeometry.dispose();
         (bgParticles.material as { dispose?: () => void }).dispose?.();
 
@@ -255,5 +352,5 @@ export function ThreeHero() {
     };
   }, []);
 
-  return <div ref={mountRef} className="absolute inset-0 -z-10 opacity-95" aria-hidden="true" />;
+  return <div ref={mountRef} className="pointer-events-none absolute inset-0 z-0 opacity-95" aria-hidden="true" />;
 }
