@@ -21,37 +21,37 @@ const workflowModules: Array<{
     id: "resume-upload",
     label: "Resume Upload",
     detail: "Student profile enters the AI system.",
-    className: "left-[5%] top-[14%]"
+    className: "left-[3%] top-[20%]"
   },
   {
     id: "ai-engine",
     label: "AI Engine",
     detail: "Model analyzes resume structure and fit.",
-    className: "left-[39%] top-[43%]"
+    className: "left-[41%] top-[44%]"
   },
   {
     id: "resume-score",
     label: "Resume Score",
     detail: "Strength score and ATS signal generated.",
-    className: "right-[10%] top-[11%]"
+    className: "right-[8%] top-[11%]"
   },
   {
     id: "skill-gap",
     label: "Skill Gap",
     detail: "Missing skills mapped for target roles.",
-    className: "right-[4%] top-[33%]"
+    className: "right-[2%] top-[34%]"
   },
   {
     id: "verified-match",
     label: "Verified Match",
     detail: "Only trusted company matches are surfaced.",
-    className: "right-[6%] top-[55%]"
+    className: "right-[3%] top-[56%]"
   },
   {
     id: "hiring-pipeline",
     label: "Hiring Pipeline",
     detail: "Applications move through real-time stages.",
-    className: "bottom-[11%] right-[14%]"
+    className: "bottom-[12%] right-[11%]"
   }
 ];
 
@@ -62,7 +62,7 @@ export function HeroSection() {
     <section className="relative z-0 overflow-hidden bg-slate-950 pb-16 pt-24 sm:pb-20 sm:pt-28">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_8%,rgba(56,189,248,0.16),transparent_34%),radial-gradient(circle_at_82%_16%,rgba(99,102,241,0.14),transparent_32%),linear-gradient(180deg,rgba(2,6,23,0.2)_0%,rgba(15,23,42,0.3)_52%,rgba(2,6,23,0.5)_100%)]" />
 
-      <div className="container-shell relative z-20 grid min-h-[700px] items-center gap-8 py-6 lg:grid-cols-[1fr_1.02fr] lg:gap-10">
+      <div className="container-shell relative z-20 grid min-h-[700px] items-center gap-8 py-6 lg:grid-cols-[1fr_1.08fr] lg:gap-8">
         <motion.div
           initial={{ opacity: 0, y: 24, filter: "blur(8px)" }}
           whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
@@ -110,10 +110,10 @@ export function HeroSection() {
           whileInView={{ opacity: 1, x: 0, scale: 1 }}
           viewport={{ once: true, amount: 0.3 }}
           transition={{ duration: 0.95, ease: [0.22, 1, 0.36, 1], delay: 0.08 }}
-          className="relative h-[440px] overflow-hidden rounded-3xl border border-slate-700/70 bg-slate-950/75 shadow-[0_30px_70px_rgba(2,6,23,0.6)] sm:h-[500px] lg:h-[560px]"
+          className="relative h-[460px] sm:h-[540px] lg:h-[620px]"
         >
           <HeroScene activeModule={activeModule} />
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_12%,rgba(125,211,252,0.16),transparent_35%),radial-gradient(circle_at_78%_86%,rgba(129,140,248,0.14),transparent_36%)]" />
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_24%_18%,rgba(125,211,252,0.1),transparent_44%),radial-gradient(circle_at_82%_78%,rgba(129,140,248,0.1),transparent_40%)]" />
 
           <div className="absolute inset-0 z-20 hidden lg:block">
             {workflowModules.map((module) => {
@@ -126,8 +126,8 @@ export function HeroSection() {
                   onMouseLeave={() => setActiveModule(null)}
                   className={`group absolute max-w-[170px] rounded-2xl border px-3 py-2 text-left backdrop-blur-md transition-all duration-300 ${module.className} ${
                     isActive
-                      ? "border-cyan-300/70 bg-slate-900/86 shadow-[0_18px_36px_rgba(34,211,238,0.3)]"
-                      : "border-slate-500/40 bg-slate-900/65 shadow-[0_12px_28px_rgba(2,6,23,0.42)]"
+                      ? "border-cyan-300/70 bg-slate-900/80 shadow-[0_18px_34px_rgba(34,211,238,0.28)]"
+                      : "border-slate-500/40 bg-slate-900/56 shadow-[0_12px_24px_rgba(2,6,23,0.36)]"
                   }`}
                 >
                   <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-cyan-200">{module.label}</p>

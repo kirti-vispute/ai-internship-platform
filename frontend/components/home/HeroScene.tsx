@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Line } from "@react-three/drei";
 import * as THREE from "three";
 
@@ -25,20 +25,20 @@ type FlowLink = {
 };
 
 const nodePositions: Record<WorkflowModule, THREE.Vector3> = {
-  "resume-upload": new THREE.Vector3(-3.15, 0.5, 0.2),
-  "ai-engine": new THREE.Vector3(-0.45, 0.05, 0),
-  "resume-score": new THREE.Vector3(2.35, 1.55, 0.14),
-  "skill-gap": new THREE.Vector3(3, 0.62, 0.1),
-  "verified-match": new THREE.Vector3(3.05, -0.35, 0.08),
-  "hiring-pipeline": new THREE.Vector3(2.25, -1.45, 0.12)
+  "resume-upload": new THREE.Vector3(-2.6, 0.46, 0.14),
+  "ai-engine": new THREE.Vector3(-0.2, 0.02, 0),
+  "resume-score": new THREE.Vector3(2.05, 1.18, 0.12),
+  "skill-gap": new THREE.Vector3(2.55, 0.36, 0.1),
+  "verified-match": new THREE.Vector3(2.55, -0.48, 0.1),
+  "hiring-pipeline": new THREE.Vector3(1.95, -1.28, 0.12)
 };
 
 const links: FlowLink[] = [
   { id: "resume-ai", from: "resume-upload", to: "ai-engine", lift: 0.55 },
-  { id: "ai-score", from: "ai-engine", to: "resume-score", lift: 0.34 },
-  { id: "ai-skill", from: "ai-engine", to: "skill-gap", lift: 0.22 },
+  { id: "ai-score", from: "ai-engine", to: "resume-score", lift: 0.3 },
+  { id: "ai-skill", from: "ai-engine", to: "skill-gap", lift: 0.18 },
   { id: "ai-verified", from: "ai-engine", to: "verified-match", lift: 0.05 },
-  { id: "verified-pipeline", from: "verified-match", to: "hiring-pipeline", lift: -0.3 }
+  { id: "verified-pipeline", from: "verified-match", to: "hiring-pipeline", lift: -0.2 }
 ];
 
 function lerp(a: number, b: number, t: number) {
@@ -325,6 +325,7 @@ function FlowMap({
   reducedMotion: boolean;
   activeModule?: WorkflowModule | null;
 }) {
+  const { size } = useThree();
   const groupRef = useRef<THREE.Group>(null);
   const lineMaterials = useRef<THREE.Material[]>([]);
   const particleRefs = useRef<THREE.Mesh[]>([]);
@@ -344,11 +345,15 @@ function FlowMap({
   );
 
   useFrame((state, delta) => {
+    const targetScale = size.width < 640 ? 0.7 : size.width < 1024 ? 0.82 : 0.92;
     const px = state.pointer.x;
     const py = state.pointer.y;
     const proximity = Math.max(0, 1 - Math.min(1, Math.hypot(px * 0.92, py) / 0.74));
 
     if (groupRef.current) {
+      groupRef.current.scale.x = lerp(groupRef.current.scale.x, targetScale, 0.05);
+      groupRef.current.scale.y = lerp(groupRef.current.scale.y, targetScale, 0.05);
+      groupRef.current.scale.z = lerp(groupRef.current.scale.z, targetScale, 0.05);
       groupRef.current.rotation.y = lerp(groupRef.current.rotation.y, px * 0.18, 0.045);
       groupRef.current.rotation.x = lerp(groupRef.current.rotation.x, py * 0.1, 0.045);
       groupRef.current.position.y = lerp(
@@ -358,9 +363,9 @@ function FlowMap({
       );
     }
 
-    state.camera.position.x = lerp(state.camera.position.x, px * 0.45, 0.04);
-    state.camera.position.y = lerp(state.camera.position.y, py * 0.25, 0.04);
-    state.camera.lookAt(0.75, 0.02, 0);
+    state.camera.position.x = lerp(state.camera.position.x, px * 0.35, 0.04);
+    state.camera.position.y = lerp(state.camera.position.y, py * 0.2, 0.04);
+    state.camera.lookAt(0.45, 0, 0);
 
     lineMaterials.current.forEach((material, idx) => {
       const lineMaterial = material as THREE.Material & { opacity?: number; color?: THREE.Color };
@@ -459,9 +464,8 @@ export function HeroScene({ activeModule = null }: HeroSceneProps) {
 
   return (
     <div className="absolute inset-0 z-0">
-      <Canvas camera={{ position: [0.2, 0.08, 8.6], fov: 45 }} dpr={[1, 1.8]} gl={{ antialias: true, alpha: true }}>
-        <color attach="background" args={["#020617"]} />
-        <fog attach="fog" args={["#020617", 7, 18]} />
+      <Canvas camera={{ position: [0.05, 0.02, 8.8], fov: 46 }} dpr={[1, 1.8]} gl={{ antialias: true, alpha: true }}>
+        <fog attach="fog" args={["#020617", 8, 18]} />
         <SceneLights />
         <FlowMap reducedMotion={reducedMotion} activeModule={activeModule} />
       </Canvas>
