@@ -27,17 +27,14 @@ export function LiveHiringSection() {
           <div className="pointer-events-none absolute -right-16 -top-14 h-44 w-44 rounded-full bg-cyan-300/24 blur-3xl dark:bg-cyan-500/14" />
           <div className="pointer-events-none absolute -left-12 bottom-0 h-36 w-36 rounded-full bg-indigo-300/22 blur-3xl dark:bg-indigo-500/14" />
 
-          <ScrollReveal variant="clip-reveal" className="relative z-10 max-w-3xl" distance={20}>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary-600 dark:text-primary-300">Live Hiring Intelligence</p>
-            <h2 className="mt-3 text-3xl font-black tracking-tight text-slate-900 dark:text-slate-100 sm:text-4xl">
-              Real-time modules for scoring, skill mapping, and verified hiring workflows.
-            </h2>
-            <p className="mt-3 text-sm leading-6 text-slate-700 dark:text-slate-300">
-              A clean control layer connecting intern readiness signals to trusted company matching and hiring pipeline outcomes.
+          <div className="relative z-10 max-w-3xl">
+            <h2 className="text-3xl font-black tracking-tight text-slate-900 dark:text-slate-100 sm:text-4xl">Live Hiring Intelligence</h2>
+            <p className="mt-3 text-sm leading-6 text-slate-700 dark:text-slate-300 sm:text-base">
+              Real-time AI modules for resume scoring, skill-gap mapping, and verified hiring workflows.
             </p>
-          </ScrollReveal>
+          </div>
 
-          <ScrollReveal variant="stagger-children" delayMs={70} staggerMs={90} className="relative z-10 mt-2" distance={12}>
+          <ScrollReveal variant="stagger-children" delayMs={70} staggerMs={90} className="relative z-10 mt-6" distance={12}>
             <EqualHeightCardGrid items={liveHiringItems} />
           </ScrollReveal>
         </div>
