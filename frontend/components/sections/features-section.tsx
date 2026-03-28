@@ -25,7 +25,6 @@ export function FeaturesSection() {
           {features.map((item) => (
             <div key={item.title}>
               <Card className="group">
-                <p className="text-xs font-semibold uppercase tracking-wider text-primary-600 dark:text-primary-300">Module</p>
                 <h3 className="mt-2 text-lg font-bold text-slate-900 dark:text-slate-100">{item.title}</h3>
                 <p className="mt-2 text-sm text-slate-700 dark:text-slate-300">{item.description}</p>
                 <div className="mt-4 h-1.5 rounded-full bg-slate-100 dark:bg-slate-700">

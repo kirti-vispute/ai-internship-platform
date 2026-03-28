@@ -24,7 +24,7 @@ const commandItems = [
 export function CommandCenterPanel() {
   return (
     <ScrollReveal variant="stagger-children" className="grid gap-4 md:grid-cols-3" staggerMs={90}>
-      {commandItems.map((item) => (
+      {commandItems.map((item, index) => (
         <TiltCard
           key={item.title}
           className={
@@ -33,7 +33,17 @@ export function CommandCenterPanel() {
               : "bg-gradient-to-b from-white to-slate-50 p-5 dark:from-slate-900 dark:to-slate-900/80"
           }
         >
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary-700 dark:text-primary-300">Live Module</p>
+          <div className="mb-3 flex items-center justify-end">
+            <span
+              className={
+                index === 0
+                  ? "h-2.5 w-2.5 rounded-full bg-cyan-500/80"
+                  : index === 1
+                    ? "h-2.5 w-2.5 rounded-full bg-blue-500/80"
+                    : "h-2.5 w-2.5 rounded-full bg-indigo-500/80"
+              }
+            />
+          </div>
           <h3 className="mt-2 text-lg font-bold leading-tight text-slate-900 dark:text-slate-100">{item.title}</h3>
           <p className="mt-2 text-sm leading-6 text-slate-700 dark:text-slate-300">{item.body}</p>
         </TiltCard>

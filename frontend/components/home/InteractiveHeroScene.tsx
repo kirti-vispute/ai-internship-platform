@@ -197,46 +197,152 @@ function DomainNodes({ reducedMotion }: { reducedMotion: boolean }) {
       </Float>
 
       {moduleNodes.map((module, index) => (
-        <mesh key={module.key} position={module.position}>
-          <boxGeometry args={[1.34, 0.5, 0.16]} />
-          <meshPhysicalMaterial
-            color={index % 2 === 0 ? palette.moduleA : palette.moduleB}
-            emissive="#0c4a6e"
-            emissiveIntensity={0.38}
-            roughness={0.22}
-            metalness={0.58}
-            clearcoat={0.64}
-            transparent
-            opacity={0.95}
-          />
-        </mesh>
+        <group key={module.key} position={module.position}>
+          <mesh>
+            <boxGeometry args={[1.34, 0.46, 0.14]} />
+            <meshPhysicalMaterial
+              color={index % 2 === 0 ? palette.moduleA : palette.moduleB}
+              emissive="#0c4a6e"
+              emissiveIntensity={0.35}
+              roughness={0.22}
+              metalness={0.58}
+              clearcoat={0.64}
+              transparent
+              opacity={0.95}
+            />
+          </mesh>
+
+          {module.key === "resume-score" && (
+            <group position={[-0.36, 0.03, 0.09]}>
+              <mesh position={[0, 0.1, 0]}>
+                <boxGeometry args={[0.42, 0.05, 0.02]} />
+                <meshBasicMaterial color="#e0f2fe" />
+              </mesh>
+              <mesh position={[0, 0, 0]}>
+                <boxGeometry args={[0.42, 0.05, 0.02]} />
+                <meshBasicMaterial color="#bae6fd" />
+              </mesh>
+              <mesh position={[0, -0.1, 0]}>
+                <boxGeometry args={[0.28, 0.05, 0.02]} />
+                <meshBasicMaterial color="#7dd3fc" />
+              </mesh>
+            </group>
+          )}
+
+          {module.key === "skill-gap" && (
+            <group position={[-0.34, 0, 0.09]}>
+              <mesh position={[0, 0.11, 0]}>
+                <boxGeometry args={[0.46, 0.06, 0.02]} />
+                <meshBasicMaterial color="#e0f2fe" />
+              </mesh>
+              <mesh position={[0, 0, 0]}>
+                <boxGeometry args={[0.3, 0.06, 0.02]} />
+                <meshBasicMaterial color="#facc15" />
+              </mesh>
+              <mesh position={[0, -0.11, 0]}>
+                <boxGeometry args={[0.46, 0.06, 0.02]} />
+                <meshBasicMaterial color="#93c5fd" />
+              </mesh>
+            </group>
+          )}
+
+          {module.key === "verified-company" && (
+            <group position={[0.28, 0, 0.1]}>
+              <mesh>
+                <cylinderGeometry args={[0.11, 0.11, 0.24, 6]} />
+                <meshBasicMaterial color="#86efac" />
+              </mesh>
+              <mesh position={[0, -0.14, 0]}>
+                <boxGeometry args={[0.26, 0.03, 0.02]} />
+                <meshBasicMaterial color="#dcfce7" />
+              </mesh>
+            </group>
+          )}
+
+          {module.key === "hiring-workflow" && (
+            <group position={[-0.25, 0, 0.09]}>
+              <mesh position={[-0.2, 0, 0]}>
+                <boxGeometry args={[0.12, 0.12, 0.02]} />
+                <meshBasicMaterial color="#dbeafe" />
+              </mesh>
+              <mesh position={[0, 0, 0]}>
+                <boxGeometry args={[0.12, 0.12, 0.02]} />
+                <meshBasicMaterial color="#93c5fd" />
+              </mesh>
+              <mesh position={[0.2, 0, 0]}>
+                <boxGeometry args={[0.12, 0.12, 0.02]} />
+                <meshBasicMaterial color="#60a5fa" />
+              </mesh>
+            </group>
+          )}
+
+          {module.key === "recommendation-confidence" && (
+            <group position={[0.23, 0, 0.09]}>
+              <mesh>
+                <cylinderGeometry args={[0.12, 0.12, 0.03, 24]} />
+                <meshBasicMaterial color="#a5b4fc" />
+              </mesh>
+              <mesh position={[0, 0, 0.02]}>
+                <cylinderGeometry args={[0.07, 0.07, 0.02, 24]} />
+                <meshBasicMaterial color="#c4b5fd" />
+              </mesh>
+            </group>
+          )}
+
+          {module.key === "application-progress" && (
+            <group position={[-0.3, -0.01, 0.09]}>
+              <mesh position={[-0.16, 0, 0]}>
+                <boxGeometry args={[0.12, 0.08, 0.02]} />
+                <meshBasicMaterial color="#dbeafe" />
+              </mesh>
+              <mesh position={[-0.01, 0, 0]}>
+                <boxGeometry args={[0.12, 0.08, 0.02]} />
+                <meshBasicMaterial color="#93c5fd" />
+              </mesh>
+              <mesh position={[0.14, 0, 0]}>
+                <boxGeometry args={[0.12, 0.08, 0.02]} />
+                <meshBasicMaterial color="#2563eb" />
+              </mesh>
+            </group>
+          )}
+        </group>
       ))}
     </group>
   );
 }
 
-function SemanticGlowLayers({ intensity }: { intensity: number }) {
-  const haloGroupRef = useRef<THREE.Group>(null);
+function WorkflowAccents({ intensity }: { intensity: number }) {
+  const accentsRef = useRef<THREE.Group>(null);
 
-  useFrame((state, delta) => {
-    if (!haloGroupRef.current) return;
-    haloGroupRef.current.rotation.y += delta * 0.1;
-    haloGroupRef.current.rotation.x = lerp(haloGroupRef.current.rotation.x, state.pointer.y * 0.04, 0.03);
+  useFrame((state) => {
+    if (!accentsRef.current) return;
+    accentsRef.current.children.forEach((child, index) => {
+      const phase = state.clock.elapsedTime * 0.55 + index * 0.7;
+      child.position.y += Math.sin(phase) * 0.0009;
+    });
   });
 
   return (
-    <group ref={haloGroupRef} position={[1.4, 0.2, -1.3]}>
-      <mesh position={[0.95, -0.28, 0]}>
-        <torusGeometry args={[0.88, 0.022, 12, 100]} />
+    <group ref={accentsRef}>
+      <mesh position={[1.35, -0.4, -1.25]}>
+        <boxGeometry args={[1.1, 0.02, 0.02]} />
         <meshBasicMaterial color="#22d3ee" transparent opacity={0.18 + intensity * 0.06} />
       </mesh>
-      <mesh position={[2.58, 0.56, -0.05]}>
-        <torusGeometry args={[0.74, 0.018, 12, 100]} />
-        <meshBasicMaterial color="#60a5fa" transparent opacity={0.16 + intensity * 0.06} />
+      <mesh position={[3.05, 0.45, -1.18]}>
+        <boxGeometry args={[1.25, 0.02, 0.02]} />
+        <meshBasicMaterial color="#60a5fa" transparent opacity={0.18 + intensity * 0.06} />
       </mesh>
-      <mesh position={[4.05, -1.52, 0.08]}>
-        <torusGeometry args={[0.8, 0.018, 12, 100]} />
-        <meshBasicMaterial color="#7dd3fc" transparent opacity={0.14 + intensity * 0.06} />
+      <mesh position={[4.7, -1.2, -1.1]}>
+        <boxGeometry args={[1.05, 0.02, 0.02]} />
+        <meshBasicMaterial color="#7dd3fc" transparent opacity={0.16 + intensity * 0.06} />
+      </mesh>
+      <mesh position={[2.2, 1.95, -1.05]}>
+        <sphereGeometry args={[0.09, 14, 14]} />
+        <meshBasicMaterial color="#22d3ee" transparent opacity={0.34 + intensity * 0.08} />
+      </mesh>
+      <mesh position={[5.2, 0.15, -1]}>
+        <sphereGeometry args={[0.085, 14, 14]} />
+        <meshBasicMaterial color="#86efac" transparent opacity={0.34 + intensity * 0.08} />
       </mesh>
     </group>
   );
@@ -299,9 +405,8 @@ export function InteractiveHeroScene() {
         <DomainNodes reducedMotion={reducedMotion} />
         <FlowSignals reducedMotion={reducedMotion} />
         <ArcSignals reducedMotion={reducedMotion} />
-        <SemanticGlowLayers intensity={intensity} />
+        <WorkflowAccents intensity={intensity} />
       </Canvas>
     </div>
   );
 }
-

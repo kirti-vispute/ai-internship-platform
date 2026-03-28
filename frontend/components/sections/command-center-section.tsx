@@ -12,9 +12,9 @@ export function CommandCenterSection() {
 
           <SectionAnimator className="relative z-10 max-w-3xl" revealVariant="clip-reveal" parallax={12} distance={22}>
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary-600 dark:text-primary-300">AI Internship Command Center</p>
-            <h2 className="mt-3 text-3xl font-black tracking-tight text-slate-900 dark:text-slate-100 sm:text-4xl">Live Hiring Intelligence</h2>
+            <h2 className="mt-3 text-3xl font-black tracking-tight text-slate-900 dark:text-slate-100 sm:text-4xl">Live Hiring Intelligence Layer</h2>
             <p className="mt-3 text-sm leading-6 text-slate-700 dark:text-slate-300">
-              Actionable intelligence for resume quality, skill readiness, and verified hiring workflows without cluttering the hero experience.
+              Actionable intelligence for resume quality, skill readiness, recommendation confidence, and verified hiring workflows.
             </p>
           </SectionAnimator>
 
