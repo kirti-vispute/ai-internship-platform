@@ -1,27 +1,27 @@
-﻿export type FeatureItem = {
+export type FeatureItem = {
   title: string;
   description: string;
 };
 
 export const features: FeatureItem[] = [
   {
-    title: "Precision Matching Engine",
-    description: "Map intern capability, resume quality, and role requirements to surface high-fit opportunities in seconds."
+    title: "AI-Powered Match Graph",
+    description: "Evaluate internship fit using resume signals, skills, role priorities, and hiring context in one ranking engine."
   },
   {
-    title: "Skill Gap Intelligence",
-    description: "Turn resume and application data into actionable skill priorities with guided learning suggestions."
+    title: "Resume + Skill Intelligence",
+    description: "Turn resume data into score drivers, missing-skill insights, and practical growth actions for better interview outcomes."
   },
   {
-    title: "Hiring Flow Control",
-    description: "Run internship posting, candidate tracking, and feedback pipelines from one structured company workspace."
+    title: "Verified Hiring Workflows",
+    description: "Manage trusted company onboarding, applicant pipelines, shortlist stages, and feedback loops from one control layer."
   }
 ];
 
 export const whyChoose = [
-  "Role-based portals built for intern growth journeys and company hiring velocity",
-  "Verification-first onboarding that keeps opportunities credible and hiring trusted",
-  "AI insights across resume strength, skill readiness, recommendations, and tracking"
+  "Role-based dashboards that keep intern growth paths and company hiring pipelines aligned",
+  "Verification-first company trust layer that improves internship quality and candidate safety",
+  "AI insights that continuously improve recommendations, resume strength, and application progress"
 ];
 
 export const stats = [
