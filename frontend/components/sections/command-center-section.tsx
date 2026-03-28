@@ -1,5 +1,6 @@
 import { ScrollReveal } from "@/components/animations/ScrollReveal";
 import { CommandCenterPanel } from "@/components/home/CommandCenterPanel";
+import { SectionAnimator } from "@/components/home/SectionAnimator";
 
 export function CommandCenterSection() {
   return (
@@ -9,20 +10,21 @@ export function CommandCenterSection() {
           <div className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-cyan-300/25 blur-3xl dark:bg-cyan-500/15" />
           <div className="pointer-events-none absolute -left-16 bottom-0 h-44 w-44 rounded-full bg-indigo-300/25 blur-3xl dark:bg-indigo-500/15" />
 
-          <ScrollReveal className="relative z-10 max-w-3xl">
+          <SectionAnimator className="relative z-10 max-w-3xl" revealVariant="clip-reveal" parallax={12} distance={22}>
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary-600 dark:text-primary-300">AI Internship Command Center</p>
             <h2 className="mt-3 text-3xl font-black tracking-tight text-slate-900 dark:text-slate-100 sm:text-4xl">Live Hiring Intelligence</h2>
             <p className="mt-3 text-sm leading-6 text-slate-700 dark:text-slate-300">
               Actionable intelligence for resume quality, skill readiness, and verified hiring workflows without cluttering the hero experience.
             </p>
-          </ScrollReveal>
+          </SectionAnimator>
 
           <div className="relative z-10 mt-6">
-            <CommandCenterPanel />
+            <ScrollReveal variant="zoom-in" delayMs={90} distance={12}>
+              <CommandCenterPanel />
+            </ScrollReveal>
           </div>
         </div>
       </div>
     </section>
   );
 }
-
