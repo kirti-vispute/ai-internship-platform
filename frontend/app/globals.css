@@ -113,18 +113,39 @@ a {
 }
 
 @media (pointer: fine) {
-  .homepage-cinematic,
-  .homepage-cinematic a,
-  .homepage-cinematic button,
-  .homepage-cinematic [role="button"],
-  .homepage-cinematic [data-cursor="interactive"] {
+  .cursor-3d-enabled,
+  .cursor-3d-enabled a,
+  .cursor-3d-enabled button,
+  .cursor-3d-enabled [role="button"],
+  .cursor-3d-enabled [data-cursor] {
     cursor: none !important;
   }
 
-  .homepage-cinematic input,
-  .homepage-cinematic textarea,
-  .homepage-cinematic select,
-  .homepage-cinematic [contenteditable="true"] {
+  .cursor-3d-enabled input,
+  .cursor-3d-enabled textarea,
+  .cursor-3d-enabled select,
+  .cursor-3d-enabled [contenteditable="true"] {
     cursor: text !important;
   }
+}
+
+.tilt-3d {
+  transform: perspective(1100px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg));
+  transform-style: preserve-3d;
+  transition: transform 240ms ease, box-shadow 280ms ease, border-color 240ms ease;
+  will-change: transform;
+}
+
+@keyframes float-gentle {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+.animate-float-gentle {
+  animation: float-gentle 6s ease-in-out infinite;
 }

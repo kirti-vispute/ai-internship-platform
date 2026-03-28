@@ -8,7 +8,7 @@ type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
 };
 
 const baseClasses =
-  "inline-flex items-center justify-center rounded-xl font-semibold transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 disabled:cursor-not-allowed disabled:opacity-60 active:scale-[0.99]";
+  "tilt-3d inline-flex items-center justify-center rounded-xl font-semibold transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 disabled:cursor-not-allowed disabled:opacity-60 active:scale-[0.99]";
 
 const variants = {
   primary:
@@ -29,14 +29,14 @@ export function Button({ className, variant = "primary", size = "md", href, chil
 
   if (href) {
     return (
-      <Link href={href} className={finalClassName}>
+      <Link href={href} className={finalClassName} data-cursor="button">
         {children}
       </Link>
     );
   }
 
   return (
-    <button className={finalClassName} {...props}>
+    <button className={finalClassName} data-cursor="button" {...props}>
       {children}
     </button>
   );

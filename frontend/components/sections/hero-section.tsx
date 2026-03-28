@@ -47,7 +47,7 @@ export function HeroSection() {
         <div className="relative animate-reveal [animation-delay:180ms]">
           <div className="pointer-events-none absolute -top-5 right-8 h-24 w-24 rounded-full bg-cyan-400/20 blur-3xl" />
           <div className="pointer-events-none absolute bottom-8 left-10 h-20 w-20 rounded-full bg-indigo-400/20 blur-3xl" />
-          <div className="grid-pattern rounded-3xl border border-slate-700/80 bg-slate-900/78 p-6 backdrop-blur-xl shadow-[0_24px_60px_rgba(2,6,23,0.62)]">
+          <div data-cursor="card" className="tilt-3d animate-float-gentle grid-pattern rounded-3xl border border-slate-700/80 bg-slate-900/78 p-6 backdrop-blur-xl shadow-[0_24px_60px_rgba(2,6,23,0.62)]">
             <p className="text-xs font-semibold uppercase tracking-wider text-cyan-200">AI Internship Command Center</p>
             <div className="mt-4 space-y-3">
               <div className="rounded-xl border border-slate-700 bg-slate-900/92 p-4 shadow-[0_12px_26px_rgba(2,6,23,0.45)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_18px_36px_rgba(2,6,23,0.62)]">

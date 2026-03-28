@@ -7,7 +7,7 @@ import { WhyChooseSection } from "@/components/sections/why-choose-section";
 
 export default function HomePage() {
   return (
-    <main className="homepage-cinematic relative overflow-x-clip overflow-y-visible">
+    <main className="relative overflow-x-clip overflow-y-visible">
       <Navbar />
       <HeroSection />
       <FeaturesSection />
