@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { Float, Line, Points, PointMaterial, Text } from "@react-three/drei";
+import { Float, Line, Text } from "@react-three/drei";
 import * as THREE from "three";
 
 function lerp(a: number, b: number, t: number) {
@@ -43,34 +43,6 @@ const pathwayPairs: [THREE.Vector3, THREE.Vector3][] = [
   [moduleNodes[0].position, moduleNodes[4].position],
   [moduleNodes[3].position, moduleNodes[5].position]
 ];
-
-function AmbientSignals() {
-  const pointsRef = useRef<THREE.Points>(null);
-  const particleCount = 220;
-  const positions = useMemo(() => {
-    const arr = new Float32Array(particleCount * 3);
-    for (let i = 0; i < particleCount; i += 1) {
-      const i3 = i * 3;
-      arr[i3] = Math.random() * 8 - 0.5;
-      arr[i3 + 1] = Math.random() * 6 - 3;
-      arr[i3 + 2] = (Math.random() - 0.5) * 4.5;
-    }
-    return arr;
-  }, []);
-
-  useFrame((state, delta) => {
-    if (!pointsRef.current) return;
-    pointsRef.current.rotation.y += delta * 0.04;
-    pointsRef.current.rotation.x = lerp(pointsRef.current.rotation.x, state.pointer.y * 0.08, 0.04);
-    pointsRef.current.rotation.z = lerp(pointsRef.current.rotation.z, state.pointer.x * 0.06, 0.04);
-  });
-
-  return (
-    <Points ref={pointsRef} positions={positions} stride={3} frustumCulled={false}>
-      <PointMaterial color="#67e8f9" size={0.038} sizeAttenuation transparent opacity={0.58} depthWrite={false} />
-    </Points>
-  );
-}
 
 function Pathways({ intensity }: { intensity: number }) {
   return (
@@ -158,17 +130,45 @@ function DomainNodes({ reducedMotion }: { reducedMotion: boolean }) {
       </Float>
 
       {moduleNodes.map((module, idx) => (
-        <mesh key={module.key} position={module.position}>
-          <boxGeometry args={[1.42, 0.52, 0.18]} />
-          <meshStandardMaterial
-            color={idx % 2 === 0 ? nodePalette.module : "#38bdf8"}
-            emissive="#0c4a6e"
-            emissiveIntensity={0.32}
-            roughness={0.28}
-            metalness={0.5}
-          />
-        </mesh>
+        <group key={module.key} position={module.position}>
+          <mesh>
+            <boxGeometry args={[1.42, 0.52, 0.18]} />
+            <meshStandardMaterial
+              color={idx % 2 === 0 ? nodePalette.module : "#38bdf8"}
+              emissive="#0c4a6e"
+              emissiveIntensity={0.32}
+              roughness={0.28}
+              metalness={0.5}
+            />
+          </mesh>
+          <Text position={[0, 0, 0.11]} fontSize={0.095} color="#e2e8f0" anchorX="center" anchorY="middle">
+            {module.label}
+          </Text>
+        </group>
       ))}
+    </group>
+  );
+}
+
+function SemanticSignalHalo({ intensity }: { intensity: number }) {
+  const haloRef = useRef<THREE.Group>(null);
+
+  useFrame((state, delta) => {
+    if (!haloRef.current) return;
+    haloRef.current.rotation.y += delta * 0.12;
+    haloRef.current.rotation.x = lerp(haloRef.current.rotation.x, state.pointer.y * 0.04, 0.02);
+  });
+
+  return (
+    <group ref={haloRef} position={[1.15, 0.2, -1.2]}>
+      <mesh position={[0.95, -0.25, 0]}>
+        <torusGeometry args={[0.85, 0.02, 10, 90]} />
+        <meshBasicMaterial color="#22d3ee" transparent opacity={0.16 + intensity * 0.05} />
+      </mesh>
+      <mesh position={[2.55, 0.52, -0.05]}>
+        <torusGeometry args={[0.7, 0.018, 10, 90]} />
+        <meshBasicMaterial color="#60a5fa" transparent opacity={0.15 + intensity * 0.05} />
+      </mesh>
     </group>
   );
 }
@@ -234,10 +234,10 @@ export function InteractiveHeroScene() {
         <pointLight position={[6.5, 1.2, 3]} color="#0ea5e9" intensity={0.55 + intensity * 0.3} />
 
         <CameraRig reducedMotion={reducedMotion} onIntensity={setIntensity} />
-        <AmbientSignals />
         <Pathways intensity={intensity} />
         <DomainNodes reducedMotion={reducedMotion} />
         <FlowSignals reducedMotion={reducedMotion} />
+        <SemanticSignalHalo intensity={intensity} />
         <WorkflowLabels />
       </Canvas>
     </div>
