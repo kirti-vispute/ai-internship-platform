@@ -24,21 +24,25 @@ type FlowLink = {
   lift: number;
 };
 
+const RIGHT_COLUMN_X = 0.9;
+const TOP_ROW_Y = 0.19;
+const ROW_STEP_Y = 0.2;
+
 const nodeAnchors: Record<WorkflowModule, { xPct: number; yPct: number; z: number }> = {
-  "resume-upload": { xPct: 0.15, yPct: 0.2, z: 0.14 },
+  "resume-upload": { xPct: 0.15, yPct: TOP_ROW_Y, z: 0.14 },
   "ai-engine": { xPct: 0.5, yPct: 0.5, z: 0 },
-  "resume-score": { xPct: 0.84, yPct: 0.2, z: 0.12 },
-  "skill-gap": { xPct: 0.88, yPct: 0.4, z: 0.1 },
-  "verified-match": { xPct: 0.88, yPct: 0.6, z: 0.1 },
-  "hiring-pipeline": { xPct: 0.88, yPct: 0.8, z: 0.12 }
+  "resume-score": { xPct: RIGHT_COLUMN_X, yPct: TOP_ROW_Y, z: 0.12 },
+  "skill-gap": { xPct: RIGHT_COLUMN_X, yPct: TOP_ROW_Y + ROW_STEP_Y, z: 0.1 },
+  "verified-match": { xPct: RIGHT_COLUMN_X, yPct: TOP_ROW_Y + ROW_STEP_Y * 2, z: 0.1 },
+  "hiring-pipeline": { xPct: RIGHT_COLUMN_X, yPct: TOP_ROW_Y + ROW_STEP_Y * 3, z: 0.12 }
 };
 
 const links: FlowLink[] = [
-  { id: "ai-resume", from: "ai-engine", to: "resume-upload", lift: 0.18 },
-  { id: "ai-score", from: "ai-engine", to: "resume-score", lift: 0.2 },
-  { id: "ai-skill", from: "ai-engine", to: "skill-gap", lift: 0.1 },
-  { id: "ai-verified", from: "ai-engine", to: "verified-match", lift: -0.02 },
-  { id: "ai-pipeline", from: "ai-engine", to: "hiring-pipeline", lift: -0.16 }
+  { id: "ai-resume", from: "ai-engine", to: "resume-upload", lift: 0.2 },
+  { id: "ai-score", from: "ai-engine", to: "resume-score", lift: 0.16 },
+  { id: "ai-skill", from: "ai-engine", to: "skill-gap", lift: 0.05 },
+  { id: "ai-verified", from: "ai-engine", to: "verified-match", lift: -0.06 },
+  { id: "ai-pipeline", from: "ai-engine", to: "hiring-pipeline", lift: -0.18 }
 ];
 
 const nodeEdgeRadius: Record<WorkflowModule, number> = {
