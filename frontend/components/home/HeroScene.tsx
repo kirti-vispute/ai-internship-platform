@@ -519,8 +519,8 @@ export function HeroScene({ activeModule = null }: HeroSceneProps) {
   }, []);
 
   return (
-    <div className="absolute inset-0 z-0">
-      <Canvas camera={{ position: [0.05, 0.02, 8.95], fov: 46 }} dpr={[1, 1.8]} gl={{ antialias: true, alpha: true }}>
+    <div className="absolute inset-0 z-0 h-full w-full">
+      <Canvas className="h-full w-full" camera={{ position: [0.05, 0.02, 8.95], fov: 46 }} dpr={[1, 1.8]} gl={{ antialias: true, alpha: true }}>
         <fog attach="fog" args={["#020617", 8, 18]} />
         <SceneLights />
         <DepthParallaxLayer />

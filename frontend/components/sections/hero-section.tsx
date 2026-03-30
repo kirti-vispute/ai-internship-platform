@@ -105,7 +105,7 @@ export function HeroSection() {
           whileInView={{ opacity: 1, x: 0, scale: 1 }}
           viewport={{ once: true, amount: 0.3 }}
           transition={{ duration: 0.95, ease: [0.22, 1, 0.36, 1], delay: 0.08 }}
-          className="relative h-[460px] sm:h-[540px] lg:h-[620px]"
+          className="relative h-full min-h-[460px] w-full sm:min-h-[540px] lg:min-h-[620px]"
         >
           <HeroScene activeModule={activeModule} />
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_37%_43%,rgba(99,102,241,0.14),transparent_30%),radial-gradient(circle_at_22%_18%,rgba(125,211,252,0.1),transparent_44%),radial-gradient(circle_at_82%_78%,rgba(129,140,248,0.1),transparent_40%)]" />
