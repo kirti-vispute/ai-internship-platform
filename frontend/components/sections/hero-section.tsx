@@ -35,36 +35,36 @@ const workflowModules: Array<{
     id: "resume-upload",
     label: "Resume Upload",
     detail: "Student profile enters the AI system.",
-    column: 2,
-    row: 2
+    column: 1.6,
+    row: 1.8
   },
   {
     id: "resume-score",
     label: "Resume Score",
     detail: "Strength score and ATS signal generated.",
-    column: 10,
-    row: 2
+    column: 11,
+    row: 1.8
   },
   {
     id: "skill-gap",
     label: "Skill Gap",
     detail: "Missing skills mapped for target roles.",
-    column: 10,
-    row: 4
+    column: 11,
+    row: 3.9
   },
   {
     id: "verified-match",
     label: "Verified Match",
     detail: "Trusted company matches are surfaced.",
-    column: 10,
+    column: 11,
     row: 6
   },
   {
     id: "hiring-pipeline",
     label: "Hiring Pipeline",
     detail: "Applications move through live stages.",
-    column: 10,
-    row: 8
+    column: 11,
+    row: 8.1
   }
 ];
 
@@ -139,14 +139,14 @@ export function HeroSection() {
                   onMouseEnter={() => setActiveModule(module.id)}
                   onMouseLeave={() => setActiveModule("ai-engine")}
                   style={toDiagramStyle(module.column, module.row)}
-                  className={`group absolute w-[182px] rounded-2xl border px-3 py-2 text-left backdrop-blur-md transition-all duration-300 ${
+                  className={`group absolute w-[156px] rounded-xl border px-2.5 py-1.5 text-left backdrop-blur-[2px] transition-all duration-300 ${
                     isActive
-                      ? "border-cyan-300/70 bg-slate-900/80 shadow-[0_18px_34px_rgba(34,211,238,0.28)]"
-                      : "border-slate-500/40 bg-slate-900/56 shadow-[0_12px_24px_rgba(2,6,23,0.36)]"
+                      ? "border-cyan-300/45 bg-slate-900/46 shadow-[0_8px_18px_rgba(34,211,238,0.14)]"
+                      : "border-slate-400/25 bg-slate-900/30 shadow-[0_6px_14px_rgba(2,6,23,0.22)]"
                   }`}
                 >
-                  <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-cyan-200">{module.label}</p>
-                  <p className="mt-1 text-[11px] leading-4 text-slate-200/90">{module.detail}</p>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-cyan-200/95">{module.label}</p>
+                  <p className="mt-1 text-[10px] leading-[1.1rem] text-slate-200/85">{module.detail}</p>
                 </button>
               );
             })}
