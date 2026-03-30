@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import type { WorkflowModule } from "@/components/home/HeroScene";
@@ -63,48 +63,101 @@ const workflowModules: WorkflowTile[] = [
   }
 ];
 
+function nearEqual(a: number, b: number) {
+  return Math.abs(a - b) < 0.001;
+}
+
 export function HeroSection() {
   const [activeModule, setActiveModule] = useState<WorkflowModule | null>("ai-engine");
   const animationRef = useRef<HTMLDivElement>(null);
+  const tileRefs = useRef<Partial<Record<WorkflowModule, HTMLButtonElement | null>>>({});
+  const cursorBiasRef = useRef({ x: 0, y: 0, proximity: 0 });
+  const pointerTargetRef = useRef({ x: 0, y: 0, proximity: 0 });
   const [connectorAnchors, setConnectorAnchors] = useState<Partial<Record<WorkflowModule, { xPct: number; yPct: number }>>>({});
 
   const desktopTiles = useMemo(() => workflowModules.filter((module) => module.id !== "ai-engine"), []);
 
-  useEffect(() => {
-    const element = animationRef.current;
-    if (!element) return;
+  const updateAnchors = useCallback(() => {
+    const container = animationRef.current;
+    if (!container) return;
 
-    const TILE_WIDTH = 156;
+    const containerRect = container.getBoundingClientRect();
+    const width = containerRect.width || 1;
+    const height = containerRect.height || 1;
 
-    const updateAnchors = () => {
-      const width = element.clientWidth || 1;
-      const nextAnchors: Partial<Record<WorkflowModule, { xPct: number; yPct: number }>> = {};
+    const nextAnchors: Partial<Record<WorkflowModule, { xPct: number; yPct: number }>> = {};
 
-      desktopTiles.forEach((module) => {
+    desktopTiles.forEach((module) => {
+      const tile = tileRefs.current[module.id];
+      if (tile && tile.offsetParent !== null) {
+        const rect = tile.getBoundingClientRect();
+        const x = module.side === "left" ? rect.right - containerRect.left : rect.left - containerRect.left;
+        const y = rect.top + rect.height / 2 - containerRect.top;
+        nextAnchors[module.id] = {
+          xPct: Math.min(0.99, Math.max(0.01, x / width)),
+          yPct: Math.min(0.99, Math.max(0.01, y / height))
+        };
+      } else {
         const leftPct = Number.parseFloat(module.left) / 100;
         const topPct = Number.parseFloat(module.top) / 100;
-        const xPct = module.side === "left" ? (leftPct * width + TILE_WIDTH) / width : leftPct;
-
         nextAnchors[module.id] = {
-          xPct,
+          xPct: module.side === "left" ? leftPct + 0.215 : leftPct,
           yPct: topPct
         };
+      }
+    });
+
+    setConnectorAnchors((prev) => {
+      const unchanged = desktopTiles.every((module) => {
+        const prevValue = prev[module.id];
+        const nextValue = nextAnchors[module.id];
+        if (!prevValue || !nextValue) return false;
+        return nearEqual(prevValue.xPct, nextValue.xPct) && nearEqual(prevValue.yPct, nextValue.yPct);
       });
+      return unchanged ? prev : nextAnchors;
+    });
+  }, [desktopTiles]);
 
-      setConnectorAnchors(nextAnchors);
-    };
-
+  useEffect(() => {
     updateAnchors();
 
-    const observer = new ResizeObserver(updateAnchors);
-    observer.observe(element);
+    const container = animationRef.current;
+    if (!container) return;
+
+    const observer = new ResizeObserver(() => updateAnchors());
+    observer.observe(container);
     window.addEventListener("resize", updateAnchors);
 
     return () => {
       observer.disconnect();
       window.removeEventListener("resize", updateAnchors);
     };
-  }, [desktopTiles]);
+  }, [updateAnchors]);
+
+  useEffect(() => {
+    const container = animationRef.current;
+    if (!container) return;
+
+    let rafId = 0;
+
+    const step = () => {
+      const target = pointerTargetRef.current;
+      const current = cursorBiasRef.current;
+      current.x += (target.x - current.x) * 0.11;
+      current.y += (target.y - current.y) * 0.11;
+      current.proximity += (target.proximity - current.proximity) * 0.1;
+
+      container.style.setProperty("--hero-nx", current.x.toFixed(4));
+      container.style.setProperty("--hero-ny", current.y.toFixed(4));
+      container.style.setProperty("--hero-prox", current.proximity.toFixed(4));
+
+      rafId = window.requestAnimationFrame(step);
+    };
+
+    rafId = window.requestAnimationFrame(step);
+
+    return () => window.cancelAnimationFrame(rafId);
+  }, []);
 
   return (
     <section className="relative z-0 overflow-hidden bg-slate-950 pb-16 pt-24 sm:pb-20 sm:pt-28">
@@ -161,33 +214,72 @@ export function HeroSection() {
           transition={{ duration: 0.95, ease: [0.22, 1, 0.36, 1], delay: 0.08 }}
           className="relative h-full min-h-[460px] w-full sm:min-h-[540px] lg:min-h-[620px]"
           ref={animationRef}
+          onMouseMove={(event) => {
+            const rect = animationRef.current?.getBoundingClientRect();
+            if (!rect) return;
+            const x = ((event.clientX - rect.left) / rect.width - 0.5) * 2;
+            const y = ((event.clientY - rect.top) / rect.height - 0.5) * 2;
+            pointerTargetRef.current.x = Math.max(-1, Math.min(1, x));
+            pointerTargetRef.current.y = Math.max(-1, Math.min(1, y));
+            pointerTargetRef.current.proximity = Math.max(0, 1 - Math.min(1, Math.hypot(x, y)));
+          }}
+          onMouseLeave={() => {
+            pointerTargetRef.current.x = 0;
+            pointerTargetRef.current.y = 0;
+            pointerTargetRef.current.proximity = 0;
+            setActiveModule("ai-engine");
+          }}
         >
-          <HeroScene activeModule={activeModule} connectorAnchors={connectorAnchors} />
+          <HeroScene activeModule={activeModule} connectorAnchors={connectorAnchors} cursorBiasRef={cursorBiasRef} />
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_37%_43%,rgba(99,102,241,0.14),transparent_30%),radial-gradient(circle_at_22%_18%,rgba(125,211,252,0.1),transparent_44%),radial-gradient(circle_at_82%_78%,rgba(129,140,248,0.1),transparent_40%)]" />
 
           <div className="absolute inset-0 z-20 hidden lg:block">
-            {desktopTiles.map((module) => {
+            {desktopTiles.map((module, index) => {
               const isActive = activeModule === module.id;
+              const pxFactor = module.side === "right" ? 8 : 5;
+              const pyFactor = module.side === "right" ? 6 : 4;
+
               return (
-                <button
+                <div
                   key={module.id}
-                  type="button"
-                  onMouseEnter={() => setActiveModule(module.id)}
-                  onMouseLeave={() => setActiveModule("ai-engine")}
                   style={{
                     left: module.left,
                     top: module.top,
-                    transform: "translateY(-50%)"
+                    transform: `translateY(-50%) translate3d(calc(var(--hero-nx, 0) * ${pxFactor}px), calc(var(--hero-ny, 0) * ${pyFactor}px), 0)`
                   }}
-                  className={`group absolute w-[156px] rounded-xl border px-2.5 py-1.5 text-left backdrop-blur-[2px] transition-all duration-300 ${
-                    isActive
-                      ? "border-cyan-300/42 bg-slate-900/40 shadow-[0_8px_18px_rgba(34,211,238,0.14)]"
-                      : "border-slate-400/22 bg-slate-900/24 shadow-[0_6px_14px_rgba(2,6,23,0.22)]"
-                  }`}
+                  className="absolute"
                 >
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-cyan-200/95">{module.label}</p>
-                  <p className="mt-1 text-[10px] leading-[1.1rem] text-slate-200/85">{module.detail}</p>
-                </button>
+                  <button
+                    ref={(node) => {
+                      tileRefs.current[module.id] = node;
+                    }}
+                    type="button"
+                    onMouseEnter={() => {
+                      setActiveModule(module.id);
+                      window.requestAnimationFrame(updateAnchors);
+                    }}
+                    onMouseLeave={() => {
+                      setActiveModule("ai-engine");
+                      window.requestAnimationFrame(updateAnchors);
+                    }}
+                    className={`group relative w-[156px] overflow-hidden rounded-xl border px-2.5 py-1.5 text-left backdrop-blur-[2px] transition-all duration-300 ${
+                      isActive
+                        ? "border-cyan-300/55 bg-slate-900/43 shadow-[0_10px_24px_rgba(34,211,238,0.2)]"
+                        : "border-slate-400/28 bg-slate-900/26 shadow-[0_7px_16px_rgba(2,6,23,0.24)]"
+                    }`}
+                  >
+                    <span
+                      style={{ animationDelay: `${index * 0.5}s` }}
+                      className="pointer-events-none absolute inset-0 rounded-xl border border-cyan-300/20 opacity-65 animate-pulse-slow"
+                    />
+                    <span
+                      style={{ animationDelay: `${index * 0.35}s` }}
+                      className="pointer-events-none absolute inset-x-3 top-0 h-px bg-gradient-to-r from-transparent via-cyan-200/75 to-transparent opacity-70 animate-signal-slide"
+                    />
+                    <p className="relative z-10 text-[10px] font-semibold uppercase tracking-[0.12em] text-cyan-200/95">{module.label}</p>
+                    <p className="relative z-10 mt-1 text-[10px] leading-[1.1rem] text-slate-200/85">{module.detail}</p>
+                  </button>
+                </div>
               );
             })}
           </div>

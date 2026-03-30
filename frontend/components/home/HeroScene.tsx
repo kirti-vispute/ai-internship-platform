@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type MutableRefObject } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Line } from "@react-three/drei";
 import * as THREE from "three";
@@ -18,9 +18,16 @@ type ConnectorAnchor = {
   yPct: number;
 };
 
+type CursorBias = {
+  x: number;
+  y: number;
+  proximity: number;
+};
+
 type HeroSceneProps = {
   activeModule?: WorkflowModule | null;
   connectorAnchors?: Partial<Record<WorkflowModule, ConnectorAnchor>>;
+  cursorBiasRef?: MutableRefObject<CursorBias>;
 };
 
 type FlowLink = {
@@ -77,7 +84,15 @@ function isLinkActive(link: FlowLink, activeModule?: WorkflowModule | null) {
   return link.from === activeModule || link.to === activeModule;
 }
 
-function AIEngineNode({ active, position }: { active: boolean; position: THREE.Vector3 }) {
+function AIEngineNode({
+  active,
+  position,
+  cursorBiasRef
+}: {
+  active: boolean;
+  position: THREE.Vector3;
+  cursorBiasRef?: MutableRefObject<CursorBias>;
+}) {
   const coreRef = useRef<THREE.Mesh>(null);
   const ringARef = useRef<THREE.Mesh>(null);
   const ringBRef = useRef<THREE.Mesh>(null);
@@ -85,24 +100,25 @@ function AIEngineNode({ active, position }: { active: boolean; position: THREE.V
   const outerGlowRef = useRef<THREE.Mesh>(null);
 
   useFrame((state, delta) => {
+    const cursorProximity = cursorBiasRef?.current.proximity ?? Math.max(0, 1 - Math.min(1, Math.hypot(state.pointer.x, state.pointer.y)));
     const pulseA = 1 + Math.sin(state.clock.elapsedTime * 1.95) * 0.12;
     const pulseB = 1 + Math.sin(state.clock.elapsedTime * 1.2 + 0.6) * 0.08;
 
     if (coreRef.current) {
       coreRef.current.rotation.y += delta * 0.45;
-      coreRef.current.scale.setScalar(pulseA);
+      coreRef.current.scale.setScalar(pulseA + cursorProximity * 0.04);
       const material = coreRef.current.material as THREE.MeshPhysicalMaterial;
-      material.emissiveIntensity = (active ? 2.15 : 1.55) + Math.sin(state.clock.elapsedTime * 2.1) * 0.2;
+      material.emissiveIntensity = (active ? 2.1 : 1.55) + cursorProximity * 0.55 + Math.sin(state.clock.elapsedTime * 2.1) * 0.2;
     }
     if (glowRef.current) {
-      glowRef.current.scale.setScalar(pulseA * 1.02);
+      glowRef.current.scale.setScalar(pulseA * (1.02 + cursorProximity * 0.05));
       const material = glowRef.current.material as THREE.MeshBasicMaterial;
-      material.opacity = active ? 0.22 : 0.16;
+      material.opacity = (active ? 0.22 : 0.16) + cursorProximity * 0.08;
     }
     if (outerGlowRef.current) {
-      outerGlowRef.current.scale.setScalar(pulseB * 1.04);
+      outerGlowRef.current.scale.setScalar(pulseB * (1.04 + cursorProximity * 0.05));
       const material = outerGlowRef.current.material as THREE.MeshBasicMaterial;
-      material.opacity = active ? 0.12 : 0.08;
+      material.opacity = (active ? 0.12 : 0.08) + cursorProximity * 0.05;
     }
     if (ringARef.current) ringARef.current.rotation.z += delta * 0.55;
     if (ringBRef.current) ringBRef.current.rotation.x -= delta * 0.35;
@@ -172,11 +188,13 @@ function DepthParallaxLayer() {
 function FlowMap({
   reducedMotion,
   activeModule,
-  connectorAnchors
+  connectorAnchors,
+  cursorBiasRef
 }: {
   reducedMotion: boolean;
   activeModule?: WorkflowModule | null;
   connectorAnchors?: Partial<Record<WorkflowModule, ConnectorAnchor>>;
+  cursorBiasRef?: MutableRefObject<CursorBias>;
 }) {
   const { size, viewport } = useThree();
   const groupRef = useRef<THREE.Group>(null);
@@ -188,11 +206,10 @@ function FlowMap({
 
     (Object.keys(connectorAnchors ?? {}) as WorkflowModule[]).forEach((id) => {
       const value = connectorAnchors?.[id];
-      if (!value) return;
-      if (id === "ai-engine") return;
+      if (!value || id === "ai-engine") return;
       merged[id] = {
-        xPct: Math.min(0.98, Math.max(0.02, value.xPct)),
-        yPct: Math.min(0.98, Math.max(0.02, value.yPct)),
+        xPct: Math.min(0.995, Math.max(0.005, value.xPct)),
+        yPct: Math.min(0.995, Math.max(0.005, value.yPct)),
         z: defaultAnchors[id].z
       };
     });
@@ -229,34 +246,38 @@ function FlowMap({
   );
 
   useFrame((state, delta) => {
+    const externalBias = cursorBiasRef?.current;
+    const biasX = externalBias ? externalBias.x : state.pointer.x;
+    const biasY = externalBias ? externalBias.y : state.pointer.y;
+    const biasProximity = externalBias
+      ? externalBias.proximity
+      : Math.max(0, 1 - Math.min(1, Math.hypot(state.pointer.x, state.pointer.y)));
+
     const targetScale = size.width < 640 ? 0.92 : size.width < 1024 ? 0.98 : 1.02;
-    const px = state.pointer.x;
-    const py = state.pointer.y;
-    const proximity = Math.max(0, 1 - Math.min(1, Math.hypot(px * 0.88, py) / 0.78));
 
     if (groupRef.current) {
       groupRef.current.scale.x = lerp(groupRef.current.scale.x, targetScale, 0.05);
       groupRef.current.scale.y = lerp(groupRef.current.scale.y, targetScale, 0.05);
       groupRef.current.scale.z = lerp(groupRef.current.scale.z, targetScale, 0.05);
-      groupRef.current.rotation.y = lerp(groupRef.current.rotation.y, px * 0.14, 0.04);
-      groupRef.current.rotation.x = lerp(groupRef.current.rotation.x, py * 0.08, 0.04);
-      groupRef.current.position.x = lerp(groupRef.current.position.x, 0, 0.04);
+      groupRef.current.rotation.y = lerp(groupRef.current.rotation.y, biasX * 0.16, 0.04);
+      groupRef.current.rotation.x = lerp(groupRef.current.rotation.x, biasY * 0.1, 0.04);
+      groupRef.current.position.x = lerp(groupRef.current.position.x, biasX * 0.26, 0.045);
       groupRef.current.position.y = lerp(
         groupRef.current.position.y,
-        reducedMotion ? 0 : Math.sin(state.clock.elapsedTime * 0.42) * 0.07,
-        0.04
+        (reducedMotion ? 0 : Math.sin(state.clock.elapsedTime * 0.42) * 0.07) + biasY * 0.16,
+        0.045
       );
     }
 
-    state.camera.position.x = lerp(state.camera.position.x, px * 0.24, 0.04);
-    state.camera.position.y = lerp(state.camera.position.y, py * 0.14, 0.04);
+    state.camera.position.x = lerp(state.camera.position.x, biasX * 0.28, 0.045);
+    state.camera.position.y = lerp(state.camera.position.y, biasY * 0.18, 0.045);
     state.camera.lookAt(0, 0, 0);
 
     lineMaterials.current.forEach((material, idx) => {
       const lineMaterial = material as THREE.Material & { opacity?: number; color?: THREE.Color };
       const active = isLinkActive(links[idx], activeModule);
       if (typeof lineMaterial.opacity === "number") {
-        lineMaterial.opacity = (active ? 0.72 : 0.34) + proximity * 0.18;
+        lineMaterial.opacity = (active ? 0.74 : 0.35) + biasProximity * 0.2;
       }
       if (lineMaterial.color) {
         lineMaterial.color.set(active ? "#7dd3fc" : "#38bdf8");
@@ -266,9 +287,18 @@ function FlowMap({
     particleRefs.current.forEach((mesh, index) => {
       const meta = particleMeta[index];
       const curve = curves[meta.curveIdx];
-      meta.t += delta * (reducedMotion ? 0.06 : 0.22 + meta.curveIdx * 0.025);
+      meta.t += delta * (reducedMotion ? 0.06 : 0.22 + meta.curveIdx * 0.03);
       if (meta.t > 1) meta.t = 0;
-      mesh.position.copy(curve.getPointAt(meta.t));
+
+      const point = curve.getPointAt(meta.t);
+      const driftFactor = 0.06 + (meta.curveIdx % 3) * 0.025;
+      const targetX = point.x + biasX * driftFactor;
+      const targetY = point.y + biasY * driftFactor * 0.7;
+
+      mesh.position.x = lerp(mesh.position.x, targetX, 0.18);
+      mesh.position.y = lerp(mesh.position.y, targetY, 0.18);
+      mesh.position.z = lerp(mesh.position.z, point.z, 0.18);
+
       const pulse = 0.86 + Math.sin(state.clock.elapsedTime * 1.8 + index) * 0.18;
       mesh.scale.setScalar(pulse);
     });
@@ -276,7 +306,7 @@ function FlowMap({
 
   return (
     <group ref={groupRef}>
-      <AIEngineNode active={activeModule === "ai-engine" || !activeModule} position={layoutPositions["ai-engine"]} />
+      <AIEngineNode active={activeModule === "ai-engine" || !activeModule} position={layoutPositions["ai-engine"]} cursorBiasRef={cursorBiasRef} />
 
       {curves.map((curve, idx) => (
         <Line
@@ -327,7 +357,7 @@ function SceneLights() {
   );
 }
 
-export function HeroScene({ activeModule = null, connectorAnchors }: HeroSceneProps) {
+export function HeroScene({ activeModule = null, connectorAnchors, cursorBiasRef }: HeroSceneProps) {
   const [reducedMotion, setReducedMotion] = useState(false);
 
   useEffect(() => {
@@ -344,7 +374,7 @@ export function HeroScene({ activeModule = null, connectorAnchors }: HeroScenePr
         <fog attach="fog" args={["#020617", 8, 18]} />
         <SceneLights />
         <DepthParallaxLayer />
-        <FlowMap reducedMotion={reducedMotion} activeModule={activeModule} connectorAnchors={connectorAnchors} />
+        <FlowMap reducedMotion={reducedMotion} activeModule={activeModule} connectorAnchors={connectorAnchors} cursorBiasRef={cursorBiasRef} />
       </Canvas>
     </div>
   );
