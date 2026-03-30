@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import type { WorkflowModule } from "@/components/home/HeroScene";
@@ -17,7 +17,7 @@ type WorkflowTile = {
   detail: string;
   left: string;
   top: string;
-  anchor?: "left" | "center";
+  side: "left" | "right";
 };
 
 const workflowModules: WorkflowTile[] = [
@@ -27,7 +27,7 @@ const workflowModules: WorkflowTile[] = [
     detail: "Student profile enters the AI system.",
     left: "8%",
     top: "19%",
-    anchor: "left"
+    side: "left"
   },
   {
     id: "resume-score",
@@ -35,7 +35,7 @@ const workflowModules: WorkflowTile[] = [
     detail: "Strength score and ATS signal generated.",
     left: "68%",
     top: "20%",
-    anchor: "left"
+    side: "right"
   },
   {
     id: "skill-gap",
@@ -43,7 +43,7 @@ const workflowModules: WorkflowTile[] = [
     detail: "Missing skills mapped for target roles.",
     left: "68%",
     top: "36%",
-    anchor: "left"
+    side: "right"
   },
   {
     id: "verified-match",
@@ -51,7 +51,7 @@ const workflowModules: WorkflowTile[] = [
     detail: "Trusted company matches are surfaced.",
     left: "68%",
     top: "52%",
-    anchor: "left"
+    side: "right"
   },
   {
     id: "hiring-pipeline",
@@ -59,12 +59,52 @@ const workflowModules: WorkflowTile[] = [
     detail: "Applications move through live stages.",
     left: "68%",
     top: "68%",
-    anchor: "left"
+    side: "right"
   }
 ];
 
 export function HeroSection() {
   const [activeModule, setActiveModule] = useState<WorkflowModule | null>("ai-engine");
+  const animationRef = useRef<HTMLDivElement>(null);
+  const [connectorAnchors, setConnectorAnchors] = useState<Partial<Record<WorkflowModule, { xPct: number; yPct: number }>>>({});
+
+  const desktopTiles = useMemo(() => workflowModules.filter((module) => module.id !== "ai-engine"), []);
+
+  useEffect(() => {
+    const element = animationRef.current;
+    if (!element) return;
+
+    const TILE_WIDTH = 156;
+
+    const updateAnchors = () => {
+      const width = element.clientWidth || 1;
+      const nextAnchors: Partial<Record<WorkflowModule, { xPct: number; yPct: number }>> = {};
+
+      desktopTiles.forEach((module) => {
+        const leftPct = Number.parseFloat(module.left) / 100;
+        const topPct = Number.parseFloat(module.top) / 100;
+        const xPct = module.side === "left" ? (leftPct * width + TILE_WIDTH) / width : leftPct;
+
+        nextAnchors[module.id] = {
+          xPct,
+          yPct: topPct
+        };
+      });
+
+      setConnectorAnchors(nextAnchors);
+    };
+
+    updateAnchors();
+
+    const observer = new ResizeObserver(updateAnchors);
+    observer.observe(element);
+    window.addEventListener("resize", updateAnchors);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", updateAnchors);
+    };
+  }, [desktopTiles]);
 
   return (
     <section className="relative z-0 overflow-hidden bg-slate-950 pb-16 pt-24 sm:pb-20 sm:pt-28">
@@ -120,12 +160,13 @@ export function HeroSection() {
           viewport={{ once: true, amount: 0.3 }}
           transition={{ duration: 0.95, ease: [0.22, 1, 0.36, 1], delay: 0.08 }}
           className="relative h-full min-h-[460px] w-full sm:min-h-[540px] lg:min-h-[620px]"
+          ref={animationRef}
         >
-          <HeroScene activeModule={activeModule} />
+          <HeroScene activeModule={activeModule} connectorAnchors={connectorAnchors} />
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_37%_43%,rgba(99,102,241,0.14),transparent_30%),radial-gradient(circle_at_22%_18%,rgba(125,211,252,0.1),transparent_44%),radial-gradient(circle_at_82%_78%,rgba(129,140,248,0.1),transparent_40%)]" />
 
           <div className="absolute inset-0 z-20 hidden lg:block">
-            {workflowModules.map((module) => {
+            {desktopTiles.map((module) => {
               const isActive = activeModule === module.id;
               return (
                 <button
@@ -136,7 +177,7 @@ export function HeroSection() {
                   style={{
                     left: module.left,
                     top: module.top,
-                    transform: module.anchor === "center" ? "translate(-50%, -50%)" : "translateY(-50%)"
+                    transform: "translateY(-50%)"
                   }}
                   className={`group absolute w-[156px] rounded-xl border px-2.5 py-1.5 text-left backdrop-blur-[2px] transition-all duration-300 ${
                     isActive

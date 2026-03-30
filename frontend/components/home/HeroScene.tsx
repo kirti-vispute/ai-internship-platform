@@ -13,8 +13,14 @@ export type WorkflowModule =
   | "verified-match"
   | "hiring-pipeline";
 
+type ConnectorAnchor = {
+  xPct: number;
+  yPct: number;
+};
+
 type HeroSceneProps = {
   activeModule?: WorkflowModule | null;
+  connectorAnchors?: Partial<Record<WorkflowModule, ConnectorAnchor>>;
 };
 
 type FlowLink = {
@@ -24,34 +30,30 @@ type FlowLink = {
   lift: number;
 };
 
-const RIGHT_COLUMN_X = 0.9;
-const TOP_ROW_Y = 0.19;
-const ROW_STEP_Y = 0.2;
-
-const nodeAnchors: Record<WorkflowModule, { xPct: number; yPct: number; z: number }> = {
-  "resume-upload": { xPct: 0.15, yPct: TOP_ROW_Y, z: 0.14 },
+const defaultAnchors: Record<WorkflowModule, ConnectorAnchor & { z: number }> = {
+  "resume-upload": { xPct: 0.3, yPct: 0.19, z: 0.1 },
   "ai-engine": { xPct: 0.5, yPct: 0.5, z: 0 },
-  "resume-score": { xPct: RIGHT_COLUMN_X, yPct: TOP_ROW_Y, z: 0.12 },
-  "skill-gap": { xPct: RIGHT_COLUMN_X, yPct: TOP_ROW_Y + ROW_STEP_Y, z: 0.1 },
-  "verified-match": { xPct: RIGHT_COLUMN_X, yPct: TOP_ROW_Y + ROW_STEP_Y * 2, z: 0.1 },
-  "hiring-pipeline": { xPct: RIGHT_COLUMN_X, yPct: TOP_ROW_Y + ROW_STEP_Y * 3, z: 0.12 }
+  "resume-score": { xPct: 0.68, yPct: 0.2, z: 0.1 },
+  "skill-gap": { xPct: 0.68, yPct: 0.36, z: 0.1 },
+  "verified-match": { xPct: 0.68, yPct: 0.52, z: 0.1 },
+  "hiring-pipeline": { xPct: 0.68, yPct: 0.68, z: 0.1 }
 };
 
 const links: FlowLink[] = [
   { id: "ai-resume", from: "ai-engine", to: "resume-upload", lift: 0.2 },
-  { id: "ai-score", from: "ai-engine", to: "resume-score", lift: 0.16 },
-  { id: "ai-skill", from: "ai-engine", to: "skill-gap", lift: 0.05 },
+  { id: "ai-score", from: "ai-engine", to: "resume-score", lift: 0.15 },
+  { id: "ai-skill", from: "ai-engine", to: "skill-gap", lift: 0.04 },
   { id: "ai-verified", from: "ai-engine", to: "verified-match", lift: -0.06 },
   { id: "ai-pipeline", from: "ai-engine", to: "hiring-pipeline", lift: -0.18 }
 ];
 
 const nodeEdgeRadius: Record<WorkflowModule, number> = {
-  "resume-upload": 0.62,
+  "resume-upload": 0,
   "ai-engine": 0.72,
-  "resume-score": 0.56,
-  "skill-gap": 0.54,
-  "verified-match": 0.56,
-  "hiring-pipeline": 0.6
+  "resume-score": 0,
+  "skill-gap": 0,
+  "verified-match": 0,
+  "hiring-pipeline": 0
 };
 
 function lerp(a: number, b: number, t: number) {
@@ -69,54 +71,10 @@ function buildCurveEdgeToEdge(from: WorkflowModule, to: WorkflowModule, position
   return new THREE.CatmullRomCurve3([edgeStart, control, edgeEnd]);
 }
 
-function isNodeActive(id: WorkflowModule, activeModule?: WorkflowModule | null) {
-  if (!activeModule) return false;
-  if (id === "ai-engine") return true;
-  return id === activeModule;
-}
-
 function isLinkActive(link: FlowLink, activeModule?: WorkflowModule | null) {
   if (!activeModule) return false;
   if (activeModule === "ai-engine") return true;
   return link.from === activeModule || link.to === activeModule;
-}
-
-function ResumeUploadNode({ active, position }: { active: boolean; position: THREE.Vector3 }) {
-  return (
-    <group position={position.toArray()}>
-      <mesh>
-        <boxGeometry args={[1.2, 1.05, 0.1]} />
-        <meshPhysicalMaterial
-          color={active ? "#60a5fa" : "#2563eb"}
-          roughness={0.2}
-          metalness={0.42}
-          clearcoat={0.72}
-          emissive="#1e3a8a"
-          emissiveIntensity={active ? 1.05 : 0.62}
-        />
-      </mesh>
-      <mesh position={[-0.26, 0.3, 0.058]}>
-        <planeGeometry args={[0.2, 0.2]} />
-        <meshBasicMaterial color="#dbeafe" />
-      </mesh>
-      <mesh position={[0.12, 0.3, 0.058]}>
-        <planeGeometry args={[0.5, 0.04]} />
-        <meshBasicMaterial color="#e2e8f0" />
-      </mesh>
-      <mesh position={[0.06, 0.16, 0.058]}>
-        <planeGeometry args={[0.7, 0.04]} />
-        <meshBasicMaterial color="#bfdbfe" />
-      </mesh>
-      <mesh position={[0.02, 0.01, 0.058]}>
-        <planeGeometry args={[0.66, 0.04]} />
-        <meshBasicMaterial color="#93c5fd" />
-      </mesh>
-      <mesh position={[-0.05, -0.14, 0.058]}>
-        <planeGeometry args={[0.55, 0.04]} />
-        <meshBasicMaterial color="#60a5fa" />
-      </mesh>
-    </group>
-  );
 }
 
 function AIEngineNode({ active, position }: { active: boolean; position: THREE.Vector3 }) {
@@ -183,142 +141,6 @@ function AIEngineNode({ active, position }: { active: boolean; position: THREE.V
   );
 }
 
-function ResumeScoreNode({ active, position }: { active: boolean; position: THREE.Vector3 }) {
-  return (
-    <group position={position.toArray()}>
-      <mesh>
-        <boxGeometry args={[1.08, 0.86, 0.08]} />
-        <meshPhysicalMaterial
-          color={active ? "#0ea5e9" : "#0369a1"}
-          roughness={0.22}
-          metalness={0.34}
-          clearcoat={0.56}
-          emissive="#164e63"
-          emissiveIntensity={active ? 0.92 : 0.58}
-        />
-      </mesh>
-      <mesh position={[-0.23, -0.02, 0.052]}>
-        <boxGeometry args={[0.15, 0.34, 0.02]} />
-        <meshBasicMaterial color="#bae6fd" />
-      </mesh>
-      <mesh position={[0, 0.06, 0.052]}>
-        <boxGeometry args={[0.15, 0.5, 0.02]} />
-        <meshBasicMaterial color="#7dd3fc" />
-      </mesh>
-      <mesh position={[0.23, 0.14, 0.052]}>
-        <boxGeometry args={[0.15, 0.66, 0.02]} />
-        <meshBasicMaterial color="#38bdf8" />
-      </mesh>
-    </group>
-  );
-}
-
-function SkillGapNode({ active, position }: { active: boolean; position: THREE.Vector3 }) {
-  return (
-    <group position={position.toArray()}>
-      <mesh>
-        <boxGeometry args={[1.04, 0.74, 0.08]} />
-        <meshPhysicalMaterial
-          color={active ? "#0891b2" : "#155e75"}
-          roughness={0.2}
-          metalness={0.36}
-          clearcoat={0.52}
-          emissive="#164e63"
-          emissiveIntensity={active ? 0.88 : 0.54}
-        />
-      </mesh>
-      <mesh position={[-0.18, 0.1, 0.052]}>
-        <boxGeometry args={[0.34, 0.08, 0.02]} />
-        <meshBasicMaterial color="#67e8f9" />
-      </mesh>
-      <mesh position={[0.18, 0.1, 0.052]}>
-        <boxGeometry args={[0.24, 0.08, 0.02]} />
-        <meshBasicMaterial color="#0ea5e9" />
-      </mesh>
-      <mesh position={[-0.12, -0.08, 0.052]}>
-        <boxGeometry args={[0.22, 0.08, 0.02]} />
-        <meshBasicMaterial color="#f59e0b" />
-      </mesh>
-      <mesh position={[0.18, -0.08, 0.052]}>
-        <boxGeometry args={[0.34, 0.08, 0.02]} />
-        <meshBasicMaterial color="#14b8a6" />
-      </mesh>
-    </group>
-  );
-}
-
-function VerifiedMatchNode({ active, position }: { active: boolean; position: THREE.Vector3 }) {
-  return (
-    <group position={position.toArray()}>
-      <mesh>
-        <boxGeometry args={[1.12, 0.8, 0.08]} />
-        <meshPhysicalMaterial
-          color={active ? "#2563eb" : "#1e3a8a"}
-          roughness={0.24}
-          metalness={0.34}
-          clearcoat={0.52}
-          emissive="#0f172a"
-          emissiveIntensity={active ? 0.88 : 0.5}
-        />
-      </mesh>
-      <mesh position={[-0.1, 0.2, 0.052]}>
-        <planeGeometry args={[0.54, 0.05]} />
-        <meshBasicMaterial color="#e2e8f0" />
-      </mesh>
-      <mesh position={[-0.14, 0.03, 0.052]}>
-        <planeGeometry args={[0.5, 0.05]} />
-        <meshBasicMaterial color="#bfdbfe" />
-      </mesh>
-      <mesh position={[-0.2, -0.14, 0.052]}>
-        <planeGeometry args={[0.38, 0.05]} />
-        <meshBasicMaterial color="#93c5fd" />
-      </mesh>
-      <mesh position={[0.34, 0.16, 0.054]}>
-        <sphereGeometry args={[0.11, 18, 18]} />
-        <meshBasicMaterial color="#34d399" />
-      </mesh>
-    </group>
-  );
-}
-
-function HiringPipelineNode({ active, position }: { active: boolean; position: THREE.Vector3 }) {
-  return (
-    <group position={position.toArray()}>
-      <mesh>
-        <boxGeometry args={[1.22, 0.9, 0.08]} />
-        <meshPhysicalMaterial
-          color={active ? "#0f766e" : "#155e75"}
-          roughness={0.2}
-          metalness={0.42}
-          clearcoat={0.62}
-          emissive="#134e4a"
-          emissiveIntensity={active ? 0.92 : 0.58}
-        />
-      </mesh>
-      <mesh position={[-0.35, 0.12, 0.052]}>
-        <boxGeometry args={[0.2, 0.12, 0.02]} />
-        <meshBasicMaterial color="#e0f2fe" />
-      </mesh>
-      <mesh position={[0, 0.12, 0.052]}>
-        <boxGeometry args={[0.2, 0.12, 0.02]} />
-        <meshBasicMaterial color="#7dd3fc" />
-      </mesh>
-      <mesh position={[0.35, 0.12, 0.052]}>
-        <boxGeometry args={[0.2, 0.12, 0.02]} />
-        <meshBasicMaterial color="#38bdf8" />
-      </mesh>
-      <mesh position={[-0.17, 0.12, 0.052]}>
-        <boxGeometry args={[0.08, 0.02, 0.01]} />
-        <meshBasicMaterial color="#bfdbfe" />
-      </mesh>
-      <mesh position={[0.17, 0.12, 0.052]}>
-        <boxGeometry args={[0.08, 0.02, 0.01]} />
-        <meshBasicMaterial color="#bfdbfe" />
-      </mesh>
-    </group>
-  );
-}
-
 function DepthParallaxLayer() {
   const groupRef = useRef<THREE.Group>(null);
 
@@ -349,29 +171,48 @@ function DepthParallaxLayer() {
 
 function FlowMap({
   reducedMotion,
-  activeModule
+  activeModule,
+  connectorAnchors
 }: {
   reducedMotion: boolean;
   activeModule?: WorkflowModule | null;
+  connectorAnchors?: Partial<Record<WorkflowModule, ConnectorAnchor>>;
 }) {
   const { size, viewport } = useThree();
   const groupRef = useRef<THREE.Group>(null);
   const lineMaterials = useRef<THREE.Material[]>([]);
   const particleRefs = useRef<THREE.Mesh[]>([]);
 
+  const anchors = useMemo(() => {
+    const merged: Record<WorkflowModule, ConnectorAnchor & { z: number }> = { ...defaultAnchors };
+
+    (Object.keys(connectorAnchors ?? {}) as WorkflowModule[]).forEach((id) => {
+      const value = connectorAnchors?.[id];
+      if (!value) return;
+      if (id === "ai-engine") return;
+      merged[id] = {
+        xPct: Math.min(0.98, Math.max(0.02, value.xPct)),
+        yPct: Math.min(0.98, Math.max(0.02, value.yPct)),
+        z: defaultAnchors[id].z
+      };
+    });
+
+    return merged;
+  }, [connectorAnchors]);
+
   const layoutPositions = useMemo(() => {
     const usableW = viewport.width * 0.86;
     const usableH = viewport.height * 0.84;
 
     return Object.fromEntries(
-      (Object.keys(nodeAnchors) as WorkflowModule[]).map((id) => {
-        const anchor = nodeAnchors[id];
+      (Object.keys(anchors) as WorkflowModule[]).map((id) => {
+        const anchor = anchors[id];
         const x = (anchor.xPct - 0.5) * usableW;
         const y = (0.5 - anchor.yPct) * usableH;
         return [id, new THREE.Vector3(x, y, anchor.z)];
       })
     ) as Record<WorkflowModule, THREE.Vector3>;
-  }, [viewport.width, viewport.height]);
+  }, [anchors, viewport.width, viewport.height]);
 
   const curves = useMemo(
     () => links.map((link) => buildCurveEdgeToEdge(link.from, link.to, layoutPositions, link.lift)),
@@ -435,12 +276,7 @@ function FlowMap({
 
   return (
     <group ref={groupRef}>
-      <ResumeUploadNode active={isNodeActive("resume-upload", activeModule)} position={layoutPositions["resume-upload"]} />
-      <AIEngineNode active={isNodeActive("ai-engine", activeModule)} position={layoutPositions["ai-engine"]} />
-      <ResumeScoreNode active={isNodeActive("resume-score", activeModule)} position={layoutPositions["resume-score"]} />
-      <SkillGapNode active={isNodeActive("skill-gap", activeModule)} position={layoutPositions["skill-gap"]} />
-      <VerifiedMatchNode active={isNodeActive("verified-match", activeModule)} position={layoutPositions["verified-match"]} />
-      <HiringPipelineNode active={isNodeActive("hiring-pipeline", activeModule)} position={layoutPositions["hiring-pipeline"]} />
+      <AIEngineNode active={activeModule === "ai-engine" || !activeModule} position={layoutPositions["ai-engine"]} />
 
       {curves.map((curve, idx) => (
         <Line
@@ -491,7 +327,7 @@ function SceneLights() {
   );
 }
 
-export function HeroScene({ activeModule = null }: HeroSceneProps) {
+export function HeroScene({ activeModule = null, connectorAnchors }: HeroSceneProps) {
   const [reducedMotion, setReducedMotion] = useState(false);
 
   useEffect(() => {
@@ -508,7 +344,7 @@ export function HeroScene({ activeModule = null }: HeroSceneProps) {
         <fog attach="fog" args={["#020617", 8, 18]} />
         <SceneLights />
         <DepthParallaxLayer />
-        <FlowMap reducedMotion={reducedMotion} activeModule={activeModule} />
+        <FlowMap reducedMotion={reducedMotion} activeModule={activeModule} connectorAnchors={connectorAnchors} />
       </Canvas>
     </div>
   );
