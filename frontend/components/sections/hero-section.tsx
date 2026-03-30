@@ -11,41 +11,60 @@ const HeroScene = dynamic(() => import("@/components/home/HeroScene").then((mod)
   loading: () => null
 });
 
+const DIAGRAM_GRID = {
+  columns: 12,
+  rows: 10
+} as const;
+
+function toDiagramStyle(column: number, row: number) {
+  return {
+    left: `${(column / DIAGRAM_GRID.columns) * 100}%`,
+    top: `${(row / DIAGRAM_GRID.rows) * 100}%`,
+    transform: "translate(-50%, -50%)"
+  } as const;
+}
+
 const workflowModules: Array<{
   id: WorkflowModule;
   label: string;
   detail: string;
-  className: string;
+  column: number;
+  row: number;
 }> = [
   {
     id: "resume-upload",
     label: "Resume Upload",
     detail: "Student profile enters the AI system.",
-    className: "left-[8%] top-[14%]"
+    column: 2,
+    row: 2
   },
   {
     id: "resume-score",
     label: "Resume Score",
     detail: "Strength score and ATS signal generated.",
-    className: "right-[4%] top-[12%]"
+    column: 10,
+    row: 2
   },
   {
     id: "skill-gap",
     label: "Skill Gap",
     detail: "Missing skills mapped for target roles.",
-    className: "right-[4%] top-[32%]"
+    column: 10,
+    row: 4
   },
   {
     id: "verified-match",
     label: "Verified Match",
     detail: "Trusted company matches are surfaced.",
-    className: "right-[4%] top-[52%]"
+    column: 10,
+    row: 6
   },
   {
     id: "hiring-pipeline",
     label: "Hiring Pipeline",
     detail: "Applications move through live stages.",
-    className: "right-[4%] top-[72%]"
+    column: 10,
+    row: 8
   }
 ];
 
@@ -119,7 +138,8 @@ export function HeroSection() {
                   type="button"
                   onMouseEnter={() => setActiveModule(module.id)}
                   onMouseLeave={() => setActiveModule("ai-engine")}
-                  className={`group absolute w-[182px] rounded-2xl border px-3 py-2 text-left backdrop-blur-md transition-all duration-300 ${module.className} ${
+                  style={toDiagramStyle(module.column, module.row)}
+                  className={`group absolute w-[182px] rounded-2xl border px-3 py-2 text-left backdrop-blur-md transition-all duration-300 ${
                     isActive
                       ? "border-cyan-300/70 bg-slate-900/80 shadow-[0_18px_34px_rgba(34,211,238,0.28)]"
                       : "border-slate-500/40 bg-slate-900/56 shadow-[0_12px_24px_rgba(2,6,23,0.36)]"
