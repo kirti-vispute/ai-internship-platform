@@ -63,8 +63,20 @@ const nodeEdgeRadius: Record<WorkflowModule, number> = {
   "hiring-pipeline": 0
 };
 
+const lineDepthOpacity = [0.96, 0.9, 0.84, 0.8, 0.76];
+
 function lerp(a: number, b: number, t: number) {
   return a + (b - a) * t;
+}
+
+function gradientColorAt(t: number) {
+  const start = new THREE.Color("#22d3ee");
+  const mid = new THREE.Color("#3b82f6");
+  const end = new THREE.Color("#8b5cf6");
+  if (t <= 0.5) {
+    return start.lerp(mid, t / 0.5);
+  }
+  return mid.lerp(end, (t - 0.5) / 0.5);
 }
 
 function buildCurveEdgeToEdge(from: WorkflowModule, to: WorkflowModule, positions: Record<WorkflowModule, THREE.Vector3>, lift: number) {
@@ -157,6 +169,92 @@ function AIEngineNode({
   );
 }
 
+function ConnectorPath({
+  curve,
+  active,
+  depthIndex
+}: {
+  curve: THREE.CatmullRomCurve3;
+  active: boolean;
+  depthIndex: number;
+}) {
+  const points = useMemo(() => curve.getPoints(52), [curve]);
+  const depthFactor = lineDepthOpacity[depthIndex] ?? 0.82;
+
+  const segments = useMemo(
+    () =>
+      points.slice(0, -1).map((point, index) => ({
+        start: point,
+        end: points[index + 1],
+        t: index / Math.max(1, points.length - 2)
+      })),
+    [points]
+  );
+
+  return (
+    <group>
+      <Line
+        points={points}
+        color={active ? "#7dd3fc" : "#60a5fa"}
+        lineWidth={active ? 4.8 : 4.1}
+        transparent
+        opacity={(active ? 0.3 : 0.18) * depthFactor}
+      />
+      {segments.map((segment, index) => (
+        <Line
+          key={`segment-${depthIndex}-${index}`}
+          points={[segment.start, segment.end]}
+          color={gradientColorAt(segment.t)}
+          lineWidth={active ? 2.45 : 2.05}
+          transparent
+          opacity={(active ? 0.92 : 0.75) * depthFactor}
+        />
+      ))}
+    </group>
+  );
+}
+
+function EndpointPulse({
+  position,
+  active,
+  depthIndex
+}: {
+  position: THREE.Vector3;
+  active: boolean;
+  depthIndex: number;
+}) {
+  const coreRef = useRef<THREE.Mesh>(null);
+  const haloRef = useRef<THREE.Mesh>(null);
+  const depthFactor = lineDepthOpacity[depthIndex] ?? 0.82;
+
+  useFrame((state) => {
+    const pulse = 1 + Math.sin(state.clock.elapsedTime * 3.2 + depthIndex) * 0.16;
+    if (coreRef.current) {
+      coreRef.current.scale.setScalar((active ? 1.04 : 0.96) * pulse);
+      const material = coreRef.current.material as THREE.MeshStandardMaterial;
+      material.emissiveIntensity = active ? 2.35 : 1.25;
+    }
+    if (haloRef.current) {
+      haloRef.current.scale.setScalar((active ? 1.1 : 1) * pulse);
+      const material = haloRef.current.material as THREE.MeshBasicMaterial;
+      material.opacity = (active ? 0.62 : 0.4) * depthFactor;
+    }
+  });
+
+  return (
+    <group position={position.toArray()}>
+      <mesh ref={haloRef}>
+        <sphereGeometry args={[0.112, 18, 18]} />
+        <meshBasicMaterial color="#67e8f9" transparent opacity={0.4} />
+      </mesh>
+      <mesh ref={coreRef}>
+        <sphereGeometry args={[0.058, 16, 16]} />
+        <meshStandardMaterial color="#e0f2fe" emissive="#22d3ee" emissiveIntensity={1.3} />
+      </mesh>
+    </group>
+  );
+}
+
 function FlowMap({
   reducedMotion,
   activeModule,
@@ -170,7 +268,6 @@ function FlowMap({
 }) {
   const { size, viewport } = useThree();
   const groupRef = useRef<THREE.Group>(null);
-  const lineMaterials = useRef<THREE.Material[]>([]);
   const particleRefs = useRef<THREE.Mesh[]>([]);
 
   const anchors = useMemo(() => {
@@ -210,20 +307,22 @@ function FlowMap({
 
   const particleMeta = useMemo(
     () =>
-      Array.from({ length: 18 }).map((_, index) => ({
-        curveIdx: index % curves.length,
-        t: (index % 6) / 6
-      })),
-    [curves.length]
+      Array.from({ length: links.length * 5 }).map((_, index) => {
+        const curveIdx = index % links.length;
+        const lane = Math.floor(index / links.length);
+        return {
+          curveIdx,
+          t: lane / 5,
+          baseSpeed: 0.14 + curveIdx * 0.018 + lane * 0.011
+        };
+      }),
+    []
   );
 
   useFrame((state, delta) => {
     const externalBias = cursorBiasRef?.current;
     const biasX = externalBias ? externalBias.x : state.pointer.x;
     const biasY = externalBias ? externalBias.y : state.pointer.y;
-    const biasProximity = externalBias
-      ? externalBias.proximity
-      : Math.max(0, 1 - Math.min(1, Math.hypot(state.pointer.x, state.pointer.y)));
 
     const targetScale = size.width < 640 ? 0.92 : size.width < 1024 ? 0.98 : 1.02;
 
@@ -241,34 +340,25 @@ function FlowMap({
     state.camera.position.y = lerp(state.camera.position.y, biasY * 0.18, 0.045);
     state.camera.lookAt(0, 0, 0);
 
-    lineMaterials.current.forEach((material, idx) => {
-      const lineMaterial = material as THREE.Material & { opacity?: number; color?: THREE.Color };
-      const active = isLinkActive(links[idx], activeModule);
-      if (typeof lineMaterial.opacity === "number") {
-        lineMaterial.opacity = (active ? 0.74 : 0.35) + biasProximity * 0.2;
-      }
-      if (lineMaterial.color) {
-        lineMaterial.color.set(active ? "#7dd3fc" : "#38bdf8");
-      }
-    });
-
     particleRefs.current.forEach((mesh, index) => {
       const meta = particleMeta[index];
       const curve = curves[meta.curveIdx];
-      meta.t += delta * (reducedMotion ? 0.06 : 0.22 + meta.curveIdx * 0.03);
+      const pathActive = isLinkActive(links[meta.curveIdx], activeModule);
+      const speed = reducedMotion ? 0.05 : meta.baseSpeed * (pathActive ? 1.85 : 1);
+      meta.t += delta * speed;
       if (meta.t > 1) meta.t = 0;
 
       const point = curve.getPointAt(meta.t);
-      const driftFactor = 0.06 + (meta.curveIdx % 3) * 0.025;
+      const driftFactor = 0.05 + (meta.curveIdx % 3) * 0.02;
       const targetX = point.x + biasX * driftFactor;
-      const targetY = point.y + biasY * driftFactor * 0.7;
+      const targetY = point.y + biasY * driftFactor * 0.65;
 
-      mesh.position.x = lerp(mesh.position.x, targetX, 0.18);
-      mesh.position.y = lerp(mesh.position.y, targetY, 0.18);
-      mesh.position.z = lerp(mesh.position.z, point.z, 0.18);
+      mesh.position.x = lerp(mesh.position.x, targetX, 0.2);
+      mesh.position.y = lerp(mesh.position.y, targetY, 0.2);
+      mesh.position.z = lerp(mesh.position.z, point.z, 0.2);
 
-      const pulse = 0.86 + Math.sin(state.clock.elapsedTime * 1.8 + index) * 0.18;
-      mesh.scale.setScalar(pulse);
+      const pulse = 0.88 + Math.sin(state.clock.elapsedTime * 2 + index) * 0.15;
+      mesh.scale.setScalar(pathActive ? pulse * 1.15 : pulse);
     });
   });
 
@@ -276,20 +366,15 @@ function FlowMap({
     <group ref={groupRef}>
       <AIEngineNode active={activeModule === "ai-engine" || !activeModule} position={layoutPositions["ai-engine"]} cursorBiasRef={cursorBiasRef} />
 
-      {curves.map((curve, idx) => (
-        <Line
-          key={links[idx].id}
-          points={curve.getPoints(44)}
-          color={isLinkActive(links[idx], activeModule) ? "#7dd3fc" : "#38bdf8"}
-          lineWidth={1.35}
-          transparent
-          opacity={0.45}
-          ref={(line) => {
-            if (!line?.material) return;
-            lineMaterials.current[idx] = line.material as THREE.Material;
-          }}
-        />
-      ))}
+      {curves.map((curve, idx) => {
+        const active = isLinkActive(links[idx], activeModule);
+        return (
+          <group key={links[idx].id}>
+            <ConnectorPath curve={curve} active={active} depthIndex={idx} />
+            <EndpointPulse position={curve.getPoint(1)} active={active} depthIndex={idx} />
+          </group>
+        );
+      })}
 
       {particleMeta.map((_, idx) => (
         <mesh
@@ -298,8 +383,8 @@ function FlowMap({
             if (mesh) particleRefs.current[idx] = mesh;
           }}
         >
-          <sphereGeometry args={[0.042, 12, 12]} />
-          <meshStandardMaterial color={idx % 2 === 0 ? "#93c5fd" : "#67e8f9"} emissive="#22d3ee" emissiveIntensity={1.15} />
+          <sphereGeometry args={[0.04, 12, 12]} />
+          <meshStandardMaterial color={idx % 2 === 0 ? "#93c5fd" : "#67e8f9"} emissive="#22d3ee" emissiveIntensity={1.2} />
         </mesh>
       ))}
     </group>
@@ -346,5 +431,3 @@ export function HeroScene({ activeModule = null, connectorAnchors, cursorBiasRef
     </div>
   );
 }
-
-
