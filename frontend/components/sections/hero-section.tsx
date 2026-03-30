@@ -11,63 +11,55 @@ const HeroScene = dynamic(() => import("@/components/home/HeroScene").then((mod)
   loading: () => null
 });
 
-const DIAGRAM_GRID = {
-  columns: 12,
-  rows: 10
-} as const;
-const RIGHT_COLUMN = 10.8;
-const TOP_ROW = 1.9;
-const ROW_STEP = 2;
-
-function toDiagramStyle(column: number, row: number) {
-  return {
-    left: `${(column / DIAGRAM_GRID.columns) * 100}%`,
-    top: `${(row / DIAGRAM_GRID.rows) * 100}%`,
-    transform: "translate(-50%, -50%)"
-  } as const;
-}
-
-const workflowModules: Array<{
+type WorkflowTile = {
   id: WorkflowModule;
   label: string;
   detail: string;
-  column: number;
-  row: number;
-}> = [
+  left: string;
+  top: string;
+  anchor?: "left" | "center";
+};
+
+const workflowModules: WorkflowTile[] = [
   {
     id: "resume-upload",
     label: "Resume Upload",
     detail: "Student profile enters the AI system.",
-    column: 1.8,
-    row: 1.9
+    left: "8%",
+    top: "19%",
+    anchor: "left"
   },
   {
     id: "resume-score",
     label: "Resume Score",
     detail: "Strength score and ATS signal generated.",
-    column: RIGHT_COLUMN,
-    row: TOP_ROW
+    left: "68%",
+    top: "20%",
+    anchor: "left"
   },
   {
     id: "skill-gap",
     label: "Skill Gap",
     detail: "Missing skills mapped for target roles.",
-    column: RIGHT_COLUMN,
-    row: TOP_ROW + ROW_STEP
+    left: "68%",
+    top: "36%",
+    anchor: "left"
   },
   {
     id: "verified-match",
     label: "Verified Match",
     detail: "Trusted company matches are surfaced.",
-    column: RIGHT_COLUMN,
-    row: TOP_ROW + ROW_STEP * 2
+    left: "68%",
+    top: "52%",
+    anchor: "left"
   },
   {
     id: "hiring-pipeline",
     label: "Hiring Pipeline",
     detail: "Applications move through live stages.",
-    column: RIGHT_COLUMN,
-    row: TOP_ROW + ROW_STEP * 3
+    left: "68%",
+    top: "68%",
+    anchor: "left"
   }
 ];
 
@@ -141,7 +133,11 @@ export function HeroSection() {
                   type="button"
                   onMouseEnter={() => setActiveModule(module.id)}
                   onMouseLeave={() => setActiveModule("ai-engine")}
-                  style={toDiagramStyle(module.column, module.row)}
+                  style={{
+                    left: module.left,
+                    top: module.top,
+                    transform: module.anchor === "center" ? "translate(-50%, -50%)" : "translateY(-50%)"
+                  }}
                   className={`group absolute w-[156px] rounded-xl border px-2.5 py-1.5 text-left backdrop-blur-[2px] transition-all duration-300 ${
                     isActive
                       ? "border-cyan-300/42 bg-slate-900/40 shadow-[0_8px_18px_rgba(34,211,238,0.14)]"
