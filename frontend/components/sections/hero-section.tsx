@@ -21,31 +21,31 @@ const workflowModules: Array<{
     id: "resume-upload",
     label: "Resume Upload",
     detail: "Student profile enters the AI system.",
-    className: "left-[2%] top-[11%]"
+    className: "left-[4%] top-[14%]"
   },
   {
     id: "resume-score",
     label: "Resume Score",
     detail: "Strength score and ATS signal generated.",
-    className: "right-[3%] top-[11%]"
+    className: "right-[5%] top-[12%]"
   },
   {
     id: "skill-gap",
     label: "Skill Gap",
     detail: "Missing skills mapped for target roles.",
-    className: "right-[2%] top-[34%]"
+    className: "right-[4%] top-[35%]"
   },
   {
     id: "verified-match",
     label: "Verified Match",
     detail: "Trusted company matches are surfaced.",
-    className: "right-[2%] top-[56%]"
+    className: "right-[4%] top-[57%]"
   },
   {
     id: "hiring-pipeline",
     label: "Hiring Pipeline",
     detail: "Applications move through live stages.",
-    className: "bottom-[9%] right-[8%]"
+    className: "bottom-[8%] right-[10%]"
   }
 ];
 

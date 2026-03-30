@@ -25,20 +25,20 @@ type FlowLink = {
 };
 
 const nodePositions: Record<WorkflowModule, THREE.Vector3> = {
-  "resume-upload": new THREE.Vector3(-2.6, 0.46, 0.14),
-  "ai-engine": new THREE.Vector3(-0.2, 0.02, 0),
-  "resume-score": new THREE.Vector3(2.05, 1.18, 0.12),
-  "skill-gap": new THREE.Vector3(2.55, 0.36, 0.1),
-  "verified-match": new THREE.Vector3(2.55, -0.48, 0.1),
-  "hiring-pipeline": new THREE.Vector3(1.95, -1.28, 0.12)
+  "resume-upload": new THREE.Vector3(-2.35, 0.78, 0.14),
+  "ai-engine": new THREE.Vector3(0, 0.02, 0),
+  "resume-score": new THREE.Vector3(2.02, 1.28, 0.12),
+  "skill-gap": new THREE.Vector3(2.36, 0.32, 0.1),
+  "verified-match": new THREE.Vector3(2.34, -0.64, 0.1),
+  "hiring-pipeline": new THREE.Vector3(1.9, -1.48, 0.12)
 };
 
 const links: FlowLink[] = [
-  { id: "resume-ai", from: "resume-upload", to: "ai-engine", lift: 0.55 },
+  { id: "resume-ai", from: "resume-upload", to: "ai-engine", lift: 0.52 },
   { id: "ai-score", from: "ai-engine", to: "resume-score", lift: 0.3 },
-  { id: "ai-skill", from: "ai-engine", to: "skill-gap", lift: 0.18 },
+  { id: "ai-skill", from: "ai-engine", to: "skill-gap", lift: 0.14 },
   { id: "ai-verified", from: "ai-engine", to: "verified-match", lift: 0.05 },
-  { id: "verified-pipeline", from: "verified-match", to: "hiring-pipeline", lift: -0.2 }
+  { id: "verified-pipeline", from: "verified-match", to: "hiring-pipeline", lift: -0.16 }
 ];
 
 function lerp(a: number, b: number, t: number) {
@@ -391,17 +391,17 @@ function FlowMap({
   );
 
   useFrame((state, delta) => {
-    const targetScale = size.width < 640 ? 0.7 : size.width < 1024 ? 0.82 : 0.92;
+    const targetScale = size.width < 640 ? 0.66 : size.width < 1024 ? 0.78 : 0.88;
     const px = state.pointer.x;
     const py = state.pointer.y;
-    const proximity = Math.max(0, 1 - Math.min(1, Math.hypot(px * 0.92, py) / 0.74));
+    const proximity = Math.max(0, 1 - Math.min(1, Math.hypot(px * 0.88, py) / 0.78));
 
     if (groupRef.current) {
       groupRef.current.scale.x = lerp(groupRef.current.scale.x, targetScale, 0.05);
       groupRef.current.scale.y = lerp(groupRef.current.scale.y, targetScale, 0.05);
       groupRef.current.scale.z = lerp(groupRef.current.scale.z, targetScale, 0.05);
-      groupRef.current.rotation.y = lerp(groupRef.current.rotation.y, px * 0.2, 0.04);
-      groupRef.current.rotation.x = lerp(groupRef.current.rotation.x, py * 0.12, 0.04);
+      groupRef.current.rotation.y = lerp(groupRef.current.rotation.y, px * 0.16, 0.04);
+      groupRef.current.rotation.x = lerp(groupRef.current.rotation.x, py * 0.09, 0.04);
       groupRef.current.position.y = lerp(
         groupRef.current.position.y,
         reducedMotion ? 0 : Math.sin(state.clock.elapsedTime * 0.42) * 0.07,
@@ -409,9 +409,9 @@ function FlowMap({
       );
     }
 
-    state.camera.position.x = lerp(state.camera.position.x, px * 0.38, 0.04);
-    state.camera.position.y = lerp(state.camera.position.y, py * 0.22, 0.04);
-    state.camera.lookAt(0.45, 0, 0);
+    state.camera.position.x = lerp(state.camera.position.x, px * 0.28, 0.04);
+    state.camera.position.y = lerp(state.camera.position.y, py * 0.16, 0.04);
+    state.camera.lookAt(0.34, -0.02, 0);
 
     lineMaterials.current.forEach((material, idx) => {
       const lineMaterial = material as THREE.Material & { opacity?: number; color?: THREE.Color };
@@ -506,7 +506,7 @@ export function HeroScene({ activeModule = null }: HeroSceneProps) {
 
   return (
     <div className="absolute inset-0 z-0">
-      <Canvas camera={{ position: [0.05, 0.02, 8.8], fov: 46 }} dpr={[1, 1.8]} gl={{ antialias: true, alpha: true }}>
+      <Canvas camera={{ position: [0.05, 0.02, 9.2], fov: 45 }} dpr={[1, 1.8]} gl={{ antialias: true, alpha: true }}>
         <fog attach="fog" args={["#020617", 8, 18]} />
         <SceneLights />
         <DepthParallaxLayer />
