@@ -28,27 +28,41 @@ const nodeAnchors: Record<WorkflowModule, { xPct: number; yPct: number; z: numbe
   "resume-upload": { xPct: 0.15, yPct: 0.2, z: 0.14 },
   "ai-engine": { xPct: 0.5, yPct: 0.5, z: 0 },
   "resume-score": { xPct: 0.84, yPct: 0.2, z: 0.12 },
-  "skill-gap": { xPct: 0.88, yPct: 0.42, z: 0.1 },
-  "verified-match": { xPct: 0.88, yPct: 0.62, z: 0.1 },
-  "hiring-pipeline": { xPct: 0.8, yPct: 0.81, z: 0.12 }
+  "skill-gap": { xPct: 0.88, yPct: 0.4, z: 0.1 },
+  "verified-match": { xPct: 0.88, yPct: 0.6, z: 0.1 },
+  "hiring-pipeline": { xPct: 0.88, yPct: 0.8, z: 0.12 }
 };
 
 const links: FlowLink[] = [
-  { id: "resume-ai", from: "resume-upload", to: "ai-engine", lift: 0.52 },
-  { id: "ai-score", from: "ai-engine", to: "resume-score", lift: 0.3 },
-  { id: "ai-skill", from: "ai-engine", to: "skill-gap", lift: 0.14 },
-  { id: "ai-verified", from: "ai-engine", to: "verified-match", lift: 0.05 },
-  { id: "verified-pipeline", from: "verified-match", to: "hiring-pipeline", lift: -0.16 }
+  { id: "ai-resume", from: "ai-engine", to: "resume-upload", lift: 0.18 },
+  { id: "ai-score", from: "ai-engine", to: "resume-score", lift: 0.2 },
+  { id: "ai-skill", from: "ai-engine", to: "skill-gap", lift: 0.1 },
+  { id: "ai-verified", from: "ai-engine", to: "verified-match", lift: -0.02 },
+  { id: "ai-pipeline", from: "ai-engine", to: "hiring-pipeline", lift: -0.16 }
 ];
+
+const nodeEdgeRadius: Record<WorkflowModule, number> = {
+  "resume-upload": 0.62,
+  "ai-engine": 0.72,
+  "resume-score": 0.56,
+  "skill-gap": 0.54,
+  "verified-match": 0.56,
+  "hiring-pipeline": 0.6
+};
 
 function lerp(a: number, b: number, t: number) {
   return a + (b - a) * t;
 }
 
-function buildCurve(start: THREE.Vector3, end: THREE.Vector3, lift: number) {
-  const control = start.clone().add(end).multiplyScalar(0.5);
+function buildCurveEdgeToEdge(from: WorkflowModule, to: WorkflowModule, positions: Record<WorkflowModule, THREE.Vector3>, lift: number) {
+  const start = positions[from].clone();
+  const end = positions[to].clone();
+  const dir = end.clone().sub(start).normalize();
+  const edgeStart = start.add(dir.clone().multiplyScalar(nodeEdgeRadius[from]));
+  const edgeEnd = end.sub(dir.clone().multiplyScalar(nodeEdgeRadius[to]));
+  const control = edgeStart.clone().add(edgeEnd).multiplyScalar(0.5);
   control.y += lift;
-  return new THREE.CatmullRomCurve3([start.clone(), control, end.clone()]);
+  return new THREE.CatmullRomCurve3([edgeStart, control, edgeEnd]);
 }
 
 function isNodeActive(id: WorkflowModule, activeModule?: WorkflowModule | null) {
@@ -64,15 +78,8 @@ function isLinkActive(link: FlowLink, activeModule?: WorkflowModule | null) {
 }
 
 function ResumeUploadNode({ active, position }: { active: boolean; position: THREE.Vector3 }) {
-  const groupRef = useRef<THREE.Group>(null);
-
-  useFrame((state) => {
-    if (!groupRef.current) return;
-    groupRef.current.position.y = position.y + Math.sin(state.clock.elapsedTime * 0.8 + 0.5) * 0.07;
-  });
-
   return (
-    <group ref={groupRef} position={position.toArray()}>
+    <group position={position.toArray()}>
       <mesh>
         <boxGeometry args={[1.2, 1.05, 0.1]} />
         <meshPhysicalMaterial
@@ -116,19 +123,19 @@ function AIEngineNode({ active, position }: { active: boolean; position: THREE.V
   const outerGlowRef = useRef<THREE.Mesh>(null);
 
   useFrame((state, delta) => {
-    const pulseA = 1 + Math.sin(state.clock.elapsedTime * 1.95) * 0.1;
+    const pulseA = 1 + Math.sin(state.clock.elapsedTime * 1.95) * 0.12;
     const pulseB = 1 + Math.sin(state.clock.elapsedTime * 1.2 + 0.6) * 0.08;
 
     if (coreRef.current) {
       coreRef.current.rotation.y += delta * 0.45;
       coreRef.current.scale.setScalar(pulseA);
       const material = coreRef.current.material as THREE.MeshPhysicalMaterial;
-      material.emissiveIntensity = (active ? 2 : 1.45) + Math.sin(state.clock.elapsedTime * 2.1) * 0.2;
+      material.emissiveIntensity = (active ? 2.15 : 1.55) + Math.sin(state.clock.elapsedTime * 2.1) * 0.2;
     }
     if (glowRef.current) {
       glowRef.current.scale.setScalar(pulseA * 1.02);
       const material = glowRef.current.material as THREE.MeshBasicMaterial;
-      material.opacity = active ? 0.2 : 0.14;
+      material.opacity = active ? 0.22 : 0.16;
     }
     if (outerGlowRef.current) {
       outerGlowRef.current.scale.setScalar(pulseB * 1.04);
@@ -173,15 +180,8 @@ function AIEngineNode({ active, position }: { active: boolean; position: THREE.V
 }
 
 function ResumeScoreNode({ active, position }: { active: boolean; position: THREE.Vector3 }) {
-  const groupRef = useRef<THREE.Group>(null);
-
-  useFrame((state) => {
-    if (!groupRef.current) return;
-    groupRef.current.position.y = position.y + Math.sin(state.clock.elapsedTime * 0.7 + 1.2) * 0.06;
-  });
-
   return (
-    <group ref={groupRef} position={position.toArray()}>
+    <group position={position.toArray()}>
       <mesh>
         <boxGeometry args={[1.08, 0.86, 0.08]} />
         <meshPhysicalMaterial
@@ -210,15 +210,8 @@ function ResumeScoreNode({ active, position }: { active: boolean; position: THRE
 }
 
 function SkillGapNode({ active, position }: { active: boolean; position: THREE.Vector3 }) {
-  const groupRef = useRef<THREE.Group>(null);
-
-  useFrame((state) => {
-    if (!groupRef.current) return;
-    groupRef.current.position.y = position.y + Math.sin(state.clock.elapsedTime * 0.9 + 2) * 0.05;
-  });
-
   return (
-    <group ref={groupRef} position={position.toArray()}>
+    <group position={position.toArray()}>
       <mesh>
         <boxGeometry args={[1.04, 0.74, 0.08]} />
         <meshPhysicalMaterial
@@ -251,15 +244,8 @@ function SkillGapNode({ active, position }: { active: boolean; position: THREE.V
 }
 
 function VerifiedMatchNode({ active, position }: { active: boolean; position: THREE.Vector3 }) {
-  const groupRef = useRef<THREE.Group>(null);
-
-  useFrame((state) => {
-    if (!groupRef.current) return;
-    groupRef.current.position.y = position.y + Math.sin(state.clock.elapsedTime * 0.76 + 2.5) * 0.05;
-  });
-
   return (
-    <group ref={groupRef} position={position.toArray()}>
+    <group position={position.toArray()}>
       <mesh>
         <boxGeometry args={[1.12, 0.8, 0.08]} />
         <meshPhysicalMaterial
@@ -292,15 +278,8 @@ function VerifiedMatchNode({ active, position }: { active: boolean; position: TH
 }
 
 function HiringPipelineNode({ active, position }: { active: boolean; position: THREE.Vector3 }) {
-  const groupRef = useRef<THREE.Group>(null);
-
-  useFrame((state) => {
-    if (!groupRef.current) return;
-    groupRef.current.position.y = position.y + Math.sin(state.clock.elapsedTime * 0.7 + 3) * 0.06;
-  });
-
   return (
-    <group ref={groupRef} position={position.toArray()}>
+    <group position={position.toArray()}>
       <mesh>
         <boxGeometry args={[1.22, 0.9, 0.08]} />
         <meshPhysicalMaterial
@@ -391,7 +370,7 @@ function FlowMap({
   }, [viewport.width, viewport.height]);
 
   const curves = useMemo(
-    () => links.map((link) => buildCurve(layoutPositions[link.from], layoutPositions[link.to], link.lift)),
+    () => links.map((link) => buildCurveEdgeToEdge(link.from, link.to, layoutPositions, link.lift)),
     [layoutPositions]
   );
 

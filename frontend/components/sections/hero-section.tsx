@@ -15,6 +15,9 @@ const DIAGRAM_GRID = {
   columns: 12,
   rows: 10
 } as const;
+const RIGHT_COLUMN = 10.8;
+const TOP_ROW = 1.9;
+const ROW_STEP = 2;
 
 function toDiagramStyle(column: number, row: number) {
   return {
@@ -42,29 +45,29 @@ const workflowModules: Array<{
     id: "resume-score",
     label: "Resume Score",
     detail: "Strength score and ATS signal generated.",
-    column: 10.8,
-    row: 1.9
+    column: RIGHT_COLUMN,
+    row: TOP_ROW
   },
   {
     id: "skill-gap",
     label: "Skill Gap",
     detail: "Missing skills mapped for target roles.",
-    column: 10.8,
-    row: 3.9
+    column: RIGHT_COLUMN,
+    row: TOP_ROW + ROW_STEP
   },
   {
     id: "verified-match",
     label: "Verified Match",
     detail: "Trusted company matches are surfaced.",
-    column: 10.8,
-    row: 5.9
+    column: RIGHT_COLUMN,
+    row: TOP_ROW + ROW_STEP * 2
   },
   {
     id: "hiring-pipeline",
     label: "Hiring Pipeline",
     detail: "Applications move through live stages.",
-    column: 10.8,
-    row: 7.9
+    column: RIGHT_COLUMN,
+    row: TOP_ROW + ROW_STEP * 3
   }
 ];
 
@@ -141,8 +144,8 @@ export function HeroSection() {
                   style={toDiagramStyle(module.column, module.row)}
                   className={`group absolute w-[156px] rounded-xl border px-2.5 py-1.5 text-left backdrop-blur-[2px] transition-all duration-300 ${
                     isActive
-                      ? "border-cyan-300/45 bg-slate-900/46 shadow-[0_8px_18px_rgba(34,211,238,0.14)]"
-                      : "border-slate-400/25 bg-slate-900/30 shadow-[0_6px_14px_rgba(2,6,23,0.22)]"
+                      ? "border-cyan-300/42 bg-slate-900/40 shadow-[0_8px_18px_rgba(34,211,238,0.14)]"
+                      : "border-slate-400/22 bg-slate-900/24 shadow-[0_6px_14px_rgba(2,6,23,0.22)]"
                   }`}
                 >
                   <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-cyan-200/95">{module.label}</p>
