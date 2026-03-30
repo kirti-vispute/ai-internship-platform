@@ -13,10 +13,14 @@ export type WorkflowModule =
   | "verified-match"
   | "hiring-pipeline";
 
+type TileEdge = "left" | "right" | "top" | "bottom" | "center";
+
 type ConnectorAnchor = {
   xPct: number;
   yPct: number;
 };
+
+type ModuleAnchorSet = Record<TileEdge, ConnectorAnchor>;
 
 type CursorBias = {
   x: number;
@@ -26,7 +30,7 @@ type CursorBias = {
 
 type HeroSceneProps = {
   activeModule?: WorkflowModule | null;
-  connectorAnchors?: Partial<Record<WorkflowModule, ConnectorAnchor>>;
+  connectorAnchors?: Partial<Record<WorkflowModule, ModuleAnchorSet>>;
   cursorBiasRef?: MutableRefObject<CursorBias>;
 };
 
@@ -34,36 +38,31 @@ type FlowLink = {
   id: string;
   from: WorkflowModule;
   to: WorkflowModule;
+  fromEdge: TileEdge;
+  toEdge: TileEdge;
   lift: number;
 };
 
-const defaultAnchors: Record<WorkflowModule, ConnectorAnchor & { z: number }> = {
-  "resume-upload": { xPct: 0.3, yPct: 0.19, z: 0.1 },
+const moduleCenters: Record<WorkflowModule, { xPct: number; yPct: number; z: number }> = {
+  "resume-upload": { xPct: 0.18, yPct: 0.32, z: 0.1 },
   "ai-engine": { xPct: 0.5, yPct: 0.5, z: 0 },
-  "resume-score": { xPct: 0.68, yPct: 0.2, z: 0.1 },
-  "skill-gap": { xPct: 0.68, yPct: 0.36, z: 0.1 },
-  "verified-match": { xPct: 0.68, yPct: 0.52, z: 0.1 },
-  "hiring-pipeline": { xPct: 0.68, yPct: 0.68, z: 0.1 }
+  "resume-score": { xPct: 0.74, yPct: 0.24, z: 0.1 },
+  "skill-gap": { xPct: 0.74, yPct: 0.44, z: 0.1 },
+  "verified-match": { xPct: 0.68, yPct: 0.63, z: 0.1 },
+  "hiring-pipeline": { xPct: 0.52, yPct: 0.79, z: 0.12 }
 };
 
 const links: FlowLink[] = [
-  { id: "ai-resume", from: "ai-engine", to: "resume-upload", lift: 0.2 },
-  { id: "ai-score", from: "ai-engine", to: "resume-score", lift: 0.15 },
-  { id: "ai-skill", from: "ai-engine", to: "skill-gap", lift: 0.04 },
-  { id: "ai-verified", from: "ai-engine", to: "verified-match", lift: -0.06 },
-  { id: "ai-pipeline", from: "ai-engine", to: "hiring-pipeline", lift: -0.18 }
+  { id: "resume-to-ai", from: "resume-upload", to: "ai-engine", fromEdge: "right", toEdge: "left", lift: 0.12 },
+  { id: "ai-to-score", from: "ai-engine", to: "resume-score", fromEdge: "right", toEdge: "left", lift: 0.14 },
+  { id: "ai-to-skill", from: "ai-engine", to: "skill-gap", fromEdge: "right", toEdge: "left", lift: 0.04 },
+  { id: "score-to-verified", from: "resume-score", to: "verified-match", fromEdge: "bottom", toEdge: "top", lift: 0.03 },
+  { id: "skill-to-verified", from: "skill-gap", to: "verified-match", fromEdge: "bottom", toEdge: "left", lift: -0.01 },
+  { id: "verified-to-pipeline", from: "verified-match", to: "hiring-pipeline", fromEdge: "bottom", toEdge: "top", lift: -0.08 }
 ];
 
-const nodeEdgeRadius: Record<WorkflowModule, number> = {
-  "resume-upload": 0,
-  "ai-engine": 0.72,
-  "resume-score": 0,
-  "skill-gap": 0,
-  "verified-match": 0,
-  "hiring-pipeline": 0
-};
-
-const lineDepthOpacity = [0.96, 0.9, 0.84, 0.8, 0.76];
+const aiEdgeRadius = 0.72;
+const lineDepthOpacity = [0.96, 0.9, 0.84, 0.8, 0.76, 0.72];
 
 function lerp(a: number, b: number, t: number) {
   return a + (b - a) * t;
@@ -74,20 +73,21 @@ function gradientColorAt(t: number) {
   const mid = new THREE.Color("#3b82f6");
   const end = new THREE.Color("#8b5cf6");
   if (t <= 0.5) {
-    return start.lerp(mid, t / 0.5);
+    return start.clone().lerp(mid, t / 0.5);
   }
-  return mid.lerp(end, (t - 0.5) / 0.5);
+  return mid.clone().lerp(end, (t - 0.5) / 0.5);
 }
 
-function buildCurveEdgeToEdge(from: WorkflowModule, to: WorkflowModule, positions: Record<WorkflowModule, THREE.Vector3>, lift: number) {
-  const start = positions[from].clone();
-  const end = positions[to].clone();
-  const dir = end.clone().sub(start).normalize();
-  const edgeStart = start.add(dir.clone().multiplyScalar(nodeEdgeRadius[from]));
-  const edgeEnd = end.sub(dir.clone().multiplyScalar(nodeEdgeRadius[to]));
-  const control = edgeStart.clone().add(edgeEnd).multiplyScalar(0.5);
-  control.y += lift;
-  return new THREE.CatmullRomCurve3([edgeStart, control, edgeEnd]);
+function makeDefaultAnchorSet(center: { xPct: number; yPct: number }): ModuleAnchorSet {
+  const dx = 0.065;
+  const dy = 0.052;
+  return {
+    left: { xPct: center.xPct - dx, yPct: center.yPct },
+    right: { xPct: center.xPct + dx, yPct: center.yPct },
+    top: { xPct: center.xPct, yPct: center.yPct - dy },
+    bottom: { xPct: center.xPct, yPct: center.yPct + dy },
+    center: { xPct: center.xPct, yPct: center.yPct }
+  };
 }
 
 function isLinkActive(link: FlowLink, activeModule?: WorkflowModule | null) {
@@ -178,7 +178,7 @@ function ConnectorPath({
   active: boolean;
   depthIndex: number;
 }) {
-  const points = useMemo(() => curve.getPoints(52), [curve]);
+  const points = useMemo(() => curve.getPoints(56), [curve]);
   const depthFactor = lineDepthOpacity[depthIndex] ?? 0.82;
 
   const segments = useMemo(
@@ -205,9 +205,9 @@ function ConnectorPath({
           key={`segment-${depthIndex}-${index}`}
           points={[segment.start, segment.end]}
           color={gradientColorAt(segment.t)}
-          lineWidth={active ? 2.45 : 2.05}
+          lineWidth={active ? 2.4 : 2.05}
           transparent
-          opacity={(active ? 0.92 : 0.75) * depthFactor}
+          opacity={(active ? 0.9 : 0.74) * depthFactor}
         />
       ))}
     </group>
@@ -263,7 +263,7 @@ function FlowMap({
 }: {
   reducedMotion: boolean;
   activeModule?: WorkflowModule | null;
-  connectorAnchors?: Partial<Record<WorkflowModule, ConnectorAnchor>>;
+  connectorAnchors?: Partial<Record<WorkflowModule, ModuleAnchorSet>>;
   cursorBiasRef?: MutableRefObject<CursorBias>;
 }) {
   const { size, viewport } = useThree();
@@ -271,16 +271,24 @@ function FlowMap({
   const particleRefs = useRef<THREE.Mesh[]>([]);
 
   const anchors = useMemo(() => {
-    const merged: Record<WorkflowModule, ConnectorAnchor & { z: number }> = { ...defaultAnchors };
+    const merged: Record<WorkflowModule, ModuleAnchorSet & { z: number }> = Object.fromEntries(
+      (Object.keys(moduleCenters) as WorkflowModule[]).map((id) => {
+        const center = moduleCenters[id];
+        return [id, { ...makeDefaultAnchorSet(center), z: center.z }];
+      })
+    ) as Record<WorkflowModule, ModuleAnchorSet & { z: number }>;
 
     (Object.keys(connectorAnchors ?? {}) as WorkflowModule[]).forEach((id) => {
       const value = connectorAnchors?.[id];
-      if (!value || id === "ai-engine") return;
-      merged[id] = {
-        xPct: Math.min(0.995, Math.max(0.005, value.xPct)),
-        yPct: Math.min(0.995, Math.max(0.005, value.yPct)),
-        z: defaultAnchors[id].z
-      };
+      if (!value) return;
+      (Object.keys(value) as TileEdge[]).forEach((edge) => {
+        const edgeValue = value[edge];
+        if (!edgeValue) return;
+        merged[id][edge] = {
+          xPct: Math.min(0.995, Math.max(0.005, edgeValue.xPct)),
+          yPct: Math.min(0.995, Math.max(0.005, edgeValue.yPct))
+        };
+      });
     });
 
     return merged;
@@ -292,16 +300,46 @@ function FlowMap({
 
     return Object.fromEntries(
       (Object.keys(anchors) as WorkflowModule[]).map((id) => {
-        const anchor = anchors[id];
-        const x = (anchor.xPct - 0.5) * usableW;
-        const y = (0.5 - anchor.yPct) * usableH;
-        return [id, new THREE.Vector3(x, y, anchor.z)];
+        const moduleAnchor = anchors[id];
+        const mapped = Object.fromEntries(
+          (["left", "right", "top", "bottom", "center"] as TileEdge[]).map((edge) => {
+            const edgeAnchor = moduleAnchor[edge];
+            const x = (edgeAnchor.xPct - 0.5) * usableW;
+            const y = (0.5 - edgeAnchor.yPct) * usableH;
+            return [edge, new THREE.Vector3(x, y, moduleAnchor.z)];
+          })
+        ) as Record<TileEdge, THREE.Vector3>;
+        return [id, mapped];
       })
-    ) as Record<WorkflowModule, THREE.Vector3>;
+    ) as Record<WorkflowModule, Record<TileEdge, THREE.Vector3>>;
   }, [anchors, viewport.width, viewport.height]);
 
   const curves = useMemo(
-    () => links.map((link) => buildCurveEdgeToEdge(link.from, link.to, layoutPositions, link.lift)),
+    () =>
+      links.map((link) => {
+        const fromPoint = layoutPositions[link.from][link.fromEdge].clone();
+        const toPoint = layoutPositions[link.to][link.toEdge].clone();
+
+        const start = fromPoint.clone();
+        const end = toPoint.clone();
+
+        if (link.from === "ai-engine") {
+          const center = layoutPositions["ai-engine"].center;
+          const dir = end.clone().sub(center).normalize();
+          start.copy(center.clone().add(dir.multiplyScalar(aiEdgeRadius)));
+        }
+
+        if (link.to === "ai-engine") {
+          const center = layoutPositions["ai-engine"].center;
+          const dir = start.clone().sub(center).normalize();
+          end.copy(center.clone().add(dir.multiplyScalar(aiEdgeRadius)));
+        }
+
+        const control = start.clone().add(end).multiplyScalar(0.5);
+        control.y += link.lift;
+
+        return new THREE.CatmullRomCurve3([start, control, end]);
+      }),
     [layoutPositions]
   );
 
@@ -330,10 +368,10 @@ function FlowMap({
       groupRef.current.scale.x = lerp(groupRef.current.scale.x, targetScale, 0.05);
       groupRef.current.scale.y = lerp(groupRef.current.scale.y, targetScale, 0.05);
       groupRef.current.scale.z = lerp(groupRef.current.scale.z, targetScale, 0.05);
-      groupRef.current.rotation.y = lerp(groupRef.current.rotation.y, biasX * 0.16, 0.04);
+      groupRef.current.rotation.y = lerp(groupRef.current.rotation.y, biasX * 0.15, 0.04);
       groupRef.current.rotation.x = lerp(groupRef.current.rotation.x, biasY * 0.1, 0.04);
-      groupRef.current.position.x = lerp(groupRef.current.position.x, biasX * 0.26, 0.045);
-      groupRef.current.position.y = lerp(groupRef.current.position.y, biasY * 0.16, 0.045);
+      groupRef.current.position.x = lerp(groupRef.current.position.x, biasX * 0.23, 0.045);
+      groupRef.current.position.y = lerp(groupRef.current.position.y, biasY * 0.14, 0.045);
     }
 
     state.camera.position.x = lerp(state.camera.position.x, biasX * 0.28, 0.045);
@@ -364,7 +402,7 @@ function FlowMap({
 
   return (
     <group ref={groupRef}>
-      <AIEngineNode active={activeModule === "ai-engine" || !activeModule} position={layoutPositions["ai-engine"]} cursorBiasRef={cursorBiasRef} />
+      <AIEngineNode active={activeModule === "ai-engine" || !activeModule} position={layoutPositions["ai-engine"].center} cursorBiasRef={cursorBiasRef} />
 
       {curves.map((curve, idx) => {
         const active = isLinkActive(links[idx], activeModule);

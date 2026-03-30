@@ -11,60 +11,131 @@ const HeroScene = dynamic(() => import("@/components/home/HeroScene").then((mod)
   loading: () => null
 });
 
+type TileEdge = "left" | "right" | "top" | "bottom" | "center";
+
+type TileAnchorSet = Record<TileEdge, { xPct: number; yPct: number }>;
+
 type WorkflowTile = {
   id: WorkflowModule;
   label: string;
   detail: string;
   left: string;
   top: string;
-  side: "left" | "right";
 };
 
 const workflowModules: WorkflowTile[] = [
   {
     id: "resume-upload",
     label: "Resume Upload",
-    detail: "Student profile enters the AI system.",
+    detail: "Profile enters the AI workflow.",
     left: "8%",
-    top: "19%",
-    side: "left"
+    top: "32%"
   },
   {
     id: "resume-score",
     label: "Resume Score",
-    detail: "Strength score and ATS signal generated.",
-    left: "68%",
-    top: "20%",
-    side: "right"
+    detail: "ATS and strength signal generated.",
+    left: "67%",
+    top: "24%"
   },
   {
     id: "skill-gap",
     label: "Skill Gap",
-    detail: "Missing skills mapped for target roles.",
-    left: "68%",
-    top: "36%",
-    side: "right"
+    detail: "Missing capabilities mapped live.",
+    left: "67%",
+    top: "44%"
   },
   {
     id: "verified-match",
     label: "Verified Match",
-    detail: "Trusted company matches are surfaced.",
-    left: "68%",
-    top: "52%",
-    side: "right"
+    detail: "Trusted company fit confidence.",
+    left: "61%",
+    top: "63%"
   },
   {
     id: "hiring-pipeline",
     label: "Hiring Pipeline",
-    detail: "Applications move through live stages.",
-    left: "68%",
-    top: "68%",
-    side: "right"
+    detail: "Outcome stages and progression.",
+    left: "45%",
+    top: "79%"
   }
 ];
 
+const tileGlyph: Partial<Record<WorkflowModule, { dot: string; bars: string[] }>> = {
+  "resume-upload": {
+    dot: "bg-cyan-300",
+    bars: ["w-6 bg-cyan-200/70", "w-4 bg-sky-300/60", "w-3 bg-indigo-300/50"]
+  },
+  "resume-score": {
+    dot: "bg-sky-300",
+    bars: ["w-3 bg-cyan-200/70", "w-5 bg-sky-300/65", "w-6 bg-indigo-300/55"]
+  },
+  "skill-gap": {
+    dot: "bg-teal-300",
+    bars: ["w-5 bg-cyan-200/65", "w-3 bg-amber-300/65", "w-6 bg-teal-300/55"]
+  },
+  "verified-match": {
+    dot: "bg-emerald-300",
+    bars: ["w-4 bg-cyan-200/65", "w-5 bg-emerald-300/65", "w-3 bg-indigo-300/55"]
+  },
+  "hiring-pipeline": {
+    dot: "bg-indigo-300",
+    bars: ["w-3 bg-cyan-200/65", "w-4 bg-sky-300/65", "w-5 bg-indigo-300/55"]
+  }
+};
+
 function nearEqual(a: number, b: number) {
   return Math.abs(a - b) < 0.001;
+}
+
+function buildAnchorSetFromRect(
+  rect: DOMRect,
+  containerRect: DOMRect,
+  bounds: { width: number; height: number }
+): TileAnchorSet {
+  const centerX = rect.left + rect.width / 2 - containerRect.left;
+  const centerY = rect.top + rect.height / 2 - containerRect.top;
+
+  return {
+    left: {
+      xPct: Math.min(0.995, Math.max(0.005, (rect.left - containerRect.left) / bounds.width)),
+      yPct: Math.min(0.995, Math.max(0.005, centerY / bounds.height))
+    },
+    right: {
+      xPct: Math.min(0.995, Math.max(0.005, (rect.right - containerRect.left) / bounds.width)),
+      yPct: Math.min(0.995, Math.max(0.005, centerY / bounds.height))
+    },
+    top: {
+      xPct: Math.min(0.995, Math.max(0.005, centerX / bounds.width)),
+      yPct: Math.min(0.995, Math.max(0.005, (rect.top - containerRect.top) / bounds.height))
+    },
+    bottom: {
+      xPct: Math.min(0.995, Math.max(0.005, centerX / bounds.width)),
+      yPct: Math.min(0.995, Math.max(0.005, (rect.bottom - containerRect.top) / bounds.height))
+    },
+    center: {
+      xPct: Math.min(0.995, Math.max(0.005, centerX / bounds.width)),
+      yPct: Math.min(0.995, Math.max(0.005, centerY / bounds.height))
+    }
+  };
+}
+
+function buildFallbackAnchors(module: WorkflowTile, width: number, height: number): TileAnchorSet {
+  const TILE_WIDTH = 156;
+  const TILE_HEIGHT = 60;
+  const leftPx = (Number.parseFloat(module.left) / 100) * width;
+  const topPx = (Number.parseFloat(module.top) / 100) * height;
+
+  const mockRect = {
+    left: leftPx,
+    right: leftPx + TILE_WIDTH,
+    top: topPx - TILE_HEIGHT / 2,
+    bottom: topPx + TILE_HEIGHT / 2,
+    width: TILE_WIDTH,
+    height: TILE_HEIGHT
+  } as DOMRect;
+
+  return buildAnchorSetFromRect(mockRect, { left: 0, top: 0 } as DOMRect, { width, height });
 }
 
 export function HeroSection() {
@@ -72,8 +143,7 @@ export function HeroSection() {
   const animationRef = useRef<HTMLDivElement>(null);
   const tileRefs = useRef<Partial<Record<WorkflowModule, HTMLButtonElement | null>>>({});
   const cursorBiasRef = useRef({ x: 0, y: 0, proximity: 0 });
-  const pointerTargetRef = useRef({ x: 0, y: 0, proximity: 0 });
-  const [connectorAnchors, setConnectorAnchors] = useState<Partial<Record<WorkflowModule, { xPct: number; yPct: number }>>>({});
+  const [connectorAnchors, setConnectorAnchors] = useState<Partial<Record<WorkflowModule, TileAnchorSet>>>({});
 
   const desktopTiles = useMemo(() => workflowModules.filter((module) => module.id !== "ai-engine"), []);
 
@@ -85,25 +155,15 @@ export function HeroSection() {
     const width = containerRect.width || 1;
     const height = containerRect.height || 1;
 
-    const nextAnchors: Partial<Record<WorkflowModule, { xPct: number; yPct: number }>> = {};
+    const nextAnchors: Partial<Record<WorkflowModule, TileAnchorSet>> = {};
 
     desktopTiles.forEach((module) => {
       const tile = tileRefs.current[module.id];
       if (tile && tile.offsetParent !== null) {
         const rect = tile.getBoundingClientRect();
-        const x = module.side === "left" ? rect.right - containerRect.left : rect.left - containerRect.left;
-        const y = rect.top + rect.height / 2 - containerRect.top;
-        nextAnchors[module.id] = {
-          xPct: Math.min(0.99, Math.max(0.01, x / width)),
-          yPct: Math.min(0.99, Math.max(0.01, y / height))
-        };
+        nextAnchors[module.id] = buildAnchorSetFromRect(rect, containerRect, { width, height });
       } else {
-        const leftPct = Number.parseFloat(module.left) / 100;
-        const topPct = Number.parseFloat(module.top) / 100;
-        nextAnchors[module.id] = {
-          xPct: module.side === "left" ? leftPct + 0.215 : leftPct,
-          yPct: topPct
-        };
+        nextAnchors[module.id] = buildFallbackAnchors(module, width, height);
       }
     });
 
@@ -112,7 +172,16 @@ export function HeroSection() {
         const prevValue = prev[module.id];
         const nextValue = nextAnchors[module.id];
         if (!prevValue || !nextValue) return false;
-        return nearEqual(prevValue.xPct, nextValue.xPct) && nearEqual(prevValue.yPct, nextValue.yPct);
+        return (
+          nearEqual(prevValue.left.xPct, nextValue.left.xPct) &&
+          nearEqual(prevValue.left.yPct, nextValue.left.yPct) &&
+          nearEqual(prevValue.right.xPct, nextValue.right.xPct) &&
+          nearEqual(prevValue.right.yPct, nextValue.right.yPct) &&
+          nearEqual(prevValue.top.xPct, nextValue.top.xPct) &&
+          nearEqual(prevValue.top.yPct, nextValue.top.yPct) &&
+          nearEqual(prevValue.bottom.xPct, nextValue.bottom.xPct) &&
+          nearEqual(prevValue.bottom.yPct, nextValue.bottom.yPct)
+        );
       });
       return unchanged ? prev : nextAnchors;
     });
@@ -133,31 +202,6 @@ export function HeroSection() {
       window.removeEventListener("resize", updateAnchors);
     };
   }, [updateAnchors]);
-
-  useEffect(() => {
-    const container = animationRef.current;
-    if (!container) return;
-
-    let rafId = 0;
-
-    const step = () => {
-      const target = pointerTargetRef.current;
-      const current = cursorBiasRef.current;
-      current.x += (target.x - current.x) * 0.11;
-      current.y += (target.y - current.y) * 0.11;
-      current.proximity += (target.proximity - current.proximity) * 0.1;
-
-      container.style.setProperty("--hero-nx", current.x.toFixed(4));
-      container.style.setProperty("--hero-ny", current.y.toFixed(4));
-      container.style.setProperty("--hero-prox", current.proximity.toFixed(4));
-
-      rafId = window.requestAnimationFrame(step);
-    };
-
-    rafId = window.requestAnimationFrame(step);
-
-    return () => window.cancelAnimationFrame(rafId);
-  }, []);
 
   return (
     <section className="relative z-0 overflow-hidden bg-slate-950 pb-16 pt-24 sm:pb-20 sm:pt-28">
@@ -219,14 +263,14 @@ export function HeroSection() {
             if (!rect) return;
             const x = ((event.clientX - rect.left) / rect.width - 0.5) * 2;
             const y = ((event.clientY - rect.top) / rect.height - 0.5) * 2;
-            pointerTargetRef.current.x = Math.max(-1, Math.min(1, x));
-            pointerTargetRef.current.y = Math.max(-1, Math.min(1, y));
-            pointerTargetRef.current.proximity = Math.max(0, 1 - Math.min(1, Math.hypot(x, y)));
+            cursorBiasRef.current.x = Math.max(-1, Math.min(1, x));
+            cursorBiasRef.current.y = Math.max(-1, Math.min(1, y));
+            cursorBiasRef.current.proximity = Math.max(0, 1 - Math.min(1, Math.hypot(x, y)));
           }}
           onMouseLeave={() => {
-            pointerTargetRef.current.x = 0;
-            pointerTargetRef.current.y = 0;
-            pointerTargetRef.current.proximity = 0;
+            cursorBiasRef.current.x = 0;
+            cursorBiasRef.current.y = 0;
+            cursorBiasRef.current.proximity = 0;
             setActiveModule("ai-engine");
           }}
         >
@@ -236,8 +280,7 @@ export function HeroSection() {
           <div className="absolute inset-0 z-20 hidden lg:block">
             {desktopTiles.map((module) => {
               const isActive = activeModule === module.id;
-              const pxFactor = module.side === "right" ? 8 : 5;
-              const pyFactor = module.side === "right" ? 6 : 4;
+              const glyph = tileGlyph[module.id] ?? { dot: "bg-cyan-300", bars: ["w-4 bg-cyan-200/70", "w-4 bg-sky-300/60", "w-4 bg-indigo-300/50"] };
 
               return (
                 <div
@@ -245,7 +288,7 @@ export function HeroSection() {
                   style={{
                     left: module.left,
                     top: module.top,
-                    transform: `translateY(-50%) translate3d(calc(var(--hero-nx, 0) * ${pxFactor}px), calc(var(--hero-ny, 0) * ${pyFactor}px), 0)`
+                    transform: "translateY(-50%)"
                   }}
                   className="absolute"
                 >
@@ -269,6 +312,14 @@ export function HeroSection() {
                     }`}
                   >
                     <span className="pointer-events-none absolute inset-0 rounded-xl border border-cyan-300/20 opacity-65 animate-pulse-slow" />
+                    <div className="relative z-10 mb-1.5 flex items-center gap-2">
+                      <span className={`h-1.5 w-1.5 rounded-full ${glyph.dot}`} />
+                      <div className="flex items-center gap-1">
+                        {glyph.bars.map((bar, idx) => (
+                          <span key={`${module.id}-bar-${idx}`} className={`h-0.5 rounded-full ${bar}`} />
+                        ))}
+                      </div>
+                    </div>
                     <p className="relative z-10 text-[10px] font-semibold uppercase tracking-[0.12em] text-cyan-200/95">{module.label}</p>
                     <p className="relative z-10 mt-1 text-[10px] leading-[1.1rem] text-slate-200/85">{module.detail}</p>
                   </button>
@@ -301,7 +352,4 @@ export function HeroSection() {
     </section>
   );
 }
-
-
-
 
