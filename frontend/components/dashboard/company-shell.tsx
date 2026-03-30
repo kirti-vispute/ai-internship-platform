@@ -1,10 +1,9 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { AnimatedBackground } from "@/components/dashboard/AnimatedBackground";
 import { cn } from "@/lib/utils";
 
@@ -329,9 +328,7 @@ export function CompanyShell({ welcomeName, onLogout, children }: CompanyShellPr
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
-                <ThemeToggle />
-                <button type="button" className="rounded-xl border border-slate-200 bg-white p-2 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800">
+              <div className="flex items-center gap-2">                <button type="button" className="rounded-xl border border-slate-200 bg-white p-2 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800">
                   <IconBell />
                 </button>
                 <Button href="/auth/company" type="button" variant="secondary" size="sm">
@@ -350,4 +347,5 @@ export function CompanyShell({ welcomeName, onLogout, children }: CompanyShellPr
     </div>
   );
 }
+
 

@@ -1,5 +1,4 @@
-﻿import Link from "next/link";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
+import Link from "next/link";
 
 const links = [
   { href: "/", label: "Home" },
@@ -27,9 +26,7 @@ export function Navbar() {
           ))}
         </div>
 
-        <div className="flex items-center gap-2">
-          <ThemeToggle className="hidden sm:inline-flex" />
-          <p className="hidden rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 sm:block">
+        <div className="flex items-center gap-2">          <p className="hidden rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 sm:block">
             AI Internship Platform
           </p>
         </div>
@@ -37,3 +34,4 @@ export function Navbar() {
     </header>
   );
 }
+
