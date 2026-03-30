@@ -59,13 +59,13 @@ export function HeroSection() {
           whileInView={{ opacity: 1, x: 0, scale: 1 }}
           viewport={{ once: true, amount: 0.3 }}
           transition={{ duration: 0.95, ease: [0.22, 1, 0.36, 1], delay: 0.08 }}
-          className="relative h-full min-h-[460px] w-full sm:min-h-[540px] lg:min-h-[620px]"
+          className="relative h-full min-h-[460px] w-full overflow-hidden sm:min-h-[540px] lg:min-h-[620px]"
         >
-          <div className="relative h-full w-full overflow-hidden">
+          <div className="relative m-0 h-full w-full overflow-hidden p-0">
             <img
               src={HERO_REFERENCE_IMAGE}
               alt="AI internship workflow reference"
-              className="absolute inset-0 block h-full w-full scale-[1.08] object-cover object-center"
+              className="absolute inset-0 m-0 block h-full w-full object-cover object-center p-0 [transform:scale(1.1)]"
             />
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(56,189,248,0.1),transparent_55%),linear-gradient(180deg,rgba(2,6,23,0.05)_0%,rgba(2,6,23,0.38)_100%)]" />
           </div>
@@ -74,3 +74,4 @@ export function HeroSection() {
     </section>
   );
 }
+
