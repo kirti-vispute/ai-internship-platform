@@ -61,8 +61,12 @@ export function HeroSection() {
           transition={{ duration: 0.95, ease: [0.22, 1, 0.36, 1], delay: 0.08 }}
           className="relative h-full min-h-[460px] w-full sm:min-h-[540px] lg:min-h-[620px]"
         >
-          <div className="relative h-full w-full overflow-hidden rounded-2xl border border-slate-700/55 bg-slate-900/30 shadow-[0_22px_46px_rgba(2,6,23,0.5)]">
-            <img src={HERO_REFERENCE_IMAGE} alt="AI internship workflow reference" className="h-full w-full object-contain p-3" />
+          <div className="relative h-full w-full overflow-hidden">
+            <img
+              src={HERO_REFERENCE_IMAGE}
+              alt="AI internship workflow reference"
+              className="absolute inset-0 block h-full w-full scale-[1.08] object-cover object-center"
+            />
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(56,189,248,0.1),transparent_55%),linear-gradient(180deg,rgba(2,6,23,0.05)_0%,rgba(2,6,23,0.38)_100%)]" />
           </div>
         </motion.div>
@@ -70,5 +74,3 @@ export function HeroSection() {
     </section>
   );
 }
-
-
