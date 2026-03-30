@@ -35,36 +35,36 @@ const workflowModules: Array<{
     id: "resume-upload",
     label: "Resume Upload",
     detail: "Student profile enters the AI system.",
-    column: 1.6,
-    row: 1.8
+    column: 1.8,
+    row: 1.9
   },
   {
     id: "resume-score",
     label: "Resume Score",
     detail: "Strength score and ATS signal generated.",
-    column: 11,
-    row: 1.8
+    column: 10.8,
+    row: 1.9
   },
   {
     id: "skill-gap",
     label: "Skill Gap",
     detail: "Missing skills mapped for target roles.",
-    column: 11,
+    column: 10.8,
     row: 3.9
   },
   {
     id: "verified-match",
     label: "Verified Match",
     detail: "Trusted company matches are surfaced.",
-    column: 11,
-    row: 6
+    column: 10.8,
+    row: 5.9
   },
   {
     id: "hiring-pipeline",
     label: "Hiring Pipeline",
     detail: "Applications move through live stages.",
-    column: 11,
-    row: 8.1
+    column: 10.8,
+    row: 7.9
   }
 ];
 
