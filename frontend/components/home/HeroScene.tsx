@@ -24,13 +24,13 @@ type FlowLink = {
   lift: number;
 };
 
-const nodeAnchors: Record<WorkflowModule, { x: number; y: number; z: number }> = {
-  "resume-upload": { x: -0.68, y: 0.38, z: 0.14 },
-  "ai-engine": { x: 0, y: 0.02, z: 0 },
-  "resume-score": { x: 0.58, y: 0.5, z: 0.12 },
-  "skill-gap": { x: 0.72, y: 0.12, z: 0.1 },
-  "verified-match": { x: 0.72, y: -0.26, z: 0.1 },
-  "hiring-pipeline": { x: 0.58, y: -0.6, z: 0.12 }
+const nodeAnchors: Record<WorkflowModule, { xPct: number; yPct: number; z: number }> = {
+  "resume-upload": { xPct: 0.15, yPct: 0.2, z: 0.14 },
+  "ai-engine": { xPct: 0.5, yPct: 0.5, z: 0 },
+  "resume-score": { xPct: 0.84, yPct: 0.2, z: 0.12 },
+  "skill-gap": { xPct: 0.88, yPct: 0.42, z: 0.1 },
+  "verified-match": { xPct: 0.88, yPct: 0.62, z: 0.1 },
+  "hiring-pipeline": { xPct: 0.8, yPct: 0.81, z: 0.12 }
 };
 
 const links: FlowLink[] = [
@@ -371,23 +371,24 @@ function FlowMap({
   reducedMotion: boolean;
   activeModule?: WorkflowModule | null;
 }) {
-  const { size } = useThree();
+  const { size, viewport } = useThree();
   const groupRef = useRef<THREE.Group>(null);
   const lineMaterials = useRef<THREE.Material[]>([]);
   const particleRefs = useRef<THREE.Mesh[]>([]);
 
   const layoutPositions = useMemo(() => {
-    const aspect = size.width / Math.max(size.height, 1);
-    const xSpan = THREE.MathUtils.clamp(3.15 + (aspect - 1.2) * 0.45, 2.75, 3.65);
-    const ySpan = THREE.MathUtils.clamp(2 + (1.2 - Math.min(aspect, 1.2)) * 0.2, 1.8, 2.15);
+    const usableW = viewport.width * 0.86;
+    const usableH = viewport.height * 0.84;
 
     return Object.fromEntries(
       (Object.keys(nodeAnchors) as WorkflowModule[]).map((id) => {
         const anchor = nodeAnchors[id];
-        return [id, new THREE.Vector3(anchor.x * xSpan, anchor.y * ySpan, anchor.z)];
+        const x = (anchor.xPct - 0.5) * usableW;
+        const y = (0.5 - anchor.yPct) * usableH;
+        return [id, new THREE.Vector3(x, y, anchor.z)];
       })
     ) as Record<WorkflowModule, THREE.Vector3>;
-  }, [size.width, size.height]);
+  }, [viewport.width, viewport.height]);
 
   const curves = useMemo(
     () => links.map((link) => buildCurve(layoutPositions[link.from], layoutPositions[link.to], link.lift)),
@@ -404,7 +405,7 @@ function FlowMap({
   );
 
   useFrame((state, delta) => {
-    const targetScale = size.width < 640 ? 0.74 : size.width < 1024 ? 0.86 : 0.96;
+    const targetScale = size.width < 640 ? 0.92 : size.width < 1024 ? 0.98 : 1.02;
     const px = state.pointer.x;
     const py = state.pointer.y;
     const proximity = Math.max(0, 1 - Math.min(1, Math.hypot(px * 0.88, py) / 0.78));
@@ -415,7 +416,7 @@ function FlowMap({
       groupRef.current.scale.z = lerp(groupRef.current.scale.z, targetScale, 0.05);
       groupRef.current.rotation.y = lerp(groupRef.current.rotation.y, px * 0.14, 0.04);
       groupRef.current.rotation.x = lerp(groupRef.current.rotation.x, py * 0.08, 0.04);
-      groupRef.current.position.x = lerp(groupRef.current.position.x, 0.08, 0.04);
+      groupRef.current.position.x = lerp(groupRef.current.position.x, 0, 0.04);
       groupRef.current.position.y = lerp(
         groupRef.current.position.y,
         reducedMotion ? 0 : Math.sin(state.clock.elapsedTime * 0.42) * 0.07,
@@ -425,7 +426,7 @@ function FlowMap({
 
     state.camera.position.x = lerp(state.camera.position.x, px * 0.24, 0.04);
     state.camera.position.y = lerp(state.camera.position.y, py * 0.14, 0.04);
-    state.camera.lookAt(0.22, -0.02, 0);
+    state.camera.lookAt(0, 0, 0);
 
     lineMaterials.current.forEach((material, idx) => {
       const lineMaterial = material as THREE.Material & { opacity?: number; color?: THREE.Color };
