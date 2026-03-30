@@ -157,34 +157,6 @@ function AIEngineNode({
   );
 }
 
-function DepthParallaxLayer() {
-  const groupRef = useRef<THREE.Group>(null);
-
-  useFrame((state) => {
-    if (!groupRef.current) return;
-    groupRef.current.position.x = lerp(groupRef.current.position.x, state.pointer.x * 0.28, 0.03);
-    groupRef.current.position.y = lerp(groupRef.current.position.y, state.pointer.y * 0.18, 0.03);
-    groupRef.current.rotation.z = lerp(groupRef.current.rotation.z, state.pointer.x * 0.05, 0.02);
-  });
-
-  return (
-    <group ref={groupRef} position={[0, 0, -2.8]}>
-      <mesh position={[-1.2, 1, -0.1]}>
-        <sphereGeometry args={[1.15, 24, 24]} />
-        <meshBasicMaterial color="#2563eb" transparent opacity={0.07} />
-      </mesh>
-      <mesh position={[2.2, -0.6, -0.2]}>
-        <sphereGeometry args={[0.95, 24, 24]} />
-        <meshBasicMaterial color="#0ea5e9" transparent opacity={0.06} />
-      </mesh>
-      <mesh position={[0.5, 0.1, -0.35]}>
-        <sphereGeometry args={[1.35, 24, 24]} />
-        <meshBasicMaterial color="#4338ca" transparent opacity={0.05} />
-      </mesh>
-    </group>
-  );
-}
-
 function FlowMap({
   reducedMotion,
   activeModule,
@@ -262,11 +234,7 @@ function FlowMap({
       groupRef.current.rotation.y = lerp(groupRef.current.rotation.y, biasX * 0.16, 0.04);
       groupRef.current.rotation.x = lerp(groupRef.current.rotation.x, biasY * 0.1, 0.04);
       groupRef.current.position.x = lerp(groupRef.current.position.x, biasX * 0.26, 0.045);
-      groupRef.current.position.y = lerp(
-        groupRef.current.position.y,
-        (reducedMotion ? 0 : Math.sin(state.clock.elapsedTime * 0.42) * 0.07) + biasY * 0.16,
-        0.045
-      );
+      groupRef.current.position.y = lerp(groupRef.current.position.y, biasY * 0.16, 0.045);
     }
 
     state.camera.position.x = lerp(state.camera.position.x, biasX * 0.28, 0.045);
@@ -373,9 +341,10 @@ export function HeroScene({ activeModule = null, connectorAnchors, cursorBiasRef
       <Canvas className="h-full w-full" camera={{ position: [0.05, 0.02, 8.95], fov: 46 }} dpr={[1, 1.8]} gl={{ antialias: true, alpha: true }}>
         <fog attach="fog" args={["#020617", 8, 18]} />
         <SceneLights />
-        <DepthParallaxLayer />
         <FlowMap reducedMotion={reducedMotion} activeModule={activeModule} connectorAnchors={connectorAnchors} cursorBiasRef={cursorBiasRef} />
       </Canvas>
     </div>
   );
 }
+
+

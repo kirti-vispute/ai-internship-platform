@@ -234,7 +234,7 @@ export function HeroSection() {
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_37%_43%,rgba(99,102,241,0.14),transparent_30%),radial-gradient(circle_at_22%_18%,rgba(125,211,252,0.1),transparent_44%),radial-gradient(circle_at_82%_78%,rgba(129,140,248,0.1),transparent_40%)]" />
 
           <div className="absolute inset-0 z-20 hidden lg:block">
-            {desktopTiles.map((module, index) => {
+            {desktopTiles.map((module) => {
               const isActive = activeModule === module.id;
               const pxFactor = module.side === "right" ? 8 : 5;
               const pyFactor = module.side === "right" ? 6 : 4;
@@ -268,14 +268,7 @@ export function HeroSection() {
                         : "border-slate-400/28 bg-slate-900/26 shadow-[0_7px_16px_rgba(2,6,23,0.24)]"
                     }`}
                   >
-                    <span
-                      style={{ animationDelay: `${index * 0.5}s` }}
-                      className="pointer-events-none absolute inset-0 rounded-xl border border-cyan-300/20 opacity-65 animate-pulse-slow"
-                    />
-                    <span
-                      style={{ animationDelay: `${index * 0.35}s` }}
-                      className="pointer-events-none absolute inset-x-3 top-0 h-px bg-gradient-to-r from-transparent via-cyan-200/75 to-transparent opacity-70 animate-signal-slide"
-                    />
+                    <span className="pointer-events-none absolute inset-0 rounded-xl border border-cyan-300/20 opacity-65 animate-pulse-slow" />
                     <p className="relative z-10 text-[10px] font-semibold uppercase tracking-[0.12em] text-cyan-200/95">{module.label}</p>
                     <p className="relative z-10 mt-1 text-[10px] leading-[1.1rem] text-slate-200/85">{module.detail}</p>
                   </button>
@@ -308,3 +301,7 @@ export function HeroSection() {
     </section>
   );
 }
+
+
+
+
