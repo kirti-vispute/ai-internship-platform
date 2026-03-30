@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 
-const HERO_REFERENCE_IMAGE = "https://tse3.mm.bing.net/th/id/OIP.bFDy8g5Icz41BvWQ3_Y4dAHaHa?rs=1&pid=ImgDetMain&o=7&rm=3";
+const HERO_REFERENCE_IMAGE = "/hero-reference-2.png";
 
 export function HeroSection() {
   return (
@@ -70,4 +70,5 @@ export function HeroSection() {
     </section>
   );
 }
+
 
