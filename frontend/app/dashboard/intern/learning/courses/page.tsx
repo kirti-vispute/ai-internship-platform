@@ -9,7 +9,7 @@ export default function LearningCoursesPage() {
   const router = useRouter();
   const handleLogout = () => {
     clearAuthSession();
-    router.push("/auth?role=intern");
+    router.push("/auth/intern");
   };
   return (
     <RoleDashboardGuard expectedRole="intern">
@@ -21,3 +21,4 @@ export default function LearningCoursesPage() {
     </RoleDashboardGuard>
   );
 }
+

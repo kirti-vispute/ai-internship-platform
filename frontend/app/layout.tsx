@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Manrope } from "next/font/google";
-import { CustomCursor } from "@/components/CustomCursor";
+import { CursorMount } from "@/components/cursor-mount";
 import "./globals.css";
 
 const manrope = Manrope({ subsets: ["latin"], variable: "--font-manrope" });
@@ -34,7 +34,7 @@ export default function RootLayout({
         />
       </head>
       <body className={`${manrope.variable} font-sans text-slate-900 antialiased`}>
-        <CustomCursor />
+        <CursorMount />
         {children}
       </body>
     </html>

@@ -42,7 +42,7 @@ export default function HrFeedbackPage() {
 
   const handleLogout = () => {
     clearAuthSession();
-    router.push("/auth?role=intern");
+    router.push("/auth/intern");
   };
 
   return (
@@ -69,3 +69,4 @@ export default function HrFeedbackPage() {
     </RoleDashboardGuard>
   );
 }
+

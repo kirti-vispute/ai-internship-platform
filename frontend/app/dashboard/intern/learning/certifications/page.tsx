@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import { useRouter } from "next/navigation";
 import { RoleDashboardGuard } from "@/components/ui/role-dashboard-guard";
 import { InternShell } from "@/components/dashboard/intern-shell";
@@ -9,7 +9,7 @@ export default function LearningCertificationsPage() {
   const router = useRouter();
   const handleLogout = () => {
     clearAuthSession();
-    router.push("/auth?role=intern");
+    router.push("/auth/intern");
   };
 
   return (

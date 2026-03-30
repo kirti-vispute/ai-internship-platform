@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -33,7 +33,7 @@ export default function InternProfilePage() {
 
   function handleLogout() {
     clearAuthSession();
-    router.push("/auth?role=intern");
+    router.push("/auth/intern");
   }
 
   const parsed = profile?.resume?.parsed;
@@ -190,4 +190,5 @@ export default function InternProfilePage() {
     </RoleDashboardGuard>
   );
 }
+
 

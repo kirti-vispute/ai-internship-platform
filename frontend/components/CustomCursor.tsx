@@ -1,19 +1,26 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useRef } from "react";
 
 const INTERACTIVE_SELECTOR = "a, button, [role='button'], [data-cursor]";
 const TEXT_SELECTOR = "input, textarea, select, [contenteditable='true']";
 
 export function CustomCursor() {
+  const pathname = usePathname();
+  const isAuthRoute = pathname.startsWith("/auth");
+
   const ringRef = useRef<HTMLDivElement | null>(null);
   const dotRef = useRef<HTMLDivElement | null>(null);
   const trailRefs = useRef<Array<HTMLDivElement | null>>([]);
-  const trailIndexes = useMemo(() => [0, 1, 2, 3, 4], []);
+  const trailIndexes = useMemo(() => [0, 1, 2], []);
 
   useEffect(() => {
     const finePointer = window.matchMedia("(pointer: fine)").matches;
-    if (!finePointer) return;
+    if (!finePointer || isAuthRoute) {
+      document.body.classList.remove("cursor-3d-enabled");
+      return;
+    }
 
     const ring = ringRef.current;
     const dot = dotRef.current;
@@ -29,7 +36,12 @@ export function CustomCursor() {
     let hoverState: "default" | "link" | "button" | "card" | "text" = "default";
     let activeEl: HTMLElement | null = null;
     let activeTiltElement: HTMLElement | null = null;
-    let rafId = 0;
+    let animationFrame = 0;
+    let pointerFrame = 0;
+
+    let queuedX = mouse.x;
+    let queuedY = mouse.y;
+    let queuedTarget: HTMLElement | null = null;
 
     const setHoverState = (target: HTMLElement | null) => {
       if (!target) {
@@ -61,28 +73,44 @@ export function CustomCursor() {
       hoverState = interactive.tagName.toLowerCase() === "a" ? "link" : "button";
     };
 
-    const onPointerMove = (event: PointerEvent) => {
-      mouse.x = event.clientX;
-      mouse.y = event.clientY;
-      setHoverState(event.target as HTMLElement | null);
+    const applyTilt = (target: HTMLElement | null, x: number, y: number) => {
+      const tiltCandidate = target?.closest?.(".tilt-3d") as HTMLElement | null;
 
-      const tiltCandidate = (event.target as HTMLElement | null)?.closest?.(".tilt-3d") as HTMLElement | null;
       if (activeTiltElement && activeTiltElement !== tiltCandidate) {
         activeTiltElement.style.setProperty("--tilt-x", "0deg");
         activeTiltElement.style.setProperty("--tilt-y", "0deg");
       }
 
-      if (tiltCandidate) {
-        const rect = tiltCandidate.getBoundingClientRect();
-        const px = (event.clientX - rect.left) / Math.max(rect.width, 1);
-        const py = (event.clientY - rect.top) / Math.max(rect.height, 1);
-        const tiltY = (px - 0.5) * 8;
-        const tiltX = (0.5 - py) * 8;
-        tiltCandidate.style.setProperty("--tilt-x", `${tiltX.toFixed(2)}deg`);
-        tiltCandidate.style.setProperty("--tilt-y", `${tiltY.toFixed(2)}deg`);
+      if (!tiltCandidate) {
+        activeTiltElement = null;
+        return;
       }
 
-      activeTiltElement = tiltCandidate || null;
+      const rect = tiltCandidate.getBoundingClientRect();
+      const px = (x - rect.left) / Math.max(rect.width, 1);
+      const py = (y - rect.top) / Math.max(rect.height, 1);
+      const tiltY = (px - 0.5) * 8;
+      const tiltX = (0.5 - py) * 8;
+      tiltCandidate.style.setProperty("--tilt-x", `${tiltX.toFixed(2)}deg`);
+      tiltCandidate.style.setProperty("--tilt-y", `${tiltY.toFixed(2)}deg`);
+      activeTiltElement = tiltCandidate;
+    };
+
+    const flushPointerFrame = () => {
+      pointerFrame = 0;
+      mouse.x = queuedX;
+      mouse.y = queuedY;
+      setHoverState(queuedTarget);
+      applyTilt(queuedTarget, queuedX, queuedY);
+    };
+
+    const onPointerMove = (event: PointerEvent) => {
+      queuedX = event.clientX;
+      queuedY = event.clientY;
+      queuedTarget = event.target as HTMLElement | null;
+
+      if (pointerFrame) return;
+      pointerFrame = window.requestAnimationFrame(flushPointerFrame);
     };
 
     const onFocusIn = (event: FocusEvent) => {
@@ -101,14 +129,14 @@ export function CustomCursor() {
         const rect = activeEl.getBoundingClientRect();
         const centerX = rect.left + rect.width / 2;
         const centerY = rect.top + rect.height / 2;
-        targetX += (centerX - mouse.x) * 0.2;
-        targetY += (centerY - mouse.y) * 0.2;
+        targetX += (centerX - mouse.x) * 0.14;
+        targetY += (centerY - mouse.y) * 0.14;
       }
 
-      dotPos.x += (targetX - dotPos.x) * 0.35;
-      dotPos.y += (targetY - dotPos.y) * 0.35;
-      ringPos.x += (targetX - ringPos.x) * 0.16;
-      ringPos.y += (targetY - ringPos.y) * 0.16;
+      dotPos.x += (targetX - dotPos.x) * 0.3;
+      dotPos.y += (targetY - dotPos.y) * 0.3;
+      ringPos.x += (targetX - ringPos.x) * 0.14;
+      ringPos.y += (targetY - ringPos.y) * 0.14;
 
       dot.style.transform = `translate3d(${dotPos.x}px, ${dotPos.y}px, 0)`;
 
@@ -116,15 +144,15 @@ export function CustomCursor() {
       let ringOpacity = 0.7;
       let ringColor = "rgba(56,189,248,0.7)";
       if (hoverState === "link") {
-        scale = 1.5;
-        ringOpacity = 0.95;
+        scale = 1.35;
+        ringOpacity = 0.92;
       } else if (hoverState === "button") {
-        scale = 1.75;
-        ringOpacity = 1;
+        scale = 1.6;
+        ringOpacity = 0.96;
         ringColor = "rgba(99,102,241,0.78)";
       } else if (hoverState === "card") {
-        scale = 1.35;
-        ringOpacity = 0.9;
+        scale = 1.25;
+        ringOpacity = 0.86;
       } else if (hoverState === "text") {
         ringOpacity = 0;
       }
@@ -132,19 +160,19 @@ export function CustomCursor() {
       ring.style.transform = `translate3d(${ringPos.x}px, ${ringPos.y}px, 0) scale(${scale})`;
       ring.style.opacity = String(ringOpacity);
       ring.style.borderColor = ringColor;
-
       dot.style.opacity = hoverState === "text" ? "0" : "1";
 
       trailRefs.current.forEach((trail, index) => {
         if (!trail) return;
         const lead = index === 0 ? dotPos : trailPos[index - 1];
-        trailPos[index].x += (lead.x - trailPos[index].x) * (0.24 - index * 0.02);
-        trailPos[index].y += (lead.y - trailPos[index].y) * (0.24 - index * 0.02);
-        trail.style.transform = `translate3d(${trailPos[index].x}px, ${trailPos[index].y}px, 0) scale(${1 - index * 0.13})`;
-        trail.style.opacity = hoverState === "text" ? "0" : `${0.32 - index * 0.05}`;
+        const followStrength = Math.max(0.14, 0.22 - index * 0.03);
+        trailPos[index].x += (lead.x - trailPos[index].x) * followStrength;
+        trailPos[index].y += (lead.y - trailPos[index].y) * followStrength;
+        trail.style.transform = `translate3d(${trailPos[index].x}px, ${trailPos[index].y}px, 0) scale(${1 - index * 0.15})`;
+        trail.style.opacity = hoverState === "text" ? "0" : `${0.3 - index * 0.07}`;
       });
 
-      rafId = window.requestAnimationFrame(animate);
+      animationFrame = window.requestAnimationFrame(animate);
     };
     animate();
 
@@ -161,7 +189,8 @@ export function CustomCursor() {
     document.addEventListener("focusin", onFocusIn, { passive: true });
 
     return () => {
-      window.cancelAnimationFrame(rafId);
+      window.cancelAnimationFrame(animationFrame);
+      if (pointerFrame) window.cancelAnimationFrame(pointerFrame);
       window.removeEventListener("pointermove", onPointerMove);
       window.removeEventListener("pointerleave", resetTiltState);
       document.removeEventListener("pointerover", onPointerOver);
@@ -169,7 +198,11 @@ export function CustomCursor() {
       resetTiltState();
       document.body.classList.remove("cursor-3d-enabled");
     };
-  }, [trailIndexes]);
+  }, [isAuthRoute, trailIndexes]);
+
+  if (isAuthRoute) {
+    return null;
+  }
 
   return (
     <>
@@ -189,7 +222,7 @@ export function CustomCursor() {
           ref={(el) => {
             trailRefs.current[index] = el;
           }}
-          className="pointer-events-none fixed left-0 top-0 z-[139] hidden h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan-300/70 blur-[1px] sm:block"
+          className="pointer-events-none fixed left-0 top-0 z-[139] hidden h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan-300/70 blur-[1px] sm:block"
           aria-hidden="true"
         />
       ))}

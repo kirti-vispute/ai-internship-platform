@@ -36,7 +36,7 @@ export default function RecommendedInternshipsPage() {
 
   function handleLogout() {
     clearAuthSession();
-    router.push("/auth?role=intern");
+    router.push("/auth/intern");
   }
 
   return (
@@ -70,3 +70,4 @@ export default function RecommendedInternshipsPage() {
     </RoleDashboardGuard>
   );
 }
+

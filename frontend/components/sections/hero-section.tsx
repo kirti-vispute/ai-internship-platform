@@ -33,10 +33,10 @@ export function HeroSection() {
           </p>
 
           <div className="mt-7 flex flex-wrap gap-3">
-            <Button size="lg" href="/auth?role=intern">
+            <Button size="lg" href="/auth/intern">
               Join as Intern
             </Button>
-            <Button size="lg" variant="secondary" href="/auth?role=company">
+            <Button size="lg" variant="secondary" href="/auth/company">
               Join as Company
             </Button>
           </div>
@@ -74,5 +74,6 @@ export function HeroSection() {
     </section>
   );
 }
+
 
 

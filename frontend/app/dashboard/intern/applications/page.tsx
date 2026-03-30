@@ -47,7 +47,7 @@ export default function InternApplicationsPage() {
 
   function handleLogout() {
     clearAuthSession();
-    router.push("/auth?role=intern");
+    router.push("/auth/intern");
   }
 
   return (
@@ -107,3 +107,4 @@ export default function InternApplicationsPage() {
     </RoleDashboardGuard>
   );
 }
+

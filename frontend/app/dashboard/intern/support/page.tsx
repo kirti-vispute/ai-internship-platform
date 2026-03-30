@@ -9,7 +9,7 @@ export default function SupportPage() {
   const router = useRouter();
   const handleLogout = () => {
     clearAuthSession();
-    router.push("/auth?role=intern");
+    router.push("/auth/intern");
   };
 
   return (
@@ -26,3 +26,4 @@ export default function SupportPage() {
     </RoleDashboardGuard>
   );
 }
+

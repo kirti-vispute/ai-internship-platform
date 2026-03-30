@@ -62,7 +62,7 @@ export default function EditInternProfilePage() {
 
   function handleLogout() {
     clearAuthSession();
-    router.push("/auth?role=intern");
+    router.push("/auth/intern");
   }
 
   return (
@@ -90,3 +90,4 @@ export default function EditInternProfilePage() {
     </RoleDashboardGuard>
   );
 }
+

@@ -9,7 +9,7 @@ export default function MockAptitudePage() {
   const router = useRouter();
   const handleLogout = () => {
     clearAuthSession();
-    router.push("/auth?role=intern");
+    router.push("/auth/intern");
   };
 
   return (
@@ -22,3 +22,4 @@ export default function MockAptitudePage() {
     </RoleDashboardGuard>
   );
 }
+

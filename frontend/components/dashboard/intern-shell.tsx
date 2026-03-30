@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -335,7 +335,7 @@ export function InternShell({ welcomeName, onLogout, children }: InternShellProp
                 <button type="button" className="rounded-xl border border-slate-200 bg-white p-2 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800">
                   <IconBell />
                 </button>
-                <Button href="/auth?role=intern" type="button" variant="secondary" size="sm">
+                <Button href="/auth/intern" type="button" variant="secondary" size="sm">
                   Switch Account
                 </Button>
                 <Button type="button" variant="secondary" size="sm" onClick={onLogout}>
@@ -351,3 +351,4 @@ export function InternShell({ welcomeName, onLogout, children }: InternShellProp
     </div>
   );
 }
+

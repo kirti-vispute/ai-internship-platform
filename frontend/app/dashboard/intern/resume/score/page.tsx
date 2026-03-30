@@ -32,7 +32,7 @@ export default function InternResumeScorePage() {
 
   function handleLogout() {
     clearAuthSession();
-    router.push("/auth?role=intern");
+    router.push("/auth/intern");
   }
 
   const analysis = profile?.resume?.analysis;
@@ -90,3 +90,4 @@ export default function InternResumeScorePage() {
     </RoleDashboardGuard>
   );
 }
+

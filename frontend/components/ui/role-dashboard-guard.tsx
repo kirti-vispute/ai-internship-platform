@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -17,7 +17,7 @@ export function RoleDashboardGuard({ expectedRole, children }: RoleDashboardGuar
     const session = getAuthSession();
 
     if (!session.loggedIn || !session.token || session.role !== expectedRole) {
-      router.replace(`/auth?role=${expectedRole}`);
+      router.replace(`/auth/${expectedRole}`);
       return;
     }
 
@@ -36,3 +36,4 @@ export function RoleDashboardGuard({ expectedRole, children }: RoleDashboardGuar
 
   return <>{children}</>;
 }
+

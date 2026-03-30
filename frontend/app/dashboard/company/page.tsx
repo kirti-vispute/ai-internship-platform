@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -29,7 +29,7 @@ export default function CompanyDashboardPage() {
 
   function handleLogout() {
     clearAuthSession();
-    router.push("/auth?role=company");
+    router.push("/auth/company");
   }
 
   return (
@@ -44,7 +44,7 @@ export default function CompanyDashboardPage() {
               <h1 className="text-3xl font-black tracking-tight text-ink dark:text-slate-100 sm:text-4xl">Manage your hiring pipeline</h1>
             </div>
             <div className="flex items-center gap-2">
-              <Link href="/auth?role=company" data-cursor="link" className="tilt-3d rounded-full bg-white px-3 py-1 text-sm font-medium text-primary-600 shadow-soft hover:text-primary-700 dark:bg-slate-900 dark:text-primary-300 dark:hover:text-primary-200">
+              <Link href="/auth/company" data-cursor="link" className="tilt-3d rounded-full bg-white px-3 py-1 text-sm font-medium text-primary-600 shadow-soft hover:text-primary-700 dark:bg-slate-900 dark:text-primary-300 dark:hover:text-primary-200">
                 Switch account
               </Link>
                 <Button type="button" variant="secondary" size="sm" onClick={handleLogout}>
@@ -139,3 +139,4 @@ export default function CompanyDashboardPage() {
     </main>
   );
 }
+
