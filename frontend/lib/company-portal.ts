@@ -52,6 +52,14 @@ export type CompanyApplication = {
   updatedAt?: string;
 };
 
+export type CandidateSearchResult = {
+  _id: string;
+  fullName: string;
+  email: string;
+  mobile?: string;
+  skills: string[];
+  resumeScore: number;
+};
 export type CompanyMatchedCandidate = {
   internshipId: string;
   internshipRole: string;
@@ -222,4 +230,13 @@ export async function fetchCompanyMatchedCandidates(force = false) {
     return all.flat().sort((a, b) => b.score - a.score);
   });
 }
+
+export async function searchCandidates(query: string) {
+  const q = query.trim();
+  if (!q) return [] as CandidateSearchResult[];
+
+  const response = await apiRequest<{ candidates: CandidateSearchResult[] }>(`/api/candidates/search?q=${encodeURIComponent(q)}`);
+  return response.candidates || [];
+}
+
 

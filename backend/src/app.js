@@ -12,6 +12,7 @@ const internshipRoutes = require("./routes/internship.routes");
 const applicationRoutes = require("./routes/application.routes");
 const aiRoutes = require("./routes/ai.routes");
 const adminRoutes = require("./routes/admin.routes");
+const candidateRoutes = require("./routes/candidate.routes");
 
 const { notFoundMiddleware, errorMiddleware } = require("./middleware/error.middleware");
 
@@ -79,8 +80,10 @@ app.use("/api/internships", internshipRoutes);
 app.use("/api/applications", applicationRoutes);
 app.use("/api/ai", aiRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/candidates", candidateRoutes);
 
 app.use(notFoundMiddleware);
 app.use(errorMiddleware);
 
 module.exports = app;
+

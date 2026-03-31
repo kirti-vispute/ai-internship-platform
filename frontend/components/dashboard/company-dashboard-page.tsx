@@ -18,7 +18,9 @@ import {
   fetchCompanyMatchedCandidates,
   fetchCompanyProfile,
   postCompanyInternship,
-  updateCompanyProfile
+  updateCompanyProfile,
+  searchCandidates,
+  CandidateSearchResult
 } from "@/lib/company-portal";
 
 export type CompanyDashboardView =
@@ -46,7 +48,6 @@ const WITH_INTERNSHIPS = new Set<CompanyDashboardView>([
   "hiring-shortlisted",
   "hiring-pipeline",
   "matching-ai",
-  "matching-search",
   "reports-feedback",
   "reports-notes",
   "reports-export"
@@ -56,12 +57,11 @@ const WITH_APPS = new Set<CompanyDashboardView>([
   "hiring-applicants",
   "hiring-shortlisted",
   "hiring-pipeline",
-  "matching-search",
   "reports-feedback",
   "reports-notes",
   "reports-export"
 ]);
-const WITH_MATCHES = new Set<CompanyDashboardView>(["overview", "matching-ai", "matching-search"]);
+const WITH_MATCHES = new Set<CompanyDashboardView>(["overview", "matching-ai"]);
 
 const field = "surface-subtle px-3 py-2 text-sm";
 
@@ -87,6 +87,10 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<CandidateSearchResult[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
 
   const [profileForm, setProfileForm] = useState({ companyName: "", contactName: "", phone: "", website: "", address: "", description: "" });
   const [postForm, setPostForm] = useState({ role: "", skillsRequired: "", prioritySkills: "", stipend: "", duration: "", location: "", description: "" });
@@ -126,6 +130,45 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
     });
   }, [profile]);
 
+  useEffect(() => {
+    if (view !== "matching-search") return;
+    const timer = window.setTimeout(() => setDebouncedQuery(query.trim()), 350);
+    return () => window.clearTimeout(timer);
+  }, [query, view]);
+
+  useEffect(() => {
+    if (view !== "matching-search") return;
+
+    if (!debouncedQuery) {
+      setSearchResults([]);
+      setSearchError(null);
+      setSearchLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setSearchLoading(true);
+    setSearchError(null);
+
+    searchCandidates(debouncedQuery)
+      .then((results) => {
+        if (!cancelled) setSearchResults(results);
+      })
+      .catch((e) => {
+        if (!cancelled) {
+          setSearchResults([]);
+          setSearchError((e as Error).message || "Failed to search candidates.");
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setSearchLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [debouncedQuery, view]);
+
   function logout() {
     clearAuthSession();
     router.push("/auth/company");
@@ -148,16 +191,6 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
     }),
     [profile?.verificationStatus, internships, apps.length, shortlisted.length, matches.length]
   );
-
-  const searchable = useMemo(() => {
-    const rows = [
-      ...apps.map((a) => ({ name: a.intern?.fullName || "Candidate", email: a.intern?.email || "", role: a.internship?.role || "", score: a.matchScore || 0, source: "applicant", skills: a.intern?.skills || [] })),
-      ...matches.map((m) => ({ name: m.internProfile?.fullName || "Candidate", email: m.internProfile?.email || "", role: m.internshipRole || "", score: m.score || 0, source: "matched", skills: m.internProfile?.skills || [] }))
-    ];
-    const q = query.trim().toLowerCase();
-    if (!q) return rows;
-    return rows.filter((r) => [r.name, r.email, r.role, ...r.skills].join(" ").toLowerCase().includes(q));
-  }, [apps, matches, query]);
 
   async function saveProfile(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -287,7 +320,52 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
       case "matching-ai":
         return <SectionPanel title="AI Matched Candidates" subtitle="Backend-ranked matched candidates.">{matches.length === 0 ? <Empty text="No matched candidates available yet." /> : <div className="space-y-2">{matches.map((m, idx) => <div key={`${m.internshipId}-${m.internProfile?._id || idx}`} className="surface-subtle flex flex-wrap items-center justify-between gap-2 px-4 py-3"><div><p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{m.internProfile?.fullName || "Candidate"}</p><p className="text-xs text-slate-600 dark:text-slate-300">{m.internshipRole}</p></div><p className="text-sm font-semibold text-primary-700 dark:text-primary-300">{m.score}%</p></div>)}</div>}</SectionPanel>;
       case "matching-search":
-        return <SectionPanel title="Candidate Search" subtitle="Search in real applicants and matched candidates."><div className="space-y-3"><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search by name, email, role, or skill" className={`${field} w-full`} />{searchable.length === 0 ? <Empty text="No candidates found for this search." /> : <div className="space-y-2">{searchable.map((c, idx) => <div key={`${c.email}-${idx}`} className="surface-subtle flex flex-wrap items-center justify-between gap-2 px-4 py-3"><div><p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{c.name}</p><p className="text-xs text-slate-600 dark:text-slate-300">{c.email || "No email"}</p><p className="text-xs text-slate-500 dark:text-slate-400">{c.role}</p></div><div className="text-right"><p className="text-xs uppercase tracking-wide text-slate-500">{c.source}</p><p className="text-sm font-semibold text-primary-700 dark:text-primary-300">{c.score}%</p></div></div>)}</div>}</div></SectionPanel>;
+        return (
+          <SectionPanel title="Candidate Search" subtitle="Search candidates by name or email.">
+            <div className="space-y-3">
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search by name or email"
+                className={`${field} w-full`}
+              />
+
+              {searchLoading && <Empty text="Searching candidates..." />}
+
+              {!searchLoading && searchError && (
+                <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300">
+                  {searchError}
+                </div>
+              )}
+
+              {!searchLoading && !searchError && !debouncedQuery && (
+                <Empty text="Type a candidate name or email to search." />
+              )}
+
+              {!searchLoading && !searchError && debouncedQuery && searchResults.length === 0 && (
+                <Empty text="No candidates found for this search." />
+              )}
+
+              {!searchLoading && !searchError && searchResults.length > 0 && (
+                <div className="space-y-2">
+                  {searchResults.map((candidate) => (
+                    <div key={candidate._id} className="surface-subtle flex flex-wrap items-center justify-between gap-2 px-4 py-3">
+                      <div>
+                        <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{candidate.fullName || "Candidate"}</p>
+                        <p className="text-xs text-slate-600 dark:text-slate-300">{candidate.email || "No email"}</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">{candidate.mobile || "No mobile"}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs uppercase tracking-wide text-slate-500">Resume Score</p>
+                        <p className="text-sm font-semibold text-primary-700 dark:text-primary-300">{candidate.resumeScore || 0}/100</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </SectionPanel>
+        );
       case "matching-saved":
         return <SectionPanel title="Saved Candidates" subtitle="Saved shortlist bookmarks."><Empty text="No saved candidates yet." /></SectionPanel>;
       case "reports-feedback":
@@ -317,6 +395,4 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
     </RoleDashboardGuard>
   );
 }
-
-
 
