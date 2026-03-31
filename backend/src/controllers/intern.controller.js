@@ -150,6 +150,7 @@ exports.getActiveInternships = asyncHandler(async (req, res) => {
 
   res.json({ internships });
 });
+
 exports.getRecommendations = asyncHandler(async (req, res) => {
   const profile = await getInternProfileByUserId(req.user._id);
 
@@ -163,7 +164,7 @@ exports.getRecommendations = asyncHandler(async (req, res) => {
     return res.json({
       recommendations: [],
       reason: "missing_resume_skills",
-      message: "Upload a resume to get accurate AI recommendations."
+      message: "Upload your resume to get accurate AI internship recommendations."
     });
   }
 
@@ -174,8 +175,15 @@ exports.getRecommendations = asyncHandler(async (req, res) => {
     source: "parsed_resume_skills",
     recommendations: ranked.map((item) => ({
       internship: item.internship,
-      skillMatchPercent: item.skillMatchPercent,
+      requiredSkillMatchPercent: item.requiredSkillMatchPercent,
+      preferredSkillMatchPercent: item.preferredSkillMatchPercent,
+      overallRecommendationScore: item.overallRecommendationScore,
       recommendationScore: item.recommendationScore,
+      skillMatchPercent: item.skillMatchPercent,
+      matchedRequiredSkills: item.matchedRequiredSkills,
+      missingRequiredSkills: item.missingRequiredSkills,
+      matchedPreferredSkills: item.matchedPreferredSkills,
+      missingPreferredSkills: item.missingPreferredSkills,
       skillGap: item.skillGap
     }))
   });
@@ -260,4 +268,3 @@ exports.reportCompany = asyncHandler(async (req, res) => {
 
   res.status(201).json({ message: "Company reported", report });
 });
-

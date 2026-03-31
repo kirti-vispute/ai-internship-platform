@@ -51,11 +51,11 @@ export default function RecommendedInternshipsPage() {
         {loading ? (
           <div className="surface-muted p-5 text-sm text-slate-700 dark:text-slate-300">Loading recommendations...</div>
         ) : (
-          <SectionPanel title="Recommended Internships" subtitle="Ranked by exact required-skill match from your parsed resume skills.">
+          <SectionPanel title="Recommended Internships" subtitle="Transparent recommendation model with separate required, preferred, and overall scoring.">
             {error && <p className="text-sm text-rose-700 dark:text-rose-300">{error}</p>}
             {!error && (!profile?.resumeUploaded || !hasParsedResumeSkills) && (
               <div className="surface-subtle px-4 py-3 text-sm text-slate-700 dark:text-slate-300">
-                Upload a resume to get accurate AI recommendations.
+                Upload your resume to get accurate AI internship recommendations.
               </div>
             )}
             {!error && profile?.resumeUploaded && hasParsedResumeSkills && recommendations.length === 0 && (
@@ -68,16 +68,32 @@ export default function RecommendedInternshipsPage() {
               <div className="space-y-2.5">
                 {recommendations.map((item) => (
                   <div key={item.internship._id} className="surface-subtle p-3.5">
-                    <div className="flex items-center justify-between gap-3">
-                      <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{item.internship.role}</p>
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{item.internship.role}</p>
+                        <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">{item.internship.company?.companyName || "Company"}</p>
+                      </div>
                       <p className="rounded-full bg-primary-100/80 px-2 py-1 text-xs font-semibold text-primary-700 dark:bg-primary-900/40 dark:text-primary-300">
-                        Skill Match {item.skillMatchPercent}%
+                        Overall Score {item.overallRecommendationScore}%
                       </p>
                     </div>
-                    <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">{item.internship.company?.companyName || "Company"}</p>
-                    <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
-                      Missing skills: {item.skillGap.missing.length > 0 ? item.skillGap.missing.join(", ") : "None"}
+
+                    <div className="mt-2 grid gap-2 text-xs text-slate-700 dark:text-slate-300 sm:grid-cols-2">
+                      <div className="surface-subtle px-2.5 py-2">Required Skill Match: {item.requiredSkillMatchPercent}%</div>
+                      {item.preferredSkillMatchPercent !== null && (
+                        <div className="surface-subtle px-2.5 py-2">Preferred Skill Match: {item.preferredSkillMatchPercent}%</div>
+                      )}
+                    </div>
+
+                    <p className="mt-2 text-xs text-slate-600 dark:text-slate-300">
+                      Missing required skills: {item.missingRequiredSkills.length > 0 ? item.missingRequiredSkills.join(", ") : "None"}
                     </p>
+
+                    {item.preferredSkillMatchPercent !== null && (
+                      <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
+                        Missing preferred skills: {item.missingPreferredSkills.length > 0 ? item.missingPreferredSkills.join(", ") : "None"}
+                      </p>
+                    )}
                   </div>
                 ))}
               </div>

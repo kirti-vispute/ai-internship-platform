@@ -39,29 +39,29 @@ export default function SuggestionsPage() {
     load();
   }, []);
 
-  const missingSkills = useMemo(() => {
-    const items = recommendations.flatMap((item) => item.skillGap?.missing || []);
+  const missingRequiredSkills = useMemo(() => {
+    const items = recommendations.flatMap((item) => item.missingRequiredSkills || []);
     return [...new Set(items)].slice(0, 3);
   }, [recommendations]);
 
   const actionableSuggestions = useMemo(() => {
     const suggestions: string[] = [];
     if (!profile?.resumeUploaded || (profile?.resume?.parsed?.skills || []).length === 0) {
-      suggestions.push("Upload your resume to unlock skill-matched recommendations.");
+      suggestions.push("Upload your resume to unlock accurate internship recommendations.");
     }
-    if (missingSkills.length > 0) {
-      suggestions.push(`Prioritize learning these skills next: ${missingSkills.join(", ")}.`);
+    if (missingRequiredSkills.length > 0) {
+      suggestions.push(`Prioritize these missing required skills: ${missingRequiredSkills.join(", ")}.`);
     }
     if (applications.length === 0) {
-      suggestions.push("Start by applying to at least one recommended internship this week.");
+      suggestions.push("Start by applying to one high-overall-score internship this week.");
     }
 
     if (suggestions.length === 0) {
-      suggestions.push("Your profile is in good shape. Keep applying to high skill-match internships.");
+      suggestions.push("Your profile looks strong. Keep applying to internships with high required skill match.");
     }
 
     return suggestions;
-  }, [profile, missingSkills, applications]);
+  }, [profile, missingRequiredSkills, applications]);
 
   const handleLogout = () => {
     clearAuthSession();
@@ -74,7 +74,7 @@ export default function SuggestionsPage() {
         {loading ? (
           <div className="surface-muted p-5 text-sm text-slate-700 dark:text-slate-300">Loading suggestions...</div>
         ) : (
-          <SectionPanel title="Suggestions" subtitle="Generated from your real resume, applications, and recommendation data.">
+          <SectionPanel title="Suggestions" subtitle="Generated from your resume data, recommendation results, and applications.">
             {error && <p className="text-sm text-rose-700 dark:text-rose-300">{error}</p>}
             {!error && (
               <ul className="space-y-2 text-sm text-slate-700 dark:text-slate-300">

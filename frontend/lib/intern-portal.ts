@@ -89,6 +89,7 @@ export type InternshipListing = {
   description?: string;
   company?: { companyName?: string };
 };
+
 export type Recommendation = {
   internship: {
     _id: string;
@@ -96,8 +97,15 @@ export type Recommendation = {
     company?: { companyName?: string };
     location?: string;
   };
-  skillMatchPercent: number;
+  requiredSkillMatchPercent: number;
+  preferredSkillMatchPercent: number | null;
+  overallRecommendationScore: number;
   recommendationScore?: number;
+  skillMatchPercent?: number;
+  matchedRequiredSkills: string[];
+  missingRequiredSkills: string[];
+  matchedPreferredSkills: string[];
+  missingPreferredSkills: string[];
   skillGap: { matched: string[]; missing: string[]; matchPercent: number };
 };
 
@@ -185,19 +193,40 @@ export async function fetchActiveInternships(force = false) {
   setCache("intern:internships", internships);
   return internships;
 }
+
 export async function fetchInternRecommendations(force = false) {
   if (!force) {
     const cached = getCache<Recommendation[]>("intern:recommendations");
     if (cached) return cached;
   }
+
   const response = await apiRequest<{ recommendations: Recommendation[] }>("/api/intern/recommendations");
-  const recommendations = (response.recommendations || []).map((item) => ({
-    ...item,
-    skillMatchPercent: Number.isFinite(item?.skillMatchPercent)
-      ? item.skillMatchPercent
-      : Number(item?.recommendationScore || item?.skillGap?.matchPercent || 0)
-  }));
+  const recommendations = (response.recommendations || []).map((item) => {
+    const required = Number(item?.requiredSkillMatchPercent ?? item?.skillMatchPercent ?? item?.skillGap?.matchPercent ?? 0);
+    const preferred = Number.isFinite(item?.preferredSkillMatchPercent)
+      ? Number(item.preferredSkillMatchPercent)
+      : null;
+    const overall = Number.isFinite(item?.overallRecommendationScore)
+      ? Number(item.overallRecommendationScore)
+      : Number(item?.recommendationScore ?? required);
+
+    return {
+      ...item,
+      requiredSkillMatchPercent: required,
+      preferredSkillMatchPercent: preferred,
+      overallRecommendationScore: overall,
+      matchedRequiredSkills: item?.matchedRequiredSkills || item?.skillGap?.matched || [],
+      missingRequiredSkills: item?.missingRequiredSkills || item?.skillGap?.missing || [],
+      matchedPreferredSkills: item?.matchedPreferredSkills || [],
+      missingPreferredSkills: item?.missingPreferredSkills || [],
+      skillGap: item?.skillGap || {
+        matched: item?.matchedRequiredSkills || [],
+        missing: item?.missingRequiredSkills || [],
+        matchPercent: required
+      }
+    } as Recommendation;
+  });
+
   setCache("intern:recommendations", recommendations);
   return recommendations;
 }
-

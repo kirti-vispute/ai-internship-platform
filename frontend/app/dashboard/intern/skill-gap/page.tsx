@@ -36,14 +36,14 @@ export default function InternSkillGapPage() {
     load();
   }, []);
 
-  const missingSkills = useMemo(() => {
-    const allMissing = recommendations.flatMap((item) => item.skillGap?.missing || []);
+  const missingRequiredSkills = useMemo(() => {
+    const allMissing = recommendations.flatMap((item) => item.missingRequiredSkills || []);
     return [...new Set(allMissing)].slice(0, 12);
   }, [recommendations]);
 
   const courseSuggestions = useMemo(
-    () => missingSkills.map((skill) => `Intro to ${skill[0]?.toUpperCase() || ""}${skill.slice(1)}`).slice(0, 6),
-    [missingSkills]
+    () => missingRequiredSkills.map((skill) => `Intro to ${skill[0]?.toUpperCase() || ""}${skill.slice(1)}`).slice(0, 6),
+    [missingRequiredSkills]
   );
 
   function handleLogout() {
@@ -60,14 +60,14 @@ export default function InternSkillGapPage() {
           <div className="space-y-5">
             {error && <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300">{error}</div>}
 
-            <SectionPanel title="Skill Gap Analysis" subtitle="Missing skills identified directly from internship requirement lists.">
+            <SectionPanel title="Skill Gap Analysis" subtitle="Missing required skills identified from recommendation results.">
               {!profile?.resumeUploaded || (profile?.resume?.parsed?.skills || []).length === 0 ? (
                 <div className="surface-subtle px-4 py-3 text-sm text-slate-700 dark:text-slate-300">Upload your resume to generate accurate skill gap analysis.</div>
-              ) : missingSkills.length === 0 ? (
-                <div className="surface-subtle px-4 py-3 text-sm text-slate-700 dark:text-slate-300">No missing skills detected in current recommendations.</div>
+              ) : missingRequiredSkills.length === 0 ? (
+                <div className="surface-subtle px-4 py-3 text-sm text-slate-700 dark:text-slate-300">Missing required skills: None</div>
               ) : (
                 <div className="flex flex-wrap gap-2">
-                  {missingSkills.map((skill) => (
+                  {missingRequiredSkills.map((skill) => (
                     <span key={skill} className="rounded-full border border-amber-300/60 bg-amber-100/60 px-3 py-1 text-xs font-semibold text-amber-800 dark:border-amber-700/50 dark:bg-amber-900/30 dark:text-amber-300">
                       {skill}
                     </span>
@@ -76,7 +76,7 @@ export default function InternSkillGapPage() {
               )}
             </SectionPanel>
 
-            <SectionPanel title="Suggested Courses" subtitle="Learning tracks based on the exact missing skills above.">
+            <SectionPanel title="Suggested Courses" subtitle="Learning tracks based on missing required skills.">
               {courseSuggestions.length === 0 ? (
                 <div className="surface-subtle px-4 py-3 text-sm text-slate-700 dark:text-slate-300">No course suggestions yet.</div>
               ) : (

@@ -29,10 +29,10 @@ export default function InternDashboardOverviewPage() {
   const summary = useMemo(() => {
     const resumeScore = profile?.resume?.score || 0;
     const openOpportunities = recommendations.length;
-    const avgSkillMatch = recommendations.length
-      ? Math.round(recommendations.reduce((sum, item) => sum + item.skillMatchPercent, 0) / recommendations.length)
+    const avgOverallRecommendation = recommendations.length
+      ? Math.round(recommendations.reduce((sum, item) => sum + item.overallRecommendationScore, 0) / recommendations.length)
       : 0;
-    return { resumeScore, openOpportunities, avgSkillMatch, applicationsCount: applications.length };
+    return { resumeScore, openOpportunities, avgOverallRecommendation, applicationsCount: applications.length };
   }, [profile, recommendations, applications]);
 
   useEffect(() => {
@@ -81,14 +81,14 @@ export default function InternDashboardOverviewPage() {
             <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
               <SummaryStatCard title="Resume Score" value={summary.resumeScore} suffix="/100" />
               <SummaryStatCard title="Open Opportunities" value={summary.openOpportunities} />
-              <SummaryStatCard title="Avg Skill Match" value={summary.avgSkillMatch} suffix="%" />
+              <SummaryStatCard title="Avg Overall Score" value={summary.avgOverallRecommendation} suffix="%" />
               <SummaryStatCard title="Applications Count" value={summary.applicationsCount} />
             </section>
 
-            <SectionPanel title="Overview Notes" subtitle="Real data only, based on your resume and active internships.">
+            <SectionPanel title="Overview Notes" subtitle="Recommendation scores are explainable and separated by factor.">
               {!profile?.resumeUploaded || !hasParsedResumeSkills ? (
                 <div className="surface-subtle px-3 py-3 text-sm text-slate-700 dark:text-slate-300">
-                  Upload a resume to get accurate AI recommendations.
+                  Upload your resume to get accurate AI internship recommendations.
                 </div>
               ) : recommendations.length === 0 ? (
                 <div className="surface-subtle px-3 py-3 text-sm text-slate-700 dark:text-slate-300">
@@ -96,9 +96,9 @@ export default function InternDashboardOverviewPage() {
                 </div>
               ) : (
                 <ul className="space-y-2 text-sm text-slate-700 dark:text-slate-300">
-                  <li className="surface-subtle px-3 py-2">Recommendations are scored using required-skills match only.</li>
-                  <li className="surface-subtle px-3 py-2">Missing skills are calculated directly from each internship requirement list.</li>
-                  <li className="surface-subtle px-3 py-2">Use Skill Gap Analysis to prioritize what to learn next.</li>
+                  <li className="surface-subtle px-3 py-2">Required Skill Match % is computed from required skills only.</li>
+                  <li className="surface-subtle px-3 py-2">Preferred Skill Match % is shown only when preferred skills exist.</li>
+                  <li className="surface-subtle px-3 py-2">Overall Score = 80% required + 20% preferred (or required only when preferred is absent).</li>
                 </ul>
               )}
             </SectionPanel>
