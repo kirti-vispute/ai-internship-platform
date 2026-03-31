@@ -1,41 +1,4 @@
-const { canonicalSkill, displaySkill } = require("./resume-structured-parser.service");
-
-const SKILL_ALIAS_MAP = {
-  js: "javascript",
-  javascript: "javascript",
-  ts: "typescript",
-  typescript: "typescript",
-  nodejs: "node.js",
-  "node js": "node.js",
-  node: "node.js",
-  reactjs: "react",
-  react: "react",
-  mongo: "mongodb",
-  mongodb: "mongodb",
-  ml: "machine learning",
-  ai: "artificial intelligence",
-  sql: "sql",
-  html: "html",
-  css: "css"
-};
-
-function normalizeSkillToken(skill) {
-  const raw = String(skill || "").trim().toLowerCase();
-  if (!raw) return "";
-
-  const canonical = canonicalSkill(raw);
-  if (canonical) {
-    return SKILL_ALIAS_MAP[canonical] || canonical;
-  }
-
-  return SKILL_ALIAS_MAP[raw] || raw;
-}
-
-function normalizeSkills(skills = []) {
-  if (!Array.isArray(skills)) return [];
-  const normalized = skills.map(normalizeSkillToken).filter(Boolean);
-  return [...new Set(normalized)];
-}
+const { normalizeSkillList, toDisplaySkillList } = require("../utils/skill-normalizer");
 
 function unique(items = []) {
   return [...new Set(items)];
@@ -163,24 +126,26 @@ function calculateResumeScore(profile) {
 }
 
 function getSkillGap(internSkills = [], requiredSkills = []) {
-  const normalizedIntern = normalizeSkills(internSkills);
-  const normalizedRequired = normalizeSkills(requiredSkills);
+  const normalizedIntern = normalizeSkillList(internSkills);
+  const normalizedRequired = normalizeSkillList(requiredSkills);
 
   const internSet = new Set(normalizedIntern);
   const matchedCanonical = normalizedRequired.filter((skill) => internSet.has(skill));
   const missingCanonical = normalizedRequired.filter((skill) => !internSet.has(skill));
-  const matchPercent = normalizedRequired.length ? Math.round((matchedCanonical.length / normalizedRequired.length) * 100) : 0;
+  const matchPercent = normalizedRequired.length > 0
+    ? Math.round((matchedCanonical.length / normalizedRequired.length) * 100)
+    : 0;
 
   return {
-    matched: matchedCanonical.map(displaySkill),
-    missing: missingCanonical.map(displaySkill),
+    matched: toDisplaySkillList(matchedCanonical),
+    missing: toDisplaySkillList(missingCanonical),
     matchPercent
   };
 }
 
 function compareSkillSets(internSkills = [], internshipSkills = []) {
-  const normalizedIntern = normalizeSkills(internSkills);
-  const normalizedTarget = normalizeSkills(internshipSkills);
+  const normalizedIntern = normalizeSkillList(internSkills);
+  const normalizedTarget = normalizeSkillList(internshipSkills);
   const internSet = new Set(normalizedIntern);
 
   const matchedCanonical = normalizedTarget.filter((skill) => internSet.has(skill));
@@ -194,15 +159,15 @@ function compareSkillSets(internSkills = [], internshipSkills = []) {
     normalizedTargetSkills: normalizedTarget,
     matchedCanonical,
     missingCanonical,
-    matched: matchedCanonical.map(displaySkill),
-    missing: missingCanonical.map(displaySkill),
+    matched: toDisplaySkillList(matchedCanonical),
+    missing: toDisplaySkillList(missingCanonical),
     matchPercent
   };
 }
 
 function getParsedResumeSkills(internProfile = {}) {
   const parsedSkills = internProfile?.resume?.parsed?.skills;
-  return normalizeSkills(Array.isArray(parsedSkills) ? parsedSkills : []);
+  return normalizeSkillList(Array.isArray(parsedSkills) ? parsedSkills : []);
 }
 
 /**
@@ -218,7 +183,7 @@ function buildInternshipRecommendation(internSkills = [], internship = {}) {
   const preferredSkills = internship?.prioritySkills || [];
 
   const required = compareSkillSets(internSkills, requiredSkills);
-  const preferredExists = normalizeSkills(preferredSkills).length > 0;
+  const preferredExists = normalizeSkillList(preferredSkills).length > 0;
   const preferred = preferredExists ? compareSkillSets(internSkills, preferredSkills) : null;
 
   const requiredSkillMatchPercent = required.matchPercent;
@@ -247,7 +212,7 @@ function buildInternshipRecommendation(internSkills = [], internship = {}) {
 }
 
 function recommendInternships(internProfile, internships = [], options = {}) {
-  const internSkills = normalizeSkills(options.internSkills || getParsedResumeSkills(internProfile));
+  const internSkills = normalizeSkillList(options.internSkills || getParsedResumeSkills(internProfile));
   if (internSkills.length === 0) {
     return [];
   }
@@ -263,8 +228,8 @@ function recommendInternships(internProfile, internships = [], options = {}) {
           internshipId: internship?._id,
           internshipRole: internship?.role || "",
           internSkills,
-          requiredSkills: normalizeSkills(internship?.skillsRequired || []),
-          preferredSkills: normalizeSkills(internship?.prioritySkills || []),
+          requiredSkills: normalizeSkillList(internship?.skillsRequired || []),
+          preferredSkills: normalizeSkillList(internship?.prioritySkills || []),
           matchedRequiredSkills: recommendation.matchedRequiredSkills,
           missingRequiredSkills: recommendation.missingRequiredSkills,
           matchedPreferredSkills: recommendation.matchedPreferredSkills,
