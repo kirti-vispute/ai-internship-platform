@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -43,7 +43,7 @@ export default function InternResumeScorePage() {
         {loading ? (
           <div className="rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-600">Loading resume score...</div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-5">
             {error && <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div>}
 
             <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -77,7 +77,7 @@ export default function InternResumeScorePage() {
                     <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">Top Improvements</p>
                     <ul className="mt-2 space-y-1 text-xs text-slate-700">
                       {(analysis.improvements || []).slice(0, 5).map((item, idx) => (
-                        <li key={`improve-${idx}`}>• {item}</li>
+                        <li key={`improve-${idx}`}>â€¢ {item}</li>
                       ))}
                     </ul>
                   </div>
@@ -90,4 +90,6 @@ export default function InternResumeScorePage() {
     </RoleDashboardGuard>
   );
 }
+
+
 

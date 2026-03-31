@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { RoleDashboardGuard } from "@/components/ui/role-dashboard-guard";
@@ -72,7 +72,7 @@ export default function InternDashboardOverviewPage() {
         {loading ? (
           <div className="surface-muted p-5 text-sm text-slate-700 dark:text-slate-300">Loading overview...</div>
         ) : (
-          <div className="space-y-7">
+          <div className="space-y-5">
             {error && <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300">{error}</div>}
 
             <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -95,4 +95,6 @@ export default function InternDashboardOverviewPage() {
     </RoleDashboardGuard>
   );
 }
+
+
 

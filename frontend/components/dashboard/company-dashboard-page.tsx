@@ -246,7 +246,7 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
     switch (view) {
       case "overview":
         return (
-          <div className="space-y-7">
+          <div className="space-y-5">
             <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
               <SummaryStatCard title="Verification" value={summary.verification.toUpperCase()} />
               <SummaryStatCard title="Active Internships" value={summary.activeInternships} />
@@ -317,4 +317,6 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
     </RoleDashboardGuard>
   );
 }
+
+
 

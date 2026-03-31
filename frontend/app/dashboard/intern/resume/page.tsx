@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -76,7 +76,7 @@ export default function InternResumePage() {
             <Skeleton className="mt-3 h-10 w-40" />
           </div>
         ) : (
-          <div className="space-y-7">
+          <div className="space-y-5">
             <SectionPanel title="Resume" subtitle="Upload and manage your resume file.">
               {error && <div className="mb-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300">{error}</div>}
               {message && <div className="mb-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300">{message}</div>}
@@ -213,5 +213,7 @@ export default function InternResumePage() {
     </RoleDashboardGuard>
   );
 }
+
+
 
 

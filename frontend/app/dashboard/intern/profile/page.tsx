@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -59,7 +59,7 @@ export default function InternProfilePage() {
             <Skeleton className="mt-3 h-10 w-56" />
           </div>
         ) : (
-          <div className="space-y-7">
+          <div className="space-y-5">
             <SectionPanel title="Personal Info" subtitle="Core profile details from your account.">
               {error ? (
                 <p className="text-sm text-rose-700">{error}</p>
@@ -190,5 +190,7 @@ export default function InternProfilePage() {
     </RoleDashboardGuard>
   );
 }
+
+
 
 

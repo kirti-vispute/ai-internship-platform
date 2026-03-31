@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -55,7 +55,7 @@ export default function InternSkillGapPage() {
         {loading ? (
           <div className="rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-600">Loading skill gap analysis...</div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-5">
             {error && <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div>}
 
             <SectionPanel title="Skill Gap Analysis" subtitle="Missing skills identified from internship recommendations.">
@@ -93,4 +93,6 @@ export default function InternSkillGapPage() {
     </RoleDashboardGuard>
   );
 }
+
+
 

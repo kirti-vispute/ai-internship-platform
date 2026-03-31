@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -53,7 +53,7 @@ export default function InternApplicationsPage() {
   return (
     <RoleDashboardGuard expectedRole="intern">
       <InternShell welcomeName="Intern" onLogout={handleLogout}>
-        <div className="space-y-6">
+        <div className="space-y-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary-600">Internships</p>
@@ -77,7 +77,7 @@ export default function InternApplicationsPage() {
                 <SectionPanel
                   key={app._id}
                   title={app.internship?.role || "Internship"}
-                  subtitle={`${app.internship?.company?.companyName || "Company"}${app.internship?.location ? ` • ${app.internship.location}` : ""}`}
+                  subtitle={`${app.internship?.company?.companyName || "Company"}${app.internship?.location ? ` â€¢ ${app.internship.location}` : ""}`}
                 >
                   <div className="grid gap-3 sm:grid-cols-2">
                     <div>
@@ -107,4 +107,6 @@ export default function InternApplicationsPage() {
     </RoleDashboardGuard>
   );
 }
+
+
 

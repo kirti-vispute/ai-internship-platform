@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -328,7 +328,8 @@ export function CompanyShell({ welcomeName, onLogout, children }: CompanyShellPr
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">                <button type="button" className="rounded-xl border border-slate-200 bg-white p-2 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800">
+              <div className="flex items-center gap-2">
+                <button type="button" className="rounded-xl border border-slate-200 bg-white p-2 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800">
                   <IconBell />
                 </button>
                 <Button href="/auth/company" type="button" variant="secondary" size="sm">
@@ -341,11 +342,14 @@ export function CompanyShell({ welcomeName, onLogout, children }: CompanyShellPr
             </div>
           </header>
 
-          <main className="animate-reveal relative z-10 p-5 lg:p-7">{children}</main>
+          <main className="animate-reveal relative z-10 mx-auto w-full max-w-[1240px] p-4 lg:p-5">{children}</main>
         </div>
       </div>
     </div>
   );
 }
+
+
+
 
 

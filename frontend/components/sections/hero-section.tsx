@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -65,15 +65,17 @@ export function HeroSection() {
             <img
               src={HERO_REFERENCE_IMAGE}
               alt="AI internship workflow reference"
-              className="absolute inset-0 m-0 block h-full w-full object-contain object-center p-0"
+              className="absolute inset-0 m-0 block h-full w-full object-contain object-center p-0 brightness-[1.08] contrast-[1.07]"
             />
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(56,189,248,0.1),transparent_55%),linear-gradient(180deg,rgba(2,6,23,0.05)_0%,rgba(2,6,23,0.38)_100%)]" />
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(56,189,248,0.13),transparent_55%),linear-gradient(180deg,rgba(2,6,23,0.02)_0%,rgba(2,6,23,0.32)_100%)]" />
           </div>
         </motion.div>
       </div>
     </section>
   );
 }
+
+
 
 
 

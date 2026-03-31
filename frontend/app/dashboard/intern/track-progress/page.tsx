@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -47,7 +47,7 @@ export default function TrackProgressPage() {
         {loading ? (
           <div className="rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-600">Loading progress...</div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-5">
             {error && <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div>}
 
             <SectionPanel title="Application Status Summary" subtitle="Your live status distribution from backend.">
@@ -73,7 +73,7 @@ export default function TrackProgressPage() {
                   {applications.map((app) => (
                     <div key={app._id} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
                       <p className="text-sm font-semibold text-slate-900">
-                        {app.internship?.role || "Internship"} • <span className="capitalize">{app.status}</span>
+                        {app.internship?.role || "Internship"} â€¢ <span className="capitalize">{app.status}</span>
                       </p>
                       <ul className="mt-2 space-y-1 text-xs text-slate-700">
                         {(app.stageHistory || []).length === 0 && <li>No stage timeline yet.</li>}
@@ -95,4 +95,6 @@ export default function TrackProgressPage() {
     </RoleDashboardGuard>
   );
 }
+
+
 
