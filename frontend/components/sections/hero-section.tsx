@@ -7,11 +7,11 @@ const HERO_REFERENCE_IMAGE = "/hero-reference-2.png";
 
 export function HeroSection() {
   return (
-    <section className="relative z-0 overflow-hidden bg-slate-950 pb-16 pt-24 sm:pb-20 sm:pt-28">
+    <section className="relative z-0 overflow-hidden bg-slate-950 pb-16 pt-16 sm:pb-20 sm:pt-20">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_8%,rgba(56,189,248,0.16),transparent_34%),radial-gradient(circle_at_82%_16%,rgba(99,102,241,0.14),transparent_32%),linear-gradient(180deg,rgba(2,6,23,0.08)_0%,rgba(15,23,42,0.34)_48%,rgba(2,6,23,0.82)_100%)]" />
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-36 bg-gradient-to-b from-transparent via-slate-950/55 to-slate-950" />
 
-      <div className="container-shell relative z-20 grid min-h-[700px] items-center gap-8 py-6 lg:grid-cols-[1fr_1.08fr] lg:gap-8">
+      <div className="container-shell relative z-20 grid min-h-[620px] items-start gap-8 py-2 sm:py-4 lg:grid-cols-[1fr_1.08fr] lg:gap-8">
         <motion.div
           initial={{ opacity: 0, y: 24, filter: "blur(8px)" }}
           whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
@@ -74,6 +74,7 @@ export function HeroSection() {
     </section>
   );
 }
+
 
 
 
