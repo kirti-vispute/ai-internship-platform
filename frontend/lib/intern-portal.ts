@@ -78,6 +78,17 @@ export type Application = {
   hrFeedback: Array<{ feedback: string; createdAt: string }>;
 };
 
+export type InternshipListing = {
+  _id: string;
+  role: string;
+  skillsRequired?: string[];
+  prioritySkills?: string[];
+  location?: string;
+  stipend?: string;
+  duration?: string;
+  description?: string;
+  company?: { companyName?: string };
+};
 export type Recommendation = {
   internship: {
     _id: string;
@@ -85,7 +96,8 @@ export type Recommendation = {
     company?: { companyName?: string };
     location?: string;
   };
-  recommendationScore: number;
+  skillMatchPercent: number;
+  recommendationScore?: number;
   skillGap: { matched: string[]; missing: string[]; matchPercent: number };
 };
 
@@ -162,13 +174,30 @@ export async function fetchInternApplications(force = false) {
   return applications;
 }
 
+export async function fetchActiveInternships(force = false) {
+  if (!force) {
+    const cached = getCache<InternshipListing[]>("intern:internships");
+    if (cached) return cached;
+  }
+
+  const response = await apiRequest<{ internships: InternshipListing[] }>("/api/intern/internships");
+  const internships = response.internships || [];
+  setCache("intern:internships", internships);
+  return internships;
+}
 export async function fetchInternRecommendations(force = false) {
   if (!force) {
     const cached = getCache<Recommendation[]>("intern:recommendations");
     if (cached) return cached;
   }
   const response = await apiRequest<{ recommendations: Recommendation[] }>("/api/intern/recommendations");
-  const recommendations = response.recommendations || [];
+  const recommendations = (response.recommendations || []).map((item) => ({
+    ...item,
+    skillMatchPercent: Number.isFinite(item?.skillMatchPercent)
+      ? item.skillMatchPercent
+      : Number(item?.recommendationScore || item?.skillGap?.matchPercent || 0)
+  }));
   setCache("intern:recommendations", recommendations);
   return recommendations;
 }
+

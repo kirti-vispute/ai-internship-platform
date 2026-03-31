@@ -1,4 +1,4 @@
-﻿const express = require("express");
+const express = require("express");
 const internController = require("../controllers/intern.controller");
 const authMiddleware = require("../middleware/auth.middleware");
 const allowRoles = require("../middleware/role.middleware");
@@ -13,6 +13,7 @@ router.put("/profile", internController.updateProfile);
 router.post("/resume/upload", upload.single("resume"), internController.uploadResume);
 router.get("/resume/score", internController.getResumeScore);
 router.post("/skill-gap", internController.getSkillGap);
+router.get("/internships", internController.getActiveInternships);
 router.get("/recommendations", internController.getRecommendations);
 router.post("/apply/:internshipId", internController.applyToInternship);
 router.get("/applications", internController.getMyApplications);

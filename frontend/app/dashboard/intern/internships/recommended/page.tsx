@@ -15,15 +15,21 @@ export default function RecommendedInternshipsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const hasParsedResumeSkills = (profile?.resume?.parsed?.skills || []).length > 0;
+
   useEffect(() => {
     async function load() {
       try {
         setLoading(true);
         setError(null);
+
         const loadedProfile = await fetchInternProfile();
         setProfile(loadedProfile);
-        if (loadedProfile.resumeUploaded) {
+
+        if (loadedProfile.resumeUploaded && (loadedProfile.resume?.parsed?.skills || []).length > 0) {
           setRecommendations(await fetchInternRecommendations());
+        } else {
+          setRecommendations([]);
         }
       } catch (err) {
         setError((err as Error).message || "Failed to load recommendations.");
@@ -43,23 +49,35 @@ export default function RecommendedInternshipsPage() {
     <RoleDashboardGuard expectedRole="intern">
       <InternShell welcomeName={profile?.fullName} onLogout={handleLogout}>
         {loading ? (
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-600">Loading recommendations...</div>
+          <div className="surface-muted p-5 text-sm text-slate-700 dark:text-slate-300">Loading recommendations...</div>
         ) : (
-          <SectionPanel title="Recommended Internships" subtitle="Backend-ranked opportunities based on your profile.">
-            {error && <p className="text-sm text-rose-700">{error}</p>}
-            {!error && !profile?.resumeUploaded && <p className="text-sm text-slate-600">Upload resume to unlock recommendations.</p>}
-            {!error && profile?.resumeUploaded && recommendations.length === 0 && <p className="text-sm text-slate-600">No recommendations found.</p>}
+          <SectionPanel title="Recommended Internships" subtitle="Ranked by exact required-skill match from your parsed resume skills.">
+            {error && <p className="text-sm text-rose-700 dark:text-rose-300">{error}</p>}
+            {!error && (!profile?.resumeUploaded || !hasParsedResumeSkills) && (
+              <div className="surface-subtle px-4 py-3 text-sm text-slate-700 dark:text-slate-300">
+                Upload a resume to get accurate AI recommendations.
+              </div>
+            )}
+            {!error && profile?.resumeUploaded && hasParsedResumeSkills && recommendations.length === 0 && (
+              <div className="surface-subtle px-4 py-3 text-sm text-slate-700 dark:text-slate-300">
+                No matching internships found right now.
+              </div>
+            )}
 
             {!error && recommendations.length > 0 && (
-              <div className="space-y-2">
+              <div className="space-y-2.5">
                 {recommendations.map((item) => (
-                  <div key={item.internship._id} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm font-semibold text-slate-900">{item.internship.role}</p>
-                      <p className="rounded-full bg-primary-50 px-2 py-1 text-xs font-semibold text-primary-700">{item.recommendationScore}%</p>
+                  <div key={item.internship._id} className="surface-subtle p-3.5">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{item.internship.role}</p>
+                      <p className="rounded-full bg-primary-100/80 px-2 py-1 text-xs font-semibold text-primary-700 dark:bg-primary-900/40 dark:text-primary-300">
+                        Skill Match {item.skillMatchPercent}%
+                      </p>
                     </div>
-                    <p className="mt-1 text-xs text-slate-500">{item.internship.company?.companyName || "Company"}</p>
-                    <p className="mt-1 text-xs text-slate-600">Missing skills: {item.skillGap.missing.join(", ") || "None"}</p>
+                    <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">{item.internship.company?.companyName || "Company"}</p>
+                    <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
+                      Missing skills: {item.skillGap.missing.length > 0 ? item.skillGap.missing.join(", ") : "None"}
+                    </p>
                   </div>
                 ))}
               </div>
@@ -70,4 +88,3 @@ export default function RecommendedInternshipsPage() {
     </RoleDashboardGuard>
   );
 }
-

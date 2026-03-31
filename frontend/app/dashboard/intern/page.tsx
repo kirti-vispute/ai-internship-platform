@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { RoleDashboardGuard } from "@/components/ui/role-dashboard-guard";
@@ -24,13 +24,15 @@ export default function InternDashboardOverviewPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const hasParsedResumeSkills = (profile?.resume?.parsed?.skills || []).length > 0;
+
   const summary = useMemo(() => {
     const resumeScore = profile?.resume?.score || 0;
     const openOpportunities = recommendations.length;
-    const avgMatchScore = recommendations.length
-      ? Math.round(recommendations.reduce((sum, item) => sum + item.recommendationScore, 0) / recommendations.length)
+    const avgSkillMatch = recommendations.length
+      ? Math.round(recommendations.reduce((sum, item) => sum + item.skillMatchPercent, 0) / recommendations.length)
       : 0;
-    return { resumeScore, openOpportunities, avgMatchScore, applicationsCount: applications.length };
+    return { resumeScore, openOpportunities, avgSkillMatch, applicationsCount: applications.length };
   }, [profile, recommendations, applications]);
 
   useEffect(() => {
@@ -45,7 +47,8 @@ export default function InternDashboardOverviewPage() {
         const loadedApplications = await fetchInternApplications();
         setApplications(loadedApplications);
 
-        if (loadedProfile.resumeUploaded) {
+        const parsedSkills = loadedProfile?.resume?.parsed?.skills || [];
+        if (loadedProfile.resumeUploaded && parsedSkills.length > 0) {
           const loadedRecommendations = await fetchInternRecommendations();
           setRecommendations(loadedRecommendations);
         } else {
@@ -78,16 +81,26 @@ export default function InternDashboardOverviewPage() {
             <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
               <SummaryStatCard title="Resume Score" value={summary.resumeScore} suffix="/100" />
               <SummaryStatCard title="Open Opportunities" value={summary.openOpportunities} />
-              <SummaryStatCard title="Avg Match Score" value={summary.avgMatchScore} suffix="%" />
+              <SummaryStatCard title="Avg Skill Match" value={summary.avgSkillMatch} suffix="%" />
               <SummaryStatCard title="Applications Count" value={summary.applicationsCount} />
             </section>
 
-            <SectionPanel title="Overview Notes" subtitle="Use the sidebar to navigate focused views.">
-              <ul className="space-y-2 text-sm text-slate-700">
-                <li className="surface-subtle px-3 py-2 text-slate-700 dark:text-slate-300">Profile details and resume management are in My Profile.</li>
-                <li className="surface-subtle px-3 py-2 text-slate-700 dark:text-slate-300">Internship discovery and tracking are in Internships.</li>
-                <li className="surface-subtle px-3 py-2 text-slate-700 dark:text-slate-300">Learning resources and mock tests are in Learning.</li>
-              </ul>
+            <SectionPanel title="Overview Notes" subtitle="Real data only, based on your resume and active internships.">
+              {!profile?.resumeUploaded || !hasParsedResumeSkills ? (
+                <div className="surface-subtle px-3 py-3 text-sm text-slate-700 dark:text-slate-300">
+                  Upload a resume to get accurate AI recommendations.
+                </div>
+              ) : recommendations.length === 0 ? (
+                <div className="surface-subtle px-3 py-3 text-sm text-slate-700 dark:text-slate-300">
+                  No matching internships found right now. Update your skills or check back after new postings.
+                </div>
+              ) : (
+                <ul className="space-y-2 text-sm text-slate-700 dark:text-slate-300">
+                  <li className="surface-subtle px-3 py-2">Recommendations are scored using required-skills match only.</li>
+                  <li className="surface-subtle px-3 py-2">Missing skills are calculated directly from each internship requirement list.</li>
+                  <li className="surface-subtle px-3 py-2">Use Skill Gap Analysis to prioritize what to learn next.</li>
+                </ul>
+              )}
             </SectionPanel>
           </div>
         )}
@@ -95,6 +108,3 @@ export default function InternDashboardOverviewPage() {
     </RoleDashboardGuard>
   );
 }
-
-
-

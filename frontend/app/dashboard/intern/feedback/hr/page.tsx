@@ -6,10 +6,11 @@ import { RoleDashboardGuard } from "@/components/ui/role-dashboard-guard";
 import { InternShell } from "@/components/dashboard/intern-shell";
 import { SectionPanel } from "@/components/dashboard/section-panel";
 import { clearAuthSession } from "@/lib/session";
-import { Application, fetchInternApplications } from "@/lib/intern-portal";
+import { Application, InternProfile, fetchInternApplications, fetchInternProfile } from "@/lib/intern-portal";
 
 export default function HrFeedbackPage() {
   const router = useRouter();
+  const [profile, setProfile] = useState<InternProfile | null>(null);
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -19,7 +20,9 @@ export default function HrFeedbackPage() {
       try {
         setLoading(true);
         setError(null);
-        setApplications(await fetchInternApplications());
+        const [loadedProfile, loadedApplications] = await Promise.all([fetchInternProfile(), fetchInternApplications()]);
+        setProfile(loadedProfile);
+        setApplications(loadedApplications);
       } catch (err) {
         setError((err as Error).message || "Failed to load HR feedback.");
       } finally {
@@ -47,18 +50,18 @@ export default function HrFeedbackPage() {
 
   return (
     <RoleDashboardGuard expectedRole="intern">
-      <InternShell welcomeName="Intern" onLogout={handleLogout}>
+      <InternShell welcomeName={profile?.fullName} onLogout={handleLogout}>
         {loading ? (
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-600">Loading HR feedback...</div>
+          <div className="surface-muted p-5 text-sm text-slate-700 dark:text-slate-300">Loading HR feedback...</div>
         ) : (
           <SectionPanel title="HR Feedback" subtitle="Direct recruiter feedback from your applications.">
-            {error && <p className="text-sm text-rose-700">{error}</p>}
-            {!error && feedbackItems.length === 0 && <p className="text-sm text-slate-600">No HR feedback yet.</p>}
+            {error && <p className="text-sm text-rose-700 dark:text-rose-300">{error}</p>}
+            {!error && feedbackItems.length === 0 && <p className="text-sm text-slate-600 dark:text-slate-300">No HR feedback yet.</p>}
             {!error && feedbackItems.length > 0 && (
               <div className="space-y-2">
                 {feedbackItems.map((item, idx) => (
-                  <p key={`${item.internship}-${idx}`} className="rounded-lg border border-amber-100 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-                    {item.internship}: {item.feedback}
+                  <p key={`${item.internship}-${idx}`} className="surface-subtle px-3 py-2 text-sm text-slate-700 dark:text-slate-200">
+                    <span className="font-semibold">{item.internship}:</span> {item.feedback}
                   </p>
                 ))}
               </div>
@@ -69,4 +72,3 @@ export default function HrFeedbackPage() {
     </RoleDashboardGuard>
   );
 }
-

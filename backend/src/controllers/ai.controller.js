@@ -1,8 +1,14 @@
-﻿const InternProfile = require("../models/InternProfile");
+const InternProfile = require("../models/InternProfile");
 const Internship = require("../models/Internship");
 const asyncHandler = require("../utils/asyncHandler");
 const AppError = require("../utils/AppError");
 const { parseResumeText, calculateResumeScore, getSkillGap, recommendInternships, rankApplicantsForInternship } = require("../services/ai.service");
+
+function getParsedResumeSkills(profile) {
+  const parsedSkills = profile?.resume?.parsed?.skills;
+  if (!Array.isArray(parsedSkills)) return [];
+  return parsedSkills.map((skill) => String(skill || "").trim()).filter(Boolean);
+}
 
 exports.parseResume = asyncHandler(async (req, res) => {
   const { text } = req.body;
@@ -58,8 +64,17 @@ exports.recommend = asyncHandler(async (req, res) => {
     throw new AppError("Intern profile not found", 404);
   }
 
+  const parsedSkills = getParsedResumeSkills(profile);
+  if (parsedSkills.length === 0) {
+    return res.json({
+      recommendations: [],
+      reason: "missing_resume_skills",
+      message: "Upload a resume to get accurate AI recommendations."
+    });
+  }
+
   const internships = await Internship.find({ isActive: true }).populate("company");
-  const recommendations = recommendInternships(profile, internships);
+  const recommendations = recommendInternships(profile, internships, { internSkills: parsedSkills });
 
   res.json({ recommendations });
 });

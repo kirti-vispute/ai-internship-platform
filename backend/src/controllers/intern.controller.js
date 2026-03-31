@@ -1,4 +1,4 @@
-﻿const path = require("path");
+const path = require("path");
 
 const ReportedCompany = require("../models/ReportedCompany");
 const InternProfile = require("../models/InternProfile");
@@ -37,6 +37,14 @@ async function refreshProfileScore(profile, resumeTextOverride = "") {
   profile.resume.predictedCategory = result.predictedCategory || "";
   profile.resume.confidence = typeof result.confidence === "number" ? result.confidence : null;
   profile.resume.analysis = result.analysis || null;
+}
+
+function getParsedResumeSkills(profile) {
+  const parsedSkills = profile?.resume?.parsed?.skills;
+  if (!Array.isArray(parsedSkills)) return [];
+  return parsedSkills
+    .map((skill) => String(skill || "").trim())
+    .filter(Boolean);
 }
 
 exports.getProfile = asyncHandler(async (req, res) => {
@@ -130,10 +138,18 @@ exports.getSkillGap = asyncHandler(async (req, res) => {
     throw new AppError("Internship not found", 404);
   }
 
-  const analysis = getSkillGap(profile.skills || [], internship.skillsRequired || []);
+  const internSkills = getParsedResumeSkills(profile);
+  const analysis = getSkillGap(internSkills, internship.skillsRequired || []);
   res.json({ internshipId, analysis });
 });
 
+exports.getActiveInternships = asyncHandler(async (req, res) => {
+  const internships = await Internship.find({ isActive: true })
+    .populate("company")
+    .sort({ createdAt: -1 });
+
+  res.json({ internships });
+});
 exports.getRecommendations = asyncHandler(async (req, res) => {
   const profile = await getInternProfileByUserId(req.user._id);
 
@@ -142,12 +158,23 @@ exports.getRecommendations = asyncHandler(async (req, res) => {
     await profile.save();
   }
 
+  const parsedSkills = getParsedResumeSkills(profile);
+  if (parsedSkills.length === 0) {
+    return res.json({
+      recommendations: [],
+      reason: "missing_resume_skills",
+      message: "Upload a resume to get accurate AI recommendations."
+    });
+  }
+
   const internships = await Internship.find({ isActive: true }).populate("company");
-  const ranked = recommendInternships(profile, internships);
+  const ranked = recommendInternships(profile, internships, { internSkills: parsedSkills });
 
   res.json({
+    source: "parsed_resume_skills",
     recommendations: ranked.map((item) => ({
       internship: item.internship,
+      skillMatchPercent: item.skillMatchPercent,
       recommendationScore: item.recommendationScore,
       skillGap: item.skillGap
     }))
@@ -174,7 +201,8 @@ exports.applyToInternship = asyncHandler(async (req, res) => {
     throw new AppError("You have already applied to this internship", 409);
   }
 
-  const analysis = getSkillGap(profile.skills || [], internship.skillsRequired || []);
+  const internSkills = getParsedResumeSkills(profile);
+  const analysis = getSkillGap(internSkills, internship.skillsRequired || []);
 
   const application = await Application.create({
     intern: profile._id,
@@ -232,3 +260,4 @@ exports.reportCompany = asyncHandler(async (req, res) => {
 
   res.status(201).json({ message: "Company reported", report });
 });
+

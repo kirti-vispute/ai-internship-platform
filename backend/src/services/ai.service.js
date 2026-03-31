@@ -1,7 +1,40 @@
-﻿function normalizeSkills(skills = []) {
-  return skills
-    .map((item) => String(item || "").trim().toLowerCase())
-    .filter(Boolean);
+const { canonicalSkill, displaySkill } = require("./resume-structured-parser.service");
+
+const SKILL_ALIAS_MAP = {
+  js: "javascript",
+  javascript: "javascript",
+  ts: "typescript",
+  typescript: "typescript",
+  nodejs: "node.js",
+  "node js": "node.js",
+  node: "node.js",
+  reactjs: "react",
+  react: "react",
+  mongo: "mongodb",
+  mongodb: "mongodb",
+  ml: "machine learning",
+  ai: "artificial intelligence",
+  sql: "sql",
+  html: "html",
+  css: "css"
+};
+
+function normalizeSkillToken(skill) {
+  const raw = String(skill || "").trim().toLowerCase();
+  if (!raw) return "";
+
+  const canonical = canonicalSkill(raw);
+  if (canonical) {
+    return SKILL_ALIAS_MAP[canonical] || canonical;
+  }
+
+  return SKILL_ALIAS_MAP[raw] || raw;
+}
+
+function normalizeSkills(skills = []) {
+  if (!Array.isArray(skills)) return [];
+  const normalized = skills.map(normalizeSkillToken).filter(Boolean);
+  return [...new Set(normalized)];
 }
 
 function unique(items = []) {
@@ -133,36 +166,64 @@ function getSkillGap(internSkills = [], requiredSkills = []) {
   const normalizedIntern = normalizeSkills(internSkills);
   const normalizedRequired = normalizeSkills(requiredSkills);
 
-  const matched = normalizedRequired.filter((skill) => normalizedIntern.includes(skill));
-  const missing = normalizedRequired.filter((skill) => !normalizedIntern.includes(skill));
-  const matchPercent = normalizedRequired.length ? Math.round((matched.length / normalizedRequired.length) * 100) : 0;
+  const internSet = new Set(normalizedIntern);
+  const matchedCanonical = normalizedRequired.filter((skill) => internSet.has(skill));
+  const missingCanonical = normalizedRequired.filter((skill) => !internSet.has(skill));
+  const matchPercent = normalizedRequired.length ? Math.round((matchedCanonical.length / normalizedRequired.length) * 100) : 0;
 
   return {
-    matched,
-    missing,
+    matched: matchedCanonical.map(displaySkill),
+    missing: missingCanonical.map(displaySkill),
     matchPercent
   };
 }
 
-function recommendInternships(internProfile, internships = []) {
-  const resumeScore = calculateResumeScore(internProfile);
+function getParsedResumeSkills(internProfile = {}) {
+  const parsedSkills = internProfile?.resume?.parsed?.skills;
+  return normalizeSkills(Array.isArray(parsedSkills) ? parsedSkills : []);
+}
+
+function recommendInternships(internProfile, internships = [], options = {}) {
+  const internSkills = normalizeSkills(options.internSkills || getParsedResumeSkills(internProfile));
+  if (internSkills.length === 0) {
+    return [];
+  }
 
   const ranked = internships.map((internship) => {
-    const skillGap = getSkillGap(internProfile.skills, internship.skillsRequired);
-    const interestBoost = internship.role && internProfile.interests?.some((interest) => internship.role.toLowerCase().includes(interest.toLowerCase())) ? 5 : 0;
-    const courseBoost = internship.skillsRequired?.some((s) => internProfile.completedCourses?.some((c) => c.toLowerCase().includes(String(s).toLowerCase()))) ? 5 : 0;
+    const requiredSkills = normalizeSkills(internship?.skillsRequired || []);
+    const skillGap = getSkillGap(internSkills, requiredSkills);
+    const skillMatchPercent = requiredSkills.length ? skillGap.matchPercent : 0;
 
-    const totalScore = Math.round(skillGap.matchPercent * 0.65 + resumeScore * 0.25 + interestBoost + courseBoost);
+    if (process.env.RECOMMENDATION_DEBUG === "true") {
+      // eslint-disable-next-line no-console
+      console.log(
+        "[recommendation-debug]",
+        JSON.stringify({
+          internshipId: internship?._id,
+          internshipRole: internship?.role || "",
+          internSkills,
+          requiredSkills,
+          matchedSkills: skillGap.matched,
+          missingSkills: skillGap.missing,
+          finalScore: skillMatchPercent
+        })
+      );
+    }
 
     return {
       internship,
-      recommendationScore: Math.min(100, totalScore),
+      skillMatchPercent,
+      recommendationScore: skillMatchPercent,
       skillGap
     };
   });
 
-  // Replace these rule-based scores with Gemini/OpenAI relevance scoring once integrated.
-  return ranked.sort((a, b) => b.recommendationScore - a.recommendationScore);
+  return ranked.sort((a, b) => {
+    if (b.skillMatchPercent !== a.skillMatchPercent) {
+      return b.skillMatchPercent - a.skillMatchPercent;
+    }
+    return String(a.internship?.role || "").localeCompare(String(b.internship?.role || ""));
+  });
 }
 
 function rankApplicantsForInternship(internship, applicantProfiles = []) {
