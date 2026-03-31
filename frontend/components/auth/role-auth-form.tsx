@@ -209,7 +209,7 @@ export function RoleAuthForm({ role }: { role: AuthRole }) {
       <div className="mb-6">
         <h1 className="text-3xl font-black tracking-tight text-ink dark:text-slate-100">{roleTitle}</h1>
         <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{roleCopy}</p>
-      </div>`n
+      </div>
       <div className="mb-4 grid grid-cols-2 rounded-xl bg-slate-100 p-1 dark:bg-slate-800">
         <button
           type="button"
