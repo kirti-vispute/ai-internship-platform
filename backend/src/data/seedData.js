@@ -1,4 +1,4 @@
-﻿const { USER_ROLES, COMPANY_VERIFICATION_STATUS, APPLICATION_STATUS } = require("../constants/enums");
+const { USER_ROLES, COMPANY_VERIFICATION_STATUS, APPLICATION_STATUS } = require("../constants/enums");
 
 module.exports = {
   users: [
@@ -16,7 +16,7 @@ module.exports = {
       skills: ["javascript", "react", "node", "mongodb"],
       education: ["B.Tech CSE - ABC University"],
       projects: ["Built internship portal", "Created recommendation app"],
-      certifications: ["Machine Learning by Coursera"],
+      certifications: ["Machine Learning Certification"],
       interests: ["ai", "machine learning"],
       completedCourses: ["Node.js Masterclass", "SQL Bootcamp"]
     },

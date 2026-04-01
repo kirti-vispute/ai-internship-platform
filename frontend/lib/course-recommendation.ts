@@ -1,25 +1,56 @@
-import { VERIFIED_COURSES, VerifiedCourse } from "@/lib/courses-dataset";
+import { NptelCourse, VERIFIED_NPTEL_COURSES } from "@/lib/courses-dataset";
 import { normalizeSkillList, normalizeSkillValue, toDisplaySkill } from "@/lib/skill-normalizer";
 
 export type RankedCourseSuggestion = {
   id: string;
   title: string;
-  platform: "NPTEL" | "Coursera";
+  platform: "NPTEL";
   url: string;
   description: string;
   targetSkills: string[];
   similarityScore: number;
 };
 
+type RelevanceEvaluation = {
+  tier: 0 | 1 | 2 | 3;
+  weightedSignalScore: number;
+  titleSignal: boolean;
+  tagSignal: boolean;
+  descriptionSignal: boolean;
+};
+
 const NPTEL_HOSTS = new Set(["onlinecourses.nptel.ac.in", "onlinecourses-archive.nptel.ac.in"]);
-const COURSERA_HOSTS = new Set(["www.coursera.org", "coursera.org"]);
 
 const TOKEN_ALIAS_MAP: Record<string, string> = {
   js: "javascript",
   "node.js": "nodejs",
   "node js": "nodejs",
-  ml: "machine learning"
+  ml: "machine learning",
+  dbms: "database management systems"
 };
+
+const SKILL_ALIAS_CANDIDATES: Record<string, string[]> = {
+  javascript: ["js"],
+  nodejs: ["node js", "node.js"],
+  "machine learning": ["ml"],
+  "database management systems": ["dbms", "database systems", "database management system"]
+};
+
+const SKILL_SIGNAL_SUPPORT: Record<string, string[]> = {
+  html: ["web development", "frontend"],
+  css: ["web development", "frontend"],
+  javascript: ["web development", "frontend", "browser"],
+  sql: ["database", "dbms", "query"],
+  python: ["programming", "data science"],
+  "machine learning": ["modeling", "supervised", "unsupervised"],
+  "data structures": ["algorithms"],
+  dbms: ["database", "sql"],
+  "database management systems": ["database", "sql", "dbms"]
+};
+
+function clamp(value: number, min = 0, max = 1): number {
+  return Math.max(min, Math.min(max, value));
+}
 
 export function normalizeText(input: string): string {
   return input
@@ -43,8 +74,38 @@ function tokenize(text: string): string[] {
     .filter(Boolean);
 }
 
-export function buildCourseDocument(course: VerifiedCourse): string {
-  return [course.title, course.description, ...(course.tags || [])].join(" ");
+function containsTerm(haystack: string, term: string): boolean {
+  if (!haystack || !term) return false;
+  const normalizedHaystack = ` ${normalizeText(haystack)} `;
+  const normalizedTerm = ` ${normalizeText(term)} `;
+  return normalizedHaystack.includes(normalizedTerm);
+}
+
+function countTermHits(haystack: string, terms: Iterable<string>): number {
+  let hits = 0;
+  for (const term of terms) {
+    if (containsTerm(haystack, term)) hits += 1;
+  }
+  return hits;
+}
+
+function getAliasCandidates(skill: string): string[] {
+  const canonical = normalizeSkillValue(skill);
+  if (!canonical) return [];
+
+  const aliases = SKILL_ALIAS_CANDIDATES[canonical] || [];
+  return normalizeSkillList([canonical, ...aliases]);
+}
+
+function getSignalTerms(skill: string): string[] {
+  const canonical = normalizeSkillValue(skill);
+  const aliases = getAliasCandidates(canonical);
+  const supports = SKILL_SIGNAL_SUPPORT[canonical] || [];
+  return normalizeSkillList([...aliases, ...supports]);
+}
+
+export function buildCourseDocument(course: NptelCourse): string {
+  return [course.title, course.description, ...(course.tags || []), ...(course.skillCoverage || []), ...(course.relevanceGroup || [])].join(" ");
 }
 
 function termFrequency(tokens: string[]): Map<string, number> {
@@ -96,17 +157,63 @@ function isVerifiedDirectCourseUrl(url: string): boolean {
   try {
     const parsed = new URL(url);
     if (parsed.protocol !== "https:") return false;
-    return NPTEL_HOSTS.has(parsed.hostname) || COURSERA_HOSTS.has(parsed.hostname);
+    return NPTEL_HOSTS.has(parsed.hostname);
   } catch {
     return false;
   }
 }
 
-function normalizeCourseTagSkills(tags: string[]): string[] {
-  return normalizeSkillList(tags);
+function normalizeCourseIndex(course: NptelCourse) {
+  return {
+    coverage: normalizeSkillList(course.skillCoverage),
+    tags: normalizeSkillList([...(course.tags || []), ...(course.relevanceGroup || [])]),
+    title: normalizeText(course.title),
+    description: normalizeText(course.description)
+  };
 }
 
-export function computeTfIdfScores(queryText: string, courses: VerifiedCourse[]) {
+function assessCourseRelevance(skill: string, course: NptelCourse): RelevanceEvaluation {
+  const canonicalSkill = normalizeSkillValue(skill);
+  if (!canonicalSkill) {
+    return { tier: 0, weightedSignalScore: 0, titleSignal: false, tagSignal: false, descriptionSignal: false };
+  }
+
+  const index = normalizeCourseIndex(course);
+  const aliasCandidates = getAliasCandidates(canonicalSkill).filter((alias) => alias !== canonicalSkill);
+
+  const exactCoverage = index.coverage.includes(canonicalSkill) || index.tags.includes(canonicalSkill);
+  const aliasCoverage = !exactCoverage && aliasCandidates.some((alias) => index.coverage.includes(alias) || index.tags.includes(alias));
+
+  if (exactCoverage) {
+    return { tier: 3, weightedSignalScore: 1, titleSignal: true, tagSignal: true, descriptionSignal: true };
+  }
+
+  if (aliasCoverage) {
+    return { tier: 2, weightedSignalScore: 0.85, titleSignal: true, tagSignal: true, descriptionSignal: false };
+  }
+
+  const signalTerms = getSignalTerms(canonicalSkill);
+  const titleSignal = signalTerms.some((term) => containsTerm(index.title, term));
+  const tagSignal = signalTerms.some((term) => index.tags.includes(term));
+  const descriptionHits = countTermHits(index.description, signalTerms);
+  const descriptionSignal = descriptionHits >= 2 || containsTerm(index.description, canonicalSkill);
+
+  const signalCount = Number(titleSignal) + Number(tagSignal) + Number(descriptionSignal);
+  const weightedSignalScore =
+    (titleSignal ? 1.2 : 0) +
+    (tagSignal ? 1 : 0) +
+    (descriptionSignal ? 0.8 : 0) +
+    Math.min(descriptionHits, 3) * 0.1;
+
+  const strongMultiSignal = signalCount >= 2 && weightedSignalScore >= 2.2;
+  if (!strongMultiSignal) {
+    return { tier: 0, weightedSignalScore, titleSignal, tagSignal, descriptionSignal };
+  }
+
+  return { tier: 1, weightedSignalScore, titleSignal, tagSignal, descriptionSignal };
+}
+
+export function computeTfIdfScores(queryText: string, courses: NptelCourse[]) {
   const queryTokens = tokenize(queryText);
   const courseTokens = courses.map((course) => tokenize(buildCourseDocument(course)));
   const idf = inverseDocumentFrequency([...courseTokens, queryTokens]);
@@ -127,8 +234,7 @@ export function computeTfIdfScores(queryText: string, courses: VerifiedCourse[])
 
     return {
       course,
-      score: cosineSimilarity(queryVector, docVector),
-      tokens: courseTokens[index]
+      score: cosineSimilarity(queryVector, docVector)
     };
   });
 }
@@ -144,53 +250,86 @@ export function getSuggestedCoursesForMissingSkills(missingSkills: string[]) {
     };
   }
 
-  const verifiedCourses = VERIFIED_COURSES.filter((course) => course.verified && isVerifiedDirectCourseUrl(course.url));
+  const verifiedCourses = VERIFIED_NPTEL_COURSES.filter(
+    (course) => course.verified && course.provider === "NPTEL" && isVerifiedDirectCourseUrl(course.url)
+  );
   const queryText = normalizedMissingSkills.join(" ");
 
-  const scoredCourses = computeTfIdfScores(queryText, verifiedCourses)
-    .map((item) => {
-      const normalizedTags = normalizeCourseTagSkills(item.course.tags || []);
-      const matchedCanonical = normalizedMissingSkills.filter((skill) => normalizedTags.includes(normalizeSkillValue(skill)));
+  const tfidfById = new Map(computeTfIdfScores(queryText, verifiedCourses).map((entry) => [entry.course.id, entry.score]));
 
-      return {
-        ...item,
-        matchedCanonical
-      };
-    })
-    .filter((item) => item.matchedCanonical.length > 0 && item.score > 0);
+  const qualified: Array<{
+    skill: string;
+    course: NptelCourse;
+    tier: 1 | 2 | 3;
+    weightedSignalScore: number;
+    similarityScore: number;
+  }> = [];
 
-  scoredCourses.sort((a, b) => {
-    if (b.score !== a.score) return b.score - a.score;
-    if (b.matchedCanonical.length !== a.matchedCanonical.length) return b.matchedCanonical.length - a.matchedCanonical.length;
-    return a.course.title.localeCompare(b.course.title);
-  });
+  for (const skill of normalizedMissingSkills) {
+    for (const course of verifiedCourses) {
+      const relevance = assessCourseRelevance(skill, course);
+      if (relevance.tier === 0) continue;
+
+      const tfidfScore = tfidfById.get(course.id) || 0;
+      const blendedScore = clamp(relevance.tier * 0.45 + relevance.weightedSignalScore * 0.2 + tfidfScore * 0.35);
+
+      qualified.push({
+        skill,
+        course,
+        tier: relevance.tier,
+        weightedSignalScore: relevance.weightedSignalScore,
+        similarityScore: blendedScore
+      });
+    }
+  }
+
+  const selected: typeof qualified = [];
+  for (const skill of normalizedMissingSkills) {
+    const perSkill = qualified
+      .filter((item) => item.skill === skill)
+      .sort((a, b) => {
+        if (b.tier !== a.tier) return b.tier - a.tier;
+        if (b.weightedSignalScore !== a.weightedSignalScore) return b.weightedSignalScore - a.weightedSignalScore;
+        if (b.similarityScore !== a.similarityScore) return b.similarityScore - a.similarityScore;
+        return a.course.title.localeCompare(b.course.title);
+      })
+      .slice(0, 2);
+
+    selected.push(...perSkill);
+  }
 
   const courseByUrl = new Map<string, RankedCourseSuggestion>();
-  for (const item of scoredCourses) {
-    const displaySkills = item.matchedCanonical.map((skill) => toDisplaySkill(skill));
+  for (const item of selected) {
+    const displaySkill = toDisplaySkill(item.skill);
     const existing = courseByUrl.get(item.course.url);
     if (existing) {
-      const merged = new Set([...existing.targetSkills, ...displaySkills]);
+      const merged = new Set([...existing.targetSkills, displaySkill]);
       existing.targetSkills = [...merged];
-      existing.similarityScore = Math.max(existing.similarityScore, item.score);
+      existing.similarityScore = Math.max(existing.similarityScore, item.similarityScore);
       continue;
     }
 
     courseByUrl.set(item.course.url, {
       id: item.course.id,
       title: item.course.title,
-      platform: item.course.platform,
+      platform: "NPTEL",
       url: item.course.url,
       description: item.course.description,
-      targetSkills: displaySkills,
-      similarityScore: item.score
+      targetSkills: [displaySkill],
+      similarityScore: item.similarityScore
     });
   }
 
-  const suggestions = [...courseByUrl.values()].slice(0, 6);
+  const suggestions = [...courseByUrl.values()]
+    .sort((a, b) => {
+      if (b.similarityScore !== a.similarityScore) return b.similarityScore - a.similarityScore;
+      return a.title.localeCompare(b.title);
+    })
+    .slice(0, 6);
+
   const covered = new Set(
-    suggestions
-      .flatMap((item) => item.targetSkills)
+    selected
+      .map((item) => item.skill)
       .map((skill) => normalizeSkillValue(skill))
       .filter(Boolean)
   );
