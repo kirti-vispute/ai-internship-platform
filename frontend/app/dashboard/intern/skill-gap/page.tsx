@@ -82,7 +82,7 @@ export default function InternSkillGapPage() {
               ) : courseSuggestions.suggestions.length === 0 && courseSuggestions.unmappedSkills.length > 0 ? (
                 <div className="surface-subtle space-y-1 px-4 py-3 text-sm text-slate-700 dark:text-slate-300">
                   {courseSuggestions.unmappedSkills.map((skill) => (
-                    <p key={skill}>No mapped free course available yet for this skill: {skill}</p>
+                    <p key={skill}>No direct Coursera/NPTEL course mapped yet for this skill: {skill}</p>
                   ))}
                 </div>
               ) : (
@@ -90,7 +90,7 @@ export default function InternSkillGapPage() {
                   {courseSuggestions.unmappedSkills.length > 0 && (
                     <div className="surface-subtle space-y-1 px-4 py-3 text-sm text-slate-700 dark:text-slate-300">
                       {courseSuggestions.unmappedSkills.map((skill) => (
-                        <p key={skill}>No mapped free course available yet for this skill: {skill}</p>
+                        <p key={skill}>No direct Coursera/NPTEL course mapped yet for this skill: {skill}</p>
                       ))}
                     </div>
                   )}
@@ -123,4 +123,5 @@ export default function InternSkillGapPage() {
     </RoleDashboardGuard>
   );
 }
+
 

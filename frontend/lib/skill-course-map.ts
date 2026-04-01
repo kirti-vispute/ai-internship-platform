@@ -1,6 +1,6 @@
 import { normalizeSkillList, normalizeSkillValue, toDisplaySkill } from "@/lib/skill-normalizer";
 
-export type CoursePlatform = "NPTEL" | "SWAYAM";
+export type CoursePlatform = "NPTEL" | "Coursera";
 
 export type SkillCourseEntry = {
   skillKey: string;
@@ -19,77 +19,70 @@ export type CourseSuggestion = {
 };
 
 const NPTEL_HOSTS = new Set(["onlinecourses.nptel.ac.in", "onlinecourses-archive.nptel.ac.in"]);
-const SWAYAM_HOSTS = new Set(["swayam.gov.in"]);
+const COURSERA_HOSTS = new Set(["www.coursera.org", "coursera.org"]);
 
-// NOTE:
-// For skills where a direct verified course page is unavailable right now, we use SWAYAM explorer links.
-// Replace with a direct course page when available.
+// Single source of truth for direct course mappings used by Suggested Courses.
+// If a skill has no verified direct Coursera/NPTEL course, leave it unmapped and the UI shows fallback.
 const SKILL_COURSE_MAP: Record<string, SkillCourseEntry[]> = {
   html: [
     {
       skillKey: "html",
-      title: "Web Technology (search on SWAYAM)",
-      platform: "SWAYAM",
-      // VERIFIED_SWAYAM_URL_NEEDED: replace explorer link with direct course URL when finalized.
-      url: "https://swayam.gov.in/explorer?searchText=web+technology",
-      description: "Find free SWAYAM courses covering HTML/web fundamentals."
+      title: "HTML, CSS, and Javascript for Web Developers",
+      platform: "Coursera",
+      url: "https://www.coursera.org/learn/html-css-javascript-for-web-developers",
+      description: "Web fundamentals for frontend development."
     }
   ],
   css: [
     {
       skillKey: "css",
-      title: "CSS and Web Design (search on SWAYAM)",
-      platform: "SWAYAM",
-      // VERIFIED_SWAYAM_URL_NEEDED: replace explorer link with direct course URL when finalized.
-      url: "https://swayam.gov.in/explorer?searchText=css",
-      description: "Find free SWAYAM courses focused on CSS and web design."
+      title: "HTML, CSS, and Javascript for Web Developers",
+      platform: "Coursera",
+      url: "https://www.coursera.org/learn/html-css-javascript-for-web-developers",
+      description: "Web styling and responsive layout fundamentals."
     }
   ],
   javascript: [
     {
       skillKey: "javascript",
-      title: "JavaScript (search on SWAYAM)",
-      platform: "SWAYAM",
-      // VERIFIED_SWAYAM_URL_NEEDED: replace explorer link with direct course URL when finalized.
-      url: "https://swayam.gov.in/explorer?searchText=javascript",
-      description: "Find free SWAYAM JavaScript courses."
+      title: "HTML, CSS, and Javascript for Web Developers",
+      platform: "Coursera",
+      url: "https://www.coursera.org/learn/html-css-javascript-for-web-developers",
+      description: "JavaScript programming for modern frontend apps."
     }
   ],
   react: [
     {
       skillKey: "react",
-      title: "React (search on SWAYAM)",
-      platform: "SWAYAM",
-      // VERIFIED_SWAYAM_URL_NEEDED: replace explorer link with direct course URL when finalized.
-      url: "https://swayam.gov.in/explorer?searchText=react",
-      description: "Find free SWAYAM courses relevant to React and modern frontend."
+      title: "Front-End Web Development with React",
+      platform: "Coursera",
+      url: "https://www.coursera.org/learn/front-end-react",
+      description: "Component-driven UI development with React."
     }
   ],
   nodejs: [
     {
       skillKey: "nodejs",
-      title: "Node.js (search on SWAYAM)",
-      platform: "SWAYAM",
-      // VERIFIED_SWAYAM_URL_NEEDED: replace explorer link with direct course URL when finalized.
-      url: "https://swayam.gov.in/explorer?searchText=node+js",
-      description: "Find free SWAYAM courses related to Node.js and backend development."
+      title: "Server-side Development with NodeJS, Express and MongoDB",
+      platform: "Coursera",
+      url: "https://www.coursera.org/learn/server-side-nodejs",
+      description: "Backend APIs with Node.js and Express."
     }
   ],
   mongodb: [
     {
       skillKey: "mongodb",
-      title: "Data Base Management Systems",
-      platform: "NPTEL",
-      url: "https://onlinecourses.nptel.ac.in/noc26_cs39/preview",
-      description: "Covers DBMS foundations relevant before NoSQL specialization."
+      title: "Server-side Development with NodeJS, Express and MongoDB",
+      platform: "Coursera",
+      url: "https://www.coursera.org/learn/server-side-nodejs",
+      description: "MongoDB integration in full-stack backend workflows."
     },
     {
       skillKey: "mongodb",
-      title: "NoSQL / MongoDB (search on SWAYAM)",
-      platform: "SWAYAM",
-      // VERIFIED_SWAYAM_URL_NEEDED: replace explorer link with direct course URL when finalized.
-      url: "https://swayam.gov.in/explorer?searchText=nosql",
-      description: "Find free SWAYAM NoSQL courses relevant to MongoDB."
+      title: "Data Base Management System",
+      platform: "NPTEL",
+      url: "https://onlinecourses.nptel.ac.in/noc26_cs39/preview",
+      description: "Core database concepts useful before advanced NoSQL design."
     }
   ],
   python: [
@@ -98,14 +91,14 @@ const SKILL_COURSE_MAP: Record<string, SkillCourseEntry[]> = {
       title: "Python for Data Science",
       platform: "NPTEL",
       url: "https://onlinecourses.nptel.ac.in/noc26_cs80/preview",
-      description: "Hands-on Python for analytics and engineering use-cases."
+      description: "Hands-on Python for data and engineering workflows."
     },
     {
       skillKey: "python",
       title: "Programming, Data Structures and Algorithms using Python",
       platform: "NPTEL",
       url: "https://onlinecourses.nptel.ac.in/noc24_cs78/preview",
-      description: "Core Python + DSA foundations."
+      description: "Python + DSA fundamentals."
     }
   ],
   sql: [
@@ -114,7 +107,7 @@ const SKILL_COURSE_MAP: Record<string, SkillCourseEntry[]> = {
       title: "Data Base Management System",
       platform: "NPTEL",
       url: "https://onlinecourses.nptel.ac.in/noc26_cs39/preview",
-      description: "SQL and DBMS fundamentals."
+      description: "SQL and relational database fundamentals."
     },
     {
       skillKey: "sql",
@@ -130,7 +123,7 @@ const SKILL_COURSE_MAP: Record<string, SkillCourseEntry[]> = {
       title: "Introduction to Machine Learning - IIT Kharagpur",
       platform: "NPTEL",
       url: "https://onlinecourses.nptel.ac.in/noc21_cs85/preview",
-      description: "ML fundamentals and supervised learning basics."
+      description: "ML foundations and supervised learning basics."
     },
     {
       skillKey: "machine learning",
@@ -143,39 +136,19 @@ const SKILL_COURSE_MAP: Record<string, SkillCourseEntry[]> = {
   "data structures": [
     {
       skillKey: "data structures",
-      title: "Data Structures and Algorithms using Python",
+      title: "Programming, Data Structures and Algorithms using Python",
       platform: "NPTEL",
       url: "https://onlinecourses.nptel.ac.in/noc24_cs78/preview",
       description: "Data structures and algorithmic problem solving."
     }
-  ],
-  aptitude: [
-    {
-      skillKey: "aptitude",
-      title: "Aptitude and Reasoning (search on SWAYAM)",
-      platform: "SWAYAM",
-      // VERIFIED_SWAYAM_URL_NEEDED: replace explorer link with direct course URL when finalized.
-      url: "https://swayam.gov.in/explorer?searchText=aptitude",
-      description: "Find free SWAYAM quantitative aptitude and reasoning courses."
-    }
-  ],
-  communication: [
-    {
-      skillKey: "communication",
-      title: "Communication Skills (search on SWAYAM)",
-      platform: "SWAYAM",
-      // VERIFIED_SWAYAM_URL_NEEDED: replace explorer link with direct course URL when finalized.
-      url: "https://swayam.gov.in/explorer?searchText=communication+skills",
-      description: "Find free SWAYAM communication and professional skills courses."
-    }
   ]
 };
 
-function isValidFreeCourseUrl(url: string): boolean {
+function isValidCourseUrl(url: string): boolean {
   try {
     const parsed = new URL(url);
     if (parsed.protocol !== "https:") return false;
-    return NPTEL_HOSTS.has(parsed.hostname) || SWAYAM_HOSTS.has(parsed.hostname);
+    return NPTEL_HOSTS.has(parsed.hostname) || COURSERA_HOSTS.has(parsed.hostname);
   } catch {
     return false;
   }
@@ -189,7 +162,7 @@ export function getCoursesForSkill(skill: string): SkillCourseEntry[] {
   const dedup = new Map<string, SkillCourseEntry>();
 
   for (const entry of entries) {
-    if (!isValidFreeCourseUrl(entry.url)) continue;
+    if (!isValidCourseUrl(entry.url)) continue;
     const key = `${entry.platform}:${entry.url}`;
     if (!dedup.has(key)) dedup.set(key, entry);
   }
