@@ -7,7 +7,7 @@ import { InternShell } from "@/components/dashboard/intern-shell";
 import { SectionPanel } from "@/components/dashboard/section-panel";
 import { clearAuthSession } from "@/lib/session";
 import { InternProfile, Recommendation, fetchInternProfile, fetchInternRecommendations } from "@/lib/intern-portal";
-import { getSuggestedCoursesForSkills } from "@/lib/skill-course-map";
+import { getSuggestedCoursesForMissingSkills } from "@/lib/course-recommendation";
 import { getMissingRequiredSkillsFromRecommendations } from "@/lib/recommendation-insights";
 
 export default function InternSkillGapPage() {
@@ -42,7 +42,7 @@ export default function InternSkillGapPage() {
     return getMissingRequiredSkillsFromRecommendations(recommendations);
   }, [recommendations]);
 
-  const courseSuggestions = useMemo(() => getSuggestedCoursesForSkills(missingRequiredSkills), [missingRequiredSkills]);
+  const courseSuggestions = useMemo(() => getSuggestedCoursesForMissingSkills(missingRequiredSkills), [missingRequiredSkills]);
 
   function handleLogout() {
     clearAuthSession();
@@ -102,6 +102,7 @@ export default function InternSkillGapPage() {
                           <p className="text-xs font-semibold uppercase tracking-wide text-primary-700 dark:text-primary-300">{course.platform}</p>
                           <h3 className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">{course.title}</h3>
                           <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">Target skills: {course.targetSkills.join(", ")}</p>
+                          <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">Relevance: {Math.round(course.similarityScore * 100)}%</p>
                           <a
                             href={course.url}
                             target="_blank"
@@ -123,5 +124,6 @@ export default function InternSkillGapPage() {
     </RoleDashboardGuard>
   );
 }
+
 
 
