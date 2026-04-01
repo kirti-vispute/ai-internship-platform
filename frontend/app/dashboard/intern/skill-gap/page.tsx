@@ -7,6 +7,7 @@ import { InternShell } from "@/components/dashboard/intern-shell";
 import { SectionPanel } from "@/components/dashboard/section-panel";
 import { clearAuthSession } from "@/lib/session";
 import { InternProfile, Recommendation, fetchInternProfile, fetchInternRecommendations } from "@/lib/intern-portal";
+import { toDisplaySkillList } from "@/lib/skill-normalizer";
 
 export default function InternSkillGapPage() {
   const router = useRouter();
@@ -38,7 +39,7 @@ export default function InternSkillGapPage() {
 
   const missingRequiredSkills = useMemo(() => {
     const allMissing = recommendations.flatMap((item) => item.missingRequiredSkills || []);
-    return [...new Set(allMissing)].slice(0, 12);
+    return toDisplaySkillList(allMissing).slice(0, 12);
   }, [recommendations]);
 
   const courseSuggestions = useMemo(

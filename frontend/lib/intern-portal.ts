@@ -1,4 +1,5 @@
 import { apiRequest } from "@/lib/api-client";
+import { toDisplaySkillList } from "@/lib/skill-normalizer";
 
 export type ResumeSection = { key: string; label: string; score: number };
 
@@ -210,18 +211,23 @@ export async function fetchInternRecommendations(force = false) {
       ? Number(item.overallRecommendationScore)
       : Number(item?.recommendationScore ?? required);
 
+    const matchedRequiredSkills = toDisplaySkillList(item?.matchedRequiredSkills || item?.skillGap?.matched || []);
+    const missingRequiredSkills = toDisplaySkillList(item?.missingRequiredSkills || item?.skillGap?.missing || []);
+    const matchedPreferredSkills = toDisplaySkillList(item?.matchedPreferredSkills || []);
+    const missingPreferredSkills = toDisplaySkillList(item?.missingPreferredSkills || []);
+
     return {
       ...item,
       requiredSkillMatchPercent: required,
       preferredSkillMatchPercent: preferred,
       overallRecommendationScore: overall,
-      matchedRequiredSkills: item?.matchedRequiredSkills || item?.skillGap?.matched || [],
-      missingRequiredSkills: item?.missingRequiredSkills || item?.skillGap?.missing || [],
-      matchedPreferredSkills: item?.matchedPreferredSkills || [],
-      missingPreferredSkills: item?.missingPreferredSkills || [],
-      skillGap: item?.skillGap || {
-        matched: item?.matchedRequiredSkills || [],
-        missing: item?.missingRequiredSkills || [],
+      matchedRequiredSkills,
+      missingRequiredSkills,
+      matchedPreferredSkills,
+      missingPreferredSkills,
+      skillGap: {
+        matched: matchedRequiredSkills,
+        missing: missingRequiredSkills,
         matchPercent: required
       }
     } as Recommendation;

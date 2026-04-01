@@ -1,36 +1,29 @@
-const SKILL_ALIAS_MAP = {
+﻿const SKILL_ALIAS_MAP: Record<string, string> = {
   js: "javascript",
   javascript: "javascript",
   ts: "typescript",
   typescript: "typescript",
-  "node js": "nodejs",
   "node.js": "nodejs",
+  "node js": "nodejs",
   nodejs: "nodejs",
   node: "nodejs",
-  reactjs: "react",
-  "react js": "react",
-  react: "react",
-  "mongo db": "mongodb",
-  mongo: "mongodb",
-  mongodb: "mongodb",
   ml: "machine learning",
   "machine-learning": "machine learning",
   "machine learning": "machine learning"
 };
 
-const DISPLAY_SKILL_MAP = {
+const DISPLAY_SKILL_MAP: Record<string, string> = {
   javascript: "JavaScript",
   typescript: "TypeScript",
   nodejs: "NodeJS",
-  react: "React",
-  "machine learning": "Machine Learning",
   html: "HTML",
   css: "CSS",
   sql: "SQL",
-  mongodb: "MongoDB"
+  mongodb: "MongoDB",
+  "machine learning": "Machine Learning"
 };
 
-function normalizeSkillValue(skill) {
+export function normalizeSkillValue(skill: unknown): string {
   if (typeof skill !== "string" && typeof skill !== "number") return "";
 
   const raw = String(skill)
@@ -43,21 +36,19 @@ function normalizeSkillValue(skill) {
   return SKILL_ALIAS_MAP[raw] || raw;
 }
 
-function normalizeSkillList(skills = []) {
+export function normalizeSkillList(skills: unknown): string[] {
   if (!Array.isArray(skills)) return [];
 
-  const set = new Set();
+  const set = new Set<string>();
   for (const skill of skills) {
     const normalized = normalizeSkillValue(skill);
-    if (normalized) {
-      set.add(normalized);
-    }
+    if (normalized) set.add(normalized);
   }
 
   return [...set];
 }
 
-function toDisplaySkill(skill) {
+export function toDisplaySkill(skill: unknown): string {
   const normalized = normalizeSkillValue(skill);
   if (!normalized) return "";
 
@@ -72,14 +63,6 @@ function toDisplaySkill(skill) {
     .join(" ");
 }
 
-function toDisplaySkillList(skills = []) {
+export function toDisplaySkillList(skills: unknown): string[] {
   return normalizeSkillList(skills).map(toDisplaySkill);
 }
-
-module.exports = {
-  normalizeSkillValue,
-  normalizeSkillList,
-  toDisplaySkill,
-  toDisplaySkillList
-};
-

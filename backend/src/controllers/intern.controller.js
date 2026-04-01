@@ -11,6 +11,7 @@ const { getSkillGap, recommendInternships } = require("../services/ai.service");
 const { computeResumeScore } = require("../services/scorer.service");
 const { parseResumeFile } = require("../services/resume-parser.service");
 const { structuredResumeParse } = require("../services/resume-structured-parser.service");
+const { normalizeSkillList, toDisplaySkillList } = require("../utils/skill-normalizer");
 
 function toProfilePayload(profileDoc) {
   const profile = profileDoc.toObject ? profileDoc.toObject() : profileDoc;
@@ -41,10 +42,7 @@ async function refreshProfileScore(profile, resumeTextOverride = "") {
 
 function getParsedResumeSkills(profile) {
   const parsedSkills = profile?.resume?.parsed?.skills;
-  if (!Array.isArray(parsedSkills)) return [];
-  return parsedSkills
-    .map((skill) => String(skill || "").trim())
-    .filter(Boolean);
+  return normalizeSkillList(Array.isArray(parsedSkills) ? parsedSkills : []);
 }
 
 exports.getProfile = asyncHandler(async (req, res) => {
@@ -59,7 +57,11 @@ exports.updateProfile = asyncHandler(async (req, res) => {
 
   allowed.forEach((field) => {
     if (req.body[field] !== undefined) {
-      profile[field] = req.body[field];
+      if (field === "skills") {
+        profile.skills = toDisplaySkillList(normalizeSkillList(req.body.skills));
+      } else {
+        profile[field] = req.body[field];
+      }
     }
   });
 
@@ -89,7 +91,9 @@ exports.uploadResume = asyncHandler(async (req, res) => {
   profile.resume.filePath = path.relative(path.join(__dirname, "../.."), req.file.path);
   profile.resume.text = resumeText;
   profile.resume.parsed = parsed;
-  profile.skills = [...new Set([...(profile.skills || []), ...(parsed.skills || [])])];
+  profile.skills = toDisplaySkillList(
+    normalizeSkillList([...(profile.skills || []), ...(parsed.skills || [])])
+  );
   profile.education = [...new Set([...(profile.education || []), ...((parsed.education || []).map((item) => item.raw || "").filter(Boolean))])];
   profile.projects = [...new Set([...(profile.projects || []), ...((parsed.projects || []).map((item) => item.title || item.description || "").filter(Boolean))])];
   profile.certifications = [...new Set([...(profile.certifications || []), ...((parsed.certifications || []).map((item) => item.name || item.raw || "").filter(Boolean))])];

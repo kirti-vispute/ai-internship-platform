@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -8,6 +8,13 @@ import { SectionPanel } from "@/components/dashboard/section-panel";
 import { SummaryStatCard } from "@/components/dashboard/summary-stat-card";
 import { clearAuthSession } from "@/lib/session";
 import { InternProfile, fetchInternProfileWithScore } from "@/lib/intern-portal";
+
+function cleanImprovementText(value: string) {
+  return String(value || "")
+    .replace(/\s+/g, " ")
+    .replace(/^[^A-Za-z0-9]+/, "")
+    .trim();
+}
 
 export default function InternResumeScorePage() {
   const router = useRouter();
@@ -75,9 +82,9 @@ export default function InternResumeScorePage() {
 
                   <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3">
                     <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">Top Improvements</p>
-                    <ul className="mt-2 space-y-1 text-xs text-slate-700">
+                    <ul className="mt-2 list-inside list-disc space-y-1 text-xs text-slate-700">
                       {(analysis.improvements || []).slice(0, 5).map((item, idx) => (
-                        <li key={`improve-${idx}`}>â€¢ {item}</li>
+                        <li key={`improve-${idx}`}>{cleanImprovementText(item)}</li>
                       ))}
                     </ul>
                   </div>

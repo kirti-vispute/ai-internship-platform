@@ -1,4 +1,5 @@
 const { calculateResumeScore } = require("./ai.service");
+const { normalizeSkillList } = require("../utils/skill-normalizer");
 
 const SCORER_ENABLED = String(process.env.SCORER_ENABLED || "false").toLowerCase() === "true";
 const SCORER_BASE_URL = process.env.SCORER_BASE_URL || "http://localhost:5002";
@@ -60,7 +61,7 @@ function analyzeResumeText(text, targetSkills = []) {
   const verbCount = ACTION_VERBS.reduce((acc, verb) => acc + countRegex(clean, new RegExp(`\\b${verb}\\b`, "gi")), 0);
   const verbScore = Math.min(100, verbCount * 15);
 
-  const normalizedSkills = targetSkills.map((skill) => String(skill).toLowerCase().trim()).filter(Boolean);
+  const normalizedSkills = normalizeSkillList(Array.isArray(targetSkills) ? targetSkills : []);
   const matchedSkills = normalizedSkills.filter((skill) => clean.includes(skill));
   const skillsScore = normalizedSkills.length > 0 ? toPercent(matchedSkills.length, normalizedSkills.length) : 60;
 

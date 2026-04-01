@@ -7,6 +7,7 @@ import { InternShell } from "@/components/dashboard/intern-shell";
 import { SectionPanel } from "@/components/dashboard/section-panel";
 import { clearAuthSession } from "@/lib/session";
 import { InternshipListing, InternProfile, fetchActiveInternships, fetchInternProfile } from "@/lib/intern-portal";
+import { normalizeSkillList, normalizeSkillValue } from "@/lib/skill-normalizer";
 
 export default function SearchInternshipsPage() {
   const router = useRouter();
@@ -35,13 +36,22 @@ export default function SearchInternshipsPage() {
   }, []);
 
   const filtered = useMemo(() => {
-    const term = query.trim().toLowerCase();
-    if (!term) return internships;
+    const rawTerm = query.trim().toLowerCase();
+    const normalizedTerm = normalizeSkillValue(query);
+
+    if (!rawTerm) return internships;
+
     return internships.filter((item) => {
       const role = String(item.role || "").toLowerCase();
       const company = String(item.company?.companyName || "").toLowerCase();
-      const skills = (item.skillsRequired || []).join(" ").toLowerCase();
-      return role.includes(term) || company.includes(term) || skills.includes(term);
+      const normalizedSkills = normalizeSkillList(item.skillsRequired || []);
+
+      const roleOrCompanyMatch = role.includes(rawTerm) || company.includes(rawTerm);
+      const skillMatch = normalizedTerm
+        ? normalizedSkills.some((skill) => skill.includes(normalizedTerm))
+        : false;
+
+      return roleOrCompanyMatch || skillMatch;
     });
   }, [query, internships]);
 

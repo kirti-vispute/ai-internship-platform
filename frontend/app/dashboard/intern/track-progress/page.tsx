@@ -76,7 +76,7 @@ export default function TrackProgressPage() {
                   {applications.map((app) => (
                     <div key={app._id} className="surface-subtle p-3">
                       <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                        {app.internship?.role || "Internship"} â€¢ <span className="capitalize">{app.status}</span>
+                        {app.internship?.role || "Internship"} - <span className="capitalize">{app.status}</span>
                       </p>
                       <ul className="mt-2 space-y-1 text-xs text-slate-700 dark:text-slate-300">
                         {(app.stageHistory || []).length === 0 && <li>No stage timeline yet.</li>}

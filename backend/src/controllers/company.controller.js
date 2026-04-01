@@ -1,10 +1,16 @@
-﻿const CompanyProfile = require("../models/CompanyProfile");
+const CompanyProfile = require("../models/CompanyProfile");
 const Internship = require("../models/Internship");
 const Application = require("../models/Application");
 const InternProfile = require("../models/InternProfile");
 const asyncHandler = require("../utils/asyncHandler");
 const AppError = require("../utils/AppError");
 const { rankApplicantsForInternship } = require("../services/ai.service");
+const { normalizeSkillList, toDisplaySkillList } = require("../utils/skill-normalizer");
+
+function normalizeIncomingSkills(value) {
+  const list = Array.isArray(value) ? value : [];
+  return toDisplaySkillList(normalizeSkillList(list));
+}
 
 async function getCompanyProfileByUserId(userId) {
   const company = await CompanyProfile.findOne({ user: userId });
@@ -43,8 +49,8 @@ exports.postInternship = asyncHandler(async (req, res) => {
   const internship = await Internship.create({
     company: company._id,
     role,
-    skillsRequired: skillsRequired || [],
-    prioritySkills: prioritySkills || [],
+    skillsRequired: normalizeIncomingSkills(skillsRequired),
+    prioritySkills: normalizeIncomingSkills(prioritySkills),
     stipend: stipend || "",
     duration: duration || "",
     location: location || "",
@@ -72,7 +78,13 @@ exports.updateMyInternship = asyncHandler(async (req, res) => {
   const allowed = ["role", "skillsRequired", "prioritySkills", "stipend", "duration", "location", "description", "isActive"];
 
   allowed.forEach((field) => {
-    if (req.body[field] !== undefined) internship[field] = req.body[field];
+    if (req.body[field] !== undefined) {
+      if (field === "skillsRequired" || field === "prioritySkills") {
+        internship[field] = normalizeIncomingSkills(req.body[field]);
+      } else {
+        internship[field] = req.body[field];
+      }
+    }
   });
 
   await internship.save();

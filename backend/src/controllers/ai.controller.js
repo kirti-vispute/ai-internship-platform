@@ -3,11 +3,11 @@ const Internship = require("../models/Internship");
 const asyncHandler = require("../utils/asyncHandler");
 const AppError = require("../utils/AppError");
 const { parseResumeText, calculateResumeScore, getSkillGap, recommendInternships, rankApplicantsForInternship } = require("../services/ai.service");
+const { normalizeSkillList } = require("../utils/skill-normalizer");
 
 function getParsedResumeSkills(profile) {
   const parsedSkills = profile?.resume?.parsed?.skills;
-  if (!Array.isArray(parsedSkills)) return [];
-  return parsedSkills.map((skill) => String(skill || "").trim()).filter(Boolean);
+  return normalizeSkillList(Array.isArray(parsedSkills) ? parsedSkills : []);
 }
 
 exports.parseResume = asyncHandler(async (req, res) => {

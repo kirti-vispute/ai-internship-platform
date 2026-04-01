@@ -66,7 +66,7 @@ export default function InternApplicationsPage() {
                 <SectionPanel
                   key={app._id}
                   title={app.internship?.role || "Internship"}
-                  subtitle={`${app.internship?.company?.companyName || "Company"}${app.internship?.location ? ` â€¢ ${app.internship.location}` : ""}`}
+                  subtitle={`${app.internship?.company?.companyName || "Company"}${app.internship?.location ? ` - ${app.internship.location}` : ""}`}
                 >
                   <div className="grid gap-3 sm:grid-cols-2">
                     <div>
