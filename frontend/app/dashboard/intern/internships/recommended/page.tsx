@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { RoleDashboardGuard } from "@/components/ui/role-dashboard-guard";
 import { InternShell } from "@/components/dashboard/intern-shell";
 import { SectionPanel } from "@/components/dashboard/section-panel";
 import { clearAuthSession } from "@/lib/session";
 import { InternProfile, Recommendation, fetchInternProfile, fetchInternRecommendations } from "@/lib/intern-portal";
+import { computeSkillMatch } from "@/lib/skill-normalizer";
 
 export default function RecommendedInternshipsPage() {
   const router = useRouter();
@@ -15,7 +16,8 @@ export default function RecommendedInternshipsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const hasParsedResumeSkills = (profile?.resume?.parsed?.skills || []).length > 0;
+  const parsedSkills = profile?.resume?.parsed?.skills || [];
+  const hasParsedResumeSkills = parsedSkills.length > 0;
 
   useEffect(() => {
     async function load() {
@@ -26,8 +28,9 @@ export default function RecommendedInternshipsPage() {
         const loadedProfile = await fetchInternProfile();
         setProfile(loadedProfile);
 
-        if (loadedProfile.resumeUploaded && (loadedProfile.resume?.parsed?.skills || []).length > 0) {
-          setRecommendations(await fetchInternRecommendations());
+        const internSkills = loadedProfile.resume?.parsed?.skills || [];
+        if (loadedProfile.resumeUploaded && internSkills.length > 0) {
+          setRecommendations(await fetchInternRecommendations(internSkills, true));
         } else {
           setRecommendations([]);
         }
@@ -39,6 +42,41 @@ export default function RecommendedInternshipsPage() {
     }
     load();
   }, []);
+
+  const liveRecommendations = useMemo(() => {
+    return recommendations.map((item) => {
+      const match = computeSkillMatch(
+        parsedSkills,
+        item.internship.skillsRequired || [],
+        item.internship.prioritySkills || []
+      );
+
+      if (process.env.NODE_ENV !== "production") {
+        // Temporary debug proof for recommendation correctness.
+        // eslint-disable-next-line no-console
+        console.debug("[recommendation-ui-debug]", {
+          internshipId: item.internship._id,
+          internshipRole: item.internship.role,
+          normalizedInternSkills: match.normalizedInternSkills,
+          normalizedRequiredSkills: match.normalizedRequiredSkills,
+          matchedRequiredSkills: match.matchedRequiredSkills,
+          missingRequiredSkills: match.missingRequiredSkills,
+          requiredMatch: match.requiredMatchPercent
+        });
+      }
+
+      return {
+        internship: item.internship,
+        requiredSkillMatchPercent: match.requiredMatchPercent,
+        preferredSkillMatchPercent: match.preferredMatchPercent,
+        overallRecommendationScore: match.overallScore,
+        matchedRequiredSkills: match.matchedRequiredSkills,
+        missingRequiredSkills: match.missingRequiredSkills,
+        matchedPreferredSkills: match.matchedPreferredSkills,
+        missingPreferredSkills: match.missingPreferredSkills
+      };
+    });
+  }, [recommendations, parsedSkills]);
 
   function handleLogout() {
     clearAuthSession();
@@ -58,15 +96,15 @@ export default function RecommendedInternshipsPage() {
                 Upload your resume to get accurate AI internship recommendations.
               </div>
             )}
-            {!error && profile?.resumeUploaded && hasParsedResumeSkills && recommendations.length === 0 && (
+            {!error && profile?.resumeUploaded && hasParsedResumeSkills && liveRecommendations.length === 0 && (
               <div className="surface-subtle px-4 py-3 text-sm text-slate-700 dark:text-slate-300">
                 No matching internships found right now.
               </div>
             )}
 
-            {!error && recommendations.length > 0 && (
+            {!error && liveRecommendations.length > 0 && (
               <div className="space-y-2.5">
-                {recommendations.map((item) => (
+                {liveRecommendations.map((item) => (
                   <div key={item.internship._id} className="surface-subtle p-3.5">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div>

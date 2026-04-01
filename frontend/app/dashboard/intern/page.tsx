@@ -49,7 +49,7 @@ export default function InternDashboardOverviewPage() {
 
         const parsedSkills = loadedProfile?.resume?.parsed?.skills || [];
         if (loadedProfile.resumeUploaded && parsedSkills.length > 0) {
-          const loadedRecommendations = await fetchInternRecommendations();
+          const loadedRecommendations = await fetchInternRecommendations(parsedSkills, true);
           setRecommendations(loadedRecommendations);
         } else {
           setRecommendations([]);

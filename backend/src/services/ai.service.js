@@ -1,4 +1,5 @@
-const { normalizeSkillList, toDisplaySkillList } = require("../utils/skill-normalizer");
+const { normalizeSkillList } = require("../utils/skill-normalizer");
+const { computeSkillMatch } = require("../utils/compute-skill-match");
 
 function unique(items = []) {
   return [...new Set(items)];
@@ -126,42 +127,11 @@ function calculateResumeScore(profile) {
 }
 
 function getSkillGap(internSkills = [], requiredSkills = []) {
-  const normalizedIntern = normalizeSkillList(internSkills);
-  const normalizedRequired = normalizeSkillList(requiredSkills);
-
-  const internSet = new Set(normalizedIntern);
-  const matchedCanonical = normalizedRequired.filter((skill) => internSet.has(skill));
-  const missingCanonical = normalizedRequired.filter((skill) => !internSet.has(skill));
-  const matchPercent = normalizedRequired.length > 0
-    ? Math.round((matchedCanonical.length / normalizedRequired.length) * 100)
-    : 0;
-
+  const result = computeSkillMatch(internSkills, requiredSkills, []);
   return {
-    matched: toDisplaySkillList(matchedCanonical),
-    missing: toDisplaySkillList(missingCanonical),
-    matchPercent
-  };
-}
-
-function compareSkillSets(internSkills = [], internshipSkills = []) {
-  const normalizedIntern = normalizeSkillList(internSkills);
-  const normalizedTarget = normalizeSkillList(internshipSkills);
-  const internSet = new Set(normalizedIntern);
-
-  const matchedCanonical = normalizedTarget.filter((skill) => internSet.has(skill));
-  const missingCanonical = normalizedTarget.filter((skill) => !internSet.has(skill));
-  const matchPercent = normalizedTarget.length > 0
-    ? Math.round((matchedCanonical.length / normalizedTarget.length) * 100)
-    : 0;
-
-  return {
-    normalizedInternSkills: normalizedIntern,
-    normalizedTargetSkills: normalizedTarget,
-    matchedCanonical,
-    missingCanonical,
-    matched: toDisplaySkillList(matchedCanonical),
-    missing: toDisplaySkillList(missingCanonical),
-    matchPercent
+    matched: result.matchedRequiredSkills,
+    missing: result.missingRequiredSkills,
+    matchPercent: result.requiredMatchPercent
   };
 }
 
@@ -171,42 +141,31 @@ function getParsedResumeSkills(internProfile = {}) {
 }
 
 /**
- * Deterministic recommendation model:
- * - requiredSkillMatchPercent = matchedRequired / totalRequired * 100
- * - preferredSkillMatchPercent = matchedPreferred / totalPreferred * 100 (or null when no preferred skills)
- * - overallRecommendationScore:
- *   with preferred skills => round(required * 0.8 + preferred * 0.2)
- *   without preferred skills => required
+ * Deterministic recommendation model (single source of truth in computeSkillMatch):
+ * - requiredMatchPercent = matchedRequired / totalRequired * 100
+ * - preferredMatchPercent = matchedPreferred / totalPreferred * 100 (or null)
+ * - overallScore = round(required * 0.8 + preferred * 0.2), else required
  */
 function buildInternshipRecommendation(internSkills = [], internship = {}) {
   const requiredSkills = internship?.skillsRequired || [];
   const preferredSkills = internship?.prioritySkills || [];
-
-  const required = compareSkillSets(internSkills, requiredSkills);
-  const preferredExists = normalizeSkillList(preferredSkills).length > 0;
-  const preferred = preferredExists ? compareSkillSets(internSkills, preferredSkills) : null;
-
-  const requiredSkillMatchPercent = required.matchPercent;
-  const preferredSkillMatchPercent = preferred ? preferred.matchPercent : null;
-  const overallRecommendationScore = preferred
-    ? Math.round(requiredSkillMatchPercent * 0.8 + preferredSkillMatchPercent * 0.2)
-    : requiredSkillMatchPercent;
+  const match = computeSkillMatch(internSkills, requiredSkills, preferredSkills);
 
   return {
     internship,
-    requiredSkillMatchPercent,
-    preferredSkillMatchPercent,
-    overallRecommendationScore,
-    recommendationScore: overallRecommendationScore,
-    skillMatchPercent: requiredSkillMatchPercent,
-    matchedRequiredSkills: required.matched,
-    missingRequiredSkills: required.missing,
-    matchedPreferredSkills: preferred ? preferred.matched : [],
-    missingPreferredSkills: preferred ? preferred.missing : [],
+    requiredSkillMatchPercent: match.requiredMatchPercent,
+    preferredSkillMatchPercent: match.preferredMatchPercent,
+    overallRecommendationScore: match.overallScore,
+    recommendationScore: match.overallScore,
+    skillMatchPercent: match.requiredMatchPercent,
+    matchedRequiredSkills: match.matchedRequiredSkills,
+    missingRequiredSkills: match.missingRequiredSkills,
+    matchedPreferredSkills: match.matchedPreferredSkills,
+    missingPreferredSkills: match.missingPreferredSkills,
     skillGap: {
-      matched: required.matched,
-      missing: required.missing,
-      matchPercent: requiredSkillMatchPercent
+      matched: match.matchedRequiredSkills,
+      missing: match.missingRequiredSkills,
+      matchPercent: match.requiredMatchPercent
     }
   };
 }
@@ -221,22 +180,20 @@ function recommendInternships(internProfile, internships = [], options = {}) {
     const recommendation = buildInternshipRecommendation(internSkills, internship);
 
     if (process.env.RECOMMENDATION_DEBUG === "true") {
+      const debugMatch = computeSkillMatch(internSkills, internship?.skillsRequired || [], internship?.prioritySkills || []);
       // eslint-disable-next-line no-console
       console.log(
         "[recommendation-debug]",
         JSON.stringify({
           internshipId: internship?._id,
           internshipRole: internship?.role || "",
-          internSkills,
-          requiredSkills: normalizeSkillList(internship?.skillsRequired || []),
-          preferredSkills: normalizeSkillList(internship?.prioritySkills || []),
-          matchedRequiredSkills: recommendation.matchedRequiredSkills,
-          missingRequiredSkills: recommendation.missingRequiredSkills,
-          matchedPreferredSkills: recommendation.matchedPreferredSkills,
-          missingPreferredSkills: recommendation.missingPreferredSkills,
-          requiredSkillMatchPercent: recommendation.requiredSkillMatchPercent,
-          preferredSkillMatchPercent: recommendation.preferredSkillMatchPercent,
-          overallRecommendationScore: recommendation.overallRecommendationScore
+          normalizedInternSkills: debugMatch.normalizedInternSkills,
+          normalizedRequiredSkills: debugMatch.normalizedRequiredSkills,
+          matchedRequiredSkills: debugMatch.matchedRequiredSkills,
+          missingRequiredSkills: debugMatch.missingRequiredSkills,
+          requiredMatch: debugMatch.requiredMatchPercent,
+          preferredMatch: debugMatch.preferredMatchPercent,
+          overallScore: debugMatch.overallScore
         })
       );
     }
@@ -261,12 +218,17 @@ function rankApplicantsForInternship(internship, applicantProfiles = []) {
   return applicantProfiles
     .map((profile) => {
       const resumeScore = calculateResumeScore(profile);
-      const skillGap = getSkillGap(profile.skills, internship.skillsRequired || []);
-      const finalScore = Math.round(skillGap.matchPercent * 0.7 + resumeScore * 0.3);
+      const internSkills = normalizeSkillList(profile?.resume?.parsed?.skills || profile?.skills || []);
+      const match = computeSkillMatch(internSkills, internship.skillsRequired || [], []);
+      const finalScore = Math.round(match.requiredMatchPercent * 0.7 + resumeScore * 0.3);
 
       return {
         profile,
-        skillGap,
+        skillGap: {
+          matched: match.matchedRequiredSkills,
+          missing: match.missingRequiredSkills,
+          matchPercent: match.requiredMatchPercent
+        },
         score: Math.min(100, finalScore)
       };
     })

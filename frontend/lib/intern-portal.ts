@@ -1,5 +1,5 @@
 import { apiRequest } from "@/lib/api-client";
-import { toDisplaySkillList } from "@/lib/skill-normalizer";
+import { computeSkillMatch, normalizeSkillList } from "@/lib/skill-normalizer";
 
 export type ResumeSection = { key: string; label: string; score: number };
 
@@ -74,6 +74,8 @@ export type Application = {
     role: string;
     company?: { companyName?: string };
     location?: string;
+    skillsRequired?: string[];
+    prioritySkills?: string[];
   };
   stageHistory: Array<{ stage: string; note: string; changedAt: string }>;
   hrFeedback: Array<{ feedback: string; createdAt: string }>;
@@ -97,6 +99,8 @@ export type Recommendation = {
     role: string;
     company?: { companyName?: string };
     location?: string;
+    skillsRequired?: string[];
+    prioritySkills?: string[];
   };
   requiredSkillMatchPercent: number;
   preferredSkillMatchPercent: number | null;
@@ -195,44 +199,63 @@ export async function fetchActiveInternships(force = false) {
   return internships;
 }
 
-export async function fetchInternRecommendations(force = false) {
+export async function fetchInternRecommendations(internSkills: unknown, force = false) {
+  const normalizedInternSkills = normalizeSkillList(internSkills);
+  if (normalizedInternSkills.length === 0) {
+    return [];
+  }
+
+  const cacheKey = `intern:recommendations:${normalizedInternSkills.join("|")}`;
   if (!force) {
-    const cached = getCache<Recommendation[]>("intern:recommendations");
+    const cached = getCache<Recommendation[]>(cacheKey);
     if (cached) return cached;
   }
 
-  const response = await apiRequest<{ recommendations: Recommendation[] }>("/api/intern/recommendations");
-  const recommendations = (response.recommendations || []).map((item) => {
-    const required = Number(item?.requiredSkillMatchPercent ?? item?.skillMatchPercent ?? item?.skillGap?.matchPercent ?? 0);
-    const preferred = Number.isFinite(item?.preferredSkillMatchPercent)
-      ? Number(item.preferredSkillMatchPercent)
-      : null;
-    const overall = Number.isFinite(item?.overallRecommendationScore)
-      ? Number(item.overallRecommendationScore)
-      : Number(item?.recommendationScore ?? required);
+  const internships = await fetchActiveInternships(force);
 
-    const matchedRequiredSkills = toDisplaySkillList(item?.matchedRequiredSkills || item?.skillGap?.matched || []);
-    const missingRequiredSkills = toDisplaySkillList(item?.missingRequiredSkills || item?.skillGap?.missing || []);
-    const matchedPreferredSkills = toDisplaySkillList(item?.matchedPreferredSkills || []);
-    const missingPreferredSkills = toDisplaySkillList(item?.missingPreferredSkills || []);
+  const recommendations: Recommendation[] = internships
+    .map((internship) => {
+      const match = computeSkillMatch(
+        normalizedInternSkills,
+        internship.skillsRequired || [],
+        internship.prioritySkills || []
+      );
 
-    return {
-      ...item,
-      requiredSkillMatchPercent: required,
-      preferredSkillMatchPercent: preferred,
-      overallRecommendationScore: overall,
-      matchedRequiredSkills,
-      missingRequiredSkills,
-      matchedPreferredSkills,
-      missingPreferredSkills,
-      skillGap: {
-        matched: matchedRequiredSkills,
-        missing: missingRequiredSkills,
-        matchPercent: required
+      return {
+        internship: {
+          _id: internship._id,
+          role: internship.role,
+          company: internship.company,
+          location: internship.location,
+          skillsRequired: internship.skillsRequired || [],
+          prioritySkills: internship.prioritySkills || []
+        },
+        requiredSkillMatchPercent: match.requiredMatchPercent,
+        preferredSkillMatchPercent: match.preferredMatchPercent,
+        overallRecommendationScore: match.overallScore,
+        recommendationScore: match.overallScore,
+        skillMatchPercent: match.requiredMatchPercent,
+        matchedRequiredSkills: match.matchedRequiredSkills,
+        missingRequiredSkills: match.missingRequiredSkills,
+        matchedPreferredSkills: match.matchedPreferredSkills,
+        missingPreferredSkills: match.missingPreferredSkills,
+        skillGap: {
+          matched: match.matchedRequiredSkills,
+          missing: match.missingRequiredSkills,
+          matchPercent: match.requiredMatchPercent
+        }
+      };
+    })
+    .sort((a, b) => {
+      if (b.overallRecommendationScore !== a.overallRecommendationScore) {
+        return b.overallRecommendationScore - a.overallRecommendationScore;
       }
-    } as Recommendation;
-  });
+      if (b.requiredSkillMatchPercent !== a.requiredSkillMatchPercent) {
+        return b.requiredSkillMatchPercent - a.requiredSkillMatchPercent;
+      }
+      return String(a.internship.role || "").localeCompare(String(b.internship.role || ""));
+    });
 
-  setCache("intern:recommendations", recommendations);
+  setCache(cacheKey, recommendations);
   return recommendations;
 }

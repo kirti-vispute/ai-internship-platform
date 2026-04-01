@@ -24,7 +24,7 @@ export default function InternSkillGapPage() {
         const loadedProfile = await fetchInternProfile();
         setProfile(loadedProfile);
         if (loadedProfile.resumeUploaded && (loadedProfile.resume?.parsed?.skills || []).length > 0) {
-          setRecommendations(await fetchInternRecommendations());
+          setRecommendations(await fetchInternRecommendations(loadedProfile.resume?.parsed?.skills || [], true));
         } else {
           setRecommendations([]);
         }

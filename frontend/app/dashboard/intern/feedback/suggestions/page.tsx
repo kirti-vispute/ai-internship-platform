@@ -28,7 +28,7 @@ export default function SuggestionsPage() {
         setApplications(await fetchInternApplications());
 
         if (loadedProfile.resumeUploaded && (loadedProfile.resume?.parsed?.skills || []).length > 0) {
-          setRecommendations(await fetchInternRecommendations());
+          setRecommendations(await fetchInternRecommendations(loadedProfile.resume?.parsed?.skills || [], true));
         }
       } catch (err) {
         setError((err as Error).message || "Failed to load suggestions.");

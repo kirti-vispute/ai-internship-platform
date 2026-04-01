@@ -15,7 +15,10 @@ const SKILL_ALIAS_MAP = {
   mongodb: "mongodb",
   ml: "machine learning",
   "machine-learning": "machine learning",
-  "machine learning": "machine learning"
+  "machine learning": "machine learning",
+  "scikit learn": "scikit-learn",
+  "scikit-learn": "scikit-learn",
+  github: "github"
 };
 
 const DISPLAY_SKILL_MAP = {
@@ -27,7 +30,8 @@ const DISPLAY_SKILL_MAP = {
   html: "HTML",
   css: "CSS",
   sql: "SQL",
-  mongodb: "MongoDB"
+  mongodb: "MongoDB",
+  "scikit-learn": "Scikit-learn"
 };
 
 function normalizeSkillValue(skill) {
@@ -43,14 +47,26 @@ function normalizeSkillValue(skill) {
   return SKILL_ALIAS_MAP[raw] || raw;
 }
 
+function splitSkillEntry(entry) {
+  return String(entry)
+    .split(/\s*(?:,|;|\||\/|&|\band\b)\s*/gi)
+    .map((part) => part.trim())
+    .filter(Boolean);
+}
+
 function normalizeSkillList(skills = []) {
   if (!Array.isArray(skills)) return [];
 
   const set = new Set();
   for (const skill of skills) {
-    const normalized = normalizeSkillValue(skill);
-    if (normalized) {
-      set.add(normalized);
+    if (typeof skill !== "string" && typeof skill !== "number") continue;
+
+    const parts = splitSkillEntry(skill);
+    for (const part of parts) {
+      const normalized = normalizeSkillValue(part);
+      if (normalized) {
+        set.add(normalized);
+      }
     }
   }
 
@@ -82,4 +98,3 @@ module.exports = {
   toDisplaySkill,
   toDisplaySkillList
 };
-
