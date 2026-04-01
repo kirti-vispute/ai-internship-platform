@@ -1,4 +1,5 @@
 import { NptelCourse, VERIFIED_NPTEL_COURSES } from "@/lib/courses-dataset";
+import { getAcademicKeywordsForSkill } from "@/lib/industry-academic-skill-map";
 import { normalizeSkillList, normalizeSkillValue, toDisplaySkill } from "@/lib/skill-normalizer";
 
 export type RankedCourseSuggestion = {
@@ -14,9 +15,7 @@ export type RankedCourseSuggestion = {
 type RelevanceEvaluation = {
   tier: 0 | 1 | 2 | 3;
   weightedSignalScore: number;
-  titleSignal: boolean;
-  tagSignal: boolean;
-  descriptionSignal: boolean;
+  matchedKeywords: string[];
 };
 
 const NPTEL_HOSTS = new Set(["onlinecourses.nptel.ac.in", "onlinecourses-archive.nptel.ac.in"]);
@@ -34,18 +33,6 @@ const SKILL_ALIAS_CANDIDATES: Record<string, string[]> = {
   nodejs: ["node js", "node.js"],
   "machine learning": ["ml"],
   "database management systems": ["dbms", "database systems", "database management system"]
-};
-
-const SKILL_SIGNAL_SUPPORT: Record<string, string[]> = {
-  html: ["web development", "frontend"],
-  css: ["web development", "frontend"],
-  javascript: ["web development", "frontend", "browser"],
-  sql: ["database", "dbms", "query"],
-  python: ["programming", "data science"],
-  "machine learning": ["modeling", "supervised", "unsupervised"],
-  "data structures": ["algorithms"],
-  dbms: ["database", "sql"],
-  "database management systems": ["database", "sql", "dbms"]
 };
 
 function clamp(value: number, min = 0, max = 1): number {
@@ -81,14 +68,6 @@ function containsTerm(haystack: string, term: string): boolean {
   return normalizedHaystack.includes(normalizedTerm);
 }
 
-function countTermHits(haystack: string, terms: Iterable<string>): number {
-  let hits = 0;
-  for (const term of terms) {
-    if (containsTerm(haystack, term)) hits += 1;
-  }
-  return hits;
-}
-
 function getAliasCandidates(skill: string): string[] {
   const canonical = normalizeSkillValue(skill);
   if (!canonical) return [];
@@ -97,11 +76,8 @@ function getAliasCandidates(skill: string): string[] {
   return normalizeSkillList([canonical, ...aliases]);
 }
 
-function getSignalTerms(skill: string): string[] {
-  const canonical = normalizeSkillValue(skill);
-  const aliases = getAliasCandidates(canonical);
-  const supports = SKILL_SIGNAL_SUPPORT[canonical] || [];
-  return normalizeSkillList([...aliases, ...supports]);
+function matchKeywordsByField(haystack: string, keywords: string[]): string[] {
+  return keywords.filter((keyword) => containsTerm(haystack, keyword));
 }
 
 export function buildCourseDocument(course: NptelCourse): string {
@@ -164,9 +140,13 @@ function isVerifiedDirectCourseUrl(url: string): boolean {
 }
 
 function normalizeCourseIndex(course: NptelCourse) {
+  const normalizedCoverage = normalizeSkillList(course.skillCoverage);
+  const normalizedTags = normalizeSkillList([...(course.tags || []), ...(course.relevanceGroup || [])]);
+
   return {
-    coverage: normalizeSkillList(course.skillCoverage),
-    tags: normalizeSkillList([...(course.tags || []), ...(course.relevanceGroup || [])]),
+    coverage: normalizedCoverage,
+    tags: normalizedTags,
+    tagBlob: normalizedTags.join(" "),
     title: normalizeText(course.title),
     description: normalizeText(course.description)
   };
@@ -175,42 +155,59 @@ function normalizeCourseIndex(course: NptelCourse) {
 function assessCourseRelevance(skill: string, course: NptelCourse): RelevanceEvaluation {
   const canonicalSkill = normalizeSkillValue(skill);
   if (!canonicalSkill) {
-    return { tier: 0, weightedSignalScore: 0, titleSignal: false, tagSignal: false, descriptionSignal: false };
+    return { tier: 0, weightedSignalScore: 0, matchedKeywords: [] };
   }
 
   const index = normalizeCourseIndex(course);
   const aliasCandidates = getAliasCandidates(canonicalSkill).filter((alias) => alias !== canonicalSkill);
+  const mappedKeywords = getAcademicKeywordsForSkill(canonicalSkill);
 
-  const exactCoverage = index.coverage.includes(canonicalSkill) || index.tags.includes(canonicalSkill);
-  const aliasCoverage = !exactCoverage && aliasCandidates.some((alias) => index.coverage.includes(alias) || index.tags.includes(alias));
+  const exactCoverage = index.coverage.includes(canonicalSkill);
+  const aliasCoverage = !exactCoverage && aliasCandidates.some((alias) => index.coverage.includes(alias));
+
+  const titleMatches = matchKeywordsByField(index.title, mappedKeywords);
+  const tagMatches = mappedKeywords.filter((keyword) => index.tags.includes(normalizeSkillValue(keyword)) || containsTerm(index.tagBlob, keyword));
+  const descriptionMatches = matchKeywordsByField(index.description, mappedKeywords);
+
+  const matchedKeywords = normalizeSkillList([...titleMatches, ...tagMatches, ...descriptionMatches]);
+
+  const strongMappedKeywordRelevance =
+    matchedKeywords.length >= 2 &&
+    (titleMatches.length > 0 || tagMatches.length > 0) &&
+    (tagMatches.length > 0 || descriptionMatches.length > 0);
+
+  const weightedRaw =
+    titleMatches.length * 1.6 +
+    tagMatches.length * 1.35 +
+    descriptionMatches.length * 1.1 +
+    matchedKeywords.length * 0.4;
+  const weightedSignalScore = clamp(weightedRaw / (Math.max(mappedKeywords.length, 1) * 2.2));
 
   if (exactCoverage) {
-    return { tier: 3, weightedSignalScore: 1, titleSignal: true, tagSignal: true, descriptionSignal: true };
+    return {
+      tier: 3,
+      weightedSignalScore: Math.max(0.92, weightedSignalScore),
+      matchedKeywords
+    };
   }
 
   if (aliasCoverage) {
-    return { tier: 2, weightedSignalScore: 0.85, titleSignal: true, tagSignal: true, descriptionSignal: false };
+    return {
+      tier: 2,
+      weightedSignalScore: Math.max(0.82, weightedSignalScore),
+      matchedKeywords
+    };
   }
 
-  const signalTerms = getSignalTerms(canonicalSkill);
-  const titleSignal = signalTerms.some((term) => containsTerm(index.title, term));
-  const tagSignal = signalTerms.some((term) => index.tags.includes(term));
-  const descriptionHits = countTermHits(index.description, signalTerms);
-  const descriptionSignal = descriptionHits >= 2 || containsTerm(index.description, canonicalSkill);
-
-  const signalCount = Number(titleSignal) + Number(tagSignal) + Number(descriptionSignal);
-  const weightedSignalScore =
-    (titleSignal ? 1.2 : 0) +
-    (tagSignal ? 1 : 0) +
-    (descriptionSignal ? 0.8 : 0) +
-    Math.min(descriptionHits, 3) * 0.1;
-
-  const strongMultiSignal = signalCount >= 2 && weightedSignalScore >= 2.2;
-  if (!strongMultiSignal) {
-    return { tier: 0, weightedSignalScore, titleSignal, tagSignal, descriptionSignal };
+  if (!strongMappedKeywordRelevance) {
+    return { tier: 0, weightedSignalScore: 0, matchedKeywords: [] };
   }
 
-  return { tier: 1, weightedSignalScore, titleSignal, tagSignal, descriptionSignal };
+  return {
+    tier: 1,
+    weightedSignalScore: Math.max(0.55, weightedSignalScore),
+    matchedKeywords
+  };
 }
 
 export function computeTfIdfScores(queryText: string, courses: NptelCourse[]) {
@@ -253,7 +250,10 @@ export function getSuggestedCoursesForMissingSkills(missingSkills: string[]) {
   const verifiedCourses = VERIFIED_NPTEL_COURSES.filter(
     (course) => course.verified && course.provider === "NPTEL" && isVerifiedDirectCourseUrl(course.url)
   );
-  const queryText = normalizedMissingSkills.join(" ");
+
+  const queryText = normalizedMissingSkills
+    .flatMap((skill) => getAcademicKeywordsForSkill(skill))
+    .join(" ");
 
   const tfidfById = new Map(computeTfIdfScores(queryText, verifiedCourses).map((entry) => [entry.course.id, entry.score]));
 
@@ -271,7 +271,7 @@ export function getSuggestedCoursesForMissingSkills(missingSkills: string[]) {
       if (relevance.tier === 0) continue;
 
       const tfidfScore = tfidfById.get(course.id) || 0;
-      const blendedScore = clamp(relevance.tier * 0.45 + relevance.weightedSignalScore * 0.2 + tfidfScore * 0.35);
+      const blendedScore = clamp(relevance.tier * 0.42 + relevance.weightedSignalScore * 0.33 + tfidfScore * 0.25);
 
       qualified.push({
         skill,
@@ -329,8 +329,7 @@ export function getSuggestedCoursesForMissingSkills(missingSkills: string[]) {
 
   const covered = new Set(
     selected
-      .map((item) => item.skill)
-      .map((skill) => normalizeSkillValue(skill))
+      .map((item) => normalizeSkillValue(item.skill))
       .filter(Boolean)
   );
 
