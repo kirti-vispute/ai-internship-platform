@@ -7,7 +7,7 @@ import { InternShell } from "@/components/dashboard/intern-shell";
 import { SectionPanel } from "@/components/dashboard/section-panel";
 import { clearAuthSession } from "@/lib/session";
 import { InternProfile, Recommendation, fetchInternProfile, fetchInternRecommendations } from "@/lib/intern-portal";
-import { getFreeCoursesForMissingSkills } from "@/lib/free-course-mapping";
+import { getSuggestedCoursesForSkills } from "@/lib/skill-course-map";
 import { getMissingRequiredSkillsFromRecommendations } from "@/lib/recommendation-insights";
 
 export default function InternSkillGapPage() {
@@ -42,7 +42,7 @@ export default function InternSkillGapPage() {
     return getMissingRequiredSkillsFromRecommendations(recommendations);
   }, [recommendations]);
 
-  const courseSuggestions = useMemo(() => getFreeCoursesForMissingSkills(missingRequiredSkills), [missingRequiredSkills]);
+  const courseSuggestions = useMemo(() => getSuggestedCoursesForSkills(missingRequiredSkills), [missingRequiredSkills]);
 
   function handleLogout() {
     clearAuthSession();
@@ -79,7 +79,7 @@ export default function InternSkillGapPage() {
                 <div className="surface-subtle px-4 py-3 text-sm text-slate-700 dark:text-slate-300">Upload your resume to unlock skill-based free course suggestions.</div>
               ) : missingRequiredSkills.length === 0 ? (
                 <div className="surface-subtle px-4 py-3 text-sm text-slate-700 dark:text-slate-300">No critical skill gaps found from your current recommendations.</div>
-              ) : courseSuggestions.courseTiles.length === 0 && courseSuggestions.unmappedSkills.length > 0 ? (
+              ) : courseSuggestions.suggestions.length === 0 && courseSuggestions.unmappedSkills.length > 0 ? (
                 <div className="surface-subtle space-y-1 px-4 py-3 text-sm text-slate-700 dark:text-slate-300">
                   {courseSuggestions.unmappedSkills.map((skill) => (
                     <p key={skill}>No mapped free course available yet for this skill: {skill}</p>
@@ -95,13 +95,13 @@ export default function InternSkillGapPage() {
                     </div>
                   )}
 
-                  {courseSuggestions.courseTiles.length > 0 && (
+                  {courseSuggestions.suggestions.length > 0 && (
                     <div className="grid gap-3 md:grid-cols-2">
-                      {courseSuggestions.courseTiles.map((course) => (
-                        <article key={`${course.targetSkill}-${course.url}`} className="surface-subtle p-3">
+                      {courseSuggestions.suggestions.map((course) => (
+                        <article key={`${course.url}`} className="surface-subtle p-3">
                           <p className="text-xs font-semibold uppercase tracking-wide text-primary-700 dark:text-primary-300">{course.platform}</p>
                           <h3 className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">{course.title}</h3>
-                          <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">Target skill: {course.targetSkill}</p>
+                          <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">Target skills: {course.targetSkills.join(", ")}</p>
                           <a
                             href={course.url}
                             target="_blank"
@@ -123,3 +123,4 @@ export default function InternSkillGapPage() {
     </RoleDashboardGuard>
   );
 }
+
