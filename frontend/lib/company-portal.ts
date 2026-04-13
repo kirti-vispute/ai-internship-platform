@@ -1,5 +1,6 @@
 import { apiRequest } from "@/lib/api-client";
 import { getAuthSession } from "@/lib/session";
+import type { InternProfile } from "@/lib/intern-portal";
 
 export type CompanyProfile = {
   _id: string;
@@ -62,7 +63,13 @@ export type CompanyApplication = {
     mobile?: string;
     skills?: string[];
     education?: string[];
-    resume?: { score?: number; filePath?: string };
+    projects?: string[];
+    certifications?: string[];
+    achievements?: string[];
+    summary?: string;
+    experience?: string[];
+    links?: string[];
+    resume?: InternProfile["resume"];
   };
   internship: {
     _id?: string;

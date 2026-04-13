@@ -27,7 +27,7 @@ import {
   searchCandidates,
   CandidateSearchResult
 } from "@/lib/company-portal";
-import { SkillChips } from "@/components/dashboard/skill-chips";
+import { ApplicantDetailsModal, type InterviewFormState } from "@/components/dashboard/applicant-details-modal";
 
 export type CompanyDashboardView =
   | "overview"
@@ -82,6 +82,31 @@ function fmtDate(value?: string) {
   return dt.toLocaleDateString();
 }
 
+function fmtAppliedDateTime(value?: string) {
+  if (!value) return "-";
+  const dt = new Date(value);
+  if (Number.isNaN(dt.getTime())) return "-";
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const d = dt.getDate();
+  const m = months[dt.getMonth()];
+  const y = dt.getFullYear();
+  let h = dt.getHours();
+  const min = dt.getMinutes().toString().padStart(2, "0");
+  const ampm = h >= 12 ? "PM" : "AM";
+  h = h % 12 || 12;
+  return `${d} ${m} ${y}, ${h}:${min} ${ampm}`;
+}
+
+const DEFAULT_INTERVIEW_FORM: InterviewFormState = {
+  roundType: "",
+  interviewDate: "",
+  interviewTime: "",
+  mode: "online",
+  meetingLink: "",
+  location: "",
+  notes: ""
+};
+
 const PIPELINE_STAGES = ["applied", "reviewed", "shortlisted", "interview", "selected", "rejected"] as const;
 
 function normalizePipelineStatus(status: string) {
@@ -89,6 +114,14 @@ function normalizePipelineStatus(status: string) {
   if (value === "screening") return "reviewed";
   if (value === "offered") return "selected";
   return value;
+}
+
+function normalizeApplicantStage(value: string) {
+  const normalized = String(value || "").toLowerCase();
+  if (normalized === "screening") return "reviewed";
+  if (normalized === "interview") return "interview_scheduled";
+  if (normalized === "offered") return "selected";
+  return normalized;
 }
 
 export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
@@ -106,10 +139,10 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
   const [searchResults, setSearchResults] = useState<CandidateSearchResult[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
-  const [resumeError, setResumeError] = useState<string | null>(null);
-  const [interviewForms, setInterviewForms] = useState<Record<string, { roundType: string; interviewDate: string; interviewTime: string; mode: "online" | "offline"; meetingLink: string; location: string; notes: string }>>({});
+  const [detailResumeError, setDetailResumeError] = useState<string | null>(null);
+  const [applicantDetailId, setApplicantDetailId] = useState<string | null>(null);
+  const [interviewForms, setInterviewForms] = useState<Record<string, InterviewFormState>>({});
   const [statusDrafts, setStatusDrafts] = useState<Record<string, string>>({});
-  const [interviewExpanded, setInterviewExpanded] = useState<Record<string, boolean>>({});
 
   const [profileForm, setProfileForm] = useState({ companyName: "", contactName: "", phone: "", website: "", address: "", description: "" });
   const [postForm, setPostForm] = useState({
@@ -219,6 +252,22 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
   }
 
   const shortlisted = useMemo(() => apps.filter((a) => normalizePipelineStatus(a.status) === "shortlisted"), [apps]);
+  const detailApp = useMemo(
+    () => (applicantDetailId ? apps.find((application) => application._id === applicantDetailId) ?? null : null),
+    [apps, applicantDetailId]
+  );
+
+  useEffect(() => {
+    if (view !== "hiring-applicants" && view !== "hiring-shortlisted") {
+      setApplicantDetailId(null);
+      setDetailResumeError(null);
+    }
+  }, [view]);
+
+  useEffect(() => {
+    if (applicantDetailId && !detailApp) setApplicantDetailId(null);
+  }, [applicantDetailId, detailApp]);
+
   const statusCounts = useMemo(() => {
     const base: Record<string, number> = { applied: 0, reviewed: 0, shortlisted: 0, interview: 0, selected: 0, rejected: 0 };
     apps.forEach((a) => {
@@ -385,185 +434,53 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
   }
 
   function applicantPanel(list: CompanyApplication[], title: string, subtitle: string, emptyText: string) {
-    const pipelineStages = ["applied", "reviewed", "shortlisted", "interview_scheduled", "interview_completed", "selected", "rejected"];
-    const normalizeStage = (value: string) => {
-      const normalized = String(value || "").toLowerCase();
-      if (normalized === "screening") return "reviewed";
-      if (normalized === "interview") return "interview_scheduled";
-      if (normalized === "offered") return "selected";
-      return normalized;
-    };
     return (
       <SectionPanel title={title} subtitle={subtitle}>
-        {list.length === 0 ? <Empty text={emptyText} /> : (
+        {list.length === 0 ? (
+          <Empty text={emptyText} />
+        ) : (
           <div className="space-y-3">
-            {list.map((a) => (
-              <div key={a._id} className="surface-subtle space-y-4 rounded-xl border border-slate-200 p-4 dark:border-slate-700">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <p className="text-base font-semibold text-slate-900 dark:text-slate-100">{a.intern?.fullName || "Candidate"}</p>
-                    <p className="text-xs text-slate-600 dark:text-slate-300">{a.internship?.role || "Internship"}</p>
+            {list.map((a) => {
+              const matchPct = a.relevanceScore ?? a.matchScore ?? 0;
+              const resumeScore = a.intern?.resume?.score ?? 0;
+              return (
+                <div
+                  key={a._id}
+                  className="surface-subtle flex flex-col gap-4 rounded-xl border border-slate-200 p-4 sm:flex-row sm:items-center sm:justify-between dark:border-slate-700"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-base font-semibold text-slate-900 dark:text-slate-100">{a.intern?.fullName || "Candidate"}</p>
+                    <p className="mt-0.5 truncate text-xs text-slate-600 dark:text-slate-300">{a.internship?.role || "Internship"}</p>
                   </div>
-                  <div className="text-right">
-                    <p className="inline-flex rounded-full bg-primary-100 px-2.5 py-1 text-xs font-semibold capitalize text-primary-700 dark:bg-primary-900/40 dark:text-primary-300">
-                      {normalizeStage(a.status)}
+                  <div className="flex w-full flex-col items-stretch gap-3 sm:w-auto sm:items-end">
+                    <p className="text-right text-xs text-slate-500 dark:text-slate-400">
+                      Applied: <span className="font-medium text-slate-700 dark:text-slate-200">{fmtAppliedDateTime(a.createdAt)}</span>
                     </p>
-                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Match {a.relevanceScore ?? a.matchScore ?? 0}% • Resume {a.intern?.resume?.score ?? 0}</p>
-                  </div>
-                </div>
-
-                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                  <div className="surface-subtle px-3 py-2 text-xs text-slate-700 dark:text-slate-300"><span className="font-semibold">Email:</span> {a.intern?.email || "-"}</div>
-                  <div className="surface-subtle px-3 py-2 text-xs text-slate-700 dark:text-slate-300"><span className="font-semibold">Phone:</span> {a.intern?.mobile || "-"}</div>
-                  <div className="surface-subtle px-3 py-2 text-xs text-slate-700 dark:text-slate-300"><span className="font-semibold">Applied:</span> {fmtDate(a.createdAt)}</div>
-                  <div className="surface-subtle px-3 py-2 text-xs text-slate-700 dark:text-slate-300"><span className="font-semibold">Availability:</span> {a.availabilityStatus === "yes" ? "Available now" : a.availabilityStatus === "no" ? "Not immediate" : "-"}</div>
-                  <div className="surface-subtle px-3 py-2 text-xs text-slate-700 dark:text-slate-300"><span className="font-semibold">Available From:</span> {fmtDate(a.joiningDate)}</div>
-                  <div className="surface-subtle px-3 py-2 text-xs text-slate-700 dark:text-slate-300"><span className="font-semibold">Resume:</span> {a.attachedResumePath ? "Application Attached" : a.intern?.resume?.filePath ? "Profile Resume" : "Not available"}</div>
-                </div>
-
-                <div className="space-y-2">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Skills</p>
-                  <SkillChips skills={(a.intern?.skills || []).slice(0, 10)} />
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Education: {(a.intern?.education || []).length > 0 ? (a.intern?.education || []).slice(0, 2).join(" | ") : "Not available"}</p>
-                </div>
-
-                <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-7">
-                  {pipelineStages.map((stage) => {
-                    const current = normalizeStage(a.status);
-                    const isCurrent = current === stage;
-                    return (
-                      <div
-                        key={`${a._id}-${stage}`}
-                        className={`rounded-lg border px-2 py-1 text-center text-[11px] font-semibold capitalize ${isCurrent ? "border-primary-200 bg-primary-50 text-primary-700 dark:border-primary-900/40 dark:bg-primary-900/20 dark:text-primary-300" : "border-slate-200 bg-white text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400"}`}
+                    <div className="flex flex-wrap items-center justify-end gap-2">
+                      <span className="inline-flex rounded-full bg-primary-100 px-2.5 py-1 text-xs font-semibold text-primary-800 dark:bg-primary-900/40 dark:text-primary-200">
+                        Match {matchPct}%
+                      </span>
+                      <span className="inline-flex rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-800 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100">
+                        Resume {resumeScore}
+                      </span>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="secondary"
+                        className="shrink-0 border-primary-300/60 text-primary-800 hover:bg-primary-50 dark:border-primary-700/50 dark:text-primary-200 dark:hover:bg-primary-950/40"
+                        onClick={() => {
+                          setApplicantDetailId(a._id);
+                          setDetailResumeError(null);
+                          setStatusDrafts((prev) => ({ ...prev, [a._id]: normalizeApplicantStage(a.status) }));
+                        }}
                       >
-                        {stage.replace("_", " ")}
-                      </div>
-                    );
-                  })}
-                </div>
-
-                <div className="grid gap-2 md:grid-cols-[1fr_auto_auto]">
-                  <select
-                    className={field}
-                    value={statusDrafts[a._id] || normalizeStage(a.status)}
-                    onChange={(e) => setStatusDrafts((prev) => ({ ...prev, [a._id]: e.target.value }))}
-                  >
-                    <option value="applied">Applied</option>
-                    <option value="reviewed">Reviewed</option>
-                    <option value="shortlisted">Shortlisted</option>
-                    <option value="interview_scheduled">Interview Scheduled</option>
-                    <option value="interview_completed">Interview Completed</option>
-                    <option value="selected">Selected</option>
-                    <option value="rejected">Rejected</option>
-                  </select>
-                  <Button
-                    type="button"
-                    size="sm"
-                    onClick={() => applyStage(a._id, statusDrafts[a._id] || normalizeStage(a.status), "Status updated from hiring dashboard")}
-                    disabled={saving}
-                  >
-                    Save Status
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="secondary"
-                    onClick={async () => {
-                      try {
-                        setResumeError(null);
-                        await openCompanyApplicationResume(a._id);
-                      } catch (e) {
-                        setResumeError((e as Error).message || "Resume not available");
-                      }
-                    }}
-                    disabled={saving || (!a.attachedResumePath && !a.intern?.resume?.filePath)}
-                  >
-                    View Resume
-                  </Button>
-                </div>
-                {resumeError && <p className="text-xs text-rose-700 dark:text-rose-300">{resumeError}</p>}
-
-                <div className="space-y-2 rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900">
-                  <button
-                    type="button"
-                    className="text-xs font-semibold uppercase tracking-wide text-primary-700 hover:underline dark:text-primary-300"
-                    onClick={() => setInterviewExpanded((prev) => ({ ...prev, [a._id]: !prev[a._id] }))}
-                  >
-                    {interviewExpanded[a._id] ? "Hide interview actions" : "Show interview actions"}
-                  </button>
-
-                  {interviewExpanded[a._id] && (
-                    <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-                  <input
-                    className={field}
-                    placeholder="Round type (HR/Technical)"
-                    value={interviewForms[a._id]?.roundType || ""}
-                    onChange={(e) => setInterviewForms((prev) => ({ ...prev, [a._id]: { ...(prev[a._id] || { roundType: "", interviewDate: "", interviewTime: "", mode: "online", meetingLink: "", location: "", notes: "" }), roundType: e.target.value } }))}
-                  />
-                  <input
-                    type="date"
-                    className={field}
-                    value={interviewForms[a._id]?.interviewDate || ""}
-                    onChange={(e) => setInterviewForms((prev) => ({ ...prev, [a._id]: { ...(prev[a._id] || { roundType: "", interviewDate: "", interviewTime: "", mode: "online", meetingLink: "", location: "", notes: "" }), interviewDate: e.target.value } }))}
-                  />
-                  <input
-                    type="time"
-                    className={field}
-                    value={interviewForms[a._id]?.interviewTime || ""}
-                    onChange={(e) => setInterviewForms((prev) => ({ ...prev, [a._id]: { ...(prev[a._id] || { roundType: "", interviewDate: "", interviewTime: "", mode: "online", meetingLink: "", location: "", notes: "" }), interviewTime: e.target.value } }))}
-                  />
-                  <select
-                    className={field}
-                    value={interviewForms[a._id]?.mode || "online"}
-                    onChange={(e) => setInterviewForms((prev) => ({ ...prev, [a._id]: { ...(prev[a._id] || { roundType: "", interviewDate: "", interviewTime: "", mode: "online", meetingLink: "", location: "", notes: "" }), mode: e.target.value as "online" | "offline" } }))}
-                  >
-                    <option value="online">Online</option>
-                    <option value="offline">Offline</option>
-                  </select>
-                  <input
-                    className={`${field} sm:col-span-2`}
-                    placeholder="Meeting link (for online)"
-                    disabled={(interviewForms[a._id]?.mode || "online") !== "online"}
-                    value={interviewForms[a._id]?.meetingLink || ""}
-                    onChange={(e) => setInterviewForms((prev) => ({ ...prev, [a._id]: { ...(prev[a._id] || { roundType: "", interviewDate: "", interviewTime: "", mode: "online", meetingLink: "", location: "", notes: "" }), meetingLink: e.target.value } }))}
-                  />
-                  <input
-                    className={`${field} sm:col-span-2`}
-                    placeholder="Location (for offline)"
-                    disabled={(interviewForms[a._id]?.mode || "online") !== "offline"}
-                    value={interviewForms[a._id]?.location || ""}
-                    onChange={(e) => setInterviewForms((prev) => ({ ...prev, [a._id]: { ...(prev[a._id] || { roundType: "", interviewDate: "", interviewTime: "", mode: "online", meetingLink: "", location: "", notes: "" }), location: e.target.value } }))}
-                  />
-                  <textarea
-                    className={`${field} min-h-20 sm:col-span-2 lg:col-span-4`}
-                    placeholder="Interview notes"
-                    value={interviewForms[a._id]?.notes || ""}
-                    onChange={(e) => setInterviewForms((prev) => ({ ...prev, [a._id]: { ...(prev[a._id] || { roundType: "", interviewDate: "", interviewTime: "", mode: "online", meetingLink: "", location: "", notes: "" }), notes: e.target.value } }))}
-                  />
-                  <div className="sm:col-span-2 lg:col-span-4">
-                    <Button type="button" size="sm" onClick={() => createInterviewRound(a._id)} disabled={saving}>Create Interview Round</Button>
+                        View details
+                      </Button>
+                    </div>
                   </div>
                 </div>
-                  )}
-                </div>
-
-                {(a.interviewRounds || []).length > 0 && (
-                  <div className="space-y-2">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Interview Rounds</p>
-                    {(a.interviewRounds || []).map((round) => (
-                      <div key={round._id} className="surface-subtle flex flex-wrap items-center justify-between gap-2 px-3 py-2 text-xs">
-                        <span>{round.roundType || "Round"} • {fmtDate(round.interviewDate)} {round.interviewTime || ""} • {round.mode || "-"}</span>
-                        <div className="flex gap-2">
-                          <Button type="button" size="sm" variant="secondary" onClick={() => round._id && updateRoundStatus(a._id, round._id, "completed")} disabled={saving || !round._id}>Completed</Button>
-                          <Button type="button" size="sm" variant="secondary" onClick={() => round._id && updateRoundStatus(a._id, round._id, "cleared")} disabled={saving || !round._id}>Cleared</Button>
-                          <Button type="button" size="sm" variant="secondary" onClick={() => round._id && updateRoundStatus(a._id, round._id, "rejected")} disabled={saving || !round._id}>Reject</Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </SectionPanel>
@@ -759,6 +676,41 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
             {error && <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300">{error}</div>}
             {success && <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300">{success}</div>}
             {viewNode}
+            {detailApp && (
+              <ApplicantDetailsModal
+                application={detailApp}
+                onClose={() => {
+                  setApplicantDetailId(null);
+                  setDetailResumeError(null);
+                }}
+                saving={saving}
+                inputClassName={field}
+                statusDraft={statusDrafts[detailApp._id] ?? normalizeApplicantStage(detailApp.status)}
+                onStatusDraftChange={(value) => setStatusDrafts((prev) => ({ ...prev, [detailApp._id]: value }))}
+                onSaveStatus={() =>
+                  applyStage(detailApp._id, statusDrafts[detailApp._id] ?? normalizeApplicantStage(detailApp.status), "Status updated from hiring dashboard")
+                }
+                onApplyStage={(status, note) => applyStage(detailApp._id, status, note ?? "")}
+                interviewForm={interviewForms[detailApp._id] ?? DEFAULT_INTERVIEW_FORM}
+                onInterviewFormChange={(patch) =>
+                  setInterviewForms((prev) => ({
+                    ...prev,
+                    [detailApp._id]: { ...(prev[detailApp._id] ?? DEFAULT_INTERVIEW_FORM), ...patch }
+                  }))
+                }
+                onCreateInterview={() => createInterviewRound(detailApp._id)}
+                onUpdateRound={(roundId, status) => updateRoundStatus(detailApp._id, roundId, status)}
+                onViewResume={async () => {
+                  try {
+                    setDetailResumeError(null);
+                    await openCompanyApplicationResume(detailApp._id);
+                  } catch (e) {
+                    setDetailResumeError((e as Error).message || "Resume not available");
+                  }
+                }}
+                resumeError={detailResumeError}
+              />
+            )}
           </div>
         )}
       </CompanyShell>
