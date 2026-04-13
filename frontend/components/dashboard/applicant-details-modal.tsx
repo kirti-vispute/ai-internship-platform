@@ -28,8 +28,6 @@ function fmtAppliedDateTime(value?: string) {
   return `${d} ${m} ${y}, ${h}:${min} ${ampm}`;
 }
 
-const PIPELINE_STAGES = ["applied", "reviewed", "shortlisted", "interview_scheduled", "interview_completed", "selected", "rejected"] as const;
-
 function normalizeStage(value: string) {
   const normalized = String(value || "").toLowerCase();
   if (normalized === "screening") return "reviewed";
@@ -56,13 +54,10 @@ export type ApplicantDetailsModalProps = {
   statusDraft: string;
   onStatusDraftChange: (value: string) => void;
   onSaveStatus: () => void;
-  onApplyStage: (status: string, note?: string) => void;
   interviewForm: InterviewFormState;
   onInterviewFormChange: (patch: Partial<InterviewFormState>) => void;
   onCreateInterview: () => void;
   onUpdateRound: (roundId: string, status: "scheduled" | "completed" | "cleared" | "rejected") => void;
-  onViewResume: () => Promise<void>;
-  resumeError: string | null;
 };
 
 export function ApplicantDetailsModal({
@@ -73,19 +68,14 @@ export function ApplicantDetailsModal({
   statusDraft,
   onStatusDraftChange,
   onSaveStatus,
-  onApplyStage,
   interviewForm,
   onInterviewFormChange,
   onCreateInterview,
-  onUpdateRound,
-  onViewResume,
-  resumeError
+  onUpdateRound
 }: ApplicantDetailsModalProps) {
   const currentStage = normalizeStage(a.status);
   const matchPct = a.relevanceScore ?? a.matchScore ?? 0;
   const resumeScore = a.intern?.resume?.score ?? 0;
-  const canOpenResume = Boolean(a.attachedResumePath || a.intern?.resume?.filePath);
-  const resumeLabel = a.attachedResumePath ? "Application resume attached" : a.intern?.resume?.filePath ? "Profile resume" : "Not available";
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -147,56 +137,13 @@ export function ApplicantDetailsModal({
                           Match {matchPct}% · Resume {resumeScore}
                         </p>
                       </div>
-                      <div className="surface-subtle rounded-lg px-3 py-2 text-xs text-slate-700 dark:text-slate-300 sm:col-span-2">
-                        <span className="font-semibold">Resume file</span>
-                        <p className="mt-0.5">{resumeLabel}</p>
-                      </div>
                     </div>
                   </section>
 
-                  <section className="space-y-3">
+                  <section className="space-y-3 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
                     <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">Hiring workflow</p>
-                    <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
-                      {PIPELINE_STAGES.map((stage) => {
-                        const isCurrent = currentStage === stage;
-                        return (
-                          <div
-                            key={`${a._id}-${stage}`}
-                            className={`rounded-lg border px-2 py-1.5 text-center text-[11px] font-semibold capitalize ${
-                              isCurrent
-                                ? "border-primary-200 bg-primary-50 text-primary-700 dark:border-primary-900/40 dark:bg-primary-900/20 dark:text-primary-300"
-                                : "border-slate-200 bg-white text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400"
-                            }`}
-                          >
-                            {stage.replace(/_/g, " ")}
-                          </div>
-                        );
-                      })}
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Button type="button" size="sm" variant="secondary" disabled={saving} onClick={() => onApplyStage("shortlisted", "Shortlisted from applicant details")}>
-                        Shortlist
-                      </Button>
-                      <Button type="button" size="sm" variant="secondary" disabled={saving} onClick={() => onApplyStage("rejected", "Rejected from applicant details")}>
-                        Reject
-                      </Button>
-                      <Button type="button" size="sm" variant="secondary" disabled={saving} onClick={() => onApplyStage("reviewed", "Marked reviewed from applicant details")}>
-                        Mark reviewed
-                      </Button>
-                      <Button type="button" size="sm" variant="secondary" disabled={saving} onClick={() => onApplyStage("interview_scheduled", "Interview scheduled from applicant details")}>
-                        Interview scheduled
-                      </Button>
-                      <Button type="button" size="sm" variant="secondary" disabled={saving} onClick={() => onApplyStage("interview_completed", "Interview completed from applicant details")}>
-                        Interview completed
-                      </Button>
-                      <Button type="button" size="sm" variant="secondary" disabled={saving} onClick={() => onApplyStage("selected", "Selected from applicant details")}>
-                        Select
-                      </Button>
-                    </div>
-
-                    <div className="flex flex-wrap gap-2">
-                      <select className={`${field} min-w-[200px] flex-1`} value={statusDraft} onChange={(e) => onStatusDraftChange(e.target.value)}>
+                    <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+                      <select className={`${field} w-full min-w-0 sm:min-w-[220px] sm:flex-1`} value={statusDraft} onChange={(e) => onStatusDraftChange(e.target.value)}>
                         <option value="applied">Applied</option>
                         <option value="reviewed">Reviewed</option>
                         <option value="shortlisted">Shortlisted</option>
@@ -205,20 +152,15 @@ export function ApplicantDetailsModal({
                         <option value="selected">Selected</option>
                         <option value="rejected">Rejected</option>
                       </select>
-                      <Button type="button" size="sm" onClick={onSaveStatus} disabled={saving}>
+                      <Button type="button" size="sm" className="w-full shrink-0 sm:w-auto" onClick={onSaveStatus} disabled={saving}>
                         Save status
                       </Button>
                     </div>
                   </section>
 
-                  <section className="space-y-2 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Resume file</p>
-                      <Button type="button" size="sm" variant="secondary" disabled={saving || !canOpenResume} onClick={() => void onViewResume()}>
-                        View resume
-                      </Button>
-                    </div>
-                    {resumeError && <p className="text-xs text-rose-700 dark:text-rose-300">{resumeError}</p>}
+                  <section className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+                    <p className="mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">Parsed resume</p>
+                    <ApplicantParsedResume intern={a.intern} />
                   </section>
 
                   <section className="space-y-3 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
@@ -287,11 +229,6 @@ export function ApplicantDetailsModal({
                         ))}
                       </div>
                     )}
-                  </section>
-
-                  <section>
-                    <p className="mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">Parsed resume</p>
-                    <ApplicantParsedResume intern={a.intern} />
                   </section>
                 </div>
               </div>

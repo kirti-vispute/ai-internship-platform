@@ -69,6 +69,7 @@ export type CompanyApplication = {
     summary?: string;
     experience?: string[];
     links?: string[];
+    interests?: string[];
     resume?: InternProfile["resume"];
   };
   internship: {

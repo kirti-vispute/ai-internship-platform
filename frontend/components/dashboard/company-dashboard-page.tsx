@@ -17,7 +17,6 @@ import {
   fetchCompanyInternships,
   fetchCompanyMatchedCandidates,
   fetchCompanyProfile,
-  openCompanyApplicationResume,
   deleteCompanyInternship,
   postCompanyInternship,
   scheduleInterviewRound,
@@ -260,7 +259,6 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
   useEffect(() => {
     if (view !== "hiring-applicants" && view !== "hiring-shortlisted") {
       setApplicantDetailId(null);
-      setDetailResumeError(null);
     }
   }, [view]);
 
@@ -452,25 +450,26 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
                     <p className="truncate text-base font-semibold text-slate-900 dark:text-slate-100">{a.intern?.fullName || "Candidate"}</p>
                     <p className="mt-0.5 truncate text-xs text-slate-600 dark:text-slate-300">{a.internship?.role || "Internship"}</p>
                   </div>
-                  <div className="flex w-full flex-col items-stretch gap-3 sm:w-auto sm:items-end">
-                    <p className="text-right text-xs text-slate-500 dark:text-slate-400">
+                  <div className="flex w-full min-w-0 flex-col items-stretch gap-3 sm:w-auto sm:max-w-[min(100%,24rem)] sm:items-end">
+                    <p className="text-left text-xs text-slate-500 dark:text-slate-400 sm:text-right">
                       Applied: <span className="font-medium text-slate-700 dark:text-slate-200">{fmtAppliedDateTime(a.createdAt)}</span>
                     </p>
-                    <div className="flex flex-wrap items-center justify-end gap-2">
-                      <span className="inline-flex rounded-full bg-primary-100 px-2.5 py-1 text-xs font-semibold text-primary-800 dark:bg-primary-900/40 dark:text-primary-200">
-                        Match {matchPct}%
-                      </span>
-                      <span className="inline-flex rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-800 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100">
-                        Resume {resumeScore}
-                      </span>
+                    <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
+                      <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+                        <span className="inline-flex min-h-9 min-w-[7.25rem] shrink-0 items-center justify-center whitespace-nowrap rounded-full border border-primary-400 bg-primary-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm dark:border-primary-500 dark:bg-primary-500 dark:text-white">
+                          Match {matchPct}%
+                        </span>
+                        <span className="inline-flex min-h-9 min-w-[7.25rem] shrink-0 items-center justify-center whitespace-nowrap rounded-full border border-slate-300 bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-900 shadow-sm dark:border-slate-500 dark:bg-slate-800 dark:text-slate-50">
+                          Resume {resumeScore}
+                        </span>
+                      </div>
                       <Button
                         type="button"
                         size="sm"
                         variant="secondary"
-                        className="shrink-0 border-primary-300/60 text-primary-800 hover:bg-primary-50 dark:border-primary-700/50 dark:text-primary-200 dark:hover:bg-primary-950/40"
+                        className="w-full shrink-0 border-slate-300 bg-white hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-900 dark:hover:bg-slate-800 sm:w-auto"
                         onClick={() => {
                           setApplicantDetailId(a._id);
-                          setDetailResumeError(null);
                           setStatusDrafts((prev) => ({ ...prev, [a._id]: normalizeApplicantStage(a.status) }));
                         }}
                       >
@@ -679,10 +678,7 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
             {detailApp && (
               <ApplicantDetailsModal
                 application={detailApp}
-                onClose={() => {
-                  setApplicantDetailId(null);
-                  setDetailResumeError(null);
-                }}
+                onClose={() => setApplicantDetailId(null)}
                 saving={saving}
                 inputClassName={field}
                 statusDraft={statusDrafts[detailApp._id] ?? normalizeApplicantStage(detailApp.status)}
@@ -690,7 +686,6 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
                 onSaveStatus={() =>
                   applyStage(detailApp._id, statusDrafts[detailApp._id] ?? normalizeApplicantStage(detailApp.status), "Status updated from hiring dashboard")
                 }
-                onApplyStage={(status, note) => applyStage(detailApp._id, status, note ?? "")}
                 interviewForm={interviewForms[detailApp._id] ?? DEFAULT_INTERVIEW_FORM}
                 onInterviewFormChange={(patch) =>
                   setInterviewForms((prev) => ({
@@ -700,15 +695,6 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
                 }
                 onCreateInterview={() => createInterviewRound(detailApp._id)}
                 onUpdateRound={(roundId, status) => updateRoundStatus(detailApp._id, roundId, status)}
-                onViewResume={async () => {
-                  try {
-                    setDetailResumeError(null);
-                    await openCompanyApplicationResume(detailApp._id);
-                  } catch (e) {
-                    setDetailResumeError((e as Error).message || "Resume not available");
-                  }
-                }}
-                resumeError={detailResumeError}
               />
             )}
           </div>
