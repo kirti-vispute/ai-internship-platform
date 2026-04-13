@@ -5,6 +5,7 @@ const InternProfile = require("../models/InternProfile");
 const asyncHandler = require("../utils/asyncHandler");
 const AppError = require("../utils/AppError");
 const { rankApplicantsForInternship } = require("../services/ai.service");
+const { computeApplicationRelevance } = require("../services/application-relevance.service");
 const { normalizeSkillList, toDisplaySkillList } = require("../utils/skill-normalizer");
 
 function normalizeIncomingSkills(value) {
@@ -173,6 +174,18 @@ exports.getApplicantsForInternship = asyncHandler(async (req, res) => {
   const applications = await Application.find({ $or: [{ internshipId: internship._id }, { internship: internship._id }], companyId: company._id })
     .populate("intern")
     .sort({ createdAt: -1 });
+
+  await Promise.all(
+    applications.map(async (application) => {
+      const relevance = computeApplicationRelevance(application.intern || {}, internship || {});
+      const nextScore = relevance.relevanceScore;
+      if ((application.relevanceScore ?? application.matchScore ?? -1) !== nextScore) {
+        application.relevanceScore = nextScore;
+        application.matchScore = nextScore;
+        await application.save();
+      }
+    })
+  );
 
   res.json({ applications });
 });

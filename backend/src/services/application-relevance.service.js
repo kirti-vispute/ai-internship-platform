@@ -176,41 +176,8 @@ function computeApplicationRelevance(profile = {}, internship = {}) {
   const internSkills = collectInternSkills(profile);
 
   const skillMatch = computeSkillMatch(internSkills, requiredSkills, preferredSkills);
-  const internshipKeywordSet = collectInternshipKeywordSet(internship, requiredSkills, preferredSkills);
-  const internKeywordSet = collectInternKeywordSet(profile);
-  const internEducationSet = collectInternEducationSet(profile);
-  const internProjectExperienceSet = collectInternProjectExperienceSet(profile);
-
-  const educationRequirements = extractEducationRequirements(internshipKeywordSet);
-  const projectExperienceTargets = toSet([
-    ...requiredSkills,
-    ...preferredSkills,
-    ...Array.from(internshipKeywordSet).slice(0, 20)
-  ]);
-
-  const skillsScore = skillMatch.overallScore;
-  const resumeKeywordScore = overlapPercent(internshipKeywordSet, internKeywordSet);
-  const educationScore = overlapPercent(educationRequirements, internEducationSet);
-  const projectExperienceScore = overlapPercent(projectExperienceTargets, internProjectExperienceSet);
-
-  const weightedComponents = [{ key: "skills", weight: 60, score: skillsScore }];
-
-  if (internshipKeywordSet.size > 0 && internKeywordSet.size > 0) {
-    weightedComponents.push({ key: "resumeKeywords", weight: 20, score: resumeKeywordScore });
-  }
-  if (educationRequirements.size > 0) {
-    weightedComponents.push({ key: "education", weight: 10, score: educationScore });
-  }
-  if (projectExperienceTargets.size > 0 && internProjectExperienceSet.size > 0) {
-    weightedComponents.push({ key: "projectExperience", weight: 10, score: projectExperienceScore });
-  }
-
-  const weightTotal = weightedComponents.reduce((sum, component) => sum + component.weight, 0);
-  const weightedSum = weightedComponents.reduce(
-    (sum, component) => sum + component.score * component.weight,
-    0
-  );
-  const relevanceScore = weightTotal > 0 ? Math.round(weightedSum / weightTotal) : skillsScore;
+  const relevanceScore = skillMatch.overallScore;
+  const weightedComponents = [{ key: "skills", weight: 100, score: relevanceScore }];
 
   return {
     relevanceScore,
@@ -223,13 +190,7 @@ function computeApplicationRelevance(profile = {}, internship = {}) {
     debug: {
       normalizedInternSkills: skillMatch.normalizedInternSkills,
       normalizedRequiredSkills: skillMatch.normalizedRequiredSkills,
-      normalizedPreferredSkills: skillMatch.normalizedPreferredSkills,
-      internshipKeywords: Array.from(internshipKeywordSet),
-      internResumeKeywords: Array.from(internKeywordSet),
-      educationRequirements: Array.from(educationRequirements),
-      internEducationKeywords: Array.from(internEducationSet),
-      projectExperienceTargets: Array.from(projectExperienceTargets),
-      internProjectExperienceKeywords: Array.from(internProjectExperienceSet)
+      normalizedPreferredSkills: skillMatch.normalizedPreferredSkills
     }
   };
 }

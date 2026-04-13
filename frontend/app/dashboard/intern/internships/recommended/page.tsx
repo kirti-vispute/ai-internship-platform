@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { RoleDashboardGuard } from "@/components/ui/role-dashboard-guard";
 import { InternShell } from "@/components/dashboard/intern-shell";
@@ -19,7 +19,6 @@ import {
   saveInternship,
   unsaveInternship
 } from "@/lib/intern-portal";
-import { computeSkillMatch } from "@/lib/skill-normalizer";
 
 export default function RecommendedInternshipsPage() {
   const router = useRouter();
@@ -71,41 +70,6 @@ export default function RecommendedInternshipsPage() {
     }
     load();
   }, []);
-
-  const liveRecommendations = useMemo(() => {
-    return recommendations.map((item) => {
-      const match = computeSkillMatch(
-        parsedSkills,
-        item.internship.skillsRequired || [],
-        item.internship.prioritySkills || []
-      );
-
-      if (process.env.NODE_ENV !== "production") {
-        // Temporary debug proof for recommendation correctness.
-        // eslint-disable-next-line no-console
-        console.debug("[recommendation-ui-debug]", {
-          internshipId: item.internship._id,
-          internshipRole: item.internship.role,
-          normalizedInternSkills: match.normalizedInternSkills,
-          normalizedRequiredSkills: match.normalizedRequiredSkills,
-          matchedRequiredSkills: match.matchedRequiredSkills,
-          missingRequiredSkills: match.missingRequiredSkills,
-          requiredMatch: match.requiredMatchPercent
-        });
-      }
-
-      return {
-        internship: item.internship,
-        requiredSkillMatchPercent: match.requiredMatchPercent,
-        preferredSkillMatchPercent: match.preferredMatchPercent,
-        overallRecommendationScore: match.overallScore,
-        matchedRequiredSkills: match.matchedRequiredSkills,
-        missingRequiredSkills: match.missingRequiredSkills,
-        matchedPreferredSkills: match.matchedPreferredSkills,
-        missingPreferredSkills: match.missingPreferredSkills
-      };
-    });
-  }, [recommendations, parsedSkills]);
 
   function openApplyModal(item: Recommendation["internship"]) {
     setApplyError(null);
@@ -168,15 +132,15 @@ export default function RecommendedInternshipsPage() {
                 Upload your resume to get accurate AI internship recommendations.
               </div>
             )}
-            {!error && profile?.resumeUploaded && hasParsedResumeSkills && liveRecommendations.length === 0 && (
+            {!error && profile?.resumeUploaded && hasParsedResumeSkills && recommendations.length === 0 && (
               <div className="surface-subtle px-4 py-3 text-sm text-slate-700 dark:text-slate-300">
                 No matching internships found right now.
               </div>
             )}
 
-            {!error && liveRecommendations.length > 0 && (
+            {!error && recommendations.length > 0 && (
               <div className="space-y-2.5">
-                {liveRecommendations.map((item) => {
+                {recommendations.map((item) => {
                   const internshipId = item.internship._id;
                   const alreadyApplied = appliedInternshipIds.has(internshipId);
                   const isSaved = savedInternshipIds.has(internshipId);

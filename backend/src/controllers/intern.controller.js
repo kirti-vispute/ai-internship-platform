@@ -318,6 +318,18 @@ exports.getMyApplications = asyncHandler(async (req, res) => {
     })
     .sort({ createdAt: -1 });
 
+  await Promise.all(
+    applications.map(async (application) => {
+      const relevance = computeApplicationRelevance(profile || {}, application.internship || {});
+      const nextScore = relevance.relevanceScore;
+      if ((application.relevanceScore ?? application.matchScore ?? -1) !== nextScore) {
+        application.relevanceScore = nextScore;
+        application.matchScore = nextScore;
+        await application.save();
+      }
+    })
+  );
+
   res.json({ applications });
 });
 
