@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
+import { SkillChips } from "@/components/dashboard/skill-chips";
 import { Button } from "@/components/ui/button";
 import { InternshipListing, applyToInternship, buildAssetUrl } from "@/lib/intern-portal";
 
@@ -65,9 +66,13 @@ export function InternApplicationModal({ internship, resumePath, onClose, onSucc
   if (!isMounted) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[1000] bg-slate-900/45">
+    <div className="fixed inset-0 z-[1000] bg-slate-950/50" onClick={onClose}>
       <div className="flex h-full w-full items-start justify-center overflow-hidden px-4 pb-6 pt-6 md:pt-8">
-        <div className="flex w-full max-w-[900px] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_20px_55px_rgba(15,23,42,0.18)]" style={{ maxHeight: "88vh" }}>
+        <div
+          className="pointer-events-auto flex w-full max-w-[900px] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.2)] dark:border-slate-700 dark:bg-slate-900"
+          style={{ maxHeight: "88vh" }}
+          onClick={(event) => event.stopPropagation()}
+        >
           <header className="flex items-start justify-between gap-4 border-b border-slate-200 px-5 py-4 md:px-6">
             <div className="min-w-0">
               <h3 className="text-xl font-semibold text-slate-900">Apply for Internship</h3>
@@ -86,45 +91,75 @@ export function InternApplicationModal({ internship, resumePath, onClose, onSucc
           </header>
 
           <div className="flex-1 overflow-y-auto px-5 py-5 md:px-6">
-            <div className="space-y-4 text-sm">
-              <section className="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
-                <p className="text-sm font-semibold text-slate-900">Internship Details</p>
-                <p className="mt-2 text-xs font-medium uppercase tracking-wide text-slate-500">Job Description</p>
-                <p className="mt-1.5 text-slate-700">{internship.description || "Not specified"}</p>
+            <div className="space-y-5 text-sm">
+              <section className="space-y-3 rounded-xl border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-700 dark:bg-slate-800/60">
+                <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Internship Overview</p>
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  <div className="surface-subtle px-3 py-2.5">
+                    <p className="text-xs text-slate-500 dark:text-slate-400">Job Title</p>
+                    <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{internship.role}</p>
+                  </div>
+                  <div className="surface-subtle px-3 py-2.5">
+                    <p className="text-xs text-slate-500 dark:text-slate-400">Company Name</p>
+                    <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{internship.company?.companyName || "Not specified"}</p>
+                  </div>
+                  <div className="surface-subtle px-3 py-2.5">
+                    <p className="text-xs text-slate-500 dark:text-slate-400">Stipend</p>
+                    <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{internship.stipend || "Not specified"}</p>
+                  </div>
+                  <div className="surface-subtle px-3 py-2.5">
+                    <p className="text-xs text-slate-500 dark:text-slate-400">Location</p>
+                    <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{internship.location || "Not specified"}</p>
+                  </div>
+                  <div className="surface-subtle px-3 py-2.5">
+                    <p className="text-xs text-slate-500 dark:text-slate-400">Work Mode</p>
+                    <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{internship.mode || "Not specified"}</p>
+                  </div>
+                  <div className="surface-subtle px-3 py-2.5">
+                    <p className="text-xs text-slate-500 dark:text-slate-400">Duration</p>
+                    <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{internship.duration || "Not specified"}</p>
+                  </div>
+                </div>
               </section>
 
-              <section className="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
-                <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Roles & Responsibilities</p>
-                <p className="mt-1.5 text-slate-700">{internship.responsibilities || "No prior experience required"}</p>
+              <section className="rounded-xl border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-700 dark:bg-slate-800/60">
+                <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Job Description</p>
+                <p className="mt-2 text-slate-700 dark:text-slate-300">{internship.description || "Not specified"}</p>
               </section>
 
-              <section className="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
-                <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Required Skills</p>
-                <p className="mt-1.5 text-slate-700">{requiredSkills.length > 0 ? requiredSkills.join(", ") : "Not specified"}</p>
+              <section className="rounded-xl border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-700 dark:bg-slate-800/60">
+                <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Roles & Responsibilities</p>
+                <p className="mt-2 text-slate-700 dark:text-slate-300">{internship.responsibilities || "No prior experience required"}</p>
               </section>
 
-              <section className="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
-                <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Location & Work Mode</p>
-                <p className="mt-1.5 text-slate-700">
-                  {internship.location || "Not specified"} | {internship.mode || "Not specified"}
+              <section className="rounded-xl border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-700 dark:bg-slate-800/60">
+                <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Required Skills</p>
+                <div className="mt-2">
+                  <SkillChips skills={requiredSkills} />
+                </div>
+              </section>
+
+              <section className="rounded-xl border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-700 dark:bg-slate-800/60">
+                <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Location & Work Mode</p>
+                <p className="mt-2 text-slate-700 dark:text-slate-300">
+                  {internship.location || "Not specified"} • {internship.mode || "Not specified"}
                 </p>
-                <p className="mt-1 text-xs text-slate-500">Stipend: {internship.stipend || "Not specified"}</p>
               </section>
 
-              <section className="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
-                <p className="text-sm font-semibold text-slate-900">Company Details</p>
-                <p className="mt-2 text-slate-700">{internship.company?.description || "Not specified"}</p>
-                <p className="mt-2 text-xs text-slate-500">
+              <section className="rounded-xl border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-700 dark:bg-slate-800/60">
+                <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Company Information</p>
+                <p className="mt-2 text-slate-700 dark:text-slate-300">{internship.company?.description || "Not specified"}</p>
+                <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
                   {internship.company?.website || "Website not specified"} | {internship.company?.address || "Address not specified"}
                 </p>
               </section>
 
-              <section className="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
-                <p className="text-sm font-semibold text-slate-900">Attached Resume</p>
+              <section className="rounded-xl border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-700 dark:bg-slate-800/60">
+                <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Attached Resume</p>
                 {resumePath ? (
-                  <p className="mt-1.5 text-slate-700">
+                  <p className="mt-2 text-slate-700 dark:text-slate-300">
                     {attachedResumeUrl ? (
-                      <a href={attachedResumeUrl} target="_blank" rel="noreferrer" className="font-medium text-blue-700 transition hover:text-blue-800 hover:underline">
+                      <a href={attachedResumeUrl} target="_blank" rel="noreferrer" className="font-medium text-blue-700 transition hover:text-blue-800 hover:underline dark:text-blue-300">
                         {attachedResumeName}
                       </a>
                     ) : (
@@ -134,18 +169,18 @@ export function InternApplicationModal({ internship, resumePath, onClose, onSucc
                 ) : (
                   <p className="mt-1.5 text-rose-700">Please upload your resume in profile before applying.</p>
                 )}
-                <p className="mt-2 text-xs text-slate-500">Your resume from your profile will be submitted with this application.</p>
+                <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">Your resume from your profile will be submitted with this application.</p>
               </section>
 
-              <section className="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
-                <p className="text-sm font-semibold text-slate-900">Availability</p>
-                <p className="mt-2 text-slate-700">Are you available to join immediately?</p>
-                <div className="mt-3 flex flex-wrap gap-5 text-sm text-slate-700">
-                  <label className="inline-flex cursor-pointer items-center gap-2">
+              <section className="rounded-xl border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-700 dark:bg-slate-800/60">
+                <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Availability</p>
+                <p className="mt-2 text-slate-700 dark:text-slate-300">Are you available to join immediately?</p>
+                <div className="mt-3 flex flex-wrap gap-5 text-sm text-slate-700 dark:text-slate-300">
+                  <label className="inline-flex cursor-pointer items-center gap-2 select-none">
                     <input type="radio" name="availability" checked={availabilityStatus === "yes"} onChange={() => setAvailabilityStatus("yes")} />
                     Yes
                   </label>
-                  <label className="inline-flex cursor-pointer items-center gap-2">
+                  <label className="inline-flex cursor-pointer items-center gap-2 select-none">
                     <input type="radio" name="availability" checked={availabilityStatus === "no"} onChange={() => setAvailabilityStatus("no")} />
                     No
                   </label>
@@ -153,7 +188,7 @@ export function InternApplicationModal({ internship, resumePath, onClose, onSucc
 
                 <div className={`grid transition-all duration-300 ease-out ${availabilityStatus === "no" ? "mt-4 grid-rows-[1fr] opacity-100" : "mt-0 grid-rows-[0fr] opacity-0"}`}>
                   <div className="overflow-hidden">
-                    <label className="text-sm font-medium text-slate-900" htmlFor="joiningDate">
+                    <label className="text-sm font-medium text-slate-900 dark:text-slate-100" htmlFor="joiningDate">
                       Available From
                     </label>
                     <input
@@ -162,7 +197,7 @@ export function InternApplicationModal({ internship, resumePath, onClose, onSucc
                       value={joiningDate}
                       min={new Date().toISOString().split("T")[0]}
                       onChange={(event) => setJoiningDate(event.target.value)}
-                      className="mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-200"
+                      className="mt-1.5 w-full cursor-pointer rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-200"
                     />
                   </div>
                 </div>
@@ -172,7 +207,7 @@ export function InternApplicationModal({ internship, resumePath, onClose, onSucc
             </div>
           </div>
 
-          <footer className="flex items-center justify-between gap-3 border-t border-slate-200 bg-white px-5 py-4 md:px-6">
+          <footer className="flex items-center justify-between gap-3 border-t border-slate-200 bg-white px-5 py-4 md:px-6 dark:border-slate-700 dark:bg-slate-900">
             <Button type="button" variant="secondary" onClick={onClose} disabled={submitting} className="transition hover:-translate-y-0.5 active:translate-y-0">
               Cancel
             </Button>

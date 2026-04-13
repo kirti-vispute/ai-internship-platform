@@ -77,6 +77,15 @@ function fmtDate(value?: string) {
   return dt.toLocaleDateString();
 }
 
+const PIPELINE_STAGES = ["applied", "reviewed", "shortlisted", "interview", "selected", "rejected"] as const;
+
+function normalizePipelineStatus(status: string) {
+  const value = String(status || "").toLowerCase();
+  if (value === "screening") return "reviewed";
+  if (value === "offered") return "selected";
+  return value;
+}
+
 export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
   const router = useRouter();
   const [profile, setProfile] = useState<CompanyProfile | null>(null);
@@ -175,10 +184,13 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
     router.push("/auth/company");
   }
 
-  const shortlisted = useMemo(() => apps.filter((a) => a.status === "shortlisted"), [apps]);
+  const shortlisted = useMemo(() => apps.filter((a) => normalizePipelineStatus(a.status) === "shortlisted"), [apps]);
   const statusCounts = useMemo(() => {
-    const base: Record<string, number> = { applied: 0, shortlisted: 0, screening: 0, interview: 0, offered: 0, rejected: 0, withdrawn: 0 };
-    apps.forEach((a) => (base[a.status] = (base[a.status] || 0) + 1));
+    const base: Record<string, number> = { applied: 0, reviewed: 0, shortlisted: 0, interview: 0, selected: 0, rejected: 0 };
+    apps.forEach((a) => {
+      const normalized = normalizePipelineStatus(a.status);
+      base[normalized] = (base[normalized] || 0) + 1;
+    });
     return base;
   }, [apps]);
 
@@ -260,23 +272,46 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
         {list.length === 0 ? <Empty text={emptyText} /> : (
           <div className="space-y-2">
             {list.map((a) => (
-              <div key={a._id} className="surface-subtle flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+              <div key={a._id} className="surface-subtle space-y-3 px-4 py-3">
                 <div>
                   <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{a.intern?.fullName || "Candidate"}</p>
                   <p className="text-xs text-slate-600 dark:text-slate-300">{a.intern?.email || "No email"}</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">{a.internship?.role || "Internship"}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Internship: {a.internship?.role || "Internship"}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Phone: {a.intern?.mobile || "-"}</p>
                   <p className="text-xs text-slate-500 dark:text-slate-400">
-                    Availability: {a.availabilityStatus === "yes" ? "Can join now" : a.availabilityStatus === "no" ? `Can join by ${fmtDate(a.joiningDate)}` : "-"}
+                    Availability: {a.availabilityStatus === "yes" ? "Available now" : a.availabilityStatus === "no" ? `Available from ${fmtDate(a.joiningDate)}` : "-"}
                   </p>
-                  {a.attachedResumePath && (
-                    <a href={buildAssetUrl(a.attachedResumePath)} target="_blank" rel="noreferrer" className="text-xs text-blue-700 hover:underline dark:text-blue-300">
-                      View attached resume
-                    </a>
-                  )}
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Applied: {fmtDate(a.createdAt)}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Skills: {(a.intern?.skills || []).length > 0 ? (a.intern?.skills || []).slice(0, 6).join(", ") : "Not available"}
+                  </p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Education: {(a.intern?.education || []).length > 0 ? (a.intern?.education || []).slice(0, 2).join(" | ") : "Not available"}
+                  </p>
+                  <div className="flex flex-wrap items-center gap-3 pt-1">
+                    {a.attachedResumePath && (
+                      <a href={buildAssetUrl(a.attachedResumePath)} target="_blank" rel="noreferrer" className="text-xs font-medium text-blue-700 hover:underline dark:text-blue-300">
+                        View Resume
+                      </a>
+                    )}
+                    <span className="text-xs text-slate-500 dark:text-slate-400">Resume Score: {a.intern?.resume?.score ?? 0}</span>
+                    <span className="text-xs text-slate-500 dark:text-slate-400">Match Score: {a.relevanceScore ?? a.matchScore ?? 0}%</span>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-xs uppercase tracking-wide text-slate-500">{a.status}</p>
-                  <p className="text-xs text-slate-500">Relevance {a.relevanceScore ?? a.matchScore ?? 0}%</p>
+
+                <div className="grid gap-2 sm:grid-cols-6">
+                  {PIPELINE_STAGES.map((stage) => {
+                    const normalized = normalizePipelineStatus(a.status);
+                    const isCurrent = normalized === stage;
+                    return (
+                      <div
+                        key={`${a._id}-${stage}`}
+                        className={`rounded-lg border px-2 py-1 text-center text-[11px] font-semibold capitalize ${isCurrent ? "border-primary-200 bg-primary-50 text-primary-700 dark:border-primary-900/40 dark:bg-primary-900/20 dark:text-primary-300" : "border-slate-200 bg-white text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400"}`}
+                      >
+                        {stage}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             ))}

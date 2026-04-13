@@ -5,8 +5,25 @@ import { useRouter } from "next/navigation";
 import { RoleDashboardGuard } from "@/components/ui/role-dashboard-guard";
 import { InternShell } from "@/components/dashboard/intern-shell";
 import { SectionPanel } from "@/components/dashboard/section-panel";
+import { buildAssetUrl } from "@/lib/intern-portal";
 import { clearAuthSession } from "@/lib/session";
 import { Application, InternProfile, fetchInternApplications, fetchInternProfile } from "@/lib/intern-portal";
+
+const TIMELINE_STEPS = ["applied", "reviewed", "shortlisted", "interview", "selected"] as const;
+
+function normalizeStatus(status: string) {
+  const value = String(status || "").toLowerCase();
+  if (value === "screening") return "reviewed";
+  if (value === "offered") return "selected";
+  return value;
+}
+
+function getActiveTimelineStatus(application: Application) {
+  const normalized = normalizeStatus(application.status);
+  if (normalized === "rejected") return "rejected";
+  if (TIMELINE_STEPS.includes(normalized as (typeof TIMELINE_STEPS)[number])) return normalized;
+  return "applied";
+}
 
 export default function TrackProgressPage() {
   const router = useRouter();
@@ -73,22 +90,49 @@ export default function TrackProgressPage() {
                 <div className="surface-subtle px-4 py-3 text-sm text-slate-700 dark:text-slate-300">No applications found.</div>
               ) : (
                 <div className="space-y-3">
-                  {applications.map((app) => (
-                    <div key={app._id} className="surface-subtle p-3">
-                      <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                        {app.internship?.role || "Internship"} - <span className="capitalize">{app.status}</span>
-                      </p>
-                      <ul className="mt-2 space-y-1 text-xs text-slate-700 dark:text-slate-300">
-                        {(app.stageHistory || []).length === 0 && <li>No stage timeline yet.</li>}
-                        {(app.stageHistory || []).map((stage, idx) => (
-                          <li key={`${app._id}-${idx}`} className="surface-subtle px-2 py-1">
-                            <span className="font-semibold capitalize">{stage.stage}</span>
-                            {stage.note ? ` - ${stage.note}` : ""}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ))}
+                  {applications.map((app) => {
+                    const activeStatus = getActiveTimelineStatus(app);
+                    const activeIdx = TIMELINE_STEPS.indexOf(activeStatus as (typeof TIMELINE_STEPS)[number]);
+                    const isRejected = normalizeStatus(app.status) === "rejected";
+                    const statusLabel = isRejected ? "Rejected" : activeStatus.charAt(0).toUpperCase() + activeStatus.slice(1);
+                    return (
+                      <div key={app._id} className="surface-subtle space-y-3 p-4">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <div>
+                            <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{app.internship?.role || "Internship"}</p>
+                            <p className="text-xs text-slate-600 dark:text-slate-300">{app.internship?.company?.companyName || "Company"} • Applied {app.appliedAt ? new Date(app.appliedAt).toLocaleDateString() : "-"}</p>
+                          </div>
+                          <p className={`rounded-full px-2 py-1 text-xs font-semibold ${isRejected ? "bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300" : "bg-primary-100 text-primary-700 dark:bg-primary-900/40 dark:text-primary-300"}`}>
+                            {isRejected ? "Rejected" : `Current: ${statusLabel}`}
+                          </p>
+                        </div>
+
+                        <div className="grid gap-2 sm:grid-cols-5">
+                          {TIMELINE_STEPS.map((step, idx) => {
+                            const done = !isRejected && idx <= activeIdx;
+                            return (
+                              <div key={`${app._id}-${step}`} className={`rounded-lg border px-2 py-2 text-center text-xs font-medium ${done ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-900/20 dark:text-emerald-300" : "border-slate-200 bg-white text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400"}`}>
+                                {step === "applied" && "Applied"}
+                                {step === "reviewed" && "Application Reviewed"}
+                                {step === "shortlisted" && "Shortlisted"}
+                                {step === "interview" && "Interview Scheduled"}
+                                {step === "selected" && "Selected"}
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        <div className="grid gap-2 text-xs text-slate-600 dark:text-slate-300 sm:grid-cols-2">
+                          <p>Availability: {app.availabilityStatus === "yes" ? "Available now" : app.availabilityStatus === "no" ? `Available from ${app.joiningDate ? new Date(app.joiningDate).toLocaleDateString() : "-"}` : "-"}</p>
+                          {app.attachedResumePath && (
+                            <a href={buildAssetUrl(app.attachedResumePath)} target="_blank" rel="noreferrer" className="text-blue-700 hover:underline dark:text-blue-300">
+                              View Attached Resume
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </SectionPanel>

@@ -45,6 +45,7 @@ export type CompanyApplication = {
     email?: string;
     mobile?: string;
     skills?: string[];
+    education?: string[];
     resume?: { score?: number };
   };
   internship: {
