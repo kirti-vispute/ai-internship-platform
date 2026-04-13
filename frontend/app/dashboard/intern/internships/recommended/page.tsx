@@ -14,7 +14,10 @@ import {
   Recommendation,
   fetchInternApplications,
   fetchInternProfile,
-  fetchInternRecommendations
+  fetchInternRecommendations,
+  fetchSavedInternships,
+  saveInternship,
+  unsaveInternship
 } from "@/lib/intern-portal";
 import { computeSkillMatch } from "@/lib/skill-normalizer";
 
@@ -28,6 +31,7 @@ export default function RecommendedInternshipsPage() {
   const [applyError, setApplyError] = useState<string | null>(null);
   const [applySuccess, setApplySuccess] = useState<string | null>(null);
   const [selectedInternship, setSelectedInternship] = useState<InternshipListing | null>(null);
+  const [savedInternshipIds, setSavedInternshipIds] = useState<Set<string>>(new Set());
 
   const parsedSkills = profile?.resume?.parsed?.skills || [];
   const hasParsedResumeSkills = parsedSkills.length > 0;
@@ -41,11 +45,12 @@ export default function RecommendedInternshipsPage() {
         const loadedProfile = await fetchInternProfile();
         setProfile(loadedProfile);
 
-        const [loadedApplications, loadedRecommendations] = await Promise.all([
+        const [loadedApplications, loadedRecommendations, loadedSaved] = await Promise.all([
           fetchInternApplications(true),
           loadedProfile.resumeUploaded && (loadedProfile.resume?.parsed?.skills || []).length > 0
             ? fetchInternRecommendations(loadedProfile.resume.parsed?.skills || [], true)
-            : Promise.resolve([] as Recommendation[])
+            : Promise.resolve([] as Recommendation[]),
+          fetchSavedInternships(true)
         ]);
 
         setRecommendations(loadedRecommendations);
@@ -57,6 +62,7 @@ export default function RecommendedInternshipsPage() {
           }
         });
         setAppliedInternshipIds(appliedIds);
+        setSavedInternshipIds(new Set((loadedSaved || []).map((item) => String(item._id))));
       } catch (err) {
         setError((err as Error).message || "Failed to load recommendations.");
       } finally {
@@ -119,6 +125,29 @@ export default function RecommendedInternshipsPage() {
     });
   }
 
+  async function toggleSave(internship: Recommendation["internship"]) {
+    try {
+      const internshipId = internship._id;
+      const isSaved = savedInternshipIds.has(internshipId);
+      if (isSaved) {
+        await unsaveInternship(internshipId);
+        setSavedInternshipIds((prev) => {
+          const next = new Set(prev);
+          next.delete(internshipId);
+          return next;
+        });
+        setApplySuccess(`Removed ${internship.role} from saved internships.`);
+      } else {
+        await saveInternship(internshipId);
+        setSavedInternshipIds((prev) => new Set([...prev, internshipId]));
+        setApplySuccess(`Saved ${internship.role}.`);
+      }
+      setApplyError(null);
+    } catch (err) {
+      setApplyError((err as Error).message || "Failed to update saved internships.");
+    }
+  }
+
   function handleLogout() {
     clearAuthSession();
     router.push("/auth/intern");
@@ -150,6 +179,7 @@ export default function RecommendedInternshipsPage() {
                 {liveRecommendations.map((item) => {
                   const internshipId = item.internship._id;
                   const alreadyApplied = appliedInternshipIds.has(internshipId);
+                  const isSaved = savedInternshipIds.has(internshipId);
                   return (
                     <div key={internshipId} className="surface-subtle p-3.5">
                       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -161,6 +191,9 @@ export default function RecommendedInternshipsPage() {
                           <p className="rounded-full bg-primary-100/80 px-2 py-1 text-xs font-semibold text-primary-700 dark:bg-primary-900/40 dark:text-primary-300">
                             Overall Score {item.overallRecommendationScore}%
                           </p>
+                          <Button type="button" size="sm" variant="secondary" onClick={() => toggleSave(item.internship)}>
+                            {isSaved ? "Unsave" : "Save"}
+                          </Button>
                           <Button
                             type="button"
                             size="sm"

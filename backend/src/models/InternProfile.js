@@ -1,4 +1,4 @@
-﻿const mongoose = require("mongoose");
+const mongoose = require("mongoose");
 
 const internProfileSchema = new mongoose.Schema(
   {
@@ -21,6 +21,7 @@ const internProfileSchema = new mongoose.Schema(
     summary: { type: String, default: "", trim: true },
     interests: [{ type: String, trim: true }],
     completedCourses: [{ type: String, trim: true }],
+    savedInternships: [{ type: mongoose.Schema.Types.ObjectId, ref: "Internship" }],
     resume: {
       filePath: { type: String, default: "" },
       text: { type: String, default: "" },

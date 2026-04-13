@@ -13,7 +13,10 @@ import {
   InternProfile,
   fetchActiveInternships,
   fetchInternApplications,
-  fetchInternProfile
+  fetchInternProfile,
+  fetchSavedInternships,
+  saveInternship,
+  unsaveInternship
 } from "@/lib/intern-portal";
 import { normalizeSkillList, normalizeSkillValue } from "@/lib/skill-normalizer";
 
@@ -28,6 +31,7 @@ export default function SearchInternshipsPage() {
   const [applyError, setApplyError] = useState<string | null>(null);
   const [applySuccess, setApplySuccess] = useState<string | null>(null);
   const [selectedInternship, setSelectedInternship] = useState<InternshipListing | null>(null);
+  const [savedInternshipIds, setSavedInternshipIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     async function load() {
@@ -35,10 +39,11 @@ export default function SearchInternshipsPage() {
         setLoading(true);
         setError(null);
 
-        const [loadedProfile, loadedInternships, loadedApplications] = await Promise.all([
+        const [loadedProfile, loadedInternships, loadedApplications, loadedSaved] = await Promise.all([
           fetchInternProfile(),
           fetchActiveInternships(true),
-          fetchInternApplications(true)
+          fetchInternApplications(true),
+          fetchSavedInternships(true)
         ]);
 
         setProfile(loadedProfile);
@@ -52,6 +57,7 @@ export default function SearchInternshipsPage() {
           }
         });
         setAppliedInternshipIds(appliedIds);
+        setSavedInternshipIds(new Set((loadedSaved || []).map((item) => String(item._id))));
       } catch (err) {
         setError((err as Error).message || "Failed to load internships.");
       } finally {
@@ -86,6 +92,29 @@ export default function SearchInternshipsPage() {
     setApplyError(null);
     setApplySuccess(null);
     setSelectedInternship(item);
+  }
+
+  async function toggleSave(item: InternshipListing) {
+    try {
+      const internshipId = item._id;
+      const isSaved = savedInternshipIds.has(internshipId);
+      if (isSaved) {
+        await unsaveInternship(internshipId);
+        setSavedInternshipIds((prev) => {
+          const next = new Set(prev);
+          next.delete(internshipId);
+          return next;
+        });
+        setApplySuccess(`Removed ${item.role} from saved internships.`);
+      } else {
+        await saveInternship(internshipId);
+        setSavedInternshipIds((prev) => new Set([...prev, internshipId]));
+        setApplySuccess(`Saved ${item.role}.`);
+      }
+      setApplyError(null);
+    } catch (err) {
+      setApplyError((err as Error).message || "Failed to update saved internships.");
+    }
   }
 
   function handleLogout() {
@@ -123,6 +152,7 @@ export default function SearchInternshipsPage() {
                 {filtered.map((item) => {
                   const internshipId = item._id;
                   const alreadyApplied = appliedInternshipIds.has(internshipId);
+                  const isSaved = savedInternshipIds.has(internshipId);
                   return (
                     <div key={internshipId} className="surface-subtle px-4 py-3">
                       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -134,15 +164,20 @@ export default function SearchInternshipsPage() {
                             Required skills: {(item.skillsRequired || []).length > 0 ? item.skillsRequired?.join(", ") : "Not specified"}
                           </p>
                         </div>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant={alreadyApplied ? "secondary" : "primary"}
-                          disabled={alreadyApplied}
-                          onClick={() => openApplyModal(item)}
-                        >
-                          {alreadyApplied ? "Applied" : "Apply"}
-                        </Button>
+                        <div className="flex gap-2">
+                          <Button type="button" size="sm" variant="secondary" onClick={() => toggleSave(item)}>
+                            {isSaved ? "Unsave" : "Save"}
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant={alreadyApplied ? "secondary" : "primary"}
+                            disabled={alreadyApplied}
+                            onClick={() => openApplyModal(item)}
+                          >
+                            {alreadyApplied ? "Applied" : "Apply"}
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   );

@@ -6,7 +6,7 @@ import { RoleDashboardGuard } from "@/components/ui/role-dashboard-guard";
 import { InternShell } from "@/components/dashboard/intern-shell";
 import { SectionPanel } from "@/components/dashboard/section-panel";
 import { clearAuthSession } from "@/lib/session";
-import { Application, InternProfile, fetchInternApplications, fetchInternProfile, openApplicationResume } from "@/lib/intern-portal";
+import { Application, InternProfile, fetchInternApplications, fetchInternProfile } from "@/lib/intern-portal";
 
 const TIMELINE_STEPS = ["applied", "reviewed", "shortlisted", "interview_scheduled", "interview_completed", "selected", "rejected"] as const;
 
@@ -31,7 +31,6 @@ export default function TrackProgressPage() {
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [resumeError, setResumeError] = useState<string | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -137,26 +136,8 @@ export default function TrackProgressPage() {
 
                         <div className="grid gap-2 text-xs text-slate-600 dark:text-slate-300 sm:grid-cols-2">
                           <p>Availability: {app.availabilityStatus === "yes" ? "Available now" : app.availabilityStatus === "no" ? `Available from ${app.joiningDate ? new Date(app.joiningDate).toLocaleDateString() : "-"}` : "-"}</p>
-                          {app.attachedResumePath ? (
-                            <button
-                              type="button"
-                              className="cursor-pointer text-left font-medium text-blue-700 hover:underline dark:text-blue-300"
-                              onClick={async () => {
-                                try {
-                                  setResumeError(null);
-                                  await openApplicationResume(app._id);
-                                } catch (e) {
-                                  setResumeError((e as Error).message || "Resume not available");
-                                }
-                              }}
-                            >
-                              Open Attached Resume
-                            </button>
-                          ) : (
-                            <span className="text-slate-500 dark:text-slate-400">Resume not available</span>
-                          )}
+                          <p>Current Stage: <span className="font-semibold capitalize">{app.status.replace(/_/g, " ")}</span></p>
                         </div>
-                        {resumeError && <p className="text-xs text-rose-700 dark:text-rose-300">{resumeError}</p>}
                       </div>
                     );
                   })}

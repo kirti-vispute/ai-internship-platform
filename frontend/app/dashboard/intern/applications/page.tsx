@@ -68,24 +68,22 @@ export default function InternApplicationsPage() {
                   title={app.internship?.role || "Internship"}
                   subtitle={`${app.internship?.company?.companyName || "Company"}${app.internship?.location ? ` - ${app.internship.location}` : ""}`}
                 >
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <div>
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                    <div className="surface-subtle px-3 py-2.5">
                       <p className="text-xs uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">Current Status</p>
-                      <p className="text-sm font-semibold capitalize text-slate-900 dark:text-slate-100">{app.status}</p>
-                      <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">Relevance Score: {app.relevanceScore ?? app.matchScore ?? 0}%</p>
-                      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Applied: {app.appliedAt ? new Date(app.appliedAt).toLocaleDateString() : "-"}</p>
+                      <p className="mt-1 inline-flex rounded-full bg-primary-100 px-2 py-1 text-xs font-semibold capitalize text-primary-700 dark:bg-primary-900/40 dark:text-primary-300">{app.status.replace(/_/g, " ")}</p>
                     </div>
-                    <div>
-                      <p className="text-xs uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">Applied Stages</p>
-                      <ul className="mt-1 space-y-1 text-xs text-slate-700 dark:text-slate-300">
-                        {(app.stageHistory || []).length === 0 && <li>No stage updates yet.</li>}
-                        {(app.stageHistory || []).map((stage, idx) => (
-                          <li key={`${stage.stage}-${idx}`} className="surface-subtle px-2 py-1">
-                            <span className="font-semibold capitalize">{stage.stage}</span>
-                            {stage.note ? ` - ${stage.note}` : ""}
-                          </li>
-                        ))}
-                      </ul>
+                    <div className="surface-subtle px-3 py-2.5">
+                      <p className="text-xs uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">Applied On</p>
+                      <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">{app.appliedAt ? new Date(app.appliedAt).toLocaleDateString() : "-"}</p>
+                    </div>
+                    <div className="surface-subtle px-3 py-2.5">
+                      <p className="text-xs uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">Relevance Score</p>
+                      <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">{app.relevanceScore ?? app.matchScore ?? 0}%</p>
+                    </div>
+                    <div className="surface-subtle px-3 py-2.5">
+                      <p className="text-xs uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">Work Mode / Location</p>
+                      <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">{app.internship?.location || "Not specified"}</p>
                     </div>
                   </div>
                 </SectionPanel>

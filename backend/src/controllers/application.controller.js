@@ -28,6 +28,14 @@ function normalizeResumePath(filePath = "") {
   return normalized;
 }
 
+function resolveAbsoluteResumePath(filePath = "") {
+  const normalized = normalizeResumePath(filePath);
+  if (!normalized) return "";
+  const absolute = path.join(__dirname, "../..", normalized);
+  if (!fs.existsSync(absolute)) return "";
+  return absolute;
+}
+
 exports.getApplicationResume = asyncHandler(async (req, res) => {
   const application = await Application.findById(req.params.id).select("attachedResumePath internId intern companyId company");
   if (!application) {
@@ -49,14 +57,15 @@ exports.getApplicationResume = asyncHandler(async (req, res) => {
     return res.status(403).json({ message: "Not allowed to access this resume" });
   }
 
-  const normalized = normalizeResumePath(application.attachedResumePath);
-  if (!normalized) {
-    return res.status(404).json({ message: "Resume not available" });
-  }
-  const absolutePath = path.join(__dirname, "../..", normalized);
-  if (!fs.existsSync(absolutePath)) {
-    return res.status(404).json({ message: "Resume not available" });
+  const attachedResumeAbsolutePath = resolveAbsoluteResumePath(application.attachedResumePath);
+  if (attachedResumeAbsolutePath) {
+    return res.sendFile(attachedResumeAbsolutePath);
   }
 
-  return res.sendFile(absolutePath);
+  const internProfile = await InternProfile.findById(application.internId || application.intern).select("resume.filePath");
+  const fallbackResumeAbsolutePath = resolveAbsoluteResumePath(internProfile?.resume?.filePath);
+  if (!fallbackResumeAbsolutePath) {
+    return res.status(404).json({ message: "Resume not available" });
+  }
+  return res.sendFile(fallbackResumeAbsolutePath);
 });

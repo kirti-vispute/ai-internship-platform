@@ -228,6 +228,29 @@ export async function fetchInternApplications(force = false) {
   return applications;
 }
 
+export async function fetchSavedInternships(force = false) {
+  if (!force) {
+    const cached = getCache<InternshipListing[]>("intern:saved");
+    if (cached) return cached;
+  }
+  const response = await apiRequest<{ internships: InternshipListing[] }>("/api/intern/saved-internships");
+  const internships = response.internships || [];
+  setCache("intern:saved", internships);
+  return internships;
+}
+
+export async function saveInternship(internshipId: string) {
+  const response = await apiRequest<{ message: string }>(`/api/intern/saved-internships/${internshipId}`, { method: "POST" });
+  cacheStore.delete("intern:saved");
+  return response;
+}
+
+export async function unsaveInternship(internshipId: string) {
+  const response = await apiRequest<{ message: string }>(`/api/intern/saved-internships/${internshipId}`, { method: "DELETE" });
+  cacheStore.delete("intern:saved");
+  return response;
+}
+
 export function buildAssetUrl(relativePath: string) {
   let normalized = String(relativePath || "").trim().replace(/\\/g, "/").replace(/^\/+/, "");
   const uploadsIdx = normalized.indexOf("/uploads/");

@@ -22,10 +22,25 @@ export type CompanyInternship = {
   skillsRequired: string[];
   prioritySkills: string[];
   stipend?: string;
+  perks?: string;
+  openings?: number | null;
   duration?: string;
+  internshipType?: string;
+  department?: string;
   location?: string;
+  startDate?: string;
+  applicationDeadline?: string;
   mode?: "remote" | "on-site" | "hybrid" | "";
   responsibilities?: string;
+  eligibilityCriteria?: string;
+  educationQualification?: string;
+  degreePreferences?: string;
+  minimumCgpa?: string;
+  experienceRequirement?: string;
+  selectionProcess?: string;
+  interviewRoundsInfo?: string;
+  additionalInstructions?: string;
+  hrContact?: string;
   description: string;
   isActive: boolean;
   createdAt?: string;
@@ -47,7 +62,7 @@ export type CompanyApplication = {
     mobile?: string;
     skills?: string[];
     education?: string[];
-    resume?: { score?: number };
+    resume?: { score?: number; filePath?: string };
   };
   internship: {
     _id?: string;
@@ -175,10 +190,25 @@ export async function postCompanyInternship(payload: {
   skillsRequired?: string[];
   prioritySkills?: string[];
   stipend?: string;
+  perks?: string;
+  openings?: number;
   duration?: string;
+  internshipType?: string;
+  department?: string;
   location?: string;
+  startDate?: string;
+  applicationDeadline?: string;
   mode?: string;
   responsibilities?: string;
+  eligibilityCriteria?: string;
+  educationQualification?: string;
+  degreePreferences?: string;
+  minimumCgpa?: string;
+  experienceRequirement?: string;
+  selectionProcess?: string;
+  interviewRoundsInfo?: string;
+  additionalInstructions?: string;
+  hrContact?: string;
   description: string;
 }) {
   const response = await apiRequest<{ internship: CompanyInternship; message: string }>("/api/company/internships", {
@@ -187,6 +217,15 @@ export async function postCompanyInternship(payload: {
   });
   cacheStore.delete("company:internships");
   return response.internship;
+}
+
+export async function deleteCompanyInternship(internshipId: string) {
+  const response = await apiRequest<{ message: string }>(`/api/company/internships/${internshipId}`, {
+    method: "DELETE"
+  });
+  cacheStore.delete("company:internships");
+  cacheStore.delete("company:applications");
+  return response;
 }
 
 export async function fetchApplicantsForInternship(internshipId: string, force = false) {

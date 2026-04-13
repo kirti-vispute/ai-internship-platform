@@ -18,6 +18,7 @@ import {
   fetchCompanyMatchedCandidates,
   fetchCompanyProfile,
   openCompanyApplicationResume,
+  deleteCompanyInternship,
   postCompanyInternship,
   scheduleInterviewRound,
   updateCompanyApplicationStage,
@@ -111,7 +112,32 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
   const [interviewExpanded, setInterviewExpanded] = useState<Record<string, boolean>>({});
 
   const [profileForm, setProfileForm] = useState({ companyName: "", contactName: "", phone: "", website: "", address: "", description: "" });
-  const [postForm, setPostForm] = useState({ role: "", skillsRequired: "", prioritySkills: "", stipend: "", duration: "", location: "", mode: "", responsibilities: "", description: "" });
+  const [postForm, setPostForm] = useState({
+    role: "",
+    department: "",
+    internshipType: "",
+    mode: "",
+    location: "",
+    duration: "",
+    startDate: "",
+    applicationDeadline: "",
+    stipend: "",
+    perks: "",
+    openings: "",
+    skillsRequired: "",
+    prioritySkills: "",
+    description: "",
+    responsibilities: "",
+    eligibilityCriteria: "",
+    educationQualification: "",
+    degreePreferences: "",
+    minimumCgpa: "",
+    experienceRequirement: "",
+    selectionProcess: "",
+    interviewRoundsInfo: "",
+    additionalInstructions: "",
+    hrContact: ""
+  });
 
   useEffect(() => {
     async function load() {
@@ -244,16 +270,53 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
         skillsRequired: toList(postForm.skillsRequired),
         prioritySkills: toList(postForm.prioritySkills),
         stipend: postForm.stipend,
+        perks: postForm.perks,
+        openings: Number(postForm.openings) || undefined,
         duration: postForm.duration,
         location: postForm.location,
+        internshipType: postForm.internshipType,
+        department: postForm.department,
+        startDate: postForm.startDate,
+        applicationDeadline: postForm.applicationDeadline,
         mode: postForm.mode,
-        responsibilities: postForm.responsibilities
+        responsibilities: postForm.responsibilities,
+        eligibilityCriteria: postForm.eligibilityCriteria,
+        educationQualification: postForm.educationQualification,
+        degreePreferences: postForm.degreePreferences,
+        minimumCgpa: postForm.minimumCgpa,
+        experienceRequirement: postForm.experienceRequirement,
+        selectionProcess: postForm.selectionProcess,
+        interviewRoundsInfo: postForm.interviewRoundsInfo,
+        additionalInstructions: postForm.additionalInstructions,
+        hrContact: postForm.hrContact
       });
       setInternships(await fetchCompanyInternships(true));
       setSuccess("Internship posted successfully.");
-      setPostForm({ role: "", skillsRequired: "", prioritySkills: "", stipend: "", duration: "", location: "", mode: "", responsibilities: "", description: "" });
+      setPostForm({
+        role: "", department: "", internshipType: "", mode: "", location: "", duration: "", startDate: "", applicationDeadline: "",
+        stipend: "", perks: "", openings: "", skillsRequired: "", prioritySkills: "", description: "", responsibilities: "",
+        eligibilityCriteria: "", educationQualification: "", degreePreferences: "", minimumCgpa: "", experienceRequirement: "",
+        selectionProcess: "", interviewRoundsInfo: "", additionalInstructions: "", hrContact: ""
+      });
     } catch (e) {
       setError((e as Error).message || "Failed to post internship.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function removeInternship(internshipId: string) {
+    const confirmed = window.confirm("Are you sure you want to delete this internship?");
+    if (!confirmed) return;
+    try {
+      setSaving(true);
+      setError(null);
+      await deleteCompanyInternship(internshipId);
+      setInternships((prev) => prev.filter((item) => item._id !== internshipId));
+      setApps(await fetchCompanyApplications(true));
+      setSuccess("Internship deleted successfully.");
+    } catch (e) {
+      setError((e as Error).message || "Failed to delete internship.");
     } finally {
       setSaving(false);
     }
@@ -355,7 +418,7 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
                   <div className="surface-subtle px-3 py-2 text-xs text-slate-700 dark:text-slate-300"><span className="font-semibold">Applied:</span> {fmtDate(a.createdAt)}</div>
                   <div className="surface-subtle px-3 py-2 text-xs text-slate-700 dark:text-slate-300"><span className="font-semibold">Availability:</span> {a.availabilityStatus === "yes" ? "Available now" : a.availabilityStatus === "no" ? "Not immediate" : "-"}</div>
                   <div className="surface-subtle px-3 py-2 text-xs text-slate-700 dark:text-slate-300"><span className="font-semibold">Available From:</span> {fmtDate(a.joiningDate)}</div>
-                  <div className="surface-subtle px-3 py-2 text-xs text-slate-700 dark:text-slate-300"><span className="font-semibold">Resume:</span> {a.attachedResumePath ? "Attached" : "Not available"}</div>
+                  <div className="surface-subtle px-3 py-2 text-xs text-slate-700 dark:text-slate-300"><span className="font-semibold">Resume:</span> {a.attachedResumePath ? "Application Attached" : a.intern?.resume?.filePath ? "Profile Resume" : "Not available"}</div>
                 </div>
 
                 <div className="space-y-2">
@@ -413,7 +476,7 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
                         setResumeError((e as Error).message || "Resume not available");
                       }
                     }}
-                    disabled={saving || !a.attachedResumePath}
+                    disabled={saving || (!a.attachedResumePath && !a.intern?.resume?.filePath)}
                   >
                     View Resume
                   </Button>
@@ -540,9 +603,84 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
       case "verification":
         return <SectionPanel title="Verification Status" subtitle="Current verification state."><div className="surface-subtle px-4 py-3 text-sm text-slate-700 dark:text-slate-300">Status: {summary.verification.toUpperCase()}</div></SectionPanel>;
       case "hiring-post":
-        return <SectionPanel title="Post Internship" subtitle="Create a new internship posting."><form className="space-y-4" onSubmit={createInternship}><div className="grid gap-4 sm:grid-cols-2"><input className={field} placeholder="Role" value={postForm.role} onChange={(e) => setPostForm((p) => ({ ...p, role: e.target.value }))} /><input className={field} placeholder="Location" value={postForm.location} onChange={(e) => setPostForm((p) => ({ ...p, location: e.target.value }))} /><input className={field} placeholder="Mode (remote/on-site/hybrid)" value={postForm.mode} onChange={(e) => setPostForm((p) => ({ ...p, mode: e.target.value }))} /><input className={field} placeholder="Skills Required (comma separated)" value={postForm.skillsRequired} onChange={(e) => setPostForm((p) => ({ ...p, skillsRequired: e.target.value }))} /><input className={field} placeholder="Priority Skills (comma separated)" value={postForm.prioritySkills} onChange={(e) => setPostForm((p) => ({ ...p, prioritySkills: e.target.value }))} /><input className={field} placeholder="Stipend" value={postForm.stipend} onChange={(e) => setPostForm((p) => ({ ...p, stipend: e.target.value }))} /><input className={field} placeholder="Duration" value={postForm.duration} onChange={(e) => setPostForm((p) => ({ ...p, duration: e.target.value }))} /><textarea className={`${field} min-h-24 sm:col-span-2`} placeholder="Role / Responsibilities" value={postForm.responsibilities} onChange={(e) => setPostForm((p) => ({ ...p, responsibilities: e.target.value }))} /><textarea className={`${field} min-h-28 sm:col-span-2`} placeholder="Description" value={postForm.description} onChange={(e) => setPostForm((p) => ({ ...p, description: e.target.value }))} /></div><Button type="submit" disabled={saving}>{saving ? "Posting..." : "Post Internship"}</Button></form></SectionPanel>;
+        return (
+          <SectionPanel title="Post Internship" subtitle="Create a formal internship posting with complete role details.">
+            <form className="space-y-6" onSubmit={createInternship}>
+              <div className="space-y-2">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">Basic Internship Information</p>
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  <input className={field} placeholder="Internship Title" value={postForm.role} onChange={(e) => setPostForm((p) => ({ ...p, role: e.target.value }))} />
+                  <input className={field} placeholder="Department / Domain" value={postForm.department} onChange={(e) => setPostForm((p) => ({ ...p, department: e.target.value }))} />
+                  <input className={field} placeholder="Internship Type" value={postForm.internshipType} onChange={(e) => setPostForm((p) => ({ ...p, internshipType: e.target.value }))} />
+                  <input className={field} placeholder="Work Mode (remote/on-site/hybrid)" value={postForm.mode} onChange={(e) => setPostForm((p) => ({ ...p, mode: e.target.value }))} />
+                  <input className={field} placeholder="Location" value={postForm.location} onChange={(e) => setPostForm((p) => ({ ...p, location: e.target.value }))} />
+                  <input className={field} placeholder="Duration (e.g. 3 months)" value={postForm.duration} onChange={(e) => setPostForm((p) => ({ ...p, duration: e.target.value }))} />
+                  <input type="date" className={field} value={postForm.startDate} onChange={(e) => setPostForm((p) => ({ ...p, startDate: e.target.value }))} />
+                  <input type="date" className={field} value={postForm.applicationDeadline} onChange={(e) => setPostForm((p) => ({ ...p, applicationDeadline: e.target.value }))} />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">Compensation & Openings</p>
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  <input className={field} placeholder="Stipend" value={postForm.stipend} onChange={(e) => setPostForm((p) => ({ ...p, stipend: e.target.value }))} />
+                  <input className={field} placeholder="Perks / Benefits" value={postForm.perks} onChange={(e) => setPostForm((p) => ({ ...p, perks: e.target.value }))} />
+                  <input type="number" min={1} className={field} placeholder="Number of Openings" value={postForm.openings} onChange={(e) => setPostForm((p) => ({ ...p, openings: e.target.value }))} />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">Role Information</p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <textarea className={`${field} min-h-24 sm:col-span-2`} placeholder="Job Description" value={postForm.description} onChange={(e) => setPostForm((p) => ({ ...p, description: e.target.value }))} />
+                  <textarea className={`${field} min-h-24 sm:col-span-2`} placeholder="Roles & Responsibilities" value={postForm.responsibilities} onChange={(e) => setPostForm((p) => ({ ...p, responsibilities: e.target.value }))} />
+                  <input className={field} placeholder="Required Skills (comma separated)" value={postForm.skillsRequired} onChange={(e) => setPostForm((p) => ({ ...p, skillsRequired: e.target.value }))} />
+                  <input className={field} placeholder="Preferred Skills (comma separated)" value={postForm.prioritySkills} onChange={(e) => setPostForm((p) => ({ ...p, prioritySkills: e.target.value }))} />
+                  <textarea className={`${field} min-h-20 sm:col-span-2`} placeholder="Eligibility Criteria" value={postForm.eligibilityCriteria} onChange={(e) => setPostForm((p) => ({ ...p, eligibilityCriteria: e.target.value }))} />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">Candidate Preferences & Process</p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <input className={field} placeholder="Education Qualification" value={postForm.educationQualification} onChange={(e) => setPostForm((p) => ({ ...p, educationQualification: e.target.value }))} />
+                  <input className={field} placeholder="Branch / Degree Preferences" value={postForm.degreePreferences} onChange={(e) => setPostForm((p) => ({ ...p, degreePreferences: e.target.value }))} />
+                  <input className={field} placeholder="Minimum CGPA (if applicable)" value={postForm.minimumCgpa} onChange={(e) => setPostForm((p) => ({ ...p, minimumCgpa: e.target.value }))} />
+                  <input className={field} placeholder="Experience Requirement" value={postForm.experienceRequirement} onChange={(e) => setPostForm((p) => ({ ...p, experienceRequirement: e.target.value }))} />
+                  <textarea className={`${field} min-h-20 sm:col-span-2`} placeholder="Selection Process" value={postForm.selectionProcess} onChange={(e) => setPostForm((p) => ({ ...p, selectionProcess: e.target.value }))} />
+                  <textarea className={`${field} min-h-20 sm:col-span-2`} placeholder="Interview Rounds" value={postForm.interviewRoundsInfo} onChange={(e) => setPostForm((p) => ({ ...p, interviewRoundsInfo: e.target.value }))} />
+                  <textarea className={`${field} min-h-20 sm:col-span-2`} placeholder="Additional Instructions" value={postForm.additionalInstructions} onChange={(e) => setPostForm((p) => ({ ...p, additionalInstructions: e.target.value }))} />
+                  <input className={`${field} sm:col-span-2`} placeholder="HR Contact Details" value={postForm.hrContact} onChange={(e) => setPostForm((p) => ({ ...p, hrContact: e.target.value }))} />
+                </div>
+              </div>
+
+              <Button type="submit" disabled={saving}>{saving ? "Posting..." : "Publish Internship"}</Button>
+            </form>
+          </SectionPanel>
+        );
       case "hiring-active":
-        return <SectionPanel title="Active Internships" subtitle="Live internships list.">{internships.filter((i) => i.isActive).length === 0 ? <Empty text="No internships posted yet." /> : <div className="space-y-2">{internships.filter((i) => i.isActive).map((i) => <div key={i._id} className="surface-subtle px-4 py-3"><p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{i.role}</p><p className="text-xs text-slate-600 dark:text-slate-300">{i.location || "Location not specified"}</p><p className="text-xs text-slate-500 dark:text-slate-400">Posted: {fmtDate(i.createdAt)}</p></div>)}</div>}</SectionPanel>;
+        return (
+          <SectionPanel title="Active Internships" subtitle="Live internships list.">
+            {internships.filter((i) => i.isActive).length === 0 ? (
+              <Empty text="No internships posted yet." />
+            ) : (
+              <div className="space-y-3">
+                {internships.filter((i) => i.isActive).map((i) => (
+                  <div key={i._id} className="surface-subtle flex flex-wrap items-start justify-between gap-3 px-4 py-3">
+                    <div>
+                      <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{i.role}</p>
+                      <p className="text-xs text-slate-600 dark:text-slate-300">{i.location || "Location not specified"} • {i.mode || "Mode not specified"}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">Posted: {fmtDate(i.createdAt)}</p>
+                    </div>
+                    <Button type="button" size="sm" variant="secondary" onClick={() => removeInternship(i._id)} disabled={saving}>
+                      Delete Internship
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </SectionPanel>
+        );
       case "hiring-applicants":
         return applicantPanel(apps, "Applicants", "All applicants across internships.", "No applicants yet.");
       case "hiring-shortlisted":

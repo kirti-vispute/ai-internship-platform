@@ -17,6 +17,9 @@ router.get("/internships", internController.getActiveInternships);
 router.get("/recommendations", internController.getRecommendations);
 router.post("/apply/:internshipId", internController.applyToInternship);
 router.get("/applications", internController.getMyApplications);
+router.get("/saved-internships", internController.getSavedInternships);
+router.post("/saved-internships/:internshipId", internController.saveInternship);
+router.delete("/saved-internships/:internshipId", internController.unsaveInternship);
 router.get("/feedback", internController.getMyFeedback);
 router.post("/report-company", internController.reportCompany);
 

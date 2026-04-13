@@ -47,7 +47,33 @@ exports.updateProfile = asyncHandler(async (req, res) => {
 exports.postInternship = asyncHandler(async (req, res) => {
   const company = await getCompanyProfileByUserId(req.user._id);
 
-  const { role, skillsRequired, prioritySkills, stipend, duration, location, mode, responsibilities, description } = req.body;
+  const {
+    role,
+    skillsRequired,
+    prioritySkills,
+    stipend,
+    perks,
+    openings,
+    duration,
+    internshipType,
+    department,
+    location,
+    startDate,
+    applicationDeadline,
+    mode,
+    responsibilities,
+    eligibilityCriteria,
+    preferredSkillsText,
+    educationQualification,
+    degreePreferences,
+    minimumCgpa,
+    experienceRequirement,
+    selectionProcess,
+    interviewRoundsInfo,
+    additionalInstructions,
+    hrContact,
+    description
+  } = req.body;
 
   if (!role || !description) {
     throw new AppError("role and description are required", 400);
@@ -59,10 +85,26 @@ exports.postInternship = asyncHandler(async (req, res) => {
     skillsRequired: normalizeIncomingSkills(skillsRequired),
     prioritySkills: normalizeIncomingSkills(prioritySkills),
     stipend: stipend || "",
+    perks: perks || "",
+    openings: typeof openings === "number" ? openings : null,
     duration: duration || "",
+    internshipType: internshipType || "",
+    department: department || "",
     location: location || "",
+    startDate: startDate ? new Date(startDate) : null,
+    applicationDeadline: applicationDeadline ? new Date(applicationDeadline) : null,
     mode: normalizeMode(mode),
     responsibilities: responsibilities || "",
+    eligibilityCriteria: eligibilityCriteria || "",
+    preferredSkillsText: preferredSkillsText || "",
+    educationQualification: educationQualification || "",
+    degreePreferences: degreePreferences || "",
+    minimumCgpa: minimumCgpa || "",
+    experienceRequirement: experienceRequirement || "",
+    selectionProcess: selectionProcess || "",
+    interviewRoundsInfo: interviewRoundsInfo || "",
+    additionalInstructions: additionalInstructions || "",
+    hrContact: hrContact || "",
     description,
     isActive: true
   });
@@ -84,14 +126,22 @@ exports.updateMyInternship = asyncHandler(async (req, res) => {
     throw new AppError("Internship not found", 404);
   }
 
-  const allowed = ["role", "skillsRequired", "prioritySkills", "stipend", "duration", "location", "mode", "responsibilities", "description", "isActive"];
+  const allowed = [
+    "role", "skillsRequired", "prioritySkills", "stipend", "perks", "openings", "duration", "internshipType", "department",
+    "location", "startDate", "applicationDeadline", "mode", "responsibilities", "eligibilityCriteria", "preferredSkillsText",
+    "educationQualification", "degreePreferences", "minimumCgpa", "experienceRequirement", "selectionProcess",
+    "interviewRoundsInfo", "additionalInstructions", "hrContact", "description", "isActive"
+  ];
 
   allowed.forEach((field) => {
     if (req.body[field] !== undefined) {
       if (field === "skillsRequired" || field === "prioritySkills") {
         internship[field] = normalizeIncomingSkills(req.body[field]);
       } else {
-        internship[field] = field === "mode" ? normalizeMode(req.body[field]) : req.body[field];
+        if (field === "mode") internship[field] = normalizeMode(req.body[field]);
+        else if (field === "startDate" || field === "applicationDeadline") internship[field] = req.body[field] ? new Date(req.body[field]) : null;
+        else if (field === "openings") internship[field] = typeof req.body[field] === "number" ? req.body[field] : null;
+        else internship[field] = req.body[field];
       }
     }
   });

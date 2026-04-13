@@ -321,6 +321,42 @@ exports.getMyApplications = asyncHandler(async (req, res) => {
   res.json({ applications });
 });
 
+exports.getSavedInternships = asyncHandler(async (req, res) => {
+  const profile = await getInternProfileByUserId(req.user._id);
+  await profile.populate({
+    path: "savedInternships",
+    match: { isActive: true },
+    populate: { path: "company" }
+  });
+  res.json({ internships: profile.savedInternships || [] });
+});
+
+exports.saveInternship = asyncHandler(async (req, res) => {
+  const { internshipId } = req.params;
+  const profile = await getInternProfileByUserId(req.user._id);
+  const internship = await Internship.findOne({ _id: internshipId, isActive: true });
+  if (!internship) {
+    throw new AppError("Internship not found", 404);
+  }
+
+  const existing = (profile.savedInternships || []).some((item) => String(item) === String(internshipId));
+  if (existing) {
+    return res.json({ message: "Internship already saved" });
+  }
+
+  profile.savedInternships = [...(profile.savedInternships || []), internship._id];
+  await profile.save();
+  res.status(201).json({ message: "Internship saved" });
+});
+
+exports.unsaveInternship = asyncHandler(async (req, res) => {
+  const { internshipId } = req.params;
+  const profile = await getInternProfileByUserId(req.user._id);
+  profile.savedInternships = (profile.savedInternships || []).filter((item) => String(item) !== String(internshipId));
+  await profile.save();
+  res.json({ message: "Internship removed from saved list" });
+});
+
 exports.getMyFeedback = asyncHandler(async (req, res) => {
   const profile = await getInternProfileByUserId(req.user._id);
 
