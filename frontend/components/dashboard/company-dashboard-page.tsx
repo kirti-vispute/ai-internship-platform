@@ -474,7 +474,7 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
                           setStatusDrafts((prev) => ({ ...prev, [a._id]: normalizeApplicantStage(a.status) }));
                         }}
                       >
-                        View details
+                        View Details
                       </Button>
                     </div>
                   </div>
