@@ -1,4 +1,5 @@
-﻿const express = require("express");
+const express = require("express");
+const path = require("path");
 const helmet = require("helmet");
 const morgan = require("morgan");
 const cors = require("cors");
@@ -54,6 +55,7 @@ app.use(
 app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
 if (process.env.NODE_ENV !== "test") {
   app.use(morgan("dev"));

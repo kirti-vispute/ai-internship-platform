@@ -12,6 +12,13 @@ function normalizeIncomingSkills(value) {
   return toDisplaySkillList(normalizeSkillList(list));
 }
 
+function normalizeMode(value) {
+  const mode = String(value || "").trim().toLowerCase();
+  if (!mode) return "";
+  if (["remote", "on-site", "hybrid"].includes(mode)) return mode;
+  throw new AppError("mode must be one of remote, on-site, hybrid", 400);
+}
+
 async function getCompanyProfileByUserId(userId) {
   const company = await CompanyProfile.findOne({ user: userId });
   if (!company) {
@@ -40,7 +47,7 @@ exports.updateProfile = asyncHandler(async (req, res) => {
 exports.postInternship = asyncHandler(async (req, res) => {
   const company = await getCompanyProfileByUserId(req.user._id);
 
-  const { role, skillsRequired, prioritySkills, stipend, duration, location, description } = req.body;
+  const { role, skillsRequired, prioritySkills, stipend, duration, location, mode, responsibilities, description } = req.body;
 
   if (!role || !description) {
     throw new AppError("role and description are required", 400);
@@ -54,6 +61,8 @@ exports.postInternship = asyncHandler(async (req, res) => {
     stipend: stipend || "",
     duration: duration || "",
     location: location || "",
+    mode: normalizeMode(mode),
+    responsibilities: responsibilities || "",
     description,
     isActive: true
   });
@@ -75,14 +84,14 @@ exports.updateMyInternship = asyncHandler(async (req, res) => {
     throw new AppError("Internship not found", 404);
   }
 
-  const allowed = ["role", "skillsRequired", "prioritySkills", "stipend", "duration", "location", "description", "isActive"];
+  const allowed = ["role", "skillsRequired", "prioritySkills", "stipend", "duration", "location", "mode", "responsibilities", "description", "isActive"];
 
   allowed.forEach((field) => {
     if (req.body[field] !== undefined) {
       if (field === "skillsRequired" || field === "prioritySkills") {
         internship[field] = normalizeIncomingSkills(req.body[field]);
       } else {
-        internship[field] = req.body[field];
+        internship[field] = field === "mode" ? normalizeMode(req.body[field]) : req.body[field];
       }
     }
   });
@@ -99,7 +108,7 @@ exports.deleteMyInternship = asyncHandler(async (req, res) => {
     throw new AppError("Internship not found", 404);
   }
 
-  await Application.deleteMany({ internship: internship._id });
+  await Application.deleteMany({ $or: [{ internshipId: internship._id }, { internship: internship._id }] });
   res.json({ message: "Internship deleted" });
 });
 
@@ -111,7 +120,7 @@ exports.getApplicantsForInternship = asyncHandler(async (req, res) => {
     throw new AppError("Internship not found", 404);
   }
 
-  const applications = await Application.find({ internship: internship._id })
+  const applications = await Application.find({ $or: [{ internshipId: internship._id }, { internship: internship._id }], companyId: company._id })
     .populate("intern")
     .sort({ createdAt: -1 });
 
@@ -173,7 +182,7 @@ exports.getAiMatchedCandidates = asyncHandler(async (req, res) => {
     throw new AppError("Internship not found", 404);
   }
 
-  const applications = await Application.find({ internship: internship._id }).populate("intern");
+  const applications = await Application.find({ $or: [{ internshipId: internship._id }, { internship: internship._id }], companyId: company._id }).populate("intern");
   const profiles = applications.map((item) => item.intern).filter(Boolean);
 
   const ranked = rankApplicantsForInternship(internship, profiles);

@@ -1,4 +1,4 @@
-﻿const mongoose = require("mongoose");
+const mongoose = require("mongoose");
 
 const internshipSchema = new mongoose.Schema(
   {
@@ -13,6 +13,8 @@ const internshipSchema = new mongoose.Schema(
     stipend: { type: String, default: "" },
     duration: { type: String, default: "" },
     location: { type: String, default: "" },
+    mode: { type: String, enum: ["remote", "on-site", "hybrid", ""], default: "" },
+    responsibilities: { type: String, default: "", trim: true },
     description: { type: String, required: true, trim: true },
     isActive: { type: Boolean, default: true }
   },

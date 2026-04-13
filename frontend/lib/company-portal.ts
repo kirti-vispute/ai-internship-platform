@@ -1,4 +1,4 @@
-﻿import { apiRequest } from "@/lib/api-client";
+import { apiRequest } from "@/lib/api-client";
 
 export type CompanyProfile = {
   _id: string;
@@ -23,6 +23,8 @@ export type CompanyInternship = {
   stipend?: string;
   duration?: string;
   location?: string;
+  mode?: "remote" | "on-site" | "hybrid" | "";
+  responsibilities?: string;
   description: string;
   isActive: boolean;
   createdAt?: string;
@@ -33,6 +35,10 @@ export type CompanyApplication = {
   _id: string;
   status: string;
   matchScore: number;
+  relevanceScore?: number;
+  attachedResumePath?: string;
+  availabilityStatus?: "yes" | "no";
+  joiningDate?: string;
   intern?: {
     _id?: string;
     fullName?: string;
@@ -156,6 +162,8 @@ export async function postCompanyInternship(payload: {
   stipend?: string;
   duration?: string;
   location?: string;
+  mode?: string;
+  responsibilities?: string;
   description: string;
 }) {
   const response = await apiRequest<{ internship: CompanyInternship; message: string }>("/api/company/internships", {
@@ -238,5 +246,3 @@ export async function searchCandidates(query: string) {
   const response = await apiRequest<{ candidates: CandidateSearchResult[] }>(`/api/candidates/search?q=${encodeURIComponent(q)}`);
   return response.candidates || [];
 }
-
-

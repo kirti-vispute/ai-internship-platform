@@ -8,6 +8,7 @@ const CompanyProfile = require("../models/CompanyProfile");
 const asyncHandler = require("../utils/asyncHandler");
 const AppError = require("../utils/AppError");
 const { getSkillGap, recommendInternships } = require("../services/ai.service");
+const { computeApplicationRelevance } = require("../services/application-relevance.service");
 const { computeResumeScore } = require("../services/scorer.service");
 const { parseResumeFile } = require("../services/resume-parser.service");
 const { structuredResumeParse } = require("../services/resume-structured-parser.service");
@@ -195,6 +196,7 @@ exports.getRecommendations = asyncHandler(async (req, res) => {
 
 exports.applyToInternship = asyncHandler(async (req, res) => {
   const { internshipId } = req.params;
+  const { availabilityStatus, joiningDate } = req.body || {};
 
   const profile = await getInternProfileByUserId(req.user._id);
   const internship = await Internship.findById(internshipId).populate("company");
@@ -208,28 +210,97 @@ exports.applyToInternship = asyncHandler(async (req, res) => {
     throw new AppError("Internship company not found", 404);
   }
 
-  const existingApplication = await Application.findOne({ intern: profile._id, internship: internship._id });
+  const existingApplication = await Application.findOne({ internId: profile._id, internshipId: internship._id });
   if (existingApplication) {
     throw new AppError("You have already applied to this internship", 409);
   }
 
-  const internSkills = getParsedResumeSkills(profile);
-  const analysis = getSkillGap(internSkills, internship.skillsRequired || []);
+  const resumePath = String(profile?.resume?.filePath || "").trim();
+  if (!resumePath) {
+    throw new AppError("Please upload your resume in profile before applying.", 400);
+  }
 
-  const application = await Application.create({
-    intern: profile._id,
-    internship: internship._id,
-    matchScore: analysis.matchPercent,
-    stageHistory: [{ stage: "applied", note: "Application submitted" }]
+  if (!["yes", "no"].includes(String(availabilityStatus || "").toLowerCase())) {
+    throw new AppError("availabilityStatus must be either 'yes' or 'no'", 400);
+  }
+
+  const normalizedAvailability = String(availabilityStatus).toLowerCase();
+  let parsedJoiningDate = null;
+  if (normalizedAvailability === "no") {
+    if (!joiningDate) {
+      throw new AppError("When can you join? is required when availability is No", 400);
+    }
+    parsedJoiningDate = new Date(joiningDate);
+    if (Number.isNaN(parsedJoiningDate.getTime())) {
+      throw new AppError("Invalid joining date", 400);
+    }
+  }
+
+  const relevance = computeApplicationRelevance(profile, internship);
+
+  if (process.env.RECOMMENDATION_DEBUG === "true") {
+    // eslint-disable-next-line no-console
+    console.log("[application-relevance-debug]", JSON.stringify({
+      internshipId: internship._id,
+      internId: profile._id,
+      normalizedInternSkills: relevance.debug.normalizedInternSkills,
+      normalizedRequiredSkills: relevance.debug.normalizedRequiredSkills,
+      matchedRequiredSkills: relevance.matchedRequiredSkills,
+      missingRequiredSkills: relevance.missingRequiredSkills,
+      requiredSkillMatchPercent: relevance.requiredSkillMatchPercent,
+      relevanceScore: relevance.relevanceScore
+    }));
+  }
+
+  let application;
+  try {
+    application = await Application.create({
+      internId: profile._id,
+      internshipId: internship._id,
+      companyId: company._id,
+      intern: profile._id,
+      internship: internship._id,
+      company: company._id,
+      status: "applied",
+      appliedAt: new Date(),
+      attachedResumePath: resumePath,
+      availabilityStatus: normalizedAvailability,
+      joiningDate: parsedJoiningDate,
+      relevanceScore: relevance.relevanceScore,
+      matchScore: relevance.relevanceScore,
+      relevanceBreakdown: {
+        requiredSkillMatchPercent: relevance.requiredSkillMatchPercent,
+        preferredSkillMatchPercent: relevance.preferredSkillMatchPercent,
+        overallSkillScore: relevance.overallSkillScore,
+        matchedRequiredSkills: relevance.matchedRequiredSkills,
+        missingRequiredSkills: relevance.missingRequiredSkills,
+        weightedComponents: relevance.weightedComponents
+      },
+      stageHistory: [{ stage: "applied", note: "Application submitted" }]
+    });
+  } catch (error) {
+    if (error && error.code === 11000) {
+      throw new AppError("You have already applied to this internship", 409);
+    }
+    throw error;
+  }
+
+  res.status(201).json({
+    message: "Application submitted",
+    application,
+    relevance: {
+      relevanceScore: relevance.relevanceScore,
+      requiredSkillMatchPercent: relevance.requiredSkillMatchPercent,
+      preferredSkillMatchPercent: relevance.preferredSkillMatchPercent,
+      missingRequiredSkills: relevance.missingRequiredSkills
+    }
   });
-
-  res.status(201).json({ message: "Application submitted", application });
 });
 
 exports.getMyApplications = asyncHandler(async (req, res) => {
   const profile = await getInternProfileByUserId(req.user._id);
 
-  const applications = await Application.find({ intern: profile._id })
+  const applications = await Application.find({ $or: [{ internId: profile._id }, { intern: profile._id }] })
     .populate({
       path: "internship",
       populate: { path: "company" }
@@ -242,7 +313,7 @@ exports.getMyApplications = asyncHandler(async (req, res) => {
 exports.getMyFeedback = asyncHandler(async (req, res) => {
   const profile = await getInternProfileByUserId(req.user._id);
 
-  const applications = await Application.find({ intern: profile._id })
+  const applications = await Application.find({ $or: [{ internId: profile._id }, { intern: profile._id }] })
     .populate("internship")
     .select("internship hrFeedback status updatedAt");
 

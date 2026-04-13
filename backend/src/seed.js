@@ -1,4 +1,4 @@
-﻿require("dotenv").config();
+require("dotenv").config();
 
 const connectDB = require("./config/db");
 const User = require("./models/User");
@@ -76,9 +76,15 @@ async function runSeed() {
     const internship = internshipsByRole[applicationSeed.internshipRole];
 
     await Application.create({
+      internId: intern._id,
+      internshipId: internship._id,
+      companyId: internship.company,
       intern: intern._id,
       internship: internship._id,
+      company: internship.company,
       status: applicationSeed.status,
+      appliedAt: new Date(),
+      relevanceScore: applicationSeed.matchScore,
       matchScore: applicationSeed.matchScore,
       hrFeedback: applicationSeed.hrFeedback,
       stageHistory: [{ stage: "applied", note: "Seeded application" }, { stage: applicationSeed.status, note: "Seeded status" }]

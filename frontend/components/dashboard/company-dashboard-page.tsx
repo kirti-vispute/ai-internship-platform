@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -22,6 +22,7 @@ import {
   searchCandidates,
   CandidateSearchResult
 } from "@/lib/company-portal";
+import { buildAssetUrl } from "@/lib/intern-portal";
 
 export type CompanyDashboardView =
   | "overview"
@@ -93,7 +94,7 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
   const [searchError, setSearchError] = useState<string | null>(null);
 
   const [profileForm, setProfileForm] = useState({ companyName: "", contactName: "", phone: "", website: "", address: "", description: "" });
-  const [postForm, setPostForm] = useState({ role: "", skillsRequired: "", prioritySkills: "", stipend: "", duration: "", location: "", description: "" });
+  const [postForm, setPostForm] = useState({ role: "", skillsRequired: "", prioritySkills: "", stipend: "", duration: "", location: "", mode: "", responsibilities: "", description: "" });
 
   useEffect(() => {
     async function load() {
@@ -224,11 +225,13 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
         prioritySkills: toList(postForm.prioritySkills),
         stipend: postForm.stipend,
         duration: postForm.duration,
-        location: postForm.location
+        location: postForm.location,
+        mode: postForm.mode,
+        responsibilities: postForm.responsibilities
       });
       setInternships(await fetchCompanyInternships(true));
       setSuccess("Internship posted successfully.");
-      setPostForm({ role: "", skillsRequired: "", prioritySkills: "", stipend: "", duration: "", location: "", description: "" });
+      setPostForm({ role: "", skillsRequired: "", prioritySkills: "", stipend: "", duration: "", location: "", mode: "", responsibilities: "", description: "" });
     } catch (e) {
       setError((e as Error).message || "Failed to post internship.");
     } finally {
@@ -237,8 +240,8 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
   }
 
   function exportCsv() {
-    const rows = [["candidate", "email", "internship", "status", "matchScore", "createdAt"]];
-    apps.forEach((a) => rows.push([a.intern?.fullName || "", a.intern?.email || "", a.internship?.role || "", a.status || "", String(a.matchScore || 0), a.createdAt || ""]));
+    const rows = [["candidate", "email", "internship", "status", "relevanceScore", "createdAt"]];
+    apps.forEach((a) => rows.push([a.intern?.fullName || "", a.intern?.email || "", a.internship?.role || "", a.status || "", String(a.relevanceScore ?? a.matchScore ?? 0), a.createdAt || ""]));
     const csv = rows
       .map((row) => row.map((item) => (item.includes(",") || item.includes("\n") || item.includes('"') ? `"${item.replace(/"/g, '""')}"` : item)).join(","))
       .join("\n");
@@ -262,10 +265,18 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
                   <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{a.intern?.fullName || "Candidate"}</p>
                   <p className="text-xs text-slate-600 dark:text-slate-300">{a.intern?.email || "No email"}</p>
                   <p className="text-xs text-slate-500 dark:text-slate-400">{a.internship?.role || "Internship"}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Availability: {a.availabilityStatus === "yes" ? "Can join now" : a.availabilityStatus === "no" ? `Can join by ${fmtDate(a.joiningDate)}` : "-"}
+                  </p>
+                  {a.attachedResumePath && (
+                    <a href={buildAssetUrl(a.attachedResumePath)} target="_blank" rel="noreferrer" className="text-xs text-blue-700 hover:underline dark:text-blue-300">
+                      View attached resume
+                    </a>
+                  )}
                 </div>
                 <div className="text-right">
                   <p className="text-xs uppercase tracking-wide text-slate-500">{a.status}</p>
-                  <p className="text-xs text-slate-500">Match {a.matchScore || 0}%</p>
+                  <p className="text-xs text-slate-500">Relevance {a.relevanceScore ?? a.matchScore ?? 0}%</p>
                 </div>
               </div>
             ))}
@@ -308,7 +319,7 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
       case "verification":
         return <SectionPanel title="Verification Status" subtitle="Current verification state."><div className="surface-subtle px-4 py-3 text-sm text-slate-700 dark:text-slate-300">Status: {summary.verification.toUpperCase()}</div></SectionPanel>;
       case "hiring-post":
-        return <SectionPanel title="Post Internship" subtitle="Create a new internship posting."><form className="space-y-4" onSubmit={createInternship}><div className="grid gap-4 sm:grid-cols-2"><input className={field} placeholder="Role" value={postForm.role} onChange={(e) => setPostForm((p) => ({ ...p, role: e.target.value }))} /><input className={field} placeholder="Location" value={postForm.location} onChange={(e) => setPostForm((p) => ({ ...p, location: e.target.value }))} /><input className={field} placeholder="Skills Required (comma separated)" value={postForm.skillsRequired} onChange={(e) => setPostForm((p) => ({ ...p, skillsRequired: e.target.value }))} /><input className={field} placeholder="Priority Skills (comma separated)" value={postForm.prioritySkills} onChange={(e) => setPostForm((p) => ({ ...p, prioritySkills: e.target.value }))} /><input className={field} placeholder="Stipend" value={postForm.stipend} onChange={(e) => setPostForm((p) => ({ ...p, stipend: e.target.value }))} /><input className={field} placeholder="Duration" value={postForm.duration} onChange={(e) => setPostForm((p) => ({ ...p, duration: e.target.value }))} /><textarea className={`${field} min-h-28 sm:col-span-2`} placeholder="Description" value={postForm.description} onChange={(e) => setPostForm((p) => ({ ...p, description: e.target.value }))} /></div><Button type="submit" disabled={saving}>{saving ? "Posting..." : "Post Internship"}</Button></form></SectionPanel>;
+        return <SectionPanel title="Post Internship" subtitle="Create a new internship posting."><form className="space-y-4" onSubmit={createInternship}><div className="grid gap-4 sm:grid-cols-2"><input className={field} placeholder="Role" value={postForm.role} onChange={(e) => setPostForm((p) => ({ ...p, role: e.target.value }))} /><input className={field} placeholder="Location" value={postForm.location} onChange={(e) => setPostForm((p) => ({ ...p, location: e.target.value }))} /><input className={field} placeholder="Mode (remote/on-site/hybrid)" value={postForm.mode} onChange={(e) => setPostForm((p) => ({ ...p, mode: e.target.value }))} /><input className={field} placeholder="Skills Required (comma separated)" value={postForm.skillsRequired} onChange={(e) => setPostForm((p) => ({ ...p, skillsRequired: e.target.value }))} /><input className={field} placeholder="Priority Skills (comma separated)" value={postForm.prioritySkills} onChange={(e) => setPostForm((p) => ({ ...p, prioritySkills: e.target.value }))} /><input className={field} placeholder="Stipend" value={postForm.stipend} onChange={(e) => setPostForm((p) => ({ ...p, stipend: e.target.value }))} /><input className={field} placeholder="Duration" value={postForm.duration} onChange={(e) => setPostForm((p) => ({ ...p, duration: e.target.value }))} /><textarea className={`${field} min-h-24 sm:col-span-2`} placeholder="Role / Responsibilities" value={postForm.responsibilities} onChange={(e) => setPostForm((p) => ({ ...p, responsibilities: e.target.value }))} /><textarea className={`${field} min-h-28 sm:col-span-2`} placeholder="Description" value={postForm.description} onChange={(e) => setPostForm((p) => ({ ...p, description: e.target.value }))} /></div><Button type="submit" disabled={saving}>{saving ? "Posting..." : "Post Internship"}</Button></form></SectionPanel>;
       case "hiring-active":
         return <SectionPanel title="Active Internships" subtitle="Live internships list.">{internships.filter((i) => i.isActive).length === 0 ? <Empty text="No internships posted yet." /> : <div className="space-y-2">{internships.filter((i) => i.isActive).map((i) => <div key={i._id} className="surface-subtle px-4 py-3"><p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{i.role}</p><p className="text-xs text-slate-600 dark:text-slate-300">{i.location || "Location not specified"}</p><p className="text-xs text-slate-500 dark:text-slate-400">Posted: {fmtDate(i.createdAt)}</p></div>)}</div>}</SectionPanel>;
       case "hiring-applicants":
@@ -395,4 +406,3 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
     </RoleDashboardGuard>
   );
 }
-

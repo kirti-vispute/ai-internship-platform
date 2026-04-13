@@ -69,6 +69,14 @@ export type Application = {
   _id: string;
   status: string;
   matchScore: number;
+  relevanceScore?: number;
+  appliedAt?: string;
+  attachedResumePath?: string;
+  availabilityStatus?: "yes" | "no";
+  joiningDate?: string;
+  internId?: string;
+  internshipId?: string;
+  companyId?: string;
   internship: {
     _id?: string;
     role: string;
@@ -90,14 +98,33 @@ export type InternshipListing = {
   stipend?: string;
   duration?: string;
   description?: string;
-  company?: { companyName?: string };
+  mode?: "remote" | "on-site" | "hybrid" | "";
+  responsibilities?: string;
+  company?: {
+    _id?: string;
+    companyName?: string;
+    description?: string;
+    website?: string;
+    address?: string;
+  };
 };
 
 export type Recommendation = {
   internship: {
     _id: string;
     role: string;
-    company?: { companyName?: string };
+    description?: string;
+    stipend?: string;
+    duration?: string;
+    mode?: "remote" | "on-site" | "hybrid" | "";
+    responsibilities?: string;
+    company?: {
+      _id?: string;
+      companyName?: string;
+      description?: string;
+      website?: string;
+      address?: string;
+    };
     location?: string;
     skillsRequired?: string[];
     prioritySkills?: string[];
@@ -116,6 +143,7 @@ export type Recommendation = {
 
 const CACHE_TTL_MS = 60 * 1000;
 const cacheStore = new Map<string, { ts: number; data: unknown }>();
+const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000").replace(/\/+$/, "");
 
 function getCache<T>(key: string): T | null {
   const entry = cacheStore.get(key);
@@ -187,6 +215,35 @@ export async function fetchInternApplications(force = false) {
   return applications;
 }
 
+export function buildAssetUrl(relativePath: string) {
+  const normalized = String(relativePath || "").trim().replace(/^\/+/, "");
+  if (!normalized) return "";
+  if (/^https?:\/\//i.test(normalized)) return normalized;
+  return `${API_BASE_URL}/${normalized}`;
+}
+
+export async function applyToInternship(
+  internshipId: string,
+  payload: { availabilityStatus: "yes" | "no"; joiningDate?: string | null }
+) {
+  const response = await apiRequest<{
+    message: string;
+    application: Application;
+    relevance?: {
+      relevanceScore?: number;
+      requiredSkillMatchPercent?: number;
+      preferredSkillMatchPercent?: number | null;
+      missingRequiredSkills?: string[];
+    };
+  }>(`/api/intern/apply/${internshipId}`, {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+
+  cacheStore.delete("intern:applications");
+  return response;
+}
+
 export async function fetchActiveInternships(force = false) {
   if (!force) {
     const cached = getCache<InternshipListing[]>("intern:internships");
@@ -225,6 +282,11 @@ export async function fetchInternRecommendations(internSkills: unknown, force = 
         internship: {
           _id: internship._id,
           role: internship.role,
+          description: internship.description,
+          stipend: internship.stipend,
+          duration: internship.duration,
+          mode: internship.mode,
+          responsibilities: internship.responsibilities,
           company: internship.company,
           location: internship.location,
           skillsRequired: internship.skillsRequired || [],
@@ -259,3 +321,4 @@ export async function fetchInternRecommendations(internSkills: unknown, force = 
   setCache(cacheKey, recommendations);
   return recommendations;
 }
+

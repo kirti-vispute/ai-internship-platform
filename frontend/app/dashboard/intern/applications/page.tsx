@@ -72,7 +72,8 @@ export default function InternApplicationsPage() {
                     <div>
                       <p className="text-xs uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">Current Status</p>
                       <p className="text-sm font-semibold capitalize text-slate-900 dark:text-slate-100">{app.status}</p>
-                      <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">Skill Match at apply time: {app.matchScore || 0}%</p>
+                      <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">Relevance Score: {app.relevanceScore ?? app.matchScore ?? 0}%</p>
+                      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Applied: {app.appliedAt ? new Date(app.appliedAt).toLocaleDateString() : "-"}</p>
                     </div>
                     <div>
                       <p className="text-xs uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">Applied Stages</p>

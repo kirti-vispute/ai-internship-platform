@@ -5,16 +5,29 @@ import { useRouter } from "next/navigation";
 import { RoleDashboardGuard } from "@/components/ui/role-dashboard-guard";
 import { InternShell } from "@/components/dashboard/intern-shell";
 import { SectionPanel } from "@/components/dashboard/section-panel";
+import { Button } from "@/components/ui/button";
+import { InternApplicationModal } from "@/components/dashboard/intern-application-modal";
 import { clearAuthSession } from "@/lib/session";
-import { InternProfile, Recommendation, fetchInternProfile, fetchInternRecommendations } from "@/lib/intern-portal";
+import {
+  InternshipListing,
+  InternProfile,
+  Recommendation,
+  fetchInternApplications,
+  fetchInternProfile,
+  fetchInternRecommendations
+} from "@/lib/intern-portal";
 import { computeSkillMatch } from "@/lib/skill-normalizer";
 
 export default function RecommendedInternshipsPage() {
   const router = useRouter();
   const [profile, setProfile] = useState<InternProfile | null>(null);
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
+  const [appliedInternshipIds, setAppliedInternshipIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [applyError, setApplyError] = useState<string | null>(null);
+  const [applySuccess, setApplySuccess] = useState<string | null>(null);
+  const [selectedInternship, setSelectedInternship] = useState<InternshipListing | null>(null);
 
   const parsedSkills = profile?.resume?.parsed?.skills || [];
   const hasParsedResumeSkills = parsedSkills.length > 0;
@@ -28,12 +41,22 @@ export default function RecommendedInternshipsPage() {
         const loadedProfile = await fetchInternProfile();
         setProfile(loadedProfile);
 
-        const internSkills = loadedProfile.resume?.parsed?.skills || [];
-        if (loadedProfile.resumeUploaded && internSkills.length > 0) {
-          setRecommendations(await fetchInternRecommendations(internSkills, true));
-        } else {
-          setRecommendations([]);
-        }
+        const [loadedApplications, loadedRecommendations] = await Promise.all([
+          fetchInternApplications(true),
+          loadedProfile.resumeUploaded && (loadedProfile.resume?.parsed?.skills || []).length > 0
+            ? fetchInternRecommendations(loadedProfile.resume.parsed?.skills || [], true)
+            : Promise.resolve([] as Recommendation[])
+        ]);
+
+        setRecommendations(loadedRecommendations);
+        const appliedIds = new Set<string>();
+        loadedApplications.forEach((application) => {
+          const internshipId = application.internshipId || application.internship?._id;
+          if (internshipId) {
+            appliedIds.add(String(internshipId));
+          }
+        });
+        setAppliedInternshipIds(appliedIds);
       } catch (err) {
         setError((err as Error).message || "Failed to load recommendations.");
       } finally {
@@ -78,6 +101,24 @@ export default function RecommendedInternshipsPage() {
     });
   }, [recommendations, parsedSkills]);
 
+  function openApplyModal(item: Recommendation["internship"]) {
+    setApplyError(null);
+    setApplySuccess(null);
+    setSelectedInternship({
+      _id: item._id,
+      role: item.role,
+      description: item.description,
+      skillsRequired: item.skillsRequired || [],
+      prioritySkills: item.prioritySkills || [],
+      stipend: item.stipend,
+      duration: item.duration,
+      location: item.location,
+      mode: item.mode,
+      responsibilities: item.responsibilities,
+      company: item.company
+    });
+  }
+
   function handleLogout() {
     clearAuthSession();
     router.push("/auth/intern");
@@ -91,6 +132,8 @@ export default function RecommendedInternshipsPage() {
         ) : (
           <SectionPanel title="Recommended Internships" subtitle="Transparent recommendation model with separate required, preferred, and overall scoring.">
             {error && <p className="text-sm text-rose-700 dark:text-rose-300">{error}</p>}
+            {applyError && !error && <p className="text-sm text-rose-700 dark:text-rose-300">{applyError}</p>}
+            {applySuccess && !error && <p className="text-sm text-emerald-700 dark:text-emerald-300">{applySuccess}</p>}
             {!error && (!profile?.resumeUploaded || !hasParsedResumeSkills) && (
               <div className="surface-subtle px-4 py-3 text-sm text-slate-700 dark:text-slate-300">
                 Upload your resume to get accurate AI internship recommendations.
@@ -104,41 +147,69 @@ export default function RecommendedInternshipsPage() {
 
             {!error && liveRecommendations.length > 0 && (
               <div className="space-y-2.5">
-                {liveRecommendations.map((item) => (
-                  <div key={item.internship._id} className="surface-subtle p-3.5">
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                      <div>
-                        <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{item.internship.role}</p>
-                        <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">{item.internship.company?.companyName || "Company"}</p>
+                {liveRecommendations.map((item) => {
+                  const internshipId = item.internship._id;
+                  const alreadyApplied = appliedInternshipIds.has(internshipId);
+                  return (
+                    <div key={internshipId} className="surface-subtle p-3.5">
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{item.internship.role}</p>
+                          <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">{item.internship.company?.companyName || "Company"}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <p className="rounded-full bg-primary-100/80 px-2 py-1 text-xs font-semibold text-primary-700 dark:bg-primary-900/40 dark:text-primary-300">
+                            Overall Score {item.overallRecommendationScore}%
+                          </p>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant={alreadyApplied ? "secondary" : "primary"}
+                            disabled={alreadyApplied}
+                            onClick={() => openApplyModal(item.internship)}
+                          >
+                            {alreadyApplied ? "Applied" : "Apply"}
+                          </Button>
+                        </div>
                       </div>
-                      <p className="rounded-full bg-primary-100/80 px-2 py-1 text-xs font-semibold text-primary-700 dark:bg-primary-900/40 dark:text-primary-300">
-                        Overall Score {item.overallRecommendationScore}%
-                      </p>
-                    </div>
 
-                    <div className="mt-2 grid gap-2 text-xs text-slate-700 dark:text-slate-300 sm:grid-cols-2">
-                      <div className="surface-subtle px-2.5 py-2">Required Skill Match: {item.requiredSkillMatchPercent}%</div>
+                      <div className="mt-2 grid gap-2 text-xs text-slate-700 dark:text-slate-300 sm:grid-cols-2">
+                        <div className="surface-subtle px-2.5 py-2">Required Skill Match: {item.requiredSkillMatchPercent}%</div>
+                        {item.preferredSkillMatchPercent !== null && (
+                          <div className="surface-subtle px-2.5 py-2">Preferred Skill Match: {item.preferredSkillMatchPercent}%</div>
+                        )}
+                      </div>
+
+                      <p className="mt-2 text-xs text-slate-600 dark:text-slate-300">
+                        Missing required skills: {item.missingRequiredSkills.length > 0 ? item.missingRequiredSkills.join(", ") : "None"}
+                      </p>
+
                       {item.preferredSkillMatchPercent !== null && (
-                        <div className="surface-subtle px-2.5 py-2">Preferred Skill Match: {item.preferredSkillMatchPercent}%</div>
+                        <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
+                          Missing preferred skills: {item.missingPreferredSkills.length > 0 ? item.missingPreferredSkills.join(", ") : "None"}
+                        </p>
                       )}
                     </div>
-
-                    <p className="mt-2 text-xs text-slate-600 dark:text-slate-300">
-                      Missing required skills: {item.missingRequiredSkills.length > 0 ? item.missingRequiredSkills.join(", ") : "None"}
-                    </p>
-
-                    {item.preferredSkillMatchPercent !== null && (
-                      <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
-                        Missing preferred skills: {item.missingPreferredSkills.length > 0 ? item.missingPreferredSkills.join(", ") : "None"}
-                      </p>
-                    )}
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </SectionPanel>
+        )}
+        {selectedInternship && (
+          <InternApplicationModal
+            internship={selectedInternship}
+            resumePath={profile?.resume?.filePath || ""}
+            onClose={() => setSelectedInternship(null)}
+            onSuccess={() => {
+              setAppliedInternshipIds((prev) => new Set([...prev, selectedInternship._id]));
+              setApplySuccess(`Application submitted for ${selectedInternship.role}.`);
+              setSelectedInternship(null);
+            }}
+          />
         )}
       </InternShell>
     </RoleDashboardGuard>
   );
 }
+
