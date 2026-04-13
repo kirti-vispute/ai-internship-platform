@@ -1,4 +1,4 @@
-﻿const express = require("express");
+const express = require("express");
 const companyController = require("../controllers/company.controller");
 const authMiddleware = require("../middleware/auth.middleware");
 const allowRoles = require("../middleware/role.middleware");
@@ -20,5 +20,7 @@ router.get("/internships/:id/matched-candidates", companyController.getAiMatched
 
 router.patch("/applications/:applicationId/stage", companyController.updateCandidateStage);
 router.post("/applications/:applicationId/feedback", companyController.addHrFeedback);
+router.post("/applications/:applicationId/interviews", companyController.scheduleInterviewRound);
+router.patch("/applications/:applicationId/interviews/:roundId", companyController.updateInterviewRound);
 
 module.exports = router;

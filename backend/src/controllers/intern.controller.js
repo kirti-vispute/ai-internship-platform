@@ -46,6 +46,17 @@ function getParsedResumeSkills(profile) {
   return normalizeSkillList(Array.isArray(parsedSkills) ? parsedSkills : []);
 }
 
+function normalizeResumePublicPath(filePath = "") {
+  const normalized = String(filePath || "").replace(/\\/g, "/").trim();
+  if (!normalized) return "";
+
+  const uploadsIdx = normalized.indexOf("/uploads/");
+  if (uploadsIdx >= 0) return normalized.slice(uploadsIdx + 1);
+  if (normalized.startsWith("uploads/")) return normalized;
+  if (normalized.includes("uploads/")) return normalized.slice(normalized.indexOf("uploads/"));
+  return normalized;
+}
+
 exports.getProfile = asyncHandler(async (req, res) => {
   const profile = await getInternProfileByUserId(req.user._id);
   res.json({ profile: toProfilePayload(profile) });
@@ -89,7 +100,7 @@ exports.uploadResume = asyncHandler(async (req, res) => {
 
   const parsed = structuredResumeParse(resumeText);
 
-  profile.resume.filePath = path.relative(path.join(__dirname, "../.."), req.file.path);
+  profile.resume.filePath = normalizeResumePublicPath(path.relative(path.join(__dirname, "../.."), req.file.path));
   profile.resume.text = resumeText;
   profile.resume.parsed = parsed;
   profile.skills = toDisplaySkillList(
@@ -215,7 +226,7 @@ exports.applyToInternship = asyncHandler(async (req, res) => {
     throw new AppError("You have already applied to this internship", 409);
   }
 
-  const resumePath = String(profile?.resume?.filePath || "").trim();
+  const resumePath = normalizeResumePublicPath(profile?.resume?.filePath || "");
   if (!resumePath) {
     throw new AppError("Please upload your resume in profile before applying.", 400);
   }

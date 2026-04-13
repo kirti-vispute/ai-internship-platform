@@ -87,6 +87,18 @@ export type Application = {
   };
   stageHistory: Array<{ stage: string; note: string; changedAt: string }>;
   hrFeedback: Array<{ feedback: string; createdAt: string }>;
+  interviewRounds?: Array<{
+    _id?: string;
+    roundType?: string;
+    interviewDate?: string;
+    interviewTime?: string;
+    mode?: "online" | "offline" | "";
+    meetingLink?: string;
+    location?: string;
+    notes?: string;
+    status?: "scheduled" | "completed" | "cleared" | "rejected";
+    updatedAt?: string;
+  }>;
 };
 
 export type InternshipListing = {
@@ -216,7 +228,10 @@ export async function fetchInternApplications(force = false) {
 }
 
 export function buildAssetUrl(relativePath: string) {
-  const normalized = String(relativePath || "").trim().replace(/^\/+/, "");
+  let normalized = String(relativePath || "").trim().replace(/\\/g, "/").replace(/^\/+/, "");
+  const uploadsIdx = normalized.indexOf("/uploads/");
+  if (uploadsIdx >= 0) normalized = normalized.slice(uploadsIdx + 1);
+  if (normalized.includes("uploads/")) normalized = normalized.slice(normalized.indexOf("uploads/"));
   if (!normalized) return "";
   if (/^https?:\/\//i.test(normalized)) return normalized;
   return `${API_BASE_URL}/${normalized}`;

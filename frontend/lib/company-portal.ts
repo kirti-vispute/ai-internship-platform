@@ -55,6 +55,18 @@ export type CompanyApplication = {
   };
   stageHistory: Array<{ stage: string; note: string; changedAt?: string }>;
   hrFeedback: Array<{ feedback: string; createdAt?: string }>;
+  interviewRounds?: Array<{
+    _id?: string;
+    roundType?: string;
+    interviewDate?: string;
+    interviewTime?: string;
+    mode?: "online" | "offline" | "";
+    meetingLink?: string;
+    location?: string;
+    notes?: string;
+    status?: "scheduled" | "completed" | "cleared" | "rejected";
+    updatedAt?: string;
+  }>;
   createdAt?: string;
   updatedAt?: string;
 };
@@ -207,6 +219,40 @@ export async function fetchCompanyApplications(force = false) {
       return bTime - aTime;
     });
   });
+}
+
+export async function updateCompanyApplicationStage(applicationId: string, status: string, note = "") {
+  const response = await apiRequest<{ application: CompanyApplication }>(`/api/company/applications/${applicationId}/stage`, {
+    method: "PATCH",
+    body: JSON.stringify({ status, note })
+  });
+  cacheStore.delete("company:applications");
+  return response.application;
+}
+
+export async function scheduleInterviewRound(
+  applicationId: string,
+  payload: { roundType: string; interviewDate: string; interviewTime: string; mode?: "online" | "offline" | ""; meetingLink?: string; location?: string; notes?: string }
+) {
+  const response = await apiRequest<{ application: CompanyApplication }>(`/api/company/applications/${applicationId}/interviews`, {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+  cacheStore.delete("company:applications");
+  return response.application;
+}
+
+export async function updateInterviewRound(
+  applicationId: string,
+  roundId: string,
+  payload: { status?: "scheduled" | "completed" | "cleared" | "rejected"; notes?: string }
+) {
+  const response = await apiRequest<{ application: CompanyApplication }>(`/api/company/applications/${applicationId}/interviews/${roundId}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload)
+  });
+  cacheStore.delete("company:applications");
+  return response.application;
 }
 
 export async function fetchMatchedCandidatesForInternship(internship: CompanyInternship, force = false) {

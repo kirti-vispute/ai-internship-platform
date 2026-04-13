@@ -9,11 +9,12 @@ import { buildAssetUrl } from "@/lib/intern-portal";
 import { clearAuthSession } from "@/lib/session";
 import { Application, InternProfile, fetchInternApplications, fetchInternProfile } from "@/lib/intern-portal";
 
-const TIMELINE_STEPS = ["applied", "reviewed", "shortlisted", "interview", "selected"] as const;
+const TIMELINE_STEPS = ["applied", "reviewed", "shortlisted", "interview_scheduled", "interview_completed", "selected", "rejected"] as const;
 
 function normalizeStatus(status: string) {
   const value = String(status || "").toLowerCase();
   if (value === "screening") return "reviewed";
+  if (value === "interview") return "interview_scheduled";
   if (value === "offered") return "selected";
   return value;
 }
@@ -93,7 +94,7 @@ export default function TrackProgressPage() {
                   {applications.map((app) => {
                     const activeStatus = getActiveTimelineStatus(app);
                     const activeIdx = TIMELINE_STEPS.indexOf(activeStatus as (typeof TIMELINE_STEPS)[number]);
-                    const isRejected = normalizeStatus(app.status) === "rejected";
+                    const isRejected = activeStatus === "rejected";
                     const statusLabel = isRejected ? "Rejected" : activeStatus.charAt(0).toUpperCase() + activeStatus.slice(1);
                     return (
                       <div key={app._id} className="surface-subtle space-y-3 p-4">
@@ -107,16 +108,28 @@ export default function TrackProgressPage() {
                           </p>
                         </div>
 
-                        <div className="grid gap-2 sm:grid-cols-5">
+                        <div className="grid gap-2 sm:grid-cols-4 lg:grid-cols-7">
                           {TIMELINE_STEPS.map((step, idx) => {
-                            const done = !isRejected && idx <= activeIdx;
+                            const done = idx <= activeIdx && !(isRejected && step === "selected");
+                            const rejectedStep = step === "rejected";
                             return (
-                              <div key={`${app._id}-${step}`} className={`rounded-lg border px-2 py-2 text-center text-xs font-medium ${done ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-900/20 dark:text-emerald-300" : "border-slate-200 bg-white text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400"}`}>
+                              <div
+                                key={`${app._id}-${step}`}
+                                className={`rounded-lg border px-2 py-2 text-center text-xs font-medium ${
+                                  rejectedStep && isRejected
+                                    ? "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900/40 dark:bg-rose-900/20 dark:text-rose-300"
+                                    : done
+                                      ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-900/20 dark:text-emerald-300"
+                                      : "border-slate-200 bg-white text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400"
+                                }`}
+                              >
                                 {step === "applied" && "Applied"}
                                 {step === "reviewed" && "Application Reviewed"}
                                 {step === "shortlisted" && "Shortlisted"}
-                                {step === "interview" && "Interview Scheduled"}
+                                {step === "interview_scheduled" && "Interview Scheduled"}
+                                {step === "interview_completed" && "Interview Completed"}
                                 {step === "selected" && "Selected"}
+                                {step === "rejected" && "Rejected"}
                               </div>
                             );
                           })}
@@ -124,10 +137,12 @@ export default function TrackProgressPage() {
 
                         <div className="grid gap-2 text-xs text-slate-600 dark:text-slate-300 sm:grid-cols-2">
                           <p>Availability: {app.availabilityStatus === "yes" ? "Available now" : app.availabilityStatus === "no" ? `Available from ${app.joiningDate ? new Date(app.joiningDate).toLocaleDateString() : "-"}` : "-"}</p>
-                          {app.attachedResumePath && (
+                          {app.attachedResumePath ? (
                             <a href={buildAssetUrl(app.attachedResumePath)} target="_blank" rel="noreferrer" className="text-blue-700 hover:underline dark:text-blue-300">
                               View Attached Resume
                             </a>
+                          ) : (
+                            <span className="text-slate-500 dark:text-slate-400">Resume not available</span>
                           )}
                         </div>
                       </div>

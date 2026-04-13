@@ -1,4 +1,4 @@
-﻿const USER_ROLES = {
+const USER_ROLES = {
   INTERN: "intern",
   COMPANY: "company",
   ADMIN: "admin"
@@ -12,9 +12,13 @@ const COMPANY_VERIFICATION_STATUS = {
 
 const APPLICATION_STATUS = {
   APPLIED: "applied",
+  REVIEWED: "reviewed",
   SHORTLISTED: "shortlisted",
   SCREENING: "screening",
+  INTERVIEW_SCHEDULED: "interview_scheduled",
+  INTERVIEW_COMPLETED: "interview_completed",
   INTERVIEW: "interview",
+  SELECTED: "selected",
   OFFERED: "offered",
   REJECTED: "rejected",
   WITHDRAWN: "withdrawn"

@@ -151,6 +151,80 @@ exports.updateCandidateStage = asyncHandler(async (req, res) => {
   res.json({ message: "Candidate stage updated", application });
 });
 
+exports.scheduleInterviewRound = asyncHandler(async (req, res) => {
+  const company = await getCompanyProfileByUserId(req.user._id);
+  const { roundType, interviewDate, interviewTime, mode, meetingLink, location, notes } = req.body || {};
+
+  if (!roundType || !interviewDate || !interviewTime) {
+    throw new AppError("roundType, interviewDate and interviewTime are required", 400);
+  }
+
+  const application = await Application.findById(req.params.applicationId).populate("internship");
+  if (!application) {
+    throw new AppError("Application not found", 404);
+  }
+  if (String(application.internship.company) !== String(company._id)) {
+    throw new AppError("Not allowed for this internship", 403);
+  }
+
+  application.interviewRounds.push({
+    roundType: String(roundType || "").trim(),
+    interviewDate: new Date(interviewDate),
+    interviewTime: String(interviewTime || "").trim(),
+    mode: ["online", "offline"].includes(String(mode || "").toLowerCase()) ? String(mode).toLowerCase() : "",
+    meetingLink: String(meetingLink || "").trim(),
+    location: String(location || "").trim(),
+    notes: String(notes || "").trim(),
+    status: "scheduled",
+    updatedAt: new Date()
+  });
+
+  application.status = "interview_scheduled";
+  application.stageHistory.push({ stage: "interview_scheduled", note: "Interview round scheduled" });
+  await application.save();
+
+  res.json({ message: "Interview round scheduled", application });
+});
+
+exports.updateInterviewRound = asyncHandler(async (req, res) => {
+  const company = await getCompanyProfileByUserId(req.user._id);
+  const { status, notes, interviewDate, interviewTime, mode, meetingLink, location } = req.body || {};
+
+  const application = await Application.findById(req.params.applicationId).populate("internship");
+  if (!application) {
+    throw new AppError("Application not found", 404);
+  }
+  if (String(application.internship.company) !== String(company._id)) {
+    throw new AppError("Not allowed for this internship", 403);
+  }
+
+  const round = (application.interviewRounds || []).id(req.params.roundId);
+  if (!round) {
+    throw new AppError("Interview round not found", 404);
+  }
+
+  if (status) round.status = String(status).toLowerCase();
+  if (notes !== undefined) round.notes = String(notes || "").trim();
+  if (interviewDate) round.interviewDate = new Date(interviewDate);
+  if (interviewTime !== undefined) round.interviewTime = String(interviewTime || "").trim();
+  if (meetingLink !== undefined) round.meetingLink = String(meetingLink || "").trim();
+  if (location !== undefined) round.location = String(location || "").trim();
+  if (mode !== undefined) round.mode = ["online", "offline"].includes(String(mode || "").toLowerCase()) ? String(mode).toLowerCase() : "";
+  round.updatedAt = new Date();
+
+  if (round.status === "completed" || round.status === "cleared") {
+    application.status = "interview_completed";
+    application.stageHistory.push({ stage: "interview_completed", note: "Interview round completed" });
+  }
+  if (round.status === "rejected") {
+    application.status = "rejected";
+    application.stageHistory.push({ stage: "rejected", note: "Rejected after interview round" });
+  }
+
+  await application.save();
+  res.json({ message: "Interview round updated", application });
+});
+
 exports.addHrFeedback = asyncHandler(async (req, res) => {
   const company = await getCompanyProfileByUserId(req.user._id);
   const { feedback } = req.body;

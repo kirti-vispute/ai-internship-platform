@@ -76,6 +76,23 @@ const applicationSchema = new mongoose.Schema(
         feedback: { type: String, required: true },
         createdAt: { type: Date, default: Date.now }
       }
+    ],
+    interviewRounds: [
+      {
+        roundType: { type: String, default: "" },
+        interviewDate: { type: Date, default: null },
+        interviewTime: { type: String, default: "" },
+        mode: { type: String, enum: ["online", "offline", ""], default: "" },
+        meetingLink: { type: String, default: "" },
+        location: { type: String, default: "" },
+        notes: { type: String, default: "" },
+        status: {
+          type: String,
+          enum: ["scheduled", "completed", "cleared", "rejected"],
+          default: "scheduled"
+        },
+        updatedAt: { type: Date, default: Date.now }
+      }
     ]
   },
   { timestamps: true }
