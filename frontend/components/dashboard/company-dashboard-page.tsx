@@ -17,6 +17,7 @@ import {
   fetchCompanyInternships,
   fetchCompanyMatchedCandidates,
   fetchCompanyProfile,
+  openCompanyApplicationResume,
   postCompanyInternship,
   scheduleInterviewRound,
   updateCompanyApplicationStage,
@@ -25,7 +26,6 @@ import {
   searchCandidates,
   CandidateSearchResult
 } from "@/lib/company-portal";
-import { buildAssetUrl } from "@/lib/intern-portal";
 import { SkillChips } from "@/components/dashboard/skill-chips";
 
 export type CompanyDashboardView =
@@ -105,7 +105,10 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
   const [searchResults, setSearchResults] = useState<CandidateSearchResult[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
+  const [resumeError, setResumeError] = useState<string | null>(null);
   const [interviewForms, setInterviewForms] = useState<Record<string, { roundType: string; interviewDate: string; interviewTime: string; mode: "online" | "offline"; meetingLink: string; location: string; notes: string }>>({});
+  const [statusDrafts, setStatusDrafts] = useState<Record<string, string>>({});
+  const [interviewExpanded, setInterviewExpanded] = useState<Record<string, boolean>>({});
 
   const [profileForm, setProfileForm] = useState({ companyName: "", contactName: "", phone: "", website: "", address: "", description: "" });
   const [postForm, setPostForm] = useState({ role: "", skillsRequired: "", prioritySkills: "", stipend: "", duration: "", location: "", mode: "", responsibilities: "", description: "" });
@@ -352,10 +355,7 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
                   <div className="surface-subtle px-3 py-2 text-xs text-slate-700 dark:text-slate-300"><span className="font-semibold">Applied:</span> {fmtDate(a.createdAt)}</div>
                   <div className="surface-subtle px-3 py-2 text-xs text-slate-700 dark:text-slate-300"><span className="font-semibold">Availability:</span> {a.availabilityStatus === "yes" ? "Available now" : a.availabilityStatus === "no" ? "Not immediate" : "-"}</div>
                   <div className="surface-subtle px-3 py-2 text-xs text-slate-700 dark:text-slate-300"><span className="font-semibold">Available From:</span> {fmtDate(a.joiningDate)}</div>
-                  <div className="surface-subtle px-3 py-2 text-xs text-slate-700 dark:text-slate-300">
-                    <span className="font-semibold">Resume:</span>{" "}
-                    {a.attachedResumePath ? <a href={buildAssetUrl(a.attachedResumePath)} target="_blank" rel="noreferrer" className="text-blue-700 hover:underline dark:text-blue-300">View</a> : "Not available"}
-                  </div>
+                  <div className="surface-subtle px-3 py-2 text-xs text-slate-700 dark:text-slate-300"><span className="font-semibold">Resume:</span> {a.attachedResumePath ? "Attached" : "Not available"}</div>
                 </div>
 
                 <div className="space-y-2">
@@ -379,16 +379,58 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
                   })}
                 </div>
 
-                <div className="flex flex-wrap gap-2">
-                  <Button type="button" size="sm" variant="secondary" onClick={() => applyStage(a._id, "reviewed", "Application reviewed")} disabled={saving}>Mark Reviewed</Button>
-                  <Button type="button" size="sm" variant="secondary" onClick={() => applyStage(a._id, "shortlisted", "Candidate shortlisted")} disabled={saving}>Shortlist</Button>
-                  <Button type="button" size="sm" variant="secondary" onClick={() => applyStage(a._id, "interview_scheduled", "Interview scheduled")} disabled={saving}>Schedule Interview</Button>
-                  <Button type="button" size="sm" variant="secondary" onClick={() => applyStage(a._id, "interview_completed", "Interview completed")} disabled={saving}>Mark Interview Completed</Button>
-                  <Button type="button" size="sm" onClick={() => applyStage(a._id, "selected", "Candidate selected")} disabled={saving}>Select</Button>
-                  <Button type="button" size="sm" variant="secondary" onClick={() => applyStage(a._id, "rejected", "Candidate rejected")} disabled={saving}>Reject</Button>
+                <div className="grid gap-2 md:grid-cols-[1fr_auto_auto]">
+                  <select
+                    className={field}
+                    value={statusDrafts[a._id] || normalizeStage(a.status)}
+                    onChange={(e) => setStatusDrafts((prev) => ({ ...prev, [a._id]: e.target.value }))}
+                  >
+                    <option value="applied">Applied</option>
+                    <option value="reviewed">Reviewed</option>
+                    <option value="shortlisted">Shortlisted</option>
+                    <option value="interview_scheduled">Interview Scheduled</option>
+                    <option value="interview_completed">Interview Completed</option>
+                    <option value="selected">Selected</option>
+                    <option value="rejected">Rejected</option>
+                  </select>
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => applyStage(a._id, statusDrafts[a._id] || normalizeStage(a.status), "Status updated from hiring dashboard")}
+                    disabled={saving}
+                  >
+                    Save Status
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    onClick={async () => {
+                      try {
+                        setResumeError(null);
+                        await openCompanyApplicationResume(a._id);
+                      } catch (e) {
+                        setResumeError((e as Error).message || "Resume not available");
+                      }
+                    }}
+                    disabled={saving || !a.attachedResumePath}
+                  >
+                    View Resume
+                  </Button>
                 </div>
+                {resumeError && <p className="text-xs text-rose-700 dark:text-rose-300">{resumeError}</p>}
 
-                <div className="grid gap-2 rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="space-y-2 rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900">
+                  <button
+                    type="button"
+                    className="text-xs font-semibold uppercase tracking-wide text-primary-700 hover:underline dark:text-primary-300"
+                    onClick={() => setInterviewExpanded((prev) => ({ ...prev, [a._id]: !prev[a._id] }))}
+                  >
+                    {interviewExpanded[a._id] ? "Hide interview actions" : "Show interview actions"}
+                  </button>
+
+                  {interviewExpanded[a._id] && (
+                    <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
                   <input
                     className={field}
                     placeholder="Round type (HR/Technical)"
@@ -418,12 +460,14 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
                   <input
                     className={`${field} sm:col-span-2`}
                     placeholder="Meeting link (for online)"
+                    disabled={(interviewForms[a._id]?.mode || "online") !== "online"}
                     value={interviewForms[a._id]?.meetingLink || ""}
                     onChange={(e) => setInterviewForms((prev) => ({ ...prev, [a._id]: { ...(prev[a._id] || { roundType: "", interviewDate: "", interviewTime: "", mode: "online", meetingLink: "", location: "", notes: "" }), meetingLink: e.target.value } }))}
                   />
                   <input
                     className={`${field} sm:col-span-2`}
                     placeholder="Location (for offline)"
+                    disabled={(interviewForms[a._id]?.mode || "online") !== "offline"}
                     value={interviewForms[a._id]?.location || ""}
                     onChange={(e) => setInterviewForms((prev) => ({ ...prev, [a._id]: { ...(prev[a._id] || { roundType: "", interviewDate: "", interviewTime: "", mode: "online", meetingLink: "", location: "", notes: "" }), location: e.target.value } }))}
                   />
@@ -436,6 +480,8 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
                   <div className="sm:col-span-2 lg:col-span-4">
                     <Button type="button" size="sm" onClick={() => createInterviewRound(a._id)} disabled={saving}>Create Interview Round</Button>
                   </div>
+                </div>
+                  )}
                 </div>
 
                 {(a.interviewRounds || []).length > 0 && (

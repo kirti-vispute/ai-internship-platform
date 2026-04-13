@@ -1,4 +1,5 @@
 import { apiRequest } from "@/lib/api-client";
+import { getAuthSession } from "@/lib/session";
 
 export type CompanyProfile = {
   _id: string;
@@ -103,6 +104,7 @@ type CacheEntry = { ts: number; data: unknown };
 const CACHE_TTL_MS = 45 * 1000;
 const cacheStore = new Map<string, CacheEntry>();
 const inFlightStore = new Map<string, Promise<unknown>>();
+const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000").replace(/\/+$/, "");
 
 function getCache<T>(key: string): T | null {
   const cached = cacheStore.get(key);
@@ -253,6 +255,36 @@ export async function updateInterviewRound(
   });
   cacheStore.delete("company:applications");
   return response.application;
+}
+
+export async function openCompanyApplicationResume(applicationId: string) {
+  const session = getAuthSession();
+  const token = session.token;
+  if (!token) {
+    throw new Error("Session not found");
+  }
+
+  const response = await fetch(`${API_BASE_URL}/api/applications/${applicationId}/resume`, {
+    method: "GET",
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error((data as { message?: string }).message || "Resume not available");
+  }
+
+  const blob = await response.blob();
+  const objectUrl = window.URL.createObjectURL(blob);
+  const opened = window.open(objectUrl, "_blank", "noopener,noreferrer");
+  if (!opened) {
+    const link = document.createElement("a");
+    link.href = objectUrl;
+    link.download = "resume";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  }
+  window.setTimeout(() => window.URL.revokeObjectURL(objectUrl), 120000);
 }
 
 export async function fetchMatchedCandidatesForInternship(internship: CompanyInternship, force = false) {

@@ -1,5 +1,6 @@
 import { apiRequest } from "@/lib/api-client";
 import { computeSkillMatch, normalizeSkillList } from "@/lib/skill-normalizer";
+import { getAuthSession } from "@/lib/session";
 
 export type ResumeSection = { key: string; label: string; score: number };
 
@@ -257,6 +258,37 @@ export async function applyToInternship(
 
   cacheStore.delete("intern:applications");
   return response;
+}
+
+export async function openApplicationResume(applicationId: string) {
+  const session = getAuthSession();
+  const token = session.token;
+  if (!token) {
+    throw new Error("Session not found");
+  }
+
+  const response = await fetch(`${API_BASE_URL}/api/applications/${applicationId}/resume`, {
+    method: "GET",
+    headers: { Authorization: `Bearer ${token}` }
+  });
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error((data as { message?: string }).message || "Resume not available");
+  }
+
+  const blob = await response.blob();
+  const objectUrl = window.URL.createObjectURL(blob);
+  const opened = window.open(objectUrl, "_blank", "noopener,noreferrer");
+  if (!opened) {
+    const link = document.createElement("a");
+    link.href = objectUrl;
+    link.download = "resume";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  }
+  window.setTimeout(() => window.URL.revokeObjectURL(objectUrl), 120000);
 }
 
 export async function fetchActiveInternships(force = false) {
