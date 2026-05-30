@@ -1,0 +1,36 @@
+{
+    "name": "ai-internship-platform-frontend",
+    "version": "1.0.0",
+    "private": true,
+    "scripts": {
+        "dev": "next dev",
+        "build": "next build",
+        "start": "next start",
+        "lint": "next lint",
+        "server:dev": "npm --prefix ../backend run dev",
+        "server:start": "npm --prefix ../backend run start",
+        "server:seed": "npm --prefix ../backend run seed",
+        "scorer:install": "npm --prefix ../backend run scorer:install",
+        "scorer:dev": "npm --prefix ../backend run scorer:dev"
+    },
+    "dependencies": {
+        "@react-three/drei": "^10.7.7",
+        "@react-three/fiber": "^9.5.0",
+        "framer-motion": "^12.38.0",
+        "next": "15.5.7",
+        "react": "19.2.1",
+        "react-dom": "19.2.1",
+        "three": "^0.177.0"
+    },
+    "devDependencies": {
+        "@netlify/plugin-nextjs": "^5.15.9",
+        "@types/node": "^22.14.1",
+        "@types/react": "^19.0.12",
+        "@types/react-dom": "^19.0.5",
+        "@types/three": "^0.177.0",
+        "autoprefixer": "^10.4.21",
+        "postcss": "^8.5.3",
+        "tailwindcss": "^3.4.17",
+        "typescript": "^5.8.3"
+    }
+}
