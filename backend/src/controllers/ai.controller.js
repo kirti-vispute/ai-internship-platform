@@ -4,6 +4,7 @@ const asyncHandler = require("../utils/asyncHandler");
 const AppError = require("../utils/AppError");
 const { parseResumeText, calculateResumeScore, getSkillGap, recommendInternships, rankApplicantsForInternship } = require("../services/ai.service");
 const { normalizeSkillList } = require("../utils/skill-normalizer");
+const { buildRoadmap } = require("../services/roadmap.service");
 
 function getParsedResumeSkills(profile) {
   const parsedSkills = profile?.resume?.parsed?.skills;
@@ -94,4 +95,15 @@ exports.matchCandidates = asyncHandler(async (req, res) => {
   const ranked = rankApplicantsForInternship(internship, profiles);
 
   res.json({ matches: ranked });
+});
+
+exports.generateRoadmap = asyncHandler(async (req, res) => {
+  const { targetRole, currentSkills } = req.body || {};
+  let skills = currentSkills;
+  if (!Array.isArray(skills) && req.user?.role === "intern") {
+    const profile = await InternProfile.findOne({ user: req.user._id });
+    skills = profile?.resume?.parsed?.skills || profile?.skills || [];
+  }
+  const roadmap = buildRoadmap({ targetRole, currentSkills: skills || [] });
+  res.json({ roadmap });
 });

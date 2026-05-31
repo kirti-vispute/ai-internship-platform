@@ -20,6 +20,8 @@ type SidebarSection = {
 
 type CompanyShellProps = {
   welcomeName?: string;
+  companyAccountType?: "owner" | "hr" | "ceo";
+  permissions?: string[];
   onLogout: () => void;
   children: React.ReactNode;
 };
@@ -210,7 +212,17 @@ function IconMenu() {
   );
 }
 
-function buildSections(): SidebarSection[] {
+function buildSections({
+  companyAccountType,
+  permissions
+}: {
+  companyAccountType?: "owner" | "hr" | "ceo";
+  permissions?: string[];
+}): SidebarSection[] {
+  const canManageRecruiters = (permissions || []).includes("company:hr:manage") || companyAccountType === "owner" || companyAccountType === "ceo";
+  const canViewSalary = (permissions || []).includes("company:analytics:salary") || companyAccountType === "owner" || companyAccountType === "ceo";
+  const canCreateInternships = companyAccountType !== "hr";
+
   return [
     {
       title: "Main",
@@ -227,7 +239,7 @@ function buildSections(): SidebarSection[] {
     {
       title: "Hiring",
       items: [
-        { label: "Post Internship", href: "/dashboard/company/hiring/post", icon: <IconPlusFile /> },
+        ...(canCreateInternships ? [{ label: "Post Internship", href: "/dashboard/company/hiring/post", icon: <IconPlusFile /> }] : []),
         { label: "Active Internships", href: "/dashboard/company/hiring/active", icon: <IconList /> },
         { label: "Applicants", href: "/dashboard/company/hiring/applicants", icon: <IconUsers /> },
         { label: "Shortlisted", href: "/dashboard/company/hiring/shortlisted", icon: <IconUsers /> },
@@ -249,8 +261,16 @@ function buildSections(): SidebarSection[] {
         { label: "Hiring Notes", href: "/dashboard/company/reports/notes", icon: <IconClipboard /> },
         { label: "Reports / Export", href: "/dashboard/company/reports/export", icon: <IconDownload /> }
       ]
+    },
+    {
+      title: "Company Admin",
+      items: [
+        ...(canManageRecruiters ? [{ label: "Recruiter Management", href: "/dashboard/company/team/recruiters", icon: <IconUsers /> }] : []),
+        { label: "Company Analytics", href: "/dashboard/company/analytics/company", icon: <IconGrid /> },
+        ...(canViewSalary ? [{ label: "Salary Insights", href: "/dashboard/company/analytics/salary", icon: <IconClipboard /> }] : [])
+      ]
     }
-  ];
+  ].filter((section) => section.items.length > 0);
 }
 
 function isItemActive(pathname: string, href: string) {
@@ -258,17 +278,17 @@ function isItemActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export function CompanyShell({ welcomeName, onLogout, children }: CompanyShellProps) {
+export function CompanyShell({ welcomeName, companyAccountType, permissions, onLogout, children }: CompanyShellProps) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const sections = useMemo(() => buildSections(), []);
+  const sections = useMemo(() => buildSections({ companyAccountType, permissions }), [companyAccountType, permissions]);
 
   return (
     <div className="min-h-screen bg-slate-100/70 transition-colors dark:bg-slate-950/60">
       <div className="mx-auto flex max-w-[1600px]">
         <aside
           className={cn(
-            "sidebar-surface fixed inset-y-0 left-0 z-40 w-72 p-5 shadow-[0_12px_36px_rgba(15,23,42,0.12)] transition-transform duration-300 lg:static lg:translate-x-0 dark:shadow-[0_16px_44px_rgba(2,6,23,0.55)]",
+            "sidebar-surface fixed inset-y-0 left-0 z-40 flex h-screen w-72 flex-col overflow-hidden p-5 shadow-[0_12px_36px_rgba(15,23,42,0.12)] transition-transform duration-300 lg:static lg:translate-x-0 dark:shadow-[0_16px_44px_rgba(2,6,23,0.55)]",
             mobileOpen ? "translate-x-0" : "-translate-x-full"
           )}
         >
@@ -277,7 +297,7 @@ export function CompanyShell({ welcomeName, onLogout, children }: CompanyShellPr
             <h2 className="mt-2 text-xl font-black tracking-tight">Hiring Command Center</h2>
           </div>
 
-          <nav className="space-y-5">
+          <nav className="scrollbar-dark min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain pr-1">
             {sections.map((section) => (
               <div key={section.title} className="animate-reveal">
                 <p className="px-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500">{section.title}</p>
@@ -293,7 +313,7 @@ export function CompanyShell({ welcomeName, onLogout, children }: CompanyShellPr
                             "flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
                             active
                               ? "bg-primary-50 text-primary-700 shadow-[0_4px_14px_rgba(37,99,235,0.12)] dark:bg-primary-900/20 dark:text-primary-300"
-                              : "text-slate-600 hover:bg-white hover:text-slate-900 hover:shadow-[0_4px_14px_rgba(15,23,42,0.08)] dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+                              : "text-slate-600 hover:bg-slate-800 hover:text-white hover:shadow-[0_4px_14px_rgba(15,23,42,0.08)] dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
                           )}
                         >
                           {item.icon}
@@ -312,13 +332,13 @@ export function CompanyShell({ welcomeName, onLogout, children }: CompanyShellPr
 
         <div className="relative min-w-0 flex-1 overflow-hidden">
           <AnimatedBackground className="opacity-75" />
-          <header className="sticky top-0 z-20 border-b border-slate-200/80 bg-white/82 px-4 py-3.5 backdrop-blur-xl lg:px-6 dark:border-slate-800 dark:bg-slate-950/78">
+          <header className="sticky top-0 z-20 border-b border-slate-800/80 bg-slate-950/82 px-4 py-3.5 backdrop-blur-xl lg:px-6 dark:border-slate-800 dark:bg-slate-950/78">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={() => setMobileOpen(true)}
-                  className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-slate-600 transition hover:bg-slate-50 lg:hidden dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
+                  className="rounded-lg border border-slate-700 bg-slate-900 px-2 py-1 text-slate-600 transition hover:bg-slate-800 lg:hidden dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
                 >
                   <IconMenu />
                 </button>
@@ -329,7 +349,7 @@ export function CompanyShell({ welcomeName, onLogout, children }: CompanyShellPr
               </div>
 
               <div className="flex items-center gap-2">
-                <button type="button" className="rounded-xl border border-slate-200 bg-white p-2 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800">
+                <button type="button" className="rounded-xl border border-slate-700 bg-slate-900 p-2 transition hover:bg-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800">
                   <IconBell />
                 </button>
                 <Button href="/auth/company" type="button" variant="secondary" size="sm">

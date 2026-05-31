@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -17,6 +17,17 @@ import {
   fetchCompanyInternships,
   fetchCompanyMatchedCandidates,
   fetchCompanyProfile,
+  fetchCompanyRecruiters,
+  fetchCompanyHrInsights,
+  createCompanyHrUser,
+  deleteCompanyHrUser,
+  updateCompanyHrPermissions,
+  HR_ASSIGNABLE_PERMISSIONS,
+  type CompanyHrInsights,
+  type CompanyHrUser,
+  fetchCompanyAnalytics,
+  assignRecruiterToInternship,
+  assignRecruiterToApplication,
   deleteCompanyInternship,
   postCompanyInternship,
   scheduleInterviewRound,
@@ -24,9 +35,12 @@ import {
   updateInterviewRound,
   updateCompanyProfile,
   searchCandidates,
-  CandidateSearchResult
+  CandidateSearchResult,
+  addApplicationFeedback,
+  CompanyCurrentUser
 } from "@/lib/company-portal";
 import { ApplicantDetailsModal, type InterviewFormState } from "@/components/dashboard/applicant-details-modal";
+import { PIPELINE_STAGES } from "@/constants/pipelineStages";
 
 export type CompanyDashboardView =
   | "overview"
@@ -43,7 +57,10 @@ export type CompanyDashboardView =
   | "matching-saved"
   | "reports-feedback"
   | "reports-notes"
-  | "reports-export";
+  | "reports-export"
+  | "team-recruiters"
+  | "analytics-company"
+  | "analytics-salary";
 
 const WITH_INTERNSHIPS = new Set<CompanyDashboardView>([
   "overview",
@@ -106,12 +123,14 @@ const DEFAULT_INTERVIEW_FORM: InterviewFormState = {
   notes: ""
 };
 
-const PIPELINE_STAGES = ["applied", "reviewed", "shortlisted", "interview", "selected", "rejected"] as const;
-
 function normalizePipelineStatus(status: string) {
   const value = String(status || "").toLowerCase();
   if (value === "screening") return "reviewed";
   if (value === "offered") return "selected";
+  if (value === "technical_round") return "technical_round";
+  if (value === "hr_round") return "hr_round";
+  if (value === "under_review") return "under_review";
+  if (value === "on_hold") return "on_hold";
   return value;
 }
 
@@ -126,6 +145,7 @@ function normalizeApplicantStage(value: string) {
 export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
   const router = useRouter();
   const [profile, setProfile] = useState<CompanyProfile | null>(null);
+  const [currentUser, setCurrentUser] = useState<CompanyCurrentUser | null>(null);
   const [internships, setInternships] = useState<CompanyInternship[]>([]);
   const [apps, setApps] = useState<CompanyApplication[]>([]);
   const [matches, setMatches] = useState<CompanyMatchedCandidate[]>([]);
@@ -138,10 +158,43 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
   const [searchResults, setSearchResults] = useState<CandidateSearchResult[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
+  const [recruiters, setRecruiters] = useState<Array<{ _id: string; email: string; displayName?: string; companyAccountType: "hr" | "ceo"; isActive: boolean }>>([]);
+  const [hrInsights, setHrInsights] = useState<CompanyHrInsights | null>(null);
+  const [hrForm, setHrForm] = useState({ name: "", email: "", password: "" });
+  const [hrFormPermissions, setHrFormPermissions] = useState<string[]>([...HR_ASSIGNABLE_PERMISSIONS]);
+  const [selectedHrId, setSelectedHrId] = useState<string | null>(null);
+  const [permissionDraft, setPermissionDraft] = useState<string[]>([]);
+  const [hrActionLoading, setHrActionLoading] = useState(false);
+  const [selectedRecruiterByInternship, setSelectedRecruiterByInternship] = useState<Record<string, string>>({});
+  const [selectedRecruiterByApplication, setSelectedRecruiterByApplication] = useState<Record<string, string>>({});
+  const [analytics, setAnalytics] = useState<{
+    recruiterPerformance: Array<{
+      recruiterId: string;
+      candidatesHandled: number;
+      shortlistedCandidates: number;
+      hiredCandidates: number;
+      conversionRate: number;
+      interviewSuccessRate: number;
+      recruiterResponseTimeHours: number;
+    }>;
+    hiringAnalytics: {
+      totalHires: number;
+      totalApplications: number;
+      departmentWiseHiring: Record<string, number>;
+      internshipPerformance: number;
+    };
+    salaryAnalytics: {
+      offeredSalaryPerCandidate: number[];
+      stipendAnalytics: number[];
+      averagePackage: number;
+      totalSalaryExpenditure: number;
+    };
+  } | null>(null);
   const [detailResumeError, setDetailResumeError] = useState<string | null>(null);
   const [applicantDetailId, setApplicantDetailId] = useState<string | null>(null);
   const [interviewForms, setInterviewForms] = useState<Record<string, InterviewFormState>>({});
   const [statusDrafts, setStatusDrafts] = useState<Record<string, string>>({});
+  const [feedbackDrafts, setFeedbackDrafts] = useState<Record<string, { feedback: string; rating: number; visibility: "internal" | "candidate" }>>({});
 
   const [profileForm, setProfileForm] = useState({ companyName: "", contactName: "", phone: "", website: "", address: "", description: "" });
   const [postForm, setPostForm] = useState({
@@ -177,14 +230,49 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
         setLoading(true);
         setError(null);
         setSuccess(null);
-        const p = await fetchCompanyProfile();
-        setProfile(p);
-        if (WITH_INTERNSHIPS.has(view)) setInternships(await fetchCompanyInternships());
-        else setInternships([]);
-        if (WITH_APPS.has(view)) setApps(await fetchCompanyApplications());
-        else setApps([]);
-        if (WITH_MATCHES.has(view)) setMatches(await fetchCompanyMatchedCandidates());
-        else setMatches([]);
+        const companyContext = await fetchCompanyProfile();
+        setProfile(companyContext.profile);
+        setCurrentUser(companyContext.currentUser);
+
+        const needsInternships = WITH_INTERNSHIPS.has(view);
+        const needsApps = WITH_APPS.has(view);
+        const needsMatches = WITH_MATCHES.has(view);
+        const needsAnalyticsBundle = ["team-recruiters", "analytics-company", "analytics-salary"].includes(view);
+        const needsHrInsights = view === "team-recruiters" || view === "analytics-company";
+
+        const [internships, apps, matches, insights, analytics] = await Promise.all([
+          needsInternships ? fetchCompanyInternships() : Promise.resolve([] as CompanyInternship[]),
+          needsApps ? fetchCompanyApplications() : Promise.resolve([] as CompanyApplication[]),
+          needsMatches ? fetchCompanyMatchedCandidates() : Promise.resolve([] as CompanyMatchedCandidate[]),
+          needsHrInsights ? fetchCompanyHrInsights(true) : Promise.resolve(null),
+          needsAnalyticsBundle ? fetchCompanyAnalytics() : Promise.resolve(null)
+        ]);
+
+        setInternships(internships);
+        setApps(apps);
+        setMatches(matches);
+        setHrInsights(insights);
+        setAnalytics(analytics);
+
+        if (insights && view === "team-recruiters") {
+          setRecruiters(
+            insights.hrUsers.map((hr) => ({
+              _id: hr.id,
+              email: hr.email,
+              displayName: hr.name,
+              companyAccountType: "hr" as const,
+              isActive: hr.isActive
+            }))
+          );
+        } else {
+          setRecruiters([]);
+        }
+
+        if (!needsAnalyticsBundle) {
+          setHrInsights(null);
+          setAnalytics(null);
+          setRecruiters([]);
+        }
       } catch (e) {
         setError((e as Error).message || "Failed to load company data.");
       } finally {
@@ -251,6 +339,97 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
   }
 
   const shortlisted = useMemo(() => apps.filter((a) => normalizePipelineStatus(a.status) === "shortlisted"), [apps]);
+  const isHrScoped = useMemo(() => currentUser?.companyAccountType === "hr", [currentUser?.companyAccountType]);
+  const canManageRecruiters = useMemo(
+    () => (currentUser?.permissions || []).includes("company:hr:manage") || ["owner", "ceo"].includes(currentUser?.companyAccountType || ""),
+    [currentUser]
+  );
+  const isCeoOrOwner = useMemo(
+    () => ["owner", "ceo"].includes(currentUser?.companyAccountType || ""),
+    [currentUser?.companyAccountType]
+  );
+
+  async function reloadHrManagement() {
+    const insights = await fetchCompanyHrInsights(true);
+    setHrInsights(insights);
+    setRecruiters(
+      insights.hrUsers.map((hr) => ({
+        _id: hr.id,
+        email: hr.email,
+        displayName: hr.name,
+        companyAccountType: "hr" as const,
+        isActive: hr.isActive
+      }))
+    );
+  }
+
+  async function handleCreateHr() {
+    if (!hrForm.name.trim() || !hrForm.email.trim() || !hrForm.password.trim()) {
+      setError("Name, email, and password are required to add HR.");
+      return;
+    }
+    try {
+      setHrActionLoading(true);
+      setError(null);
+      await createCompanyHrUser({
+        name: hrForm.name.trim(),
+        email: hrForm.email.trim(),
+        password: hrForm.password,
+        permissions: hrFormPermissions
+      });
+      setHrForm({ name: "", email: "", password: "" });
+      setHrFormPermissions([...HR_ASSIGNABLE_PERMISSIONS]);
+      setSuccess("HR account created successfully.");
+      await reloadHrManagement();
+    } catch (e) {
+      setError((e as Error).message || "Failed to create HR account.");
+    } finally {
+      setHrActionLoading(false);
+    }
+  }
+
+  async function handleDeleteHr(hrId: string, email: string) {
+    if (!window.confirm(`Delete HR account ${email}? This cannot be undone.`)) return;
+    try {
+      setHrActionLoading(true);
+      setError(null);
+      await deleteCompanyHrUser(hrId);
+      if (selectedHrId === hrId) setSelectedHrId(null);
+      setSuccess("HR account deleted.");
+      await reloadHrManagement();
+    } catch (e) {
+      setError((e as Error).message || "Failed to delete HR account.");
+    } finally {
+      setHrActionLoading(false);
+    }
+  }
+
+  function openHrInsights(hr: CompanyHrUser) {
+    setSelectedHrId(hr.id);
+    setPermissionDraft([...hr.permissions.filter((p) => HR_ASSIGNABLE_PERMISSIONS.includes(p as (typeof HR_ASSIGNABLE_PERMISSIONS)[number]))]);
+  }
+
+  async function handleSaveHrPermissions(hrId: string) {
+    try {
+      setHrActionLoading(true);
+      setError(null);
+      await updateCompanyHrPermissions(hrId, permissionDraft);
+      setSuccess("HR permissions updated.");
+      await reloadHrManagement();
+    } catch (e) {
+      setError((e as Error).message || "Failed to update HR permissions.");
+    } finally {
+      setHrActionLoading(false);
+    }
+  }
+  const canAssign = useMemo(
+    () => (currentUser?.permissions || []).includes("company:internship:assign") || ["owner", "ceo"].includes(currentUser?.companyAccountType || ""),
+    [currentUser]
+  );
+  const canViewSalary = useMemo(
+    () => (currentUser?.permissions || []).includes("company:analytics:salary") || ["owner", "ceo"].includes(currentUser?.companyAccountType || ""),
+    [currentUser]
+  );
   const detailApp = useMemo(
     () => (applicantDetailId ? apps.find((application) => application._id === applicantDetailId) ?? null : null),
     [apps, applicantDetailId]
@@ -267,7 +446,17 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
   }, [applicantDetailId, detailApp]);
 
   const statusCounts = useMemo(() => {
-    const base: Record<string, number> = { applied: 0, reviewed: 0, shortlisted: 0, interview: 0, selected: 0, rejected: 0 };
+    const base: Record<string, number> = {
+      applied: 0,
+      shortlisted: 0,
+      under_review: 0,
+      interview_scheduled: 0,
+      technical_round: 0,
+      hr_round: 0,
+      selected: 0,
+      rejected: 0,
+      on_hold: 0
+    };
     apps.forEach((a) => {
       const normalized = normalizePipelineStatus(a.status);
       base[normalized] = (base[normalized] || 0) + 1;
@@ -281,9 +470,10 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
       activeInternships: internships.filter((item) => item.isActive).length,
       applicants: apps.length,
       shortlisted: shortlisted.length,
-      matched: matches.length
+      matched: matches.length,
+      roleLabel: currentUser?.companyAccountType?.toUpperCase() || "OWNER"
     }),
-    [profile?.verificationStatus, internships, apps.length, shortlisted.length, matches.length]
+    [profile?.verificationStatus, internships, apps.length, shortlisted.length, matches.length, currentUser?.companyAccountType]
   );
 
   async function saveProfile(event: React.FormEvent<HTMLFormElement>) {
@@ -369,6 +559,37 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
     }
   }
 
+  async function assignInternship(internshipId: string) {
+    const recruiterId = selectedRecruiterByInternship[internshipId];
+    if (!recruiterId) return;
+    try {
+      setSaving(true);
+      await assignRecruiterToInternship(internshipId, recruiterId);
+      setInternships(await fetchCompanyInternships(true));
+      setApps(await fetchCompanyApplications(true));
+      setSuccess("Internship assigned to recruiter.");
+    } catch (e) {
+      setError((e as Error).message || "Failed to assign internship.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function assignApplication(applicationId: string) {
+    const recruiterId = selectedRecruiterByApplication[applicationId];
+    if (!recruiterId) return;
+    try {
+      setSaving(true);
+      await assignRecruiterToApplication(applicationId, recruiterId);
+      setApps(await fetchCompanyApplications(true));
+      setSuccess("Candidate assigned to recruiter.");
+    } catch (e) {
+      setError((e as Error).message || "Failed to assign candidate.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function applyStage(applicationId: string, status: string, note = "") {
     try {
       setSaving(true);
@@ -378,6 +599,26 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
       setSuccess("Applicant status updated.");
     } catch (e) {
       setError((e as Error).message || "Failed to update applicant stage.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function submitFeedback(applicationId: string) {
+    const draft = feedbackDrafts[applicationId];
+    if (!draft?.feedback?.trim()) {
+      setError("Feedback text is required.");
+      return;
+    }
+    try {
+      setSaving(true);
+      setError(null);
+      await addApplicationFeedback(applicationId, draft);
+      setApps(await fetchCompanyApplications(true));
+      setSuccess("Feedback saved.");
+      setFeedbackDrafts((prev) => ({ ...prev, [applicationId]: { feedback: "", rating: 3, visibility: "candidate" } }));
+    } catch (e) {
+      setError((e as Error).message || "Failed to add feedback.");
     } finally {
       setSaving(false);
     }
@@ -467,7 +708,7 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
                         type="button"
                         size="sm"
                         variant="secondary"
-                        className="w-full shrink-0 border-slate-300 bg-white hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-900 dark:hover:bg-slate-800 sm:w-auto"
+                        className="w-full shrink-0 border-slate-600 bg-slate-900 hover:bg-slate-800 dark:border-slate-600 dark:bg-slate-900 dark:hover:bg-slate-800 sm:w-auto"
                         onClick={() => {
                           setApplicantDetailId(a._id);
                           setStatusDrafts((prev) => ({ ...prev, [a._id]: normalizeApplicantStage(a.status) }));
@@ -493,6 +734,7 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
           <div className="space-y-5">
             <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
               <SummaryStatCard title="Verification" value={summary.verification.toUpperCase()} />
+              <SummaryStatCard title="Workspace" value={summary.roleLabel} />
               <SummaryStatCard title="Active Internships" value={summary.activeInternships} />
               <SummaryStatCard title="Applicants" value={summary.applicants} />
               <SummaryStatCard title="Shortlisted" value={summary.shortlisted} />
@@ -519,6 +761,13 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
       case "verification":
         return <SectionPanel title="Verification Status" subtitle="Current verification state."><div className="surface-subtle px-4 py-3 text-sm text-slate-700 dark:text-slate-300">Status: {summary.verification.toUpperCase()}</div></SectionPanel>;
       case "hiring-post":
+        if (isHrScoped) {
+          return (
+            <SectionPanel title="Post Internship" subtitle="HR workspace can manage assigned internships only.">
+              <Empty text="Internship creation is restricted to CEO/Company Admin." />
+            </SectionPanel>
+          );
+        }
         return (
           <SectionPanel title="Post Internship" subtitle="Create a formal internship posting with complete role details.">
             <form className="space-y-6" onSubmit={createInternship}>
@@ -588,9 +837,32 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
                       <p className="text-xs text-slate-600 dark:text-slate-300">{i.location || "Location not specified"} • {i.mode || "Mode not specified"}</p>
                       <p className="text-xs text-slate-500 dark:text-slate-400">Posted: {fmtDate(i.createdAt)}</p>
                     </div>
-                    <Button type="button" size="sm" variant="secondary" onClick={() => removeInternship(i._id)} disabled={saving}>
+                    <div className="flex flex-wrap items-center gap-2">
+                      {canAssign && recruiters.length > 0 && (
+                        <>
+                          <select
+                            className="surface-subtle rounded-lg border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-600"
+                            value={selectedRecruiterByInternship[i._id] || ""}
+                            onChange={(event) =>
+                              setSelectedRecruiterByInternship((prev) => ({ ...prev, [i._id]: event.target.value }))
+                            }
+                          >
+                            <option value="">Assign recruiter</option>
+                            {recruiters.map((recruiter) => (
+                              <option key={recruiter._id} value={recruiter._id}>
+                                {recruiter.email} ({recruiter.companyAccountType})
+                              </option>
+                            ))}
+                          </select>
+                          <Button type="button" size="sm" variant="secondary" disabled={saving || !selectedRecruiterByInternship[i._id]} onClick={() => assignInternship(i._id)}>
+                            Assign
+                          </Button>
+                        </>
+                      )}
+                      <Button type="button" size="sm" variant="secondary" onClick={() => removeInternship(i._id)} disabled={saving || isHrScoped}>
                       Delete Internship
-                    </Button>
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -598,11 +870,78 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
           </SectionPanel>
         );
       case "hiring-applicants":
-        return applicantPanel(apps, "Applicants", "All applicants across internships.", "No applicants yet.");
+        return (
+          <SectionPanel title="Applicants" subtitle={isHrScoped ? "Assigned candidates in your recruiter workspace." : "All applicants across internships."}>
+            {apps.length === 0 ? (
+              <Empty text="No applicants yet." />
+            ) : (
+              <div className="space-y-3">
+                {apps.map((a) => (
+                  <div key={a._id} className="surface-subtle flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+                    <div>
+                      <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{a.intern?.fullName || "Candidate"}</p>
+                      <p className="text-xs text-slate-600 dark:text-slate-300">{a.internship?.role || "Internship"} • {a.status}</p>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      {canAssign && recruiters.length > 0 && (
+                        <>
+                          <select
+                            className="surface-subtle rounded-lg border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-600"
+                            value={selectedRecruiterByApplication[a._id] || ""}
+                            onChange={(event) =>
+                              setSelectedRecruiterByApplication((prev) => ({ ...prev, [a._id]: event.target.value }))
+                            }
+                          >
+                            <option value="">Assign recruiter</option>
+                            {recruiters.map((recruiter) => (
+                              <option key={recruiter._id} value={recruiter._id}>
+                                {recruiter.email} ({recruiter.companyAccountType})
+                              </option>
+                            ))}
+                          </select>
+                          <Button type="button" size="sm" variant="secondary" disabled={!selectedRecruiterByApplication[a._id] || saving} onClick={() => assignApplication(a._id)}>
+                            Assign
+                          </Button>
+                        </>
+                      )}
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="secondary"
+                        className="w-full shrink-0 border-slate-600 bg-slate-900 hover:bg-slate-800 dark:border-slate-600 dark:bg-slate-900 dark:hover:bg-slate-800 sm:w-auto"
+                        onClick={() => {
+                          setApplicantDetailId(a._id);
+                          setStatusDrafts((prev) => ({ ...prev, [a._id]: normalizeApplicantStage(a.status) }));
+                        }}
+                      >
+                        View Details
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </SectionPanel>
+        );
       case "hiring-shortlisted":
         return applicantPanel(shortlisted, "Shortlisted", "Candidates in shortlisted stage.", "No shortlisted candidates yet.");
       case "hiring-pipeline":
-        return <SectionPanel title="Hiring Pipeline" subtitle="Real status breakdown.">{apps.length === 0 ? <Empty text="No applicants yet." /> : <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{Object.entries(statusCounts).map(([stage, count]) => <div key={stage} className="surface-subtle px-3 py-2.5"><p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">{stage}</p><p className="text-xl font-bold text-slate-900 dark:text-slate-100">{count}</p></div>)}</div>}</SectionPanel>;
+        return (
+          <SectionPanel title="Hiring Pipeline" subtitle="Real status breakdown.">
+            {apps.length === 0 ? (
+              <Empty text="No applicants yet." />
+            ) : (
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {PIPELINE_STAGES.map((stage) => (
+                  <div key={stage} className="surface-subtle px-3 py-2.5">
+                    <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">{stage.replace(/_/g, " ")}</p>
+                    <p className="text-xl font-bold text-slate-900 dark:text-slate-100">{statusCounts[stage] || 0}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </SectionPanel>
+        );
       case "matching-ai":
         return <SectionPanel title="AI Matched Candidates" subtitle="Backend-ranked matched candidates.">{matches.length === 0 ? <Empty text="No matched candidates available yet." /> : <div className="space-y-2">{matches.map((m, idx) => <div key={`${m.internshipId}-${m.internProfile?._id || idx}`} className="surface-subtle flex flex-wrap items-center justify-between gap-2 px-4 py-3"><div><p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{m.internProfile?.fullName || "Candidate"}</p><p className="text-xs text-slate-600 dark:text-slate-300">{m.internshipRole}</p></div><p className="text-sm font-semibold text-primary-700 dark:text-primary-300">{m.score}%</p></div>)}</div>}</SectionPanel>;
       case "matching-search":
@@ -659,7 +998,158 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
       case "reports-notes":
         return <SectionPanel title="Hiring Notes" subtitle="Stage notes captured in pipeline updates.">{apps.flatMap((a) => a.stageHistory || []).filter((h) => h.note?.trim()).length === 0 ? <Empty text="No hiring notes available yet." /> : <div className="space-y-2">{apps.flatMap((a) => (a.stageHistory || []).filter((h) => h.note?.trim()).map((h, idx) => ({ id: `${a._id}-${idx}`, name: a.intern?.fullName || "Candidate", role: a.internship?.role || "Internship", stage: h.stage, note: h.note, changedAt: h.changedAt }))).sort((a, b) => new Date(b.changedAt || 0).getTime() - new Date(a.changedAt || 0).getTime()).map((n) => <div key={n.id} className="surface-subtle px-4 py-3"><p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{n.name}</p><p className="text-xs text-slate-500 dark:text-slate-400">{n.role} • {n.stage} • {fmtDate(n.changedAt)}</p><p className="mt-1 text-sm text-slate-700 dark:text-slate-300">{n.note}</p></div>)}</div>}</SectionPanel>;
       case "reports-export":
-        return <SectionPanel title="Reports / Export" subtitle="Export live hiring data."><div className="space-y-3"><div className="grid gap-3 sm:grid-cols-3"><div className="surface-subtle px-3 py-2.5"><p className="text-xs text-slate-500">Internships</p><p className="text-lg font-semibold text-slate-900 dark:text-slate-100">{internships.length}</p></div><div className="surface-subtle px-3 py-2.5"><p className="text-xs text-slate-500">Applicants</p><p className="text-lg font-semibold text-slate-900 dark:text-slate-100">{apps.length}</p></div><div className="surface-subtle px-3 py-2.5"><p className="text-xs text-slate-500">Shortlisted</p><p className="text-lg font-semibold text-slate-900 dark:text-slate-100">{shortlisted.length}</p></div></div><Button type="button" onClick={exportCsv} disabled={apps.length === 0}>Export Applicants CSV</Button>{apps.length === 0 && <Empty text="No applicant data available for export." />}</div></SectionPanel>;
+        return <SectionPanel title="Reports / Export" subtitle={isHrScoped ? "Export your assigned hiring records." : "Export company hiring reports."}><div className="space-y-3"><div className="grid gap-3 sm:grid-cols-3"><div className="surface-subtle px-3 py-2.5"><p className="text-xs text-slate-500">Internships</p><p className="text-lg font-semibold text-slate-900 dark:text-slate-100">{internships.length}</p></div><div className="surface-subtle px-3 py-2.5"><p className="text-xs text-slate-500">Applicants</p><p className="text-lg font-semibold text-slate-900 dark:text-slate-100">{apps.length}</p></div><div className="surface-subtle px-3 py-2.5"><p className="text-xs text-slate-500">Shortlisted</p><p className="text-lg font-semibold text-slate-900 dark:text-slate-100">{shortlisted.length}</p></div></div><Button type="button" onClick={exportCsv} disabled={apps.length === 0}>Export Applicants CSV</Button>{apps.length === 0 && <Empty text="No applicant data available for export." />}</div></SectionPanel>;
+      case "team-recruiters":
+        return (
+          <SectionPanel title="HR Management" subtitle="CEO controls: create HR accounts, permissions, performance insights, and removal.">
+            {!canManageRecruiters || !isCeoOrOwner ? (
+              <Empty text="HR management is restricted to CEO / Company Admin." />
+            ) : (
+              <div className="space-y-5">
+                {hrInsights && (
+                  <div className="grid gap-3 sm:grid-cols-4">
+                    <div className="surface-subtle px-3 py-2.5"><p className="text-xs text-slate-500">HR Users</p><p className="text-lg font-semibold">{hrInsights.summary.totalHrUsers}</p></div>
+                    <div className="surface-subtle px-3 py-2.5"><p className="text-xs text-slate-500">Assigned Candidates</p><p className="text-lg font-semibold">{hrInsights.summary.totalAssignedCandidates}</p></div>
+                    <div className="surface-subtle px-3 py-2.5"><p className="text-xs text-slate-500">Total Hires</p><p className="text-lg font-semibold">{hrInsights.summary.totalHires}</p></div>
+                    <div className="surface-subtle px-3 py-2.5"><p className="text-xs text-slate-500">Avg Conversion</p><p className="text-lg font-semibold">{hrInsights.summary.averageConversionRate}%</p></div>
+                  </div>
+                )}
+
+                <div className="surface-subtle space-y-3 p-4">
+                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Add HR User</p>
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    <input className={field} placeholder="Full name" value={hrForm.name} onChange={(e) => setHrForm((p) => ({ ...p, name: e.target.value }))} />
+                    <input className={field} placeholder="Email" type="email" value={hrForm.email} onChange={(e) => setHrForm((p) => ({ ...p, email: e.target.value }))} />
+                    <input className={field} placeholder="Password (min 8 chars)" type="password" value={hrForm.password} onChange={(e) => setHrForm((p) => ({ ...p, password: e.target.value }))} />
+                  </div>
+                  <div className="flex flex-wrap gap-3 text-xs text-slate-600 dark:text-slate-300">
+                    {HR_ASSIGNABLE_PERMISSIONS.map((perm) => (
+                      <label key={perm} className="inline-flex items-center gap-1.5">
+                        <input
+                          type="checkbox"
+                          checked={hrFormPermissions.includes(perm)}
+                          onChange={(e) =>
+                            setHrFormPermissions((prev) =>
+                              e.target.checked ? [...new Set([...prev, perm])] : prev.filter((p) => p !== perm)
+                            )
+                          }
+                        />
+                        {perm}
+                      </label>
+                    ))}
+                  </div>
+                  <Button type="button" onClick={handleCreateHr} disabled={hrActionLoading}>
+                    {hrActionLoading ? "Saving..." : "Add HR"}
+                  </Button>
+                </div>
+
+                {!hrInsights || hrInsights.hrUsers.length === 0 ? (
+                  <Empty text="No HR accounts yet. Create one above." />
+                ) : (
+                  <div className="space-y-3">
+                    {hrInsights.hrUsers.map((hr) => (
+                      <div key={hr.id} className="surface-subtle space-y-3 px-4 py-3">
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div>
+                            <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{hr.name}</p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">{hr.email} • {hr.isActive ? "Active" : "Inactive"}</p>
+                            <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
+                              {hr.assignedInternships} internships • {hr.assignedCandidates} candidates • {hr.performanceMetrics.hiredCandidates} hires • {hr.performanceMetrics.conversionRate}% conversion
+                            </p>
+                            <p className="text-xs text-slate-500">{hr.performanceMetrics.activitySummary}</p>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            <Button type="button" variant="secondary" onClick={() => openHrInsights(hr)} disabled={hrActionLoading}>
+                              View Insights
+                            </Button>
+                            <Button type="button" variant="secondary" onClick={() => handleDeleteHr(hr.id, hr.email)} disabled={hrActionLoading}>
+                              Delete HR
+                            </Button>
+                          </div>
+                        </div>
+
+                        {selectedHrId === hr.id && (
+                          <div className="rounded-lg border border-slate-200 p-3 dark:border-slate-700">
+                            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Performance</p>
+                            <div className="mt-2 grid gap-2 sm:grid-cols-3 text-sm">
+                              <p>Handled: {hr.performanceMetrics.candidatesHandled}</p>
+                              <p>Shortlisted: {hr.performanceMetrics.shortlistedCandidates}</p>
+                              <p>Interviews success: {hr.performanceMetrics.interviewSuccessRate}%</p>
+                            </div>
+                            <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-slate-500">Permissions</p>
+                            <div className="mt-2 flex flex-wrap gap-3 text-xs">
+                              {HR_ASSIGNABLE_PERMISSIONS.map((perm) => (
+                                <label key={`${hr.id}-${perm}`} className="inline-flex items-center gap-1.5">
+                                  <input
+                                    type="checkbox"
+                                    checked={permissionDraft.includes(perm)}
+                                    onChange={(e) =>
+                                      setPermissionDraft((prev) =>
+                                        e.target.checked ? [...new Set([...prev, perm])] : prev.filter((p) => p !== perm)
+                                      )
+                                    }
+                                  />
+                                  {perm}
+                                </label>
+                              ))}
+                            </div>
+                            <div className="mt-3">
+                              <Button type="button" onClick={() => handleSaveHrPermissions(hr.id)} disabled={hrActionLoading}>
+                                Save Permissions
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </SectionPanel>
+        );
+      case "analytics-company":
+        return (
+          <SectionPanel title="Company Analytics" subtitle="Recruiter performance and hiring analytics.">
+            {!analytics ? (
+              <Empty text="Analytics not available." />
+            ) : (
+              <div className="space-y-4">
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <div className="surface-subtle px-3 py-2.5"><p className="text-xs text-slate-500">Total Hires</p><p className="text-lg font-semibold">{analytics.hiringAnalytics.totalHires}</p></div>
+                  <div className="surface-subtle px-3 py-2.5"><p className="text-xs text-slate-500">Total Applications</p><p className="text-lg font-semibold">{analytics.hiringAnalytics.totalApplications}</p></div>
+                  <div className="surface-subtle px-3 py-2.5"><p className="text-xs text-slate-500">Internship Performance</p><p className="text-lg font-semibold">{analytics.hiringAnalytics.internshipPerformance}</p></div>
+                </div>
+                <div className="space-y-2">
+                  {analytics.recruiterPerformance.map((item) => {
+                    const hrMatch = hrInsights?.hrUsers.find((hr) => hr.id === item.recruiterId);
+                    const label = hrMatch ? `${hrMatch.name} (${hrMatch.email})` : `Recruiter ${item.recruiterId}`;
+                    return (
+                      <div key={item.recruiterId} className="surface-subtle px-4 py-3 text-sm">
+                        {label} • Handled {item.candidatesHandled} • Hired {item.hiredCandidates} • Conversion {item.conversionRate}%
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </SectionPanel>
+        );
+      case "analytics-salary":
+        return (
+          <SectionPanel title="Salary Insights" subtitle="Company stipend and salary analytics.">
+            {!canViewSalary ? (
+              <Empty text="Salary insights are restricted to CEO / Company Admin." />
+            ) : !analytics ? (
+              <Empty text="Salary analytics not available." />
+            ) : (
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="surface-subtle px-3 py-2.5"><p className="text-xs text-slate-500">Average Package</p><p className="text-lg font-semibold">{analytics.salaryAnalytics.averagePackage}</p></div>
+                <div className="surface-subtle px-3 py-2.5"><p className="text-xs text-slate-500">Total Salary Expenditure</p><p className="text-lg font-semibold">{analytics.salaryAnalytics.totalSalaryExpenditure}</p></div>
+              </div>
+            )}
+          </SectionPanel>
+        );
       default:
         return null;
     }
@@ -667,7 +1157,12 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
 
   return (
     <RoleDashboardGuard expectedRole="company">
-      <CompanyShell welcomeName={profile?.companyName} onLogout={logout}>
+      <CompanyShell
+        welcomeName={profile?.companyName}
+        companyAccountType={currentUser?.companyAccountType}
+        permissions={currentUser?.permissions || []}
+        onLogout={logout}
+      >
         {loading ? (
           <div className="surface-muted px-4 py-3 text-sm text-slate-700 dark:text-slate-300">Loading company dashboard...</div>
         ) : (
@@ -695,6 +1190,14 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
                 }
                 onCreateInterview={() => createInterviewRound(detailApp._id)}
                 onUpdateRound={(roundId, status) => updateRoundStatus(detailApp._id, roundId, status)}
+                feedbackDraft={feedbackDrafts[detailApp._id] || { feedback: "", rating: 3, visibility: "candidate" }}
+                onFeedbackDraftChange={(patch) =>
+                  setFeedbackDrafts((prev) => ({
+                    ...prev,
+                    [detailApp._id]: { ...(prev[detailApp._id] || { feedback: "", rating: 3, visibility: "candidate" }), ...patch }
+                  }))
+                }
+                onSubmitFeedback={() => submitFeedback(detailApp._id)}
               />
             )}
           </div>

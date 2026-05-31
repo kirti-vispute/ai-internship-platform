@@ -1,16 +1,12 @@
-const fs = require("fs");
-const path = require("path");
 const multer = require("multer");
+const { resolveUploadDirectory, buildStoredFilename, UPLOAD_DIRECTORIES } = require("../services/file-upload.service");
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadDir = path.join(__dirname, "../../uploads/resumes");
-    fs.mkdirSync(uploadDir, { recursive: true });
-    cb(null, uploadDir);
+    cb(null, resolveUploadDirectory(UPLOAD_DIRECTORIES.RESUMES));
   },
   filename: (req, file, cb) => {
-    const safeName = file.originalname.replace(/\s+/g, "_");
-    cb(null, `${Date.now()}_${safeName}`);
+    cb(null, buildStoredFilename(file.originalname));
   }
 });
 

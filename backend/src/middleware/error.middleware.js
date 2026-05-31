@@ -1,5 +1,7 @@
-﻿function notFoundMiddleware(req, res, next) {
-  res.status(404).json({ message: "Route not found" });
+﻿const { sendError } = require("../utils/api-response");
+
+function notFoundMiddleware(req, res, next) {
+  return sendError(res, { statusCode: 404, message: "Route not found" });
 }
 
 function errorMiddleware(err, req, res, next) {
@@ -11,9 +13,10 @@ function errorMiddleware(err, req, res, next) {
     console.error(err);
   }
 
-  return res.status(statusCode).json({
+  return sendError(res, {
+    statusCode,
     message,
-    stack: process.env.NODE_ENV === "development" ? err.stack : undefined
+    error: process.env.NODE_ENV === "development" ? { stack: err.stack } : null
   });
 }
 

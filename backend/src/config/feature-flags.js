@@ -1,0 +1,17 @@
+function toBool(value, fallback) {
+  if (value === undefined || value === null || value === "") return fallback;
+  return String(value).toLowerCase() === "true";
+}
+
+const FEATURE_FLAGS = Object.freeze({
+  ENABLE_AI: toBool(process.env.ENABLE_AI, true),
+  ENABLE_NOTIFICATIONS: toBool(process.env.ENABLE_NOTIFICATIONS, true),
+  ENABLE_RECORDINGS: toBool(process.env.ENABLE_RECORDINGS, false),
+  ENABLE_CHAT: toBool(process.env.ENABLE_CHAT, true)
+});
+
+function isEnabled(flagName) {
+  return Boolean(FEATURE_FLAGS[flagName]);
+}
+
+module.exports = { FEATURE_FLAGS, isEnabled };

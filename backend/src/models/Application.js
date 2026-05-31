@@ -37,6 +37,21 @@ const applicationSchema = new mongoose.Schema(
       ref: "CompanyProfile",
       required: true
     },
+    assignedRecruiter: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+      index: true
+    },
+    assignmentUpdatedAt: {
+      type: Date,
+      default: null
+    },
+    assignedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null
+    },
     status: {
       type: String,
       enum: Object.values(APPLICATION_STATUS),
@@ -74,6 +89,11 @@ const applicationSchema = new mongoose.Schema(
     hrFeedback: [
       {
         feedback: { type: String, required: true },
+        stage: { type: String, enum: Object.values(APPLICATION_STATUS), default: APPLICATION_STATUS.APPLIED },
+        rating: { type: Number, min: 1, max: 5, default: null },
+        category: { type: String, default: "general" },
+        visibility: { type: String, enum: ["internal", "candidate"], default: "candidate" },
+        authorRole: { type: String, default: "company" },
         createdAt: { type: Date, default: Date.now }
       }
     ],
@@ -117,6 +137,8 @@ applicationSchema.pre("validate", function syncLinkedIds(next) {
 
 applicationSchema.index({ internId: 1, internshipId: 1 }, { unique: true });
 applicationSchema.index({ companyId: 1, internshipId: 1 });
+applicationSchema.index({ status: 1, createdAt: -1 });
+applicationSchema.index({ companyId: 1, status: 1, createdAt: -1 });
 
 module.exports = mongoose.model("Application", applicationSchema);
 

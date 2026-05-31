@@ -1,4 +1,4 @@
-import { ScrollReveal } from "@/components/animations/ScrollReveal";
+﻿import { ScrollReveal } from "@/components/animations/ScrollReveal";
 import { CommandCenterPanel } from "@/components/home/CommandCenterPanel";
 import { SectionAnimator } from "@/components/home/SectionAnimator";
 
@@ -6,7 +6,7 @@ export function CommandCenterSection() {
   return (
     <section className="pb-12 pt-6 sm:pb-16 sm:pt-10">
       <div className="container-shell">
-        <div className="relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white/90 p-6 shadow-[0_18px_46px_rgba(15,23,42,0.12)] dark:border-slate-700 dark:bg-slate-900/80 dark:shadow-[0_20px_50px_rgba(2,6,23,0.55)] sm:p-8">
+        <div className="relative overflow-hidden rounded-3xl border border-slate-700/80 bg-slate-900/90 p-6 shadow-[0_18px_46px_rgba(15,23,42,0.12)] dark:border-slate-700 dark:bg-slate-900/80 dark:shadow-[0_20px_50px_rgba(2,6,23,0.55)] sm:p-8">
           <div className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-cyan-300/25 blur-3xl dark:bg-cyan-500/15" />
           <div className="pointer-events-none absolute -left-16 bottom-0 h-44 w-44 rounded-full bg-indigo-300/25 blur-3xl dark:bg-indigo-500/15" />
 

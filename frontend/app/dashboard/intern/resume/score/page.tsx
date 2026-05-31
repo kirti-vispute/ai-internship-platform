@@ -1,13 +1,9 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { RoleDashboardGuard } from "@/components/ui/role-dashboard-guard";
-import { InternShell } from "@/components/dashboard/intern-shell";
 import { SectionPanel } from "@/components/dashboard/section-panel";
 import { SummaryStatCard } from "@/components/dashboard/summary-stat-card";
-import { clearAuthSession } from "@/lib/session";
-import { InternProfile, fetchInternProfileWithScore } from "@/lib/intern-portal";
+import { InternProfile, fetchInternProfileWithScore, peekInternProfile } from "@/lib/intern-portal";
 
 function cleanImprovementText(value: string) {
   return String(value || "")
@@ -17,15 +13,14 @@ function cleanImprovementText(value: string) {
 }
 
 export default function InternResumeScorePage() {
-  const router = useRouter();
   const [profile, setProfile] = useState<InternProfile | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => typeof window === "undefined" ? true : !peekInternProfile());
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function load() {
       try {
-        setLoading(true);
+        if (!peekInternProfile()) setLoading(true);
         setError(null);
         setProfile(await fetchInternProfileWithScore());
       } catch (err) {
@@ -37,18 +32,12 @@ export default function InternResumeScorePage() {
     load();
   }, []);
 
-  function handleLogout() {
-    clearAuthSession();
-    router.push("/auth/intern");
-  }
-
   const analysis = profile?.resume?.analysis;
 
   return (
-    <RoleDashboardGuard expectedRole="intern">
-      <InternShell welcomeName={profile?.fullName} onLogout={handleLogout}>
-        {loading ? (
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-600">Loading resume score...</div>
+    <>
+      {loading ? (
+          <div className="rounded-2xl border border-slate-700 bg-slate-900 p-5 text-sm text-slate-600">Loading resume score...</div>
         ) : (
           <div className="space-y-5">
             {error && <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div>}
@@ -58,6 +47,14 @@ export default function InternResumeScorePage() {
               <SummaryStatCard title="Score Source" value={profile?.resume?.scoreSource || "fallback"} />
               <SummaryStatCard title="Predicted Category" value={profile?.resume?.predictedCategory || "N/A"} />
             </section>
+            {analysis?.checks && (
+              <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                <SummaryStatCard title="Completeness" value={analysis.checks.completenessPercent || 0} suffix="%" />
+                <SummaryStatCard title="Role Specificity" value={analysis.checks.roleSpecificScore || 0} suffix="/100" />
+                <SummaryStatCard title="Formatting" value={analysis.checks.formattingQualityScore || 0} suffix="/100" />
+                <SummaryStatCard title="Experience Weight" value={analysis.checks.experienceWeightedScore || 0} suffix="/100" />
+              </section>
+            )}
 
             <SectionPanel title="Resume Analysis" subtitle="Section breakdown and improvement guidance.">
               {!profile?.resumeUploaded ? (
@@ -88,15 +85,17 @@ export default function InternResumeScorePage() {
                       ))}
                     </ul>
                   </div>
+                  {!!analysis?.checks?.missingSkills?.length && (
+                    <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3">
+                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-amber-700">Missing Skills</p>
+                      <p className="mt-2 text-xs text-amber-800">{analysis.checks.missingSkills.join(", ")}</p>
+                    </div>
+                  )}
                 </>
               )}
             </SectionPanel>
           </div>
         )}
-      </InternShell>
-    </RoleDashboardGuard>
+    </>
   );
 }
-
-
-

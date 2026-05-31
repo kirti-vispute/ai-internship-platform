@@ -1,4 +1,4 @@
-type SkillChipsProps = {
+﻿type SkillChipsProps = {
   skills: string[];
 };
 
@@ -12,7 +12,7 @@ export function SkillChips({ skills }: SkillChipsProps) {
       {skills.map((skill) => (
         <span
           key={skill}
-          className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700 shadow-soft transition-all duration-200 hover:-translate-y-0.5 hover:border-primary-300 hover:bg-primary-50 hover:text-primary-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-primary-500/60 dark:hover:bg-primary-900/20 dark:hover:text-primary-300"
+          className="rounded-full border border-slate-600 bg-slate-800 px-3 py-1 text-xs font-semibold text-slate-200 shadow-soft transition-all duration-200 hover:border-primary-500/60 hover:bg-primary-900/30 hover:text-primary-300"
         >
           {skill}
         </span>

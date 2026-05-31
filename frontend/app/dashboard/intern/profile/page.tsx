@@ -1,25 +1,20 @@
 ﻿"use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { RoleDashboardGuard } from "@/components/ui/role-dashboard-guard";
-import { InternShell } from "@/components/dashboard/intern-shell";
 import { SectionPanel } from "@/components/dashboard/section-panel";
 import { SkillChips } from "@/components/dashboard/skill-chips";
 import { Skeleton } from "@/components/ui/skeleton";
-import { clearAuthSession } from "@/lib/session";
-import { InternProfile, fetchInternProfile } from "@/lib/intern-portal";
+import { InternProfile, fetchInternProfile, peekInternProfile } from "@/lib/intern-portal";
 
 export default function InternProfilePage() {
-  const router = useRouter();
   const [profile, setProfile] = useState<InternProfile | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => typeof window === "undefined" ? true : !peekInternProfile());
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function load() {
       try {
-        setLoading(true);
+        if (!peekInternProfile()) setLoading(true);
         setError(null);
         setProfile(await fetchInternProfile());
       } catch (err) {
@@ -30,11 +25,6 @@ export default function InternProfilePage() {
     }
     load();
   }, []);
-
-  function handleLogout() {
-    clearAuthSession();
-    router.push("/auth/intern");
-  }
 
   const parsed = profile?.resume?.parsed;
   const projectList = parsed?.projects || [];
@@ -50,10 +40,9 @@ export default function InternProfilePage() {
     .join("");
 
   return (
-    <RoleDashboardGuard expectedRole="intern">
-      <InternShell welcomeName={profile?.fullName} onLogout={handleLogout}>
-        {loading ? (
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900">
+    <>
+      {loading ? (
+          <div className="rounded-2xl border border-slate-700 bg-slate-900 p-5 dark:border-slate-700 dark:bg-slate-900">
             <Skeleton className="h-4 w-40" />
             <Skeleton className="mt-3 h-20 w-full" />
             <Skeleton className="mt-3 h-10 w-56" />
@@ -100,6 +89,10 @@ export default function InternProfilePage() {
 
             <SectionPanel title="Skills" subtitle="Extracted and normalized skills from your resume.">
               <SkillChips skills={parsed?.skills || profile?.skills || []} />
+            </SectionPanel>
+
+            <SectionPanel title="Professional Summary" subtitle="Your profile summary for recruiters.">
+              <p className="text-sm text-slate-700 dark:text-slate-300">{profile?.summary || parsed?.summary || "Add a summary to showcase your profile."}</p>
             </SectionPanel>
 
             <div className="grid gap-6 xl:grid-cols-3">
@@ -184,13 +177,29 @@ export default function InternProfilePage() {
                 <SkillChips skills={languages} />
               </SectionPanel>
             )}
+
+            <SectionPanel title="Social Links" subtitle="Professional links and profiles.">
+              <div className="space-y-2 text-sm">
+                {profile?.linkedinUrl ? (
+                  <a className="text-primary-700 underline" href={profile.linkedinUrl} target="_blank" rel="noreferrer">
+                    LinkedIn
+                  </a>
+                ) : null}
+                {(profile?.links || []).length > 0 ? (
+                  (profile?.links || []).slice(0, 5).map((link) => (
+                    <div key={link}>
+                      <a className="text-primary-700 underline" href={link} target="_blank" rel="noreferrer">
+                        {link}
+                      </a>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-slate-600 dark:text-slate-300">No social links added yet.</p>
+                )}
+              </div>
+            </SectionPanel>
           </div>
         )}
-      </InternShell>
-    </RoleDashboardGuard>
+    </>
   );
 }
-
-
-
-

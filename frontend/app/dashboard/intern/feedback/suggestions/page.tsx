@@ -1,26 +1,21 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
-import { RoleDashboardGuard } from "@/components/ui/role-dashboard-guard";
-import { InternShell } from "@/components/dashboard/intern-shell";
 import { SectionPanel } from "@/components/dashboard/section-panel";
-import { clearAuthSession } from "@/lib/session";
-import { Application, InternProfile, Recommendation, fetchInternApplications, fetchInternProfile, fetchInternRecommendations } from "@/lib/intern-portal";
+import { Application, InternProfile, Recommendation, fetchInternApplications, fetchInternProfile, fetchInternRecommendations, peekInternProfile } from "@/lib/intern-portal";
 import { toDisplaySkillList } from "@/lib/skill-normalizer";
 
 export default function SuggestionsPage() {
-  const router = useRouter();
   const [profile, setProfile] = useState<InternProfile | null>(null);
   const [applications, setApplications] = useState<Application[]>([]);
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => typeof window === "undefined" ? true : !peekInternProfile());
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function load() {
       try {
-        setLoading(true);
+        if (!peekInternProfile()) setLoading(true);
         setError(null);
 
         const loadedProfile = await fetchInternProfile();
@@ -64,15 +59,9 @@ export default function SuggestionsPage() {
     return suggestions;
   }, [profile, missingRequiredSkills, applications]);
 
-  const handleLogout = () => {
-    clearAuthSession();
-    router.push("/auth/intern");
-  };
-
   return (
-    <RoleDashboardGuard expectedRole="intern">
-      <InternShell welcomeName={profile?.fullName} onLogout={handleLogout}>
-        {loading ? (
+    <>
+      {loading ? (
           <div className="surface-muted p-5 text-sm text-slate-700 dark:text-slate-300">Loading suggestions...</div>
         ) : (
           <SectionPanel title="Suggestions" subtitle="Generated from your resume data, recommendation results, and applications.">
@@ -88,7 +77,6 @@ export default function SuggestionsPage() {
             )}
           </SectionPanel>
         )}
-      </InternShell>
-    </RoleDashboardGuard>
+    </>
   );
 }

@@ -31,7 +31,10 @@ async function runSeed() {
     const user = await User.create({
       email: userSeed.email,
       role: userSeed.role,
-      passwordHash: await hashPassword(userSeed.password)
+      passwordHash: await hashPassword(userSeed.password),
+      adminRole: userSeed.adminRole || null,
+      companyAccountType: userSeed.companyAccountType || null,
+      displayName: userSeed.displayName || ""
     });
     usersByEmail[user.email] = user;
   }
@@ -61,12 +64,27 @@ async function runSeed() {
     companiesByEmail[company.companyEmail] = company;
   }
 
+  for (const userSeed of seedData.users) {
+    if (!userSeed.linkedCompanyEmail) continue;
+    const user = usersByEmail[userSeed.email];
+    const company = companiesByEmail[userSeed.linkedCompanyEmail];
+    if (!user || !company) continue;
+    user.companyProfileRef = company._id;
+    await user.save();
+  }
+
   const internshipsByRole = {};
   for (const internshipSeed of seedData.internships) {
     const company = companiesByEmail[internshipSeed.companyEmail];
+    const hrUser = internshipSeed.assignToHrEmail
+      ? usersByEmail[internshipSeed.assignToHrEmail]
+      : null;
+    const { assignToHrEmail, companyEmail, ...internshipFields } = internshipSeed;
     const internship = await Internship.create({
-      ...internshipSeed,
-      company: company._id
+      ...internshipFields,
+      company: company._id,
+      assignedRecruiter: hrUser?._id || null,
+      assignedDepartment: internshipFields.department || ""
     });
     internshipsByRole[internship.role] = internship;
   }
@@ -74,6 +92,9 @@ async function runSeed() {
   for (const applicationSeed of seedData.applications) {
     const intern = internProfilesByEmail[applicationSeed.internEmail];
     const internship = internshipsByRole[applicationSeed.internshipRole];
+    const hrUser = applicationSeed.assignToHrEmail
+      ? usersByEmail[applicationSeed.assignToHrEmail]
+      : null;
 
     await Application.create({
       internId: intern._id,
@@ -82,8 +103,11 @@ async function runSeed() {
       intern: intern._id,
       internship: internship._id,
       company: internship.company,
+      assignedRecruiter: hrUser?._id || internship.assignedRecruiter || null,
       status: applicationSeed.status,
       appliedAt: new Date(),
+      attachedResumePath: intern.resume?.filePath || "uploads/resumes/seed-resume.pdf",
+      availabilityStatus: applicationSeed.availabilityStatus || "yes",
       relevanceScore: applicationSeed.matchScore,
       matchScore: applicationSeed.matchScore,
       hrFeedback: applicationSeed.hrFeedback,

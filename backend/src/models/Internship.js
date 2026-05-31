@@ -7,6 +7,17 @@ const internshipSchema = new mongoose.Schema(
       ref: "CompanyProfile",
       required: true
     },
+    assignedRecruiter: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+      index: true
+    },
+    assignedDepartment: {
+      type: String,
+      default: "",
+      trim: true
+    },
     role: { type: String, required: true, trim: true },
     skillsRequired: [{ type: String, trim: true }],
     prioritySkills: [{ type: String, trim: true }],
@@ -32,9 +43,14 @@ const internshipSchema = new mongoose.Schema(
     additionalInstructions: { type: String, default: "", trim: true },
     hrContact: { type: String, default: "", trim: true },
     description: { type: String, required: true, trim: true },
-    isActive: { type: Boolean, default: true }
+    isActive: { type: Boolean, default: true },
+    isDeleted: { type: Boolean, default: false, index: true },
+    deletedAt: { type: Date, default: null },
+    deletedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null }
   },
   { timestamps: true }
 );
+
+internshipSchema.index({ createdAt: -1, isActive: 1, isDeleted: 1 });
 
 module.exports = mongoose.model("Internship", internshipSchema);

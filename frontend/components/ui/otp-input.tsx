@@ -16,8 +16,8 @@ export function OTPInput({ value, onChange, disabled }: OTPInputProps) {
         disabled={disabled}
         onChange={(event) => onChange(event.target.value.replace(/\D/g, "").slice(0, 6))}
         className={cn(
-          "h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm tracking-[0.4em] outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-100",
-          disabled && "cursor-not-allowed bg-slate-50"
+          "surface-input h-11 w-full px-3 text-sm tracking-[0.4em]",
+          disabled && "cursor-not-allowed bg-slate-800/60"
         )}
         placeholder="_ _ _ _ _ _"
       />

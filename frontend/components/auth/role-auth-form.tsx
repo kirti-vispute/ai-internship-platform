@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { OTPInput } from "@/components/ui/otp-input";
 import { PasswordStrength } from "@/components/ui/password-strength";
 import { apiRequest } from "@/lib/api-client";
 import { clearAuthSession, setAuthSession } from "@/lib/session";
@@ -54,6 +55,49 @@ const initialCompanyData: CompanySignupData = {
 
 const COMPANY_PROFILE_PLACEHOLDER = "Pending profile completion";
 
+type CompanyLoginType = "hr" | "ceo";
+
+const COMPANY_LOGIN_PRESETS: Record<
+  CompanyLoginType,
+  { title: string; description: string; email: string; password: string }
+> = {
+  hr: {
+    title: "Company HR",
+    description: "Manage applicants, interviews, and hiring pipeline for your organization.",
+    email: "hr@novatech.example",
+    password: "CompanyHr@123"
+  },
+  ceo: {
+    title: "Company CEO",
+    description: "Executive access to company verification, analytics, and hiring oversight.",
+    email: "ceo@novatech.example",
+    password: "CompanyCeo@123"
+  }
+};
+
+function AuthPortalLinks({ role }: { role: AuthRole }) {
+  return (
+    <div className="mt-6 space-y-2 border-t border-slate-200 pt-4 text-xs dark:border-slate-700">
+      <p className="font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">Other portals</p>
+      <div className="flex flex-wrap gap-x-4 gap-y-1">
+        {role !== "intern" && (
+          <Link href="/auth/intern" className="font-semibold text-primary-600 hover:text-primary-700 dark:text-primary-300" data-cursor="link">
+            Intern login
+          </Link>
+        )}
+        {role !== "company" && (
+          <Link href="/auth/company" className="font-semibold text-primary-600 hover:text-primary-700 dark:text-primary-300" data-cursor="link">
+            Company login
+          </Link>
+        )}
+        <Link href="/auth/admin" className="font-semibold text-primary-600 hover:text-primary-700 dark:text-primary-300" data-cursor="link">
+          Admin login
+        </Link>
+      </div>
+    </div>
+  );
+}
+
 export function RoleAuthForm({ role }: { role: AuthRole }) {
   const router = useRouter();
   const [mode, setMode] = useState<FormMode>("signup");
@@ -65,6 +109,14 @@ export function RoleAuthForm({ role }: { role: AuthRole }) {
   const [verificationPending, setVerificationPending] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [otp, setOtp] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpVerified, setOtpVerified] = useState(false);
+  const [resetOtpMode, setResetOtpMode] = useState(false);
+  const [resetOtpSent, setResetOtpSent] = useState(false);
+  const [resetOtp, setResetOtp] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [companyLoginType, setCompanyLoginType] = useState<CompanyLoginType>("hr");
 
   useEffect(() => {
     clearAuthSession();
@@ -81,6 +133,14 @@ export function RoleAuthForm({ role }: { role: AuthRole }) {
 
   const setModeWithReset = useCallback((nextMode: FormMode) => {
     setMode(nextMode);
+    setErrors({});
+    setFeedback(null);
+  }, []);
+
+  const applyCompanyLoginPreset = useCallback((type: CompanyLoginType) => {
+    const preset = COMPANY_LOGIN_PRESETS[type];
+    setCompanyLoginType(type);
+    setLoginData({ email: preset.email, password: preset.password });
     setErrors({});
     setFeedback(null);
   }, []);
@@ -133,12 +193,17 @@ export function RoleAuthForm({ role }: { role: AuthRole }) {
         setFeedback(null);
 
         const endpoint = role === "intern" ? "/api/auth/intern/login" : "/api/auth/company/login";
-        const response = await apiRequest<{ message: string; token: string; role: AuthRole }>(endpoint, {
+        const response = await apiRequest<{
+          message: string;
+          token: string;
+          refreshToken?: string;
+          role: AuthRole;
+        }>(endpoint, {
           method: "POST",
           body: JSON.stringify(loginData)
         });
 
-        setAuthSession(response.role, response.token);
+        setAuthSession(response.role, response.token, { refreshToken: response.refreshToken });
         setFeedback({ type: "success", message: response.message });
         router.push(response.role === "intern" ? "/dashboard/intern" : "/dashboard/company");
       } catch (error) {
@@ -162,17 +227,24 @@ export function RoleAuthForm({ role }: { role: AuthRole }) {
         setFeedback(null);
 
         if (role === "intern") {
-          const response = await apiRequest<{ message: string; token: string; role: AuthRole }>("/api/auth/intern/signup", {
-            method: "POST",
-            body: JSON.stringify({
-              fullName: internData.fullName,
-              email: internData.email,
-              mobile: internData.mobile,
-              password: internData.password
-            })
-          });
+          if (!otpVerified) {
+            setFeedback({ type: "error", message: "Please verify OTP before creating your account." });
+            return;
+          }
+          const response = await apiRequest<{ message: string; token: string; refreshToken?: string; role: AuthRole }>(
+            "/api/auth/intern/signup",
+            {
+              method: "POST",
+              body: JSON.stringify({
+                fullName: internData.fullName,
+                email: internData.email,
+                mobile: internData.mobile,
+                password: internData.password
+              })
+            }
+          );
 
-          setAuthSession(response.role, response.token);
+          setAuthSession(response.role, response.token, { refreshToken: response.refreshToken });
           setFeedback({ type: "success", message: response.message });
           router.push("/dashboard/intern");
           return;
@@ -217,7 +289,7 @@ export function RoleAuthForm({ role }: { role: AuthRole }) {
           data-cursor="button"
           className={`rounded-lg px-3 py-2 text-sm font-semibold transition-all duration-200 ${
             mode === "signup"
-              ? "bg-white text-slate-900 shadow-soft dark:bg-slate-900 dark:text-slate-100"
+              ? "bg-slate-900 text-slate-100 shadow-soft"
               : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
           }`}
         >
@@ -229,7 +301,7 @@ export function RoleAuthForm({ role }: { role: AuthRole }) {
           data-cursor="button"
           className={`rounded-lg px-3 py-2 text-sm font-semibold transition-all duration-200 ${
             mode === "login"
-              ? "bg-white text-slate-900 shadow-soft dark:bg-slate-900 dark:text-slate-100"
+              ? "bg-slate-900 text-slate-100 shadow-soft"
               : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
           }`}
         >
@@ -237,7 +309,7 @@ export function RoleAuthForm({ role }: { role: AuthRole }) {
         </button>
       </div>
 
-      <p className="mb-6 text-xs text-slate-500 dark:text-slate-400">
+      <p className="mb-4 text-xs text-slate-500 dark:text-slate-400">
         {role === "intern" ? "Looking for company access?" : "Looking for intern access?"}{" "}
         <Link
           href={role === "intern" ? "/auth/company" : "/auth/intern"}
@@ -252,6 +324,51 @@ export function RoleAuthForm({ role }: { role: AuthRole }) {
 
       {mode === "login" ? (
         <form className="mt-5 space-y-4" onSubmit={handleLoginSubmit}>
+          {role === "company" && (
+            <div className="space-y-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">
+                Company account type
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                {(Object.keys(COMPANY_LOGIN_PRESETS) as CompanyLoginType[]).map((type) => {
+                  const preset = COMPANY_LOGIN_PRESETS[type];
+                  const active = companyLoginType === type;
+                  return (
+                    <button
+                      key={type}
+                      type="button"
+                      data-cursor="button"
+                      onClick={() => applyCompanyLoginPreset(type)}
+                      className={`rounded-xl border px-3 py-3 text-left transition ${
+                        active
+                          ? "border-primary-500 bg-primary-50 shadow-soft dark:border-primary-400 dark:bg-primary-950/40"
+                          : "border-slate-700 bg-slate-900 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:hover:border-slate-600"
+                      }`}
+                    >
+                      <p className="text-sm font-bold text-slate-900 dark:text-slate-100">{preset.title}</p>
+                      <p className="mt-1 text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">{preset.description}</p>
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50/80 px-3 py-2.5 text-xs text-slate-600 dark:border-slate-600 dark:bg-slate-900/50 dark:text-slate-300">
+                <p className="font-semibold text-slate-700 dark:text-slate-200">Demo credentials</p>
+                <p className="mt-1">
+                  Email: <span className="font-mono">{COMPANY_LOGIN_PRESETS[companyLoginType].email}</span>
+                </p>
+                <p>
+                  Password: <span className="font-mono">{COMPANY_LOGIN_PRESETS[companyLoginType].password}</span>
+                </p>
+                <button
+                  type="button"
+                  className="mt-2 font-semibold text-primary-600 hover:text-primary-700 dark:text-primary-300"
+                  onClick={() => applyCompanyLoginPreset(companyLoginType)}
+                >
+                  Use these credentials
+                </button>
+              </div>
+            </div>
+          )}
           <Input
             label="Email"
             type="email"
@@ -277,17 +394,62 @@ export function RoleAuthForm({ role }: { role: AuthRole }) {
             >
               {showPassword ? "Hide Password" : "Show Password"}
             </button>
-            <button type="button" data-cursor="button" className="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">
+            <button
+              type="button"
+              data-cursor="button"
+              className="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+              onClick={() => setResetOtpMode((prev) => !prev)}
+            >
               Forgot password?
             </button>
           </div>
+          {resetOtpMode && (
+            <div className="space-y-2 rounded-xl border border-slate-200 p-3">
+              <Button
+                type="button"
+                size="sm"
+                onClick={async () => {
+                  if (!validateEmail(loginData.email)) {
+                    setFeedback({ type: "error", message: "Enter a valid email first." });
+                    return;
+                  }
+                  await apiRequest("/api/auth/password/send-otp", { method: "POST", body: JSON.stringify({ email: loginData.email }) });
+                  setResetOtpSent(true);
+                  setFeedback({ type: "success", message: "Password reset OTP sent." });
+                }}
+              >
+                Send Reset OTP
+              </Button>
+              {resetOtpSent && (
+                <>
+                  <OTPInput value={resetOtp} onChange={setResetOtp} />
+                  <Input label="New Password" type={showPassword ? "text" : "password"} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={async () => {
+                      await apiRequest("/api/auth/password/reset", {
+                        method: "POST",
+                        body: JSON.stringify({ email: loginData.email, otp: resetOtp, newPassword })
+                      });
+                      setFeedback({ type: "success", message: "Password reset successful. You can now log in." });
+                    }}
+                  >
+                    Reset Password
+                  </Button>
+                </>
+              )}
+            </div>
+          )}
           <Button type="submit" className="w-full" disabled={isLoading}>
             {isLoading ? (
               <span className="inline-flex items-center gap-2">
                 <LoadingSpinner /> Logging in
               </span>
+            ) : role === "company" ? (
+              `Login as ${COMPANY_LOGIN_PRESETS[companyLoginType].title}`
             ) : (
-              `Login as ${role === "intern" ? "Intern" : "Company"}`
+              "Login as Intern"
             )}
           </Button>
         </form>
@@ -333,6 +495,48 @@ export function RoleAuthForm({ role }: { role: AuthRole }) {
                 onChange={(event) => setInternData((prev) => ({ ...prev, confirmPassword: event.target.value }))}
                 error={errors.confirmPassword}
               />
+              <div className="rounded-xl border border-slate-200 p-3">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Email Verification OTP</p>
+                {!otpSent ? (
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={async () => {
+                      if (!validateEmail(internData.email)) {
+                        setFeedback({ type: "error", message: "Enter a valid email before sending OTP." });
+                        return;
+                      }
+                      await apiRequest("/api/auth/intern/send-otp", {
+                        method: "POST",
+                        body: JSON.stringify({ email: internData.email })
+                      });
+                      setOtpSent(true);
+                      setFeedback({ type: "success", message: "OTP sent to your email." });
+                    }}
+                  >
+                    Send OTP
+                  </Button>
+                ) : (
+                  <div className="space-y-2">
+                    <OTPInput value={otp} onChange={setOtp} />
+                    <Button
+                      type="button"
+                      size="sm"
+                      disabled={otpVerified}
+                      onClick={async () => {
+                        await apiRequest("/api/auth/intern/verify-otp", {
+                          method: "POST",
+                          body: JSON.stringify({ email: internData.email, otp })
+                        });
+                        setOtpVerified(true);
+                        setFeedback({ type: "success", message: "OTP verified. Complete signup now." });
+                      }}
+                    >
+                      {otpVerified ? "OTP Verified" : "Verify OTP"}
+                    </Button>
+                  </div>
+                )}
+              </div>
               <div className="flex items-center justify-between text-sm">
                 <button
                   type="button"
@@ -436,6 +640,8 @@ export function RoleAuthForm({ role }: { role: AuthRole }) {
           </Button>
         </form>
       )}
+
+      <AuthPortalLinks role={role} />
     </Card>
   );
 }

@@ -3,7 +3,7 @@ import { Manrope } from "next/font/google";
 import { CursorMount } from "@/components/cursor-mount";
 import "./globals.css";
 
-const manrope = Manrope({ subsets: ["latin"], variable: "--font-manrope" });
+const manrope = Manrope({ subsets: ["latin"], variable: "--font-manrope", display: "swap" });
 
 export const metadata: Metadata = {
   title: "AI Internship Platform",
@@ -14,8 +14,8 @@ export default function RootLayout({
   children
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className="dark">
-      <body className={`${manrope.variable} font-sans text-slate-100 antialiased`}>
+    <html lang="en" className="dark" suppressHydrationWarning>
+      <body className={`${manrope.variable} font-sans text-slate-100 antialiased`} suppressHydrationWarning>
         <CursorMount />
         {children}
       </body>

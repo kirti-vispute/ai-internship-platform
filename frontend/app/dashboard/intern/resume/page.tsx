@@ -1,22 +1,17 @@
 ﻿"use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
-import { RoleDashboardGuard } from "@/components/ui/role-dashboard-guard";
-import { InternShell } from "@/components/dashboard/intern-shell";
 import { SectionPanel } from "@/components/dashboard/section-panel";
 import { SkillChips } from "@/components/dashboard/skill-chips";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { clearAuthSession } from "@/lib/session";
 import { apiRequest } from "@/lib/api-client";
-import { InternProfile, fetchInternProfile, invalidateInternCache } from "@/lib/intern-portal";
+import { buildAssetUrl, InternProfile, fetchInternProfile, invalidateInternCache, peekInternProfile } from "@/lib/intern-portal";
 
 export default function InternResumePage() {
-  const router = useRouter();
   const fileRef = useRef<HTMLInputElement | null>(null);
   const [profile, setProfile] = useState<InternProfile | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => typeof window === "undefined" ? true : !peekInternProfile());
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -24,7 +19,7 @@ export default function InternResumePage() {
   useEffect(() => {
     async function load() {
       try {
-        setLoading(true);
+        if (!peekInternProfile()) setLoading(true);
         setProfile(await fetchInternProfile(true));
       } catch (err) {
         setError((err as Error).message || "Failed to load resume details.");
@@ -54,23 +49,19 @@ export default function InternResumePage() {
     }
   }
 
-  function handleLogout() {
-    clearAuthSession();
-    router.push("/auth/intern");
-  }
-
   const parsed = profile?.resume?.parsed;
   const projects = parsed?.projects || [];
+  const resumeUrl = profile?.resume?.filePath ? buildAssetUrl(profile.resume.filePath) : "";
+
   const education = parsed?.education || [];
   const certifications = parsed?.certifications || [];
   const achievements = parsed?.achievements || profile?.achievements || [];
   const languages = parsed?.languages || [];
 
   return (
-    <RoleDashboardGuard expectedRole="intern">
-      <InternShell welcomeName={profile?.fullName} onLogout={handleLogout}>
-        {loading ? (
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900">
+    <>
+      {loading ? (
+          <div className="rounded-2xl border border-slate-700 bg-slate-900 p-5 dark:border-slate-700 dark:bg-slate-900">
             <Skeleton className="h-4 w-52" />
             <Skeleton className="mt-3 h-16 w-full" />
             <Skeleton className="mt-3 h-10 w-40" />
@@ -91,9 +82,30 @@ export default function InternResumePage() {
               </div>
 
               <div className="mt-4">
-                <Button type="button" variant="secondary" size="sm" onClick={() => fileRef.current?.click()} disabled={uploading}>
-                  {uploading ? "Uploading..." : "Upload Resume"}
-                </Button>
+                <div className="flex flex-wrap gap-2">
+                  <Button type="button" variant="secondary" size="sm" onClick={() => fileRef.current?.click()} disabled={uploading}>
+                    {uploading ? "Uploading..." : "Upload Resume"}
+                  </Button>
+                  {resumeUrl && (
+                    <>
+                      <a
+                        className="tilt-3d inline-flex h-9 items-center justify-center rounded-xl border border-slate-700 bg-slate-900 px-4 text-sm font-semibold text-slate-100 shadow-soft transition duration-200 hover:border-slate-600 hover:bg-slate-800"
+                        href={resumeUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        Preview Resume
+                      </a>
+                      <a
+                        className="tilt-3d inline-flex h-9 items-center justify-center rounded-xl border border-slate-700 bg-slate-900 px-4 text-sm font-semibold text-slate-100 shadow-soft transition duration-200 hover:border-slate-600 hover:bg-slate-800"
+                        href={resumeUrl}
+                        download
+                      >
+                        Download Resume
+                      </a>
+                    </>
+                  )}
+                </div>
                 <input
                   ref={fileRef}
                   type="file"
@@ -209,11 +221,6 @@ export default function InternResumePage() {
             </SectionPanel>
           </div>
         )}
-      </InternShell>
-    </RoleDashboardGuard>
+    </>
   );
 }
-
-
-
-

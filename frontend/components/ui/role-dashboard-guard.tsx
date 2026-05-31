@@ -9,31 +9,31 @@ type RoleDashboardGuardProps = {
   children: React.ReactNode;
 };
 
+function isSessionAllowed(expectedRole: AuthRole) {
+  const session = getAuthSession();
+  return Boolean(session.loggedIn && session.token && session.role === expectedRole);
+}
+
 export function RoleDashboardGuard({ expectedRole, children }: RoleDashboardGuardProps) {
   const router = useRouter();
-  const [allowed, setAllowed] = useState(false);
+  const [allowed, setAllowed] = useState(() => isSessionAllowed(expectedRole));
 
   useEffect(() => {
-    const session = getAuthSession();
-
-    if (!session.loggedIn || !session.token || session.role !== expectedRole) {
-      router.replace(`/auth/${expectedRole}`);
+    if (isSessionAllowed(expectedRole)) {
+      setAllowed(true);
       return;
     }
 
-    setAllowed(true);
+    router.replace(`/auth/${expectedRole}`);
   }, [expectedRole, router]);
 
   if (!allowed) {
     return (
       <section className="container-shell py-12">
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-600 shadow-soft">
-          Checking session...
-        </div>
+        <div className="surface-card p-6 text-sm text-slate-400 shadow-soft">Checking session...</div>
       </section>
     );
   }
 
   return <>{children}</>;
 }
-

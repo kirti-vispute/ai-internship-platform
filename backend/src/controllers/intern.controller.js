@@ -13,6 +13,9 @@ const { computeResumeScore } = require("../services/scorer.service");
 const { parseResumeFile } = require("../services/resume-parser.service");
 const { structuredResumeParse } = require("../services/resume-structured-parser.service");
 const { normalizeSkillList, toDisplaySkillList } = require("../utils/skill-normalizer");
+const { logActivity } = require("../services/activity-log.service");
+const { sendNotificationEmail } = require("../services/notification.service");
+const { buildRoadmap } = require("../services/roadmap.service");
 
 function toProfilePayload(profileDoc) {
   const profile = profileDoc.toObject ? profileDoc.toObject() : profileDoc;
@@ -57,6 +60,16 @@ function normalizeResumePublicPath(filePath = "") {
   return normalized;
 }
 
+function isValidLinkedInUrl(url) {
+  if (!url) return true;
+  try {
+    const parsed = new URL(String(url).startsWith("http") ? String(url) : `https://${String(url)}`);
+    return parsed.hostname.includes("linkedin.com");
+  } catch {
+    return false;
+  }
+}
+
 exports.getProfile = asyncHandler(async (req, res) => {
   const profile = await getInternProfileByUserId(req.user._id);
   res.json({ profile: toProfilePayload(profile) });
@@ -65,23 +78,60 @@ exports.getProfile = asyncHandler(async (req, res) => {
 exports.updateProfile = asyncHandler(async (req, res) => {
   const profile = await getInternProfileByUserId(req.user._id);
 
-  const allowed = ["fullName", "mobile", "skills", "education", "projects", "certifications", "experience", "achievements", "links", "summary", "interests", "completedCourses"];
+  const allowed = [
+    "fullName",
+    "mobile",
+    "skills",
+    "education",
+    "projects",
+    "certifications",
+    "experience",
+    "achievements",
+    "links",
+    "summary",
+    "interests",
+    "completedCourses",
+    "linkedinUrl",
+    "profileSections"
+  ];
 
   allowed.forEach((field) => {
     if (req.body[field] !== undefined) {
       if (field === "skills") {
         profile.skills = toDisplaySkillList(normalizeSkillList(req.body.skills));
+      } else if (field === "linkedinUrl") {
+        if (!isValidLinkedInUrl(req.body.linkedinUrl)) {
+          throw new AppError("linkedinUrl must be a valid LinkedIn URL", 400);
+        }
+        profile.linkedinUrl = String(req.body.linkedinUrl || "").trim();
+      } else if (field === "profileSections" && req.body.profileSections && typeof req.body.profileSections === "object") {
+        profile.profileSections = { ...(profile.profileSections || {}), ...req.body.profileSections };
       } else {
         profile[field] = req.body[field];
       }
     }
   });
 
+  if (profile.linkedinUrl) {
+    const links = new Set(profile.links || []);
+    links.add(profile.linkedinUrl);
+    profile.links = Array.from(links);
+  }
+
   if (profile.resume?.text) {
     await refreshProfileScore(profile);
   }
 
   await profile.save();
+  await logActivity({
+    actorUser: req.user._id,
+    actorRole: req.user.role,
+    entityType: "intern_profile",
+    entityId: profile._id,
+    action: "profile_updated",
+    metadata: { fields: Object.keys(req.body || {}) },
+    ipAddress: req.ip
+  });
 
   res.json({ message: "Profile updated", profile: toProfilePayload(profile) });
 });
@@ -115,9 +165,22 @@ exports.uploadResume = asyncHandler(async (req, res) => {
   if (!profile.summary && parsed.summary) {
     profile.summary = parsed.summary;
   }
+  if (!profile.linkedinUrl) {
+    const linkedIn = (parsed.links || []).find((link) => String(link).toLowerCase().includes("linkedin.com"));
+    if (linkedIn) profile.linkedinUrl = linkedIn;
+  }
 
   await refreshProfileScore(profile, resumeText);
   await profile.save();
+  await logActivity({
+    actorUser: req.user._id,
+    actorRole: req.user.role,
+    entityType: "intern_profile",
+    entityId: profile._id,
+    action: "resume_uploaded",
+    metadata: { filePath: profile.resume.filePath },
+    ipAddress: req.ip
+  });
 
   res.json({
     message: "Resume uploaded and parsed",
@@ -159,12 +222,31 @@ exports.getSkillGap = asyncHandler(async (req, res) => {
   res.json({ internshipId, analysis });
 });
 
-exports.getActiveInternships = asyncHandler(async (req, res) => {
-  const internships = await Internship.find({ isActive: true })
-    .populate("company")
-    .sort({ createdAt: -1 });
+exports.getCareerRoadmap = asyncHandler(async (req, res) => {
+  const profile = await getInternProfileByUserId(req.user._id);
+  const targetRole = String(req.body?.targetRole || "full_stack_developer");
+  const roadmap = buildRoadmap({
+    targetRole,
+    currentSkills: profile?.resume?.parsed?.skills || profile?.skills || []
+  });
+  res.json({ roadmap });
+});
 
-  res.json({ internships });
+exports.getActiveInternships = asyncHandler(async (req, res) => {
+  const page = Math.max(1, Number(req.query.page || 1));
+  const limit = Math.min(100, Math.max(1, Number(req.query.limit || 10)));
+  const skip = (page - 1) * limit;
+  const query = { isActive: true, isDeleted: false };
+  const [internships, total] = await Promise.all([
+    Internship.find(query)
+    .populate("company")
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit),
+    Internship.countDocuments(query)
+  ]);
+
+  res.json({ internships, page, limit, total });
 });
 
 exports.getRecommendations = asyncHandler(async (req, res) => {
@@ -184,7 +266,7 @@ exports.getRecommendations = asyncHandler(async (req, res) => {
     });
   }
 
-  const internships = await Internship.find({ isActive: true }).populate("company");
+  const internships = await Internship.find({ isActive: true, isDeleted: false }).populate("company");
   const ranked = recommendInternships(profile, internships, { internSkills: parsedSkills });
 
   res.json({
@@ -275,6 +357,7 @@ exports.applyToInternship = asyncHandler(async (req, res) => {
       status: "applied",
       appliedAt: new Date(),
       attachedResumePath: resumePath,
+      assignedRecruiter: internship.assignedRecruiter || null,
       availabilityStatus: normalizedAvailability,
       joiningDate: parsedJoiningDate,
       relevanceScore: relevance.relevanceScore,
@@ -306,17 +389,29 @@ exports.applyToInternship = asyncHandler(async (req, res) => {
       missingRequiredSkills: relevance.missingRequiredSkills
     }
   });
+  sendNotificationEmail({
+    to: profile.email,
+    subject: "Application Submitted",
+    text: `You have successfully applied for ${internship.role}.`,
+    type: "application_submitted"
+  });
 });
 
 exports.getMyApplications = asyncHandler(async (req, res) => {
   const profile = await getInternProfileByUserId(req.user._id);
 
-  const applications = await Application.find({ $or: [{ internId: profile._id }, { intern: profile._id }] })
+  const page = Math.max(1, Number(req.query.page || 1));
+  const limit = Math.min(100, Math.max(1, Number(req.query.limit || 10)));
+  const skip = (page - 1) * limit;
+  const query = { $or: [{ internId: profile._id }, { intern: profile._id }] };
+  const applications = await Application.find(query)
     .populate({
       path: "internship",
       populate: { path: "company" }
     })
-    .sort({ createdAt: -1 });
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit);
 
   await Promise.all(
     applications.map(async (application) => {
@@ -330,7 +425,8 @@ exports.getMyApplications = asyncHandler(async (req, res) => {
     })
   );
 
-  res.json({ applications });
+  const total = await Application.countDocuments(query);
+  res.json({ applications, page, limit, total });
 });
 
 exports.getSavedInternships = asyncHandler(async (req, res) => {
@@ -388,7 +484,7 @@ exports.getMyFeedback = asyncHandler(async (req, res) => {
 });
 
 exports.reportCompany = asyncHandler(async (req, res) => {
-  const { companyId, reason } = req.body;
+  const { companyId, reason, details = "", reportType = "other", evidenceUrls = [], internshipId = null, hrUserId = null } = req.body || {};
 
   if (!companyId || !reason) {
     throw new AppError("companyId and reason are required", 400);
@@ -397,7 +493,22 @@ exports.reportCompany = asyncHandler(async (req, res) => {
   const report = await ReportedCompany.create({
     company: companyId,
     reason,
+    details,
+    reportType,
+    evidenceUrls: Array.isArray(evidenceUrls) ? evidenceUrls.filter(Boolean) : [],
+    internship: internshipId,
+    hrUser: hrUserId,
     reportedBy: req.user._id
+  });
+
+  await logActivity({
+    actorUser: req.user._id,
+    actorRole: req.user.role,
+    entityType: "company_report",
+    entityId: report._id,
+    action: "report_created",
+    metadata: { companyId },
+    ipAddress: req.ip
   });
 
   res.status(201).json({ message: "Company reported", report });

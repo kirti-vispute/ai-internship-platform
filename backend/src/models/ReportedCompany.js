@@ -17,15 +17,44 @@ const reportedCompanySchema = new mongoose.Schema(
       required: true,
       trim: true
     },
+    reportType: {
+      type: String,
+      enum: ["fake_internship", "abusive_hr", "scam_company", "inappropriate_behavior", "other"],
+      default: "other"
+    },
+    evidenceUrls: [{ type: String, trim: true }],
+    details: { type: String, default: "", trim: true },
+    internship: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Internship",
+      default: null
+    },
+    hrUser: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null
+    },
     status: {
       type: String,
       enum: Object.values(REPORTED_COMPANY_STATUS),
       default: REPORTED_COMPANY_STATUS.OPEN
     },
+    reviewedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null
+    },
+    reviewedAt: {
+      type: Date,
+      default: null
+    },
     resolutionNote: {
       type: String,
       default: ""
-    }
+    },
+    isDeleted: { type: Boolean, default: false, index: true },
+    deletedAt: { type: Date, default: null },
+    deletedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null }
   },
   { timestamps: true }
 );

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect } from "react";
 import { createPortal } from "react-dom";
@@ -58,6 +58,9 @@ export type ApplicantDetailsModalProps = {
   onInterviewFormChange: (patch: Partial<InterviewFormState>) => void;
   onCreateInterview: () => void;
   onUpdateRound: (roundId: string, status: "scheduled" | "completed" | "cleared" | "rejected") => void;
+  feedbackDraft: { feedback: string; rating: number; visibility: "internal" | "candidate" };
+  onFeedbackDraftChange: (patch: Partial<{ feedback: string; rating: number; visibility: "internal" | "candidate" }>) => void;
+  onSubmitFeedback: () => void;
 };
 
 export function ApplicantDetailsModal({
@@ -71,7 +74,10 @@ export function ApplicantDetailsModal({
   interviewForm,
   onInterviewFormChange,
   onCreateInterview,
-  onUpdateRound
+  onUpdateRound,
+  feedbackDraft,
+  onFeedbackDraftChange,
+  onSubmitFeedback
 }: ApplicantDetailsModalProps) {
   const currentStage = normalizeStage(a.status);
   const matchPct = a.relevanceScore ?? a.matchScore ?? 0;
@@ -108,7 +114,7 @@ export function ApplicantDetailsModal({
 
               <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
                 <div className="space-y-6">
-                  <section className="rounded-xl border border-slate-200 bg-white/80 p-4 dark:border-slate-800 dark:bg-slate-900/80">
+                  <section className="rounded-xl border border-slate-700 bg-slate-900/80 p-4 dark:border-slate-800 dark:bg-slate-900/80">
                     <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">Applicant</p>
                     <div className="mt-3 grid gap-3 sm:grid-cols-2">
                       <div className="surface-subtle rounded-lg px-3 py-2 text-xs text-slate-700 dark:text-slate-300">
@@ -140,15 +146,17 @@ export function ApplicantDetailsModal({
                     </div>
                   </section>
 
-                  <section className="space-y-3 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+                  <section className="space-y-3 rounded-xl border border-slate-700 bg-slate-900 p-4 dark:border-slate-700 dark:bg-slate-900">
                     <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">Hiring workflow</p>
                     <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
                       <select className={`${field} w-full min-w-0 sm:min-w-[220px] sm:flex-1`} value={statusDraft} onChange={(e) => onStatusDraftChange(e.target.value)}>
                         <option value="applied">Applied</option>
-                        <option value="reviewed">Reviewed</option>
+                        <option value="under_review">Under Review</option>
                         <option value="shortlisted">Shortlisted</option>
                         <option value="interview_scheduled">Interview Scheduled</option>
-                        <option value="interview_completed">Interview Completed</option>
+                        <option value="technical_round">Technical Round</option>
+                        <option value="hr_round">HR Round</option>
+                        <option value="on_hold">On Hold</option>
                         <option value="selected">Selected</option>
                         <option value="rejected">Rejected</option>
                       </select>
@@ -158,12 +166,12 @@ export function ApplicantDetailsModal({
                     </div>
                   </section>
 
-                  <section className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+                  <section className="rounded-xl border border-slate-700 bg-slate-900 p-4 dark:border-slate-700 dark:bg-slate-900">
                     <p className="mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">Parsed resume</p>
                     <ApplicantParsedResume intern={a.intern} />
                   </section>
 
-                  <section className="space-y-3 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+                  <section className="space-y-3 rounded-xl border border-slate-700 bg-slate-900 p-4 dark:border-slate-700 dark:bg-slate-900">
                     <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Schedule interview</p>
                     <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
                       <input
@@ -229,6 +237,37 @@ export function ApplicantDetailsModal({
                         ))}
                       </div>
                     )}
+                  </section>
+
+                  <section className="space-y-3 rounded-xl border border-slate-700 bg-slate-900 p-4 dark:border-slate-700 dark:bg-slate-900">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">HR feedback</p>
+                    <textarea
+                      className={`${field} min-h-20`}
+                      placeholder="Share candidate feedback"
+                      value={feedbackDraft.feedback}
+                      onChange={(e) => onFeedbackDraftChange({ feedback: e.target.value })}
+                    />
+                    <div className="grid gap-2 sm:grid-cols-3">
+                      <input
+                        type="number"
+                        min={1}
+                        max={5}
+                        className={field}
+                        value={feedbackDraft.rating}
+                        onChange={(e) => onFeedbackDraftChange({ rating: Number(e.target.value || 1) })}
+                      />
+                      <select
+                        className={field}
+                        value={feedbackDraft.visibility}
+                        onChange={(e) => onFeedbackDraftChange({ visibility: e.target.value as "internal" | "candidate" })}
+                      >
+                        <option value="candidate">Visible to candidate</option>
+                        <option value="internal">Internal only</option>
+                      </select>
+                      <Button type="button" size="sm" onClick={onSubmitFeedback} disabled={saving}>
+                        Save feedback
+                      </Button>
+                    </div>
                   </section>
                 </div>
               </div>

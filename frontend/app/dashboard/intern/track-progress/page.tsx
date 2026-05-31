@@ -1,14 +1,10 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
-import { RoleDashboardGuard } from "@/components/ui/role-dashboard-guard";
-import { InternShell } from "@/components/dashboard/intern-shell";
 import { SectionPanel } from "@/components/dashboard/section-panel";
-import { clearAuthSession } from "@/lib/session";
-import { Application, InternProfile, fetchInternApplications, fetchInternProfile } from "@/lib/intern-portal";
+import { Application, InternProfile, fetchInternApplications, fetchInternProfile, peekInternProfile } from "@/lib/intern-portal";
 
-const TIMELINE_STEPS = ["applied", "reviewed", "shortlisted", "interview_scheduled", "interview_completed", "selected", "rejected"] as const;
+const TIMELINE_STEPS = ["applied", "under_review", "shortlisted", "interview_scheduled", "technical_round", "hr_round", "selected", "rejected", "on_hold"] as const;
 
 function normalizeStatus(status: string) {
   const value = String(status || "").toLowerCase();
@@ -26,16 +22,15 @@ function getActiveTimelineStatus(application: Application) {
 }
 
 export default function TrackProgressPage() {
-  const router = useRouter();
   const [profile, setProfile] = useState<InternProfile | null>(null);
   const [applications, setApplications] = useState<Application[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => typeof window === "undefined" ? true : !peekInternProfile());
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function load() {
       try {
-        setLoading(true);
+        if (!peekInternProfile()) setLoading(true);
         setError(null);
         const [loadedProfile, loadedApplications] = await Promise.all([fetchInternProfile(), fetchInternApplications()]);
         setProfile(loadedProfile);
@@ -56,15 +51,9 @@ export default function TrackProgressPage() {
     }, {});
   }, [applications]);
 
-  function handleLogout() {
-    clearAuthSession();
-    router.push("/auth/intern");
-  }
-
   return (
-    <RoleDashboardGuard expectedRole="intern">
-      <InternShell welcomeName={profile?.fullName} onLogout={handleLogout}>
-        {loading ? (
+    <>
+      {loading ? (
           <div className="surface-muted p-5 text-sm text-slate-700 dark:text-slate-300">Loading progress...</div>
         ) : (
           <div className="space-y-5">
@@ -119,16 +108,18 @@ export default function TrackProgressPage() {
                                     ? "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900/40 dark:bg-rose-900/20 dark:text-rose-300"
                                     : done
                                       ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-900/20 dark:text-emerald-300"
-                                      : "border-slate-200 bg-white text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400"
+                                      : "border-slate-700 bg-slate-900 text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400"
                                 }`}
                               >
                                 {step === "applied" && "Applied"}
-                                {step === "reviewed" && "Application Reviewed"}
+                                {step === "under_review" && "Under Review"}
                                 {step === "shortlisted" && "Shortlisted"}
                                 {step === "interview_scheduled" && "Interview Scheduled"}
-                                {step === "interview_completed" && "Interview Completed"}
+                                {step === "technical_round" && "Technical Round"}
+                                {step === "hr_round" && "HR Round"}
                                 {step === "selected" && "Selected"}
                                 {step === "rejected" && "Rejected"}
+                                {step === "on_hold" && "On Hold"}
                               </div>
                             );
                           })}
@@ -138,6 +129,18 @@ export default function TrackProgressPage() {
                           <p>Availability: {app.availabilityStatus === "yes" ? "Available now" : app.availabilityStatus === "no" ? `Available from ${app.joiningDate ? new Date(app.joiningDate).toLocaleDateString() : "-"}` : "-"}</p>
                           <p>Current Stage: <span className="font-semibold capitalize">{app.status.replace(/_/g, " ")}</span></p>
                         </div>
+                        {(app.stageHistory || []).length > 0 && (
+                          <div className="rounded-lg border border-slate-700 bg-slate-900 p-2 dark:border-slate-700 dark:bg-slate-900">
+                            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Stage History</p>
+                            <div className="space-y-1 text-xs">
+                              {(app.stageHistory || []).slice().reverse().slice(0, 6).map((entry, idx) => (
+                                <p key={`${app._id}-stage-${idx}`}>
+                                  {entry.stage.replace(/_/g, " ")} - {entry.note || "Updated"} - {entry.changedAt ? new Date(entry.changedAt).toLocaleString() : "-"}
+                                </p>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     );
                   })}
@@ -146,7 +149,6 @@ export default function TrackProgressPage() {
             </SectionPanel>
           </div>
         )}
-      </InternShell>
-    </RoleDashboardGuard>
+    </>
   );
 }

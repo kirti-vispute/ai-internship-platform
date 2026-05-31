@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { AnimatedBackground } from "@/components/dashboard/AnimatedBackground";
 import { cn } from "@/lib/utils";
@@ -261,27 +261,33 @@ function isItemActive(pathname: string, href: string) {
 
 export function InternShell({ welcomeName, onLogout, children }: InternShellProps) {
   const pathname = usePathname();
+  const mainRef = useRef<HTMLElement | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const sections = useMemo(() => buildSections(), []);
 
+  useEffect(() => {
+    mainRef.current?.scrollTo({ top: 0, behavior: "auto" });
+  }, [pathname]);
+
   return (
-    <div className="min-h-screen bg-slate-100/70 transition-colors dark:bg-slate-950/60">
-      <div className="mx-auto flex max-w-[1600px]">
+    <div className="h-screen overflow-hidden bg-slate-950/60">
+      <div className="mx-auto flex h-full max-w-[1600px]">
         <aside
           className={cn(
-            "sidebar-surface fixed inset-y-0 left-0 z-40 w-72 p-5 shadow-[0_12px_36px_rgba(15,23,42,0.12)] transition-transform duration-300 lg:static lg:translate-x-0 dark:shadow-[0_16px_44px_rgba(2,6,23,0.55)]",
-            mobileOpen ? "translate-x-0" : "-translate-x-full"
+            "sidebar-surface z-40 flex h-full w-72 shrink-0 flex-col overflow-hidden border-r border-slate-800 p-5 shadow-[0_16px_44px_rgba(2,6,23,0.55)] transition-transform duration-300",
+            "fixed inset-y-0 left-0 lg:relative lg:translate-x-0",
+            mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
           )}
         >
-          <div className="mb-6 rounded-2xl bg-gradient-to-r from-primary-600 to-blue-600 p-4 text-white shadow-glow dark:from-primary-700 dark:to-cyan-600">
+          <div className="mb-6 shrink-0 rounded-2xl bg-gradient-to-r from-primary-700 to-cyan-600 p-4 text-white shadow-glow">
             <p className="text-xs uppercase tracking-[0.18em] text-primary-100">Intern Portal</p>
             <h2 className="mt-2 text-xl font-black tracking-tight">AI Internship Platform</h2>
           </div>
 
-          <nav className="space-y-5">
+          <nav className="scrollbar-dark min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain pr-1">
             {sections.map((section) => (
-              <div key={section.title} className="animate-reveal">
-                <p className="px-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500">{section.title}</p>
+              <div key={section.title}>
+                <p className="px-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">{section.title}</p>
                 <ul className="mt-2.5 space-y-1.5">
                   {section.items.map((item) => {
                     const active = isItemActive(pathname, item.href);
@@ -289,12 +295,14 @@ export function InternShell({ welcomeName, onLogout, children }: InternShellProp
                       <li key={item.label}>
                         <Link
                           href={item.href}
+                          scroll={false}
+                          prefetch={true}
                           onClick={() => setMobileOpen(false)}
                           className={cn(
-                            "flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
+                            "flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors duration-150",
                             active
-                              ? "bg-primary-50 text-primary-700 shadow-[0_4px_14px_rgba(37,99,235,0.12)] dark:bg-primary-900/20 dark:text-primary-300"
-                              : "text-slate-600 hover:bg-white hover:text-slate-900 hover:shadow-[0_4px_14px_rgba(15,23,42,0.08)] dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+                              ? "bg-primary-900/20 text-primary-300 shadow-[0_4px_14px_rgba(37,99,235,0.12)]"
+                              : "text-slate-300 hover:bg-slate-800 hover:text-white"
                           )}
                         >
                           {item.icon}
@@ -309,31 +317,38 @@ export function InternShell({ welcomeName, onLogout, children }: InternShellProp
           </nav>
         </aside>
 
-        {mobileOpen && <button aria-label="Close menu" className="fixed inset-0 z-30 bg-slate-900/40 lg:hidden" onClick={() => setMobileOpen(false)} />}
+        {mobileOpen && (
+          <button
+            type="button"
+            aria-label="Close menu"
+            className="fixed inset-0 z-30 bg-slate-900/40 lg:hidden"
+            onClick={() => setMobileOpen(false)}
+          />
+        )}
 
-        <div className="relative min-w-0 flex-1 overflow-hidden">
+        <div className="relative flex min-w-0 flex-1 flex-col overflow-hidden lg:ml-0">
           <AnimatedBackground className="opacity-75" />
-          <header className="sticky top-0 z-20 border-b border-slate-200/80 bg-white/82 px-4 py-3.5 backdrop-blur-xl lg:px-6 dark:border-slate-800 dark:bg-slate-950/78">
+          <header className="sticky top-0 z-20 shrink-0 border-b border-slate-800/80 bg-slate-950/82 px-4 py-3.5 backdrop-blur-xl lg:px-6">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={() => setMobileOpen(true)}
-                  className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-slate-600 transition hover:bg-slate-50 lg:hidden dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
+                  className="rounded-lg border border-slate-700 bg-slate-900 px-2 py-1 text-slate-300 transition hover:bg-slate-800 lg:hidden"
                 >
                   <IconMenu />
                 </button>
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary-600 dark:text-primary-300">Welcome</p>
-                  <h1 className="text-lg font-bold text-slate-900 dark:text-slate-100">{welcomeName || "Intern"}</h1>
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary-300">Welcome</p>
+                  <h1 className="text-lg font-bold text-slate-100">{welcomeName || "Intern"}</h1>
                 </div>
               </div>
 
               <div className="flex items-center gap-2">
-                <button type="button" className="rounded-xl border border-slate-200 bg-white p-2 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800">
+                <button type="button" className="rounded-xl border border-slate-700 bg-slate-900 p-2 transition hover:bg-slate-800">
                   <IconBell />
                 </button>
-                <Button href="/auth/intern" type="button" variant="secondary" size="sm">
+                <Button href="/auth/intern" variant="secondary" size="sm">
                   Switch Account
                 </Button>
                 <Button type="button" variant="secondary" size="sm" onClick={onLogout}>
@@ -343,14 +358,11 @@ export function InternShell({ welcomeName, onLogout, children }: InternShellProp
             </div>
           </header>
 
-          <main className="animate-reveal relative z-10 mx-auto w-full max-w-[1240px] p-4 lg:p-5">{children}</main>
+          <main ref={mainRef} className="scrollbar-dark relative z-10 mx-auto w-full max-w-[1240px] flex-1 overflow-y-auto overscroll-contain p-4 lg:p-5">
+            {children}
+          </main>
         </div>
       </div>
     </div>
   );
 }
-
-
-
-
-

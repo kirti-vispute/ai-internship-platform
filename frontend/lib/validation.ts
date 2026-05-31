@@ -24,6 +24,17 @@ export function validateUrl(url: string): boolean {
   }
 }
 
+export function validateLinkedInUrl(url: string): boolean {
+  if (!url.trim()) return true;
+  try {
+    const formatted = url.startsWith("http") ? url : `https://${url}`;
+    const parsed = new URL(formatted);
+    return parsed.hostname.includes("linkedin.com");
+  } catch {
+    return false;
+  }
+}
+
 export function getPasswordStrength(password: string): {
   score: number;
   label: string;

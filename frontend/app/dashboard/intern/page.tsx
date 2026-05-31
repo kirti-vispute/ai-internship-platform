@@ -1,27 +1,23 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { RoleDashboardGuard } from "@/components/ui/role-dashboard-guard";
-import { InternShell } from "@/components/dashboard/intern-shell";
 import { SummaryStatCard } from "@/components/dashboard/summary-stat-card";
 import { SectionPanel } from "@/components/dashboard/section-panel";
-import { clearAuthSession } from "@/lib/session";
-import { useRouter } from "next/navigation";
 import {
   Application,
   InternProfile,
   Recommendation,
   fetchInternApplications,
   fetchInternProfileWithScore,
-  fetchInternRecommendations
+  fetchInternRecommendations,
+  peekInternProfile
 } from "@/lib/intern-portal";
 
 export default function InternDashboardOverviewPage() {
-  const router = useRouter();
   const [profile, setProfile] = useState<InternProfile | null>(null);
   const [applications, setApplications] = useState<Application[]>([]);
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => typeof window === "undefined" ? true : !peekInternProfile());
   const [error, setError] = useState<string | null>(null);
 
   const hasParsedResumeSkills = (profile?.resume?.parsed?.skills || []).length > 0;
@@ -38,13 +34,14 @@ export default function InternDashboardOverviewPage() {
   useEffect(() => {
     async function load() {
       try {
-        setLoading(true);
+        if (!peekInternProfile()) setLoading(true);
         setError(null);
 
-        const loadedProfile = await fetchInternProfileWithScore();
+        const [loadedProfile, loadedApplications] = await Promise.all([
+          fetchInternProfileWithScore(),
+          fetchInternApplications()
+        ]);
         setProfile(loadedProfile);
-
-        const loadedApplications = await fetchInternApplications();
         setApplications(loadedApplications);
 
         const parsedSkills = loadedProfile?.resume?.parsed?.skills || [];
@@ -64,15 +61,9 @@ export default function InternDashboardOverviewPage() {
     load();
   }, []);
 
-  function handleLogout() {
-    clearAuthSession();
-    router.push("/auth/intern");
-  }
-
   return (
-    <RoleDashboardGuard expectedRole="intern">
-      <InternShell welcomeName={profile?.fullName} onLogout={handleLogout}>
-        {loading ? (
+    <>
+      {loading ? (
           <div className="surface-muted p-5 text-sm text-slate-700 dark:text-slate-300">Loading overview...</div>
         ) : (
           <div className="space-y-5">
@@ -104,7 +95,6 @@ export default function InternDashboardOverviewPage() {
             </SectionPanel>
           </div>
         )}
-      </InternShell>
-    </RoleDashboardGuard>
+    </>
   );
 }

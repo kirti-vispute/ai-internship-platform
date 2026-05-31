@@ -12,9 +12,16 @@ export type CompanyProfile = {
   website?: string;
   address?: string;
   description?: string;
-  verificationStatus: "pending" | "verified" | "rejected";
+  verificationStatus: "pending" | "verified" | "rejected" | "suspended";
   createdAt?: string;
   updatedAt?: string;
+};
+
+export type CompanyCurrentUser = {
+  _id: string;
+  email: string;
+  companyAccountType: "owner" | "hr" | "ceo";
+  permissions: string[];
 };
 
 export type CompanyInternship = {
@@ -43,6 +50,8 @@ export type CompanyInternship = {
   additionalInstructions?: string;
   hrContact?: string;
   description: string;
+  assignedRecruiter?: string | null;
+  assignedDepartment?: string;
   isActive: boolean;
   createdAt?: string;
   updatedAt?: string;
@@ -69,6 +78,7 @@ export type CompanyApplication = {
     summary?: string;
     experience?: string[];
     links?: string[];
+    linkedinUrl?: string;
     interests?: string[];
     resume?: InternProfile["resume"];
   };
@@ -78,7 +88,14 @@ export type CompanyApplication = {
     location?: string;
   };
   stageHistory: Array<{ stage: string; note: string; changedAt?: string }>;
-  hrFeedback: Array<{ feedback: string; createdAt?: string }>;
+  hrFeedback: Array<{
+    feedback: string;
+    createdAt?: string;
+    stage?: string;
+    rating?: number | null;
+    category?: string;
+    visibility?: "internal" | "candidate";
+  }>;
   interviewRounds?: Array<{
     _id?: string;
     roundType?: string;
@@ -93,6 +110,7 @@ export type CompanyApplication = {
   }>;
   createdAt?: string;
   updatedAt?: string;
+  assignedRecruiter?: string | null;
 };
 
 export type CandidateSearchResult = {
@@ -172,8 +190,8 @@ export function invalidateCompanyPortalCache() {
 
 export async function fetchCompanyProfile(force = false) {
   return withCache("company:profile", force, async () => {
-    const response = await apiRequest<{ profile: CompanyProfile }>("/api/company/profile");
-    return response.profile;
+    const response = await apiRequest<{ profile: CompanyProfile; currentUser: CompanyCurrentUser }>("/api/company/profile");
+    return response;
   });
 }
 
@@ -182,8 +200,151 @@ export async function updateCompanyProfile(payload: Partial<CompanyProfile>) {
     method: "PUT",
     body: JSON.stringify(payload)
   });
-  setCache("company:profile", response.profile);
+  const cached = getCache<{ profile: CompanyProfile; currentUser: CompanyCurrentUser }>("company:profile");
+  setCache("company:profile", {
+    profile: response.profile,
+    currentUser: cached?.currentUser || { _id: "", email: "", companyAccountType: "owner", permissions: [] }
+  });
   return response.profile;
+}
+
+export type CompanyHrPerformance = {
+  candidatesHandled: number;
+  shortlistedCandidates: number;
+  hiredCandidates: number;
+  conversionRate: number;
+  interviewSuccessRate: number;
+  recruiterResponseTimeHours: number;
+  activitySummary: string;
+};
+
+export type CompanyHrUser = {
+  id: string;
+  name: string;
+  email: string;
+  isActive: boolean;
+  permissions: string[];
+  assignedCandidates: number;
+  assignedInternships: number;
+  performanceMetrics: CompanyHrPerformance;
+};
+
+export type CompanyHrInsights = {
+  summary: {
+    totalHrUsers: number;
+    activeHrUsers: number;
+    totalAssignedCandidates: number;
+    totalAssignedInternships: number;
+    totalHires: number;
+    averageConversionRate: number;
+  };
+  hrUsers: CompanyHrUser[];
+};
+
+export const HR_ASSIGNABLE_PERMISSIONS = [
+  "application:review",
+  "pipeline:update",
+  "feedback:write",
+  "company:analytics:recruiter"
+] as const;
+
+export async function fetchCompanyRecruiters() {
+  const response = await apiRequest<{
+    recruiters: Array<{
+      _id: string;
+      email: string;
+      displayName?: string;
+      companyAccountType: "hr" | "ceo";
+      isActive: boolean;
+    }>;
+  }>("/api/company/recruiters");
+  return response.recruiters || [];
+}
+
+export async function fetchCompanyHrInsights(force = false) {
+  return withCache("company:hr-insights", force, async () => {
+    const response = await apiRequest<CompanyHrInsights>("/api/company/hr/insights");
+    return response;
+  });
+}
+
+export async function createCompanyHrUser(payload: {
+  name: string;
+  email: string;
+  password: string;
+  permissions?: string[];
+}) {
+  const response = await apiRequest<{ message: string; hrUser: CompanyHrUser }>("/api/company/hr/create", {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+  cacheStore.delete("company:hr-insights");
+  cacheStore.delete("company:recruiters");
+  return response;
+}
+
+export async function deleteCompanyHrUser(hrId: string) {
+  const response = await apiRequest<{ message: string; deleted: boolean }>(`/api/company/hr/${hrId}`, {
+    method: "DELETE"
+  });
+  cacheStore.delete("company:hr-insights");
+  cacheStore.delete("company:recruiters");
+  return response;
+}
+
+export async function updateCompanyHrPermissions(hrId: string, permissions: string[]) {
+  const response = await apiRequest<{ message: string; hrUser: { id: string; permissions: string[] } }>(
+    `/api/company/hr/${hrId}/permissions`,
+    {
+      method: "PATCH",
+      body: JSON.stringify({ permissions })
+    }
+  );
+  cacheStore.delete("company:hr-insights");
+  return response;
+}
+
+export async function assignRecruiterToInternship(internshipId: string, recruiterUserId: string, department = "") {
+  return apiRequest<{ message: string }>(`/api/company/internships/${internshipId}/assign-recruiter`, {
+    method: "POST",
+    body: JSON.stringify({ recruiterUserId, department })
+  });
+}
+
+export async function assignRecruiterToApplication(applicationId: string, recruiterUserId: string) {
+  return apiRequest<{ message: string }>(`/api/company/applications/${applicationId}/assign-recruiter`, {
+    method: "POST",
+    body: JSON.stringify({ recruiterUserId })
+  });
+}
+
+export async function fetchCompanyAnalytics() {
+  const response = await apiRequest<{
+    analytics: {
+      recruiterPerformance: Array<{
+        recruiterId: string;
+        candidatesHandled: number;
+        shortlistedCandidates: number;
+        hiredCandidates: number;
+        conversionRate: number;
+        interviewSuccessRate: number;
+        recruiterResponseTimeHours: number;
+      }>;
+      hiringAnalytics: {
+        totalHires: number;
+        totalApplications: number;
+        departmentWiseHiring: Record<string, number>;
+        internshipPerformance: number;
+      };
+      salaryAnalytics: {
+        offeredSalaryPerCandidate: number[];
+        stipendAnalytics: number[];
+        averagePackage: number;
+        totalSalaryExpenditure: number;
+      };
+    };
+  }>("/api/company/analytics");
+  return response.analytics;
 }
 
 export async function fetchCompanyInternships(force = false) {
@@ -274,6 +435,18 @@ export async function updateCompanyApplicationStage(applicationId: string, statu
   const response = await apiRequest<{ application: CompanyApplication }>(`/api/company/applications/${applicationId}/stage`, {
     method: "PATCH",
     body: JSON.stringify({ status, note })
+  });
+  cacheStore.delete("company:applications");
+  return response.application;
+}
+
+export async function addApplicationFeedback(
+  applicationId: string,
+  payload: { feedback: string; rating?: number; category?: string; visibility?: "internal" | "candidate" }
+) {
+  const response = await apiRequest<{ application: CompanyApplication }>(`/api/company/applications/${applicationId}/feedback`, {
+    method: "POST",
+    body: JSON.stringify(payload)
   });
   cacheStore.delete("company:applications");
   return response.application;

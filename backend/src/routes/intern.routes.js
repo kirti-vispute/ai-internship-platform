@@ -13,6 +13,7 @@ router.put("/profile", internController.updateProfile);
 router.post("/resume/upload", upload.single("resume"), internController.uploadResume);
 router.get("/resume/score", internController.getResumeScore);
 router.post("/skill-gap", internController.getSkillGap);
+router.post("/roadmap", internController.getCareerRoadmap);
 router.get("/internships", internController.getActiveInternships);
 router.get("/recommendations", internController.getRecommendations);
 router.post("/apply/:internshipId", internController.applyToInternship);

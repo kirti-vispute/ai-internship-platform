@@ -88,8 +88,66 @@ a {
   @apply rounded-xl border border-slate-700/70 bg-slate-900/80 shadow-[0_10px_24px_rgba(2,6,23,0.45)];
 }
 
+.surface-input {
+  @apply rounded-xl border border-slate-700 bg-slate-900 text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20;
+}
+
+.surface-btn-secondary {
+  @apply border border-slate-700 bg-slate-900 text-slate-100 shadow-soft hover:border-slate-600 hover:bg-slate-800;
+}
+
+.surface-header {
+  @apply border-b border-slate-800 bg-slate-950/80 backdrop-blur-xl;
+}
+
 .sidebar-surface {
   @apply border-r border-slate-800 bg-gradient-to-b from-slate-950 to-slate-900;
+  color-scheme: dark;
+}
+
+.sidebar-surface nav {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(100, 116, 139, 0.75) rgba(15, 23, 42, 0.55);
+}
+
+.scrollbar-dark {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(100, 116, 139, 0.75) rgba(15, 23, 42, 0.55);
+}
+
+.scrollbar-dark::-webkit-scrollbar,
+.sidebar-surface nav::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.scrollbar-dark::-webkit-scrollbar-track,
+.sidebar-surface nav::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.55);
+  border-radius: 999px;
+}
+
+.scrollbar-dark::-webkit-scrollbar-thumb,
+.sidebar-surface nav::-webkit-scrollbar-thumb {
+  background-color: rgba(71, 85, 105, 0.9);
+  border-radius: 999px;
+}
+
+.scrollbar-dark::-webkit-scrollbar-thumb:hover,
+.sidebar-surface nav::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(148, 163, 184, 0.85);
+}
+
+.scrollbar-dark::-webkit-scrollbar-button,
+.sidebar-surface nav::-webkit-scrollbar-button {
+  display: none;
+  height: 0;
+  width: 0;
+}
+
+.scrollbar-dark::-webkit-scrollbar-corner,
+.sidebar-surface nav::-webkit-scrollbar-corner {
+  background: rgba(15, 23, 42, 0.55);
 }
 
 @media (pointer: fine) {
@@ -112,8 +170,12 @@ a {
 .tilt-3d {
   transform: perspective(1100px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg));
   transform-style: preserve-3d;
-  transition: transform 240ms ease, box-shadow 280ms ease, border-color 240ms ease;
-  will-change: transform;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .tilt-3d {
+    transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+  }
 }
 
 @keyframes float-gentle {

@@ -44,6 +44,9 @@ function analyzeResumeText(text, targetSkills = []) {
   const hasEmail = /[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/i.test(clean);
   const hasPhone = /(?:\+?\d{1,3}[\s-]?)?(?:\d[\s-]?){10,12}/.test(clean);
   const hasLinkedIn = /linkedin\.com\//i.test(clean);
+  const hasProjects = clean.includes("project");
+  const hasExperience = clean.includes("experience");
+  const hasEducation = clean.includes("education");
 
   const sectionCount = SECTION_HINTS.filter((section) => clean.includes(section)).length;
   const sectionScore = toPercent(sectionCount, SECTION_HINTS.length);
@@ -64,6 +67,11 @@ function analyzeResumeText(text, targetSkills = []) {
   const normalizedSkills = normalizeSkillList(Array.isArray(targetSkills) ? targetSkills : []);
   const matchedSkills = normalizedSkills.filter((skill) => clean.includes(skill));
   const skillsScore = normalizedSkills.length > 0 ? toPercent(matchedSkills.length, normalizedSkills.length) : 60;
+  const completenessChecks = [hasEmail, hasPhone, hasLinkedIn, hasProjects, hasExperience, hasEducation];
+  const completenessPercent = toPercent(completenessChecks.filter(Boolean).length, completenessChecks.length);
+  const roleSpecificScore = normalizedSkills.length > 0 ? skillsScore : Math.round((skillsScore + sectionScore) / 2);
+  const formattingQualityScore = Math.round((sectionScore * 0.55) + (lengthScore * 0.45));
+  const experienceWeightedScore = Math.round((verbScore * 0.5) + (quantScore * 0.3) + (sectionScore * 0.2));
 
   const atsScore = Math.round((hasEmail ? 30 : 0) + (hasPhone ? 25 : 0) + (hasLinkedIn ? 15 : 0) + sectionScore * 0.3);
   const contentScore = Math.round(lengthScore * 0.5 + sectionScore * 0.5);
@@ -75,7 +83,11 @@ function analyzeResumeText(text, targetSkills = []) {
     content: normalizeScore(contentScore) || 0,
     impact: normalizeScore(impactScore) || 0,
     skills: normalizeScore(skillsScore) || 0,
-    structure: normalizeScore(structureScore) || 0
+    structure: normalizeScore(structureScore) || 0,
+    roleSpecific: normalizeScore(roleSpecificScore) || 0,
+    formattingQuality: normalizeScore(formattingQualityScore) || 0,
+    experienceWeighted: normalizeScore(experienceWeightedScore) || 0,
+    completeness: normalizeScore(completenessPercent) || 0
   };
 
   const ruleScore = normalizeScore(
@@ -124,7 +136,11 @@ function analyzeResumeText(text, targetSkills = []) {
       quantifiedAchievements: quantCount,
       actionVerbHits: verbCount,
       matchedSkills,
-      missingSkills: normalizedSkills.filter((skill) => !matchedSkills.includes(skill))
+      missingSkills: normalizedSkills.filter((skill) => !matchedSkills.includes(skill)),
+      roleSpecificScore: categoryScores.roleSpecific,
+      formattingQualityScore: categoryScores.formattingQuality,
+      experienceWeightedScore: categoryScores.experienceWeighted,
+      completenessPercent
     },
     strengths,
     improvements: improvements.slice(0, 6),
@@ -134,7 +150,11 @@ function analyzeResumeText(text, targetSkills = []) {
       { key: "content", label: "Content Quality", score: normalizeScore(contentScore) || 0 },
       { key: "impact", label: "Impact & Achievements", score: normalizeScore(impactScore) || 0 },
       { key: "skills", label: "Skill Match", score: normalizeScore(skillsScore) || 0 },
-      { key: "structure", label: "Structure & Readability", score: normalizeScore(structureScore) || 0 }
+      { key: "structure", label: "Structure & Readability", score: normalizeScore(structureScore) || 0 },
+      { key: "roleSpecific", label: "Role Specificity", score: categoryScores.roleSpecific },
+      { key: "formattingQuality", label: "Formatting Quality", score: categoryScores.formattingQuality },
+      { key: "experienceWeighted", label: "Experience Impact", score: categoryScores.experienceWeighted },
+      { key: "completeness", label: "Resume Completeness", score: categoryScores.completeness }
     ]
   };
 }

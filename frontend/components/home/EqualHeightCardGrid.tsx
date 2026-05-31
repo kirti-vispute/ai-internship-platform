@@ -46,7 +46,7 @@ export function EqualHeightCardGrid({
           key={item.title}
           data-cursor="card"
           className={cn(
-            "tilt-3d flex h-full flex-col rounded-2xl border p-5 transition duration-300 hover:-translate-y-1 hover:scale-[1.02]",
+            "flex h-full flex-col rounded-2xl border p-5 transition duration-200 hover:-translate-y-0.5",
             minHeightClassName || "min-h-[198px]",
             cardToneClass,
             cardClassName

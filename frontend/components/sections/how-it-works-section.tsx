@@ -41,7 +41,7 @@ export function HowItWorksSection() {
             {steps.map((step, index) => (
               <ScrollReveal
                 key={step.title}
-                variant={index % 2 === 0 ? "blur-up" : "soft-scale"}
+                variant={index % 2 === 0 ? "fade-up" : "soft-scale"}
                 delayMs={index * 55}
                 distance={14}
                 className="h-full"

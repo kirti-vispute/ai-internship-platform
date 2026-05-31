@@ -3,8 +3,6 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 
-const HERO_REFERENCE_IMAGE = "/hero-reference-2.png";
-
 export function HeroSection() {
   return (
     <section className="relative z-0 overflow-hidden bg-slate-950 pb-16 pt-16 sm:pb-20 sm:pt-20">
@@ -13,13 +11,12 @@ export function HeroSection() {
 
       <div className="container-shell relative z-20 grid min-h-[620px] items-start gap-8 py-2 sm:py-4 lg:grid-cols-[1fr_1.08fr] lg:gap-8">
         <motion.div
-          initial={{ opacity: 0, y: 24, filter: "blur(8px)" }}
-          whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-          viewport={{ once: true, amount: 0.35 }}
-          transition={{ duration: 0.85, ease: [0.22, 1, 0.36, 1] }}
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
           className="z-20 max-w-2xl"
         >
-          <p className="inline-flex rounded-full border border-cyan-300/35 bg-slate-900/75 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-cyan-200 shadow-[0_10px_28px_rgba(6,182,212,0.2)]">
+          <p className="inline-flex rounded-full border border-cyan-300/35 bg-slate-900/75 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-cyan-200">
             AI Internship Workflow Map
           </p>
 
@@ -39,44 +36,47 @@ export function HeroSection() {
             <Button size="lg" variant="secondary" href="/auth/company">
               Join as Company
             </Button>
+            <Button size="lg" variant="secondary" href="/auth/admin">
+              Admin Console
+            </Button>
           </div>
 
           <div className="mt-4 flex flex-wrap gap-2 text-xs">
-            <span className="rounded-full border border-slate-700 bg-slate-900/75 px-3 py-1 text-slate-200 shadow-[0_8px_20px_rgba(2,6,23,0.5)]">
-              Resume upload intelligence
-            </span>
-            <span className="rounded-full border border-slate-700 bg-slate-900/75 px-3 py-1 text-slate-200 shadow-[0_8px_20px_rgba(2,6,23,0.5)]">
-              Skill gap detection
-            </span>
-            <span className="rounded-full border border-slate-700 bg-slate-900/75 px-3 py-1 text-slate-200 shadow-[0_8px_20px_rgba(2,6,23,0.5)]">
-              Verified hiring progress
-            </span>
+            <span className="rounded-full border border-slate-700 bg-slate-900/75 px-3 py-1 text-slate-200">Resume upload intelligence</span>
+            <span className="rounded-full border border-slate-700 bg-slate-900/75 px-3 py-1 text-slate-200">Skill gap detection</span>
+            <span className="rounded-full border border-slate-700 bg-slate-900/75 px-3 py-1 text-slate-200">Verified hiring progress</span>
           </div>
         </motion.div>
 
         <motion.div
-          initial={{ opacity: 0, x: 28, scale: 0.97 }}
-          whileInView={{ opacity: 1, x: 0, scale: 1 }}
-          viewport={{ once: true, amount: 0.3 }}
-          transition={{ duration: 0.95, ease: [0.22, 1, 0.36, 1], delay: 0.08 }}
+          initial={{ opacity: 0, x: 16 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1], delay: 0.05 }}
           className="relative h-full min-h-[460px] w-full overflow-hidden sm:min-h-[540px] lg:min-h-[620px]"
         >
-          <div className="relative m-0 h-full w-full overflow-hidden p-0">
-            <img
-              src={HERO_REFERENCE_IMAGE}
-              alt="AI internship workflow reference"
-              className="absolute inset-0 m-0 block h-full w-full object-contain object-center p-0 brightness-[1.08] contrast-[1.07]"
-            />
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(56,189,248,0.13),transparent_55%),linear-gradient(180deg,rgba(2,6,23,0.02)_0%,rgba(2,6,23,0.32)_100%)]" />
+          <div className="relative m-0 h-full w-full overflow-hidden rounded-3xl border border-slate-800/80 bg-slate-900/60 p-6">
+            <div className="grid h-full gap-3">
+              <div className="rounded-2xl border border-cyan-400/20 bg-cyan-500/10 p-4">
+                <p className="text-xs font-semibold uppercase tracking-wider text-cyan-200">Resume Intelligence</p>
+                <p className="mt-2 text-2xl font-black text-white">Score + ATS Readiness</p>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="rounded-2xl border border-indigo-400/20 bg-indigo-500/10 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-indigo-200">Skill Gap</p>
+                  <p className="mt-2 text-lg font-bold text-white">Targeted learning paths</p>
+                </div>
+                <div className="rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-emerald-200">Matching</p>
+                  <p className="mt-2 text-lg font-bold text-white">Verified company fit</p>
+                </div>
+              </div>
+              <div className="rounded-2xl border border-slate-700 bg-slate-950/70 p-4">
+                <p className="text-sm text-slate-300">Pipeline visibility from application to offer with explainable AI scores.</p>
+              </div>
+            </div>
           </div>
         </motion.div>
       </div>
     </section>
   );
 }
-
-
-
-
-
-

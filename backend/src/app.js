@@ -5,6 +5,7 @@ const morgan = require("morgan");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const rateLimit = require("express-rate-limit");
+const mongoSanitize = require("express-mongo-sanitize");
 
 const authRoutes = require("./routes/auth.routes");
 const internRoutes = require("./routes/intern.routes");
@@ -14,8 +15,10 @@ const applicationRoutes = require("./routes/application.routes");
 const aiRoutes = require("./routes/ai.routes");
 const adminRoutes = require("./routes/admin.routes");
 const candidateRoutes = require("./routes/candidate.routes");
+const skillRoutes = require("./routes/skill.routes");
 
 const { notFoundMiddleware, errorMiddleware } = require("./middleware/error.middleware");
+const { sendSuccess } = require("./utils/api-response");
 
 const app = express();
 
@@ -33,6 +36,7 @@ const allowedOrigins = [
 ].filter(Boolean);
 
 app.use(helmet());
+app.use(mongoSanitize());
 app.use(
   cors({
     origin(origin, callback) {
@@ -71,18 +75,22 @@ app.use(
   })
 );
 
-app.get("/health", (req, res) => {
-  res.json({ status: "ok", service: "ai-internship-platform-api" });
-});
+app.get("/health", (req, res) => sendSuccess(res, { data: { status: "ok", service: "ai-internship-platform-api" } }));
 
-app.use("/api/auth", authRoutes);
-app.use("/api/intern", internRoutes);
-app.use("/api/company", companyRoutes);
-app.use("/api/internships", internshipRoutes);
-app.use("/api/applications", applicationRoutes);
-app.use("/api/ai", aiRoutes);
-app.use("/api/admin", adminRoutes);
-app.use("/api/candidates", candidateRoutes);
+function mountApi(prefix) {
+  app.use(`${prefix}/auth`, authRoutes);
+  app.use(`${prefix}/intern`, internRoutes);
+  app.use(`${prefix}/company`, companyRoutes);
+  app.use(`${prefix}/internships`, internshipRoutes);
+  app.use(`${prefix}/applications`, applicationRoutes);
+  app.use(`${prefix}/ai`, aiRoutes);
+  app.use(`${prefix}/admin`, adminRoutes);
+  app.use(`${prefix}/candidates`, candidateRoutes);
+  app.use(`${prefix}/skills`, skillRoutes);
+}
+
+mountApi("/api");
+mountApi("/api/v1");
 
 app.use(notFoundMiddleware);
 app.use(errorMiddleware);

@@ -1,13 +1,9 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { RoleDashboardGuard } from "@/components/ui/role-dashboard-guard";
-import { InternShell } from "@/components/dashboard/intern-shell";
 import { SectionPanel } from "@/components/dashboard/section-panel";
 import { Button } from "@/components/ui/button";
 import { InternApplicationModal } from "@/components/dashboard/intern-application-modal";
-import { clearAuthSession } from "@/lib/session";
 import {
   InternshipListing,
   InternProfile,
@@ -17,15 +13,15 @@ import {
   fetchInternRecommendations,
   fetchSavedInternships,
   saveInternship,
-  unsaveInternship
+  unsaveInternship,
+  peekInternProfile
 } from "@/lib/intern-portal";
 
 export default function RecommendedInternshipsPage() {
-  const router = useRouter();
   const [profile, setProfile] = useState<InternProfile | null>(null);
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [appliedInternshipIds, setAppliedInternshipIds] = useState<Set<string>>(new Set());
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => typeof window === "undefined" ? true : !peekInternProfile());
   const [error, setError] = useState<string | null>(null);
   const [applyError, setApplyError] = useState<string | null>(null);
   const [applySuccess, setApplySuccess] = useState<string | null>(null);
@@ -38,7 +34,7 @@ export default function RecommendedInternshipsPage() {
   useEffect(() => {
     async function load() {
       try {
-        setLoading(true);
+        if (!peekInternProfile()) setLoading(true);
         setError(null);
 
         const loadedProfile = await fetchInternProfile();
@@ -112,15 +108,9 @@ export default function RecommendedInternshipsPage() {
     }
   }
 
-  function handleLogout() {
-    clearAuthSession();
-    router.push("/auth/intern");
-  }
-
   return (
-    <RoleDashboardGuard expectedRole="intern">
-      <InternShell welcomeName={profile?.fullName} onLogout={handleLogout}>
-        {loading ? (
+    <>
+      {loading ? (
           <div className="surface-muted p-5 text-sm text-slate-700 dark:text-slate-300">Loading recommendations...</div>
         ) : (
           <SectionPanel title="Recommended Internships" subtitle="Transparent recommendation model with separate required, preferred, and overall scoring.">
@@ -205,8 +195,6 @@ export default function RecommendedInternshipsPage() {
             }}
           />
         )}
-      </InternShell>
-    </RoleDashboardGuard>
+    </>
   );
 }
-

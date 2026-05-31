@@ -12,6 +12,10 @@ export type ResumeAnalysis = {
     impact: number;
     skills: number;
     structure: number;
+    roleSpecific?: number;
+    formattingQuality?: number;
+    experienceWeighted?: number;
+    completeness?: number;
   };
   sectionBreakdown?: ResumeSection[];
   strengths: string[];
@@ -22,6 +26,10 @@ export type ResumeAnalysis = {
     wordCount?: number;
     matchedSkills?: string[];
     missingSkills?: string[];
+    roleSpecificScore?: number;
+    formattingQualityScore?: number;
+    experienceWeightedScore?: number;
+    completenessPercent?: number;
   };
 };
 
@@ -37,8 +45,20 @@ export type InternProfile = {
   experience?: string[];
   achievements?: string[];
   links?: string[];
+  linkedinUrl?: string;
   summary?: string;
   completedCourses: string[];
+  profileSections?: {
+    personalInformation?: { location?: string; headline?: string };
+    professionalSummary?: string;
+    education?: Array<{ degree?: string; institution?: string; startYear?: string; endYear?: string; grade?: string }>;
+    experience?: Array<{ role?: string; company?: string; duration?: string; description?: string }>;
+    projects?: Array<{ title?: string; description?: string; techStack?: string[]; demoLink?: string }>;
+    certifications?: Array<{ name?: string; issuer?: string; year?: string }>;
+    skills?: string[];
+    socialLinks?: Array<{ platform?: string; url?: string }>;
+    achievements?: string[];
+  };
   resume: {
     filePath: string;
     text: string;
@@ -158,6 +178,22 @@ export type Recommendation = {
   skillGap: { matched: string[]; missing: string[]; matchPercent: number };
 };
 
+export type CareerRoadmap = {
+  targetRole: string;
+  currentSkills: string[];
+  requiredSkills: string[];
+  missingSkills: string[];
+  matchPercent: number;
+  roadmap: Array<{ skill: string; priority: string; phase: string; suggestions: string[] }>;
+};
+
+export type SkillOption = {
+  _id: string;
+  name: string;
+  normalizedName: string;
+  category?: string;
+};
+
 const CACHE_TTL_MS = 60 * 1000;
 const cacheStore = new Map<string, { ts: number; data: unknown }>();
 const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000").replace(/\/+$/, "");
@@ -170,6 +206,14 @@ function getCache<T>(key: string): T | null {
     return null;
   }
   return entry.data as T;
+}
+
+export function peekInternProfile() {
+  return getCache<InternProfile>("intern:profile");
+}
+
+export function peekInternApplications() {
+  return getCache<Application[]>("intern:applications");
 }
 
 function setCache<T>(key: string, data: T) {
@@ -347,5 +391,28 @@ export async function fetchInternRecommendations(internSkills: unknown, force = 
 
   setCache(cacheKey, recommendations);
   return recommendations;
+}
+
+export async function searchSkills(query: string, page = 1, limit = 10): Promise<SkillOption[]> {
+  const response = await apiRequest<{ success?: boolean; data?: { items?: SkillOption[] } }>(
+    `/api/skills?q=${encodeURIComponent(query)}&page=${page}&limit=${limit}`
+  );
+  return response.data?.items || [];
+}
+
+export async function createCustomSkill(name: string): Promise<SkillOption | null> {
+  const response = await apiRequest<{ success?: boolean; data?: SkillOption }>("/api/skills/custom", {
+    method: "POST",
+    body: JSON.stringify({ name })
+  });
+  return response.data || null;
+}
+
+export async function generateCareerRoadmap(targetRole: string): Promise<CareerRoadmap | null> {
+  const response = await apiRequest<{ roadmap: CareerRoadmap }>("/api/intern/roadmap", {
+    method: "POST",
+    body: JSON.stringify({ targetRole })
+  });
+  return response.roadmap || null;
 }
 

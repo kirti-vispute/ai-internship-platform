@@ -14,6 +14,17 @@ type SectionAnimatorProps = {
   parallax?: number;
 };
 
+const REVEAL_VARIANT_MAP = {
+  "fade-up": "fade-up",
+  "soft-scale": "soft-scale",
+  "slide-left": "slide-left",
+  "slide-right": "slide-right",
+  "blur-up": "fade-up",
+  "zoom-in": "zoom-in",
+  "clip-reveal": "fade-up",
+  "tilt-rise": "tilt-rise"
+} as const;
+
 export function SectionAnimator({
   children,
   className,
@@ -24,7 +35,7 @@ export function SectionAnimator({
   parallax = 0
 }: SectionAnimatorProps) {
   const content = (
-    <ScrollReveal variant={revealVariant} delayMs={delayMs} distance={distance} threshold={threshold}>
+    <ScrollReveal variant={REVEAL_VARIANT_MAP[revealVariant]} delayMs={delayMs} distance={distance} threshold={threshold}>
       {children}
     </ScrollReveal>
   );

@@ -1,29 +1,34 @@
-﻿import { ScrollReveal } from "@/components/animations/ScrollReveal";
-import { LiveHiringSection } from "@/components/home/LiveHiringSection";
-import { Footer } from "@/components/layout/footer";
+﻿import dynamic from "next/dynamic";
 import { Navbar } from "@/components/layout/navbar";
-import { FeaturesSection } from "@/components/sections/features-section";
 import { HeroSection } from "@/components/sections/hero-section";
-import { HowItWorksSection } from "@/components/sections/how-it-works-section";
-import { WhyChooseSection } from "@/components/sections/why-choose-section";
+import { Footer } from "@/components/layout/footer";
+
+const LiveHiringSection = dynamic(
+  () => import("@/components/home/LiveHiringSection").then((mod) => mod.LiveHiringSection),
+  { loading: () => <section className="py-20" aria-hidden="true" /> }
+);
+const HowItWorksSection = dynamic(
+  () => import("@/components/sections/how-it-works-section").then((mod) => mod.HowItWorksSection),
+  { loading: () => <section className="py-20" aria-hidden="true" /> }
+);
+const FeaturesSection = dynamic(
+  () => import("@/components/sections/features-section").then((mod) => mod.FeaturesSection),
+  { loading: () => <section className="py-20" aria-hidden="true" /> }
+);
+const WhyChooseSection = dynamic(
+  () => import("@/components/sections/why-choose-section").then((mod) => mod.WhyChooseSection),
+  { loading: () => <section className="py-20" aria-hidden="true" /> }
+);
 
 export default function HomePage() {
   return (
     <main className="relative overflow-x-clip overflow-y-visible">
       <Navbar />
       <HeroSection />
-      <ScrollReveal variant="fade-up" distance={12}>
-        <LiveHiringSection />
-      </ScrollReveal>
-      <ScrollReveal variant="slide-left" distance={14}>
-        <HowItWorksSection />
-      </ScrollReveal>
-      <ScrollReveal variant="soft-scale" distance={10}>
-        <FeaturesSection />
-      </ScrollReveal>
-      <ScrollReveal variant="slide-right" distance={14}>
-        <WhyChooseSection />
-      </ScrollReveal>
+      <LiveHiringSection />
+      <HowItWorksSection />
+      <FeaturesSection />
+      <WhyChooseSection />
       <Footer />
     </main>
   );

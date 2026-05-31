@@ -1,6 +1,8 @@
-﻿export function Footer() {
+﻿import Link from "next/link";
+
+export function Footer() {
   return (
-    <footer className="border-t border-slate-200 bg-white/90 dark:border-slate-800 dark:bg-slate-950/80">
+    <footer className="border-t border-slate-700 bg-slate-900/90 dark:border-slate-800 dark:bg-slate-950/80">
       <div className="container-shell grid gap-6 py-10 sm:grid-cols-2 lg:grid-cols-4">
         <div>
           <p className="text-lg font-bold text-ink dark:text-slate-100">InternAI</p>
@@ -22,6 +24,15 @@
             <li>Help Center</li>
             <li>Privacy</li>
             <li>Terms</li>
+            <li>
+              <Link
+                href="/auth/admin"
+                className="font-medium text-primary-600 transition hover:text-primary-700 dark:text-primary-300 dark:hover:text-primary-200"
+                data-cursor="link"
+              >
+                Admin Login
+              </Link>
+            </li>
           </ul>
         </div>
         <div>

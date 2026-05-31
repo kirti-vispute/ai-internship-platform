@@ -1,13 +1,10 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { RoleDashboardGuard } from "@/components/ui/role-dashboard-guard";
-import { clearAuthSession } from "@/lib/session";
-import { InternShell } from "@/components/dashboard/intern-shell";
 import { SectionPanel } from "@/components/dashboard/section-panel";
-import { Application, InternProfile, fetchInternApplications, fetchInternProfile } from "@/lib/intern-portal";
+import { Application, InternProfile, fetchInternApplications, fetchInternProfile, peekInternProfile } from "@/lib/intern-portal";
 import { SkillChips } from "@/components/dashboard/skill-chips";
 
 export default function InternApplicationsPage() {
@@ -15,13 +12,13 @@ export default function InternApplicationsPage() {
   const [profile, setProfile] = useState<InternProfile | null>(null);
   const [applications, setApplications] = useState<Application[]>([]);
   const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => typeof window === "undefined" ? true : !peekInternProfile());
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadApplications() {
       try {
-        setLoading(true);
+        if (!peekInternProfile()) setLoading(true);
         setError(null);
         const [loadedProfile, loadedApps] = await Promise.all([fetchInternProfile(), fetchInternApplications(true)]);
         setProfile(loadedProfile);
@@ -36,15 +33,9 @@ export default function InternApplicationsPage() {
     loadApplications();
   }, []);
 
-  function handleLogout() {
-    clearAuthSession();
-    router.push("/auth/intern");
-  }
-
   return (
-    <RoleDashboardGuard expectedRole="intern">
-      <InternShell welcomeName={profile?.fullName} onLogout={handleLogout}>
-        <div className="space-y-5">
+    <>
+    <div className="space-y-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary-600">Internships</p>
@@ -100,7 +91,7 @@ export default function InternApplicationsPage() {
         </div>
         {selectedApplication && (
           <div className="fixed inset-0 z-[1000] bg-slate-950/45 p-4" onClick={() => setSelectedApplication(null)}>
-            <div className="mx-auto mt-8 max-h-[88vh] w-full max-w-3xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-900" onClick={(e) => e.stopPropagation()}>
+            <div className="mx-auto mt-8 max-h-[88vh] w-full max-w-3xl overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl dark:border-slate-700 dark:bg-slate-900" onClick={(e) => e.stopPropagation()}>
               <div className="flex items-start justify-between border-b border-slate-200 px-5 py-4 dark:border-slate-700">
                 <div>
                   <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{selectedApplication.internship?.role || "Internship"}</h3>
@@ -137,7 +128,6 @@ export default function InternApplicationsPage() {
             </div>
           </div>
         )}
-      </InternShell>
-    </RoleDashboardGuard>
+    </>
   );
 }

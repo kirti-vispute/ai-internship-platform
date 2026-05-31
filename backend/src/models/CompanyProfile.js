@@ -22,7 +22,16 @@ const companyProfileSchema = new mongoose.Schema(
       enum: Object.values(COMPANY_VERIFICATION_STATUS),
       default: COMPANY_VERIFICATION_STATUS.PENDING
     },
-    rejectionReason: { type: String, default: "" }
+    verificationDocuments: [{ type: String, trim: true }],
+    linkedInUrl: { type: String, default: "", trim: true },
+    hrIdentityProofUrl: { type: String, default: "", trim: true },
+    businessRegistrationProofUrl: { type: String, default: "", trim: true },
+    verifiedBadgeIssuedAt: { type: Date, default: null },
+    verifiedByAdmin: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
+    rejectionReason: { type: String, default: "" },
+    isDeleted: { type: Boolean, default: false, index: true },
+    deletedAt: { type: Date, default: null },
+    deletedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null }
   },
   { timestamps: true }
 );

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
@@ -69,7 +69,7 @@ export function InternApplicationModal({ internship, resumePath, onClose, onSucc
     <div className="fixed inset-0 z-[1000] bg-slate-950/50" onClick={onClose}>
       <div className="flex h-full w-full items-start justify-center overflow-hidden px-4 pb-6 pt-6 md:pt-8">
         <div
-          className="pointer-events-auto flex w-full max-w-[900px] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.2)] dark:border-slate-700 dark:bg-slate-900"
+          className="pointer-events-auto flex w-full max-w-[900px] flex-col overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-[0_24px_60px_rgba(15,23,42,0.2)] dark:border-slate-700 dark:bg-slate-900"
           style={{ maxHeight: "88vh" }}
           onClick={(event) => event.stopPropagation()}
         >
@@ -197,7 +197,7 @@ export function InternApplicationModal({ internship, resumePath, onClose, onSucc
                       value={joiningDate}
                       min={new Date().toISOString().split("T")[0]}
                       onChange={(event) => setJoiningDate(event.target.value)}
-                      className="mt-1.5 w-full cursor-pointer rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-200"
+                      className="mt-1.5 w-full cursor-pointer rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-slate-200 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
                     />
                   </div>
                 </div>
@@ -207,7 +207,7 @@ export function InternApplicationModal({ internship, resumePath, onClose, onSucc
             </div>
           </div>
 
-          <footer className="flex items-center justify-between gap-3 border-t border-slate-200 bg-white px-5 py-4 md:px-6 dark:border-slate-700 dark:bg-slate-900">
+          <footer className="flex items-center justify-between gap-3 border-t border-slate-700 bg-slate-900 px-5 py-4 md:px-6 dark:border-slate-700 dark:bg-slate-900">
             <Button type="button" variant="secondary" onClick={onClose} disabled={submitting} className="transition hover:-translate-y-0.5 active:translate-y-0">
               Cancel
             </Button>

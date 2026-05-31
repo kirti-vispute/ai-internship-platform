@@ -15,7 +15,10 @@ const VIEW_MAP: Record<string, CompanyDashboardView> = {
   "matching/saved": "matching-saved",
   "reports/feedback": "reports-feedback",
   "reports/notes": "reports-notes",
-  "reports/export": "reports-export"
+  "reports/export": "reports-export",
+  "team/recruiters": "team-recruiters",
+  "analytics/company": "analytics-company",
+  "analytics/salary": "analytics-salary"
 };
 
 export default async function CompanyDashboardViewRoute({

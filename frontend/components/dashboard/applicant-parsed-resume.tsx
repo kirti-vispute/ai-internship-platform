@@ -17,7 +17,7 @@ export function ApplicantParsedResume({ intern }: { intern?: InternLike }) {
     : intern?.achievements || [];
   const languages = parsed?.languages || [];
   const experienceList = parsed?.experience || [];
-  const linkList = [...(parsed?.links || []), ...(intern?.links || [])].filter(Boolean);
+  const linkList = [...(parsed?.links || []), ...(intern?.links || []), intern?.linkedinUrl || ""].filter(Boolean);
   const summaryText = (parsed?.summary || intern?.summary || "").trim();
   const locationText = (parsed?.location || "").trim();
   const interests = intern?.interests || [];
@@ -195,7 +195,7 @@ export function ApplicantParsedResume({ intern }: { intern?: InternLike }) {
             {linkList.map((href, idx) => (
               <li key={`${href}-${idx}`}>
                 <a href={href} target="_blank" rel="noreferrer" className="text-sm font-medium text-blue-700 hover:underline dark:text-blue-400">
-                  {href}
+                  {String(href).toLowerCase().includes("linkedin.com") ? "LinkedIn Profile" : href}
                 </a>
               </li>
             ))}

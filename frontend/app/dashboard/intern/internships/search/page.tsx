@@ -1,13 +1,9 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
-import { RoleDashboardGuard } from "@/components/ui/role-dashboard-guard";
-import { InternShell } from "@/components/dashboard/intern-shell";
 import { SectionPanel } from "@/components/dashboard/section-panel";
 import { Button } from "@/components/ui/button";
 import { InternApplicationModal } from "@/components/dashboard/intern-application-modal";
-import { clearAuthSession } from "@/lib/session";
 import {
   InternshipListing,
   InternProfile,
@@ -16,17 +12,17 @@ import {
   fetchInternProfile,
   fetchSavedInternships,
   saveInternship,
-  unsaveInternship
+  unsaveInternship,
+  peekInternProfile
 } from "@/lib/intern-portal";
 import { normalizeSkillList, normalizeSkillValue } from "@/lib/skill-normalizer";
 
 export default function SearchInternshipsPage() {
-  const router = useRouter();
   const [profile, setProfile] = useState<InternProfile | null>(null);
   const [internships, setInternships] = useState<InternshipListing[]>([]);
   const [appliedInternshipIds, setAppliedInternshipIds] = useState<Set<string>>(new Set());
   const [query, setQuery] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => typeof window === "undefined" ? true : !peekInternProfile());
   const [error, setError] = useState<string | null>(null);
   const [applyError, setApplyError] = useState<string | null>(null);
   const [applySuccess, setApplySuccess] = useState<string | null>(null);
@@ -36,7 +32,7 @@ export default function SearchInternshipsPage() {
   useEffect(() => {
     async function load() {
       try {
-        setLoading(true);
+        if (!peekInternProfile()) setLoading(true);
         setError(null);
 
         const [loadedProfile, loadedInternships, loadedApplications, loadedSaved] = await Promise.all([
@@ -117,15 +113,9 @@ export default function SearchInternshipsPage() {
     }
   }
 
-  function handleLogout() {
-    clearAuthSession();
-    router.push("/auth/intern");
-  }
-
   return (
-    <RoleDashboardGuard expectedRole="intern">
-      <InternShell welcomeName={profile?.fullName} onLogout={handleLogout}>
-        <SectionPanel title="Search Internships" subtitle="Explore active internships from verified company postings.">
+    <>
+    <SectionPanel title="Search Internships" subtitle="Explore active internships from verified company postings.">
           <div className="space-y-3">
             <input
               value={query}
@@ -198,8 +188,6 @@ export default function SearchInternshipsPage() {
             }}
           />
         )}
-      </InternShell>
-    </RoleDashboardGuard>
+    </>
   );
 }
-

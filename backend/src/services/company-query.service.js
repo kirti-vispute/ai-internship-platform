@@ -1,0 +1,114 @@
+const Internship = require("../models/Internship");
+const Application = require("../models/Application");
+const AppError = require("../utils/AppError");
+const {
+  internshipScopeFilter,
+  applicationScopeFilter,
+  applicantsQueryForInternship,
+  isHrScopedUser,
+  buildListMeta
+} = require("./company-access.service");
+
+async function findInternships(companyId, user, { page = 1, limit = 10, sort = { createdAt: -1 } } = {}) {
+  const safePage = Math.max(1, Number(page));
+  const safeLimit = Math.min(100, Math.max(1, Number(limit)));
+  const skip = (safePage - 1) * safeLimit;
+  const query = internshipScopeFilter(companyId, user);
+
+  const [internships, total] = await Promise.all([
+    Internship.find(query).sort(sort).skip(skip).limit(safeLimit),
+    Internship.countDocuments(query)
+  ]);
+
+  return {
+    internships,
+    page: safePage,
+    limit: safeLimit,
+    total,
+    meta: buildListMeta(user)
+  };
+}
+
+async function findInternshipById(companyId, internshipId, user) {
+  const internship = await Internship.findOne({
+    _id: internshipId,
+    ...internshipScopeFilter(companyId, user)
+  });
+  if (!internship) {
+    throw new AppError("Internship not found", 404);
+  }
+  return internship;
+}
+
+async function findApplications(companyId, user, queryExtras = {}, options = {}) {
+  const query = {
+    ...applicationScopeFilter(companyId, user),
+    ...queryExtras
+  };
+  const sort = options.sort || { createdAt: -1 };
+  return Application.find(query).sort(sort).populate(options.populate || []);
+}
+
+async function findApplicationById(companyId, applicationId, user, populate = "internship") {
+  const application = await Application.findOne({
+    _id: applicationId,
+    ...applicationScopeFilter(companyId, user)
+  }).populate(populate);
+
+  if (!application) {
+    throw new AppError("Application not found", 404);
+  }
+
+  const internshipCompanyId =
+    application.internship?.company || application.internship?.companyId;
+  if (internshipCompanyId && String(internshipCompanyId) !== String(companyId)) {
+    throw new AppError("Not allowed for this internship", 403);
+  }
+
+  if (
+    isHrScopedUser(user) &&
+    application.assignedRecruiter &&
+    String(application.assignedRecruiter) !== String(user._id)
+  ) {
+    throw new AppError("Not allowed for this recruiter scope", 403);
+  }
+
+  return application;
+}
+
+async function findApplicantsForInternship(companyId, internshipId, user, { page = 1, limit = 10, status = "" } = {}) {
+  await findInternshipById(companyId, internshipId, user);
+
+  const query = applicantsQueryForInternship(internshipId, companyId, user);
+  if (status) query.status = status;
+
+  const applications = await Application.find(query).populate("intern").sort({ createdAt: -1 });
+  const total = await Application.countDocuments(query);
+  const safePage = Math.max(1, Number(page));
+  const safeLimit = Math.min(100, Math.max(1, Number(limit)));
+  const skip = (safePage - 1) * safeLimit;
+
+  return {
+    applications: applications.slice(skip, skip + safeLimit),
+    page: safePage,
+    limit: safeLimit,
+    total,
+    meta: buildListMeta(user)
+  };
+}
+
+async function countScopedApplications(companyId, user, queryExtras = {}) {
+  return Application.countDocuments({
+    ...applicationScopeFilter(companyId, user),
+    ...queryExtras
+  });
+}
+
+module.exports = {
+  findInternships,
+  findInternshipById,
+  findApplications,
+  findApplicationById,
+  findApplicantsForInternship,
+  countScopedApplications
+};
