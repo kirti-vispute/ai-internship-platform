@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" fill="none" role="img" aria-label="InternAI">
+  <defs>
+    <linearGradient id="ia-compact" x1="4" y1="4" x2="36" y2="36" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1f6fff"/>
+      <stop offset="1" stop-color="#22d3ee"/>
+    </linearGradient>
+  </defs>
+  <rect x="2" y="2" width="36" height="36" rx="9" fill="url(#ia-compact)"/>
+  <path d="M12 26V14h4v6l6-5 6 5v-6h4v12h-6v-6l-6 5-6-5v6z" fill="#fff"/>
+</svg>
