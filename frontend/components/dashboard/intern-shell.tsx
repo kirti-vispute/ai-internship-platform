@@ -8,6 +8,7 @@ import {
   Bell,
   BookOpen,
   Bookmark,
+  Calendar,
   ClipboardList,
   FileText,
   HelpCircle,
@@ -69,6 +70,7 @@ function buildSections(chatUnread = 0): SidebarSection[] {
         { label: "Search Internships", href: "/dashboard/intern/internships/search", icon: <AppIcon icon={Search} /> },
         { label: "Saved Internships", href: "/dashboard/intern/internships/saved", icon: <AppIcon icon={Bookmark} /> },
         { label: "My Applications", href: "/dashboard/intern/applications", icon: <AppIcon icon={ClipboardList} /> },
+        { label: "Scheduled Interviews", href: "/dashboard/intern/interviews", icon: <AppIcon icon={Calendar} /> },
         { label: "Track Progress", href: "/dashboard/intern/track-progress", icon: <AppIcon icon={BarChart3} /> }
       ]
     },

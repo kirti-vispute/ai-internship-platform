@@ -28,11 +28,14 @@ import {
   Application,
   InAppNotification,
   InternProfile,
+  checkInterviewReminders,
   fetchInternApplications,
   fetchInternNotifications,
   fetchInternProfileWithScore,
   fetchInternRecommendations
 } from "@/lib/intern-portal";
+import { UpcomingInterviewsWidget } from "@/components/dashboard/intern/upcoming-interviews-widget";
+import { ScheduledInterviewsPanel } from "@/components/dashboard/intern/scheduled-interviews-panel";
 
 export default function InternDashboardOverviewPage() {
   const router = useRouter();
@@ -64,6 +67,7 @@ export default function InternDashboardOverviewPage() {
         setApplications(apps || []);
         setRecommendationCount(recommendations?.length || 0);
         setNotifications((alerts.notifications || []).slice(0, 5));
+        await checkInterviewReminders().catch(() => null);
 
         const missing = new Set<string>();
         (recommendations || []).forEach((item) => {
@@ -180,6 +184,10 @@ export default function InternDashboardOverviewPage() {
                 <SummaryStatCard title="Interviews Scheduled" value={interviewCount} hint="Upcoming interview rounds." icon={Calendar} />
                 <SummaryStatCard title="Recommended Internships" value={recommendationCount} hint="Matched opportunities for your profile." icon={Briefcase} />
               </section>
+
+              <UpcomingInterviewsWidget applications={applications} />
+
+              <ScheduledInterviewsPanel applications={applications} compact />
 
               <SectionPanel title="Recent Applications" subtitle="Latest activity across your internship pipeline." titleIcon={ClipboardList}>
                 {recentApplications.length === 0 ? (

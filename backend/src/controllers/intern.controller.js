@@ -13,13 +13,17 @@ const { computeResumeScore } = require("../services/scorer.service");
 const { parseResumeFile } = require("../services/resume-parser.service");
 const { structuredResumeParse } = require("../services/resume-structured-parser.service");
 const { normalizeSkillList, toDisplaySkillList } = require("../utils/skill-normalizer");
+const { storeUploadedFile } = require("../infrastructure/storage/storage.adapter");
 const { logActivity } = require("../services/activity-log.service");
 const { sendNotificationEmail } = require("../services/notification.service");
 const { createInAppNotification, notifyInternByProfileId } = require("../services/in-app-notification.service");
 const Notification = require("../models/Notification");
 const { NOTIFICATION_TYPES } = require("../constants/notification-types");
 const { APPLICATION_STATUS } = require("../constants/enums");
-const { buildRoadmap } = require("../services/roadmap.service");
+const {
+  listInternInterviews,
+  processInterviewRemindersForIntern
+} = require("../services/interview-workflow.service");
 
 function toProfilePayload(profileDoc) {
   const profile = profileDoc.toObject ? profileDoc.toObject() : profileDoc;
@@ -90,7 +94,15 @@ function isValidHttpUrl(url) {
 
 exports.getProfile = asyncHandler(async (req, res) => {
   const profile = await getInternProfileByUserId(req.user._id);
-  res.json({ profile: toProfilePayload(profile) });
+  const { getCertificationStats } = require("../services/certification.service");
+  const certificationStats = await getCertificationStats(req.user._id);
+  res.json({
+    profile: {
+      ...toProfilePayload(profile),
+      certificationStats,
+      verifiedCertificationCount: profile.verifiedCertificationCount || certificationStats.verified
+    }
+  });
 });
 
 exports.updateProfile = asyncHandler(async (req, res) => {
@@ -188,6 +200,16 @@ exports.uploadResume = asyncHandler(async (req, res) => {
   const parsed = structuredResumeParse(resumeText);
 
   profile.resume.filePath = normalizeResumePublicPath(path.relative(path.join(__dirname, "../.."), req.file.path));
+
+  try {
+    const stored = await storeUploadedFile({ filePath: req.file.path, folder: "resumes", resourceType: "raw" });
+    if (stored?.url) {
+      profile.resume.filePath = stored.url.startsWith("http") ? stored.url : profile.resume.filePath;
+    }
+  } catch {
+    // Local disk path remains the fallback when Cloudinary is unavailable.
+  }
+
   profile.resume.text = resumeText;
   profile.resume.parsed = parsed;
   profile.skills = toDisplaySkillList(
@@ -687,4 +709,16 @@ exports.reportCompany = asyncHandler(async (req, res) => {
   });
 
   res.status(201).json({ message: "Company reported", report });
+});
+
+exports.getMyInterviews = asyncHandler(async (req, res) => {
+  const profile = await getInternProfileByUserId(req.user._id);
+  const interviews = await listInternInterviews(profile._id);
+  res.json({ interviews });
+});
+
+exports.checkInterviewReminders = asyncHandler(async (req, res) => {
+  const profile = await getInternProfileByUserId(req.user._id);
+  const result = await processInterviewRemindersForIntern(profile._id);
+  res.json(result);
 });

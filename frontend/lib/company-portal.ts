@@ -347,6 +347,21 @@ export async function fetchCompanyAnalytics() {
   return response.analytics;
 }
 
+export async function fetchCompanyHiringScoringTemplates(force = false) {
+  return withCache("company:hiring-scoring", force, async () => {
+    const response = await apiRequest<{
+      templates: Array<{
+        roleKey: string;
+        roleLabel: string;
+        weights: { skills: number; tests: number; projects: number; experience: number; resume: number };
+        enabled: { skills: boolean; tests: boolean; projects: boolean; experience: boolean; resume: boolean };
+        version?: number;
+      }>;
+    }>("/api/company/hiring-scoring/templates");
+    return response.templates || [];
+  });
+}
+
 export async function fetchCompanyInternships(force = false) {
   return withCache("company:internships", force, async () => {
     const response = await apiRequest<{ internships: CompanyInternship[] }>("/api/company/internships");

@@ -60,6 +60,15 @@ export type ResumeAnalysis = {
   warnings?: string[];
   confidence?: number | null;
   quality?: { issues: string[]; confidence: number; isReliable: boolean };
+  aiValidation?: {
+    confidenceScore: number;
+    validationStatus: "validated" | "partial" | "conflict_detected";
+    confidenceTier: "high" | "medium" | "low";
+    reliabilityLevel?: "High" | "Medium" | "Low";
+    insufficientData?: boolean;
+    groundingSources?: string[];
+    explanationTrace: string;
+  };
   checks?: {
     wordCount?: number;
     matchedSkills?: string[];
@@ -94,6 +103,18 @@ export type InternProfile = {
   educationDetails?: Array<{ college?: string; degree?: string; branch?: string; cgpa?: string; passingYear?: string }>;
   courseEntries?: Array<{ courseName?: string; platform?: string; completionDate?: string; certificateUrl?: string; verificationLink?: string }>;
   certificationEntries?: Array<{ name?: string; issuer?: string; year?: string; certificateUrl?: string; verificationLink?: string }>;
+  verifiedCertificationCount?: number;
+  verifiedCertificationEntries?: Array<{
+    name?: string;
+    issuer?: string;
+    year?: string;
+    certificateUrl?: string;
+    verificationLink?: string;
+    skillCategory?: string;
+    verificationStatus?: string;
+    certificationId?: string;
+  }>;
+  certificationStats?: { total: number; verified: number; pending: number; rejected: number };
   summary?: string;
   completedCourses: string[];
   profileSections?: {
@@ -175,6 +196,22 @@ export type Application = {
     status?: "scheduled" | "completed" | "cleared" | "rejected";
     updatedAt?: string;
   }>;
+};
+
+export type ScheduledInterview = {
+  interviewId: string;
+  applicationId: string;
+  companyId?: string;
+  roleId?: string;
+  companyName: string;
+  role: string;
+  interviewDate: string;
+  interviewTime: string;
+  interviewType: string;
+  interviewStatus: "scheduled" | "upcoming" | "in_progress" | "completed" | "cancelled";
+  meetingLink?: string;
+  mode?: "online" | "offline" | "";
+  notes?: string;
 };
 
 export type InternshipListing = {
@@ -516,6 +553,22 @@ export async function withdrawApplication(applicationId: string) {
   });
   cacheStore.delete("intern:applications");
   return response;
+}
+
+export async function fetchInternInterviews(force = false) {
+  const cacheKey = "intern:interviews";
+  if (!force) {
+    const cached = getCache<ScheduledInterview[]>(cacheKey);
+    if (cached) return cached;
+  }
+  const response = await apiRequest<{ interviews: ScheduledInterview[] }>("/api/intern/interviews");
+  const interviews = response.interviews || [];
+  setCache(cacheKey, interviews);
+  return interviews;
+}
+
+export async function checkInterviewReminders() {
+  return apiRequest<{ sent: number }>("/api/intern/interviews/reminders/check", { method: "POST" });
 }
 
 export async function fetchPublicCompanyProfile(companyId: string) {

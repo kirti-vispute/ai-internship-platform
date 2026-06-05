@@ -265,7 +265,7 @@ async function buildPlatformStatisticsData() {
   ]);
 
   return {
-    subject: { name: "InternAI Platform", email: "admin@internai.local", role: "Administrator" },
+    subject: { name: "CareerSetu Platform", email: "admin@internai.local", role: "Administrator" },
     statistics: {
       totalStudents,
       totalCompanies,
@@ -291,7 +291,7 @@ async function buildVerificationReportData(companyId) {
   if (!company) throw new AppError("Company not found", 404);
 
   return {
-    subject: { name: "InternAI Admin", email: "admin@internai.local", role: "Administrator" },
+    subject: { name: "CareerSetu Admin", email: "admin@internai.local", role: "Administrator" },
     company: {
       name: company.companyName,
       email: company.companyEmail,

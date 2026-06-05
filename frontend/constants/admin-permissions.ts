@@ -6,7 +6,8 @@ export const ADMIN_PERMISSIONS = Object.freeze({
   COMPANY_SUSPEND: "admin:company:suspend",
   REPORT_REVIEW: "admin:report:review",
   ACTIVITY_VIEW: "admin:activity:view",
-  MANAGE: "admin:manage"
+  MANAGE: "admin:manage",
+  CERTIFICATION_REVIEW: "admin:certification:review"
 });
 
 export type AdminPermission = (typeof ADMIN_PERMISSIONS)[keyof typeof ADMIN_PERMISSIONS];
@@ -34,6 +35,10 @@ export function canAccessAdminView(view: string, permissions: string[]): boolean
       return hasAdminPermission(permissions, ADMIN_PERMISSIONS.REPORT_REVIEW);
     case "activity-logs":
       return hasAdminPermission(permissions, ADMIN_PERMISSIONS.ACTIVITY_VIEW);
+    case "certification-review":
+      return hasAdminPermission(permissions, ADMIN_PERMISSIONS.CERTIFICATION_REVIEW);
+    case "hiring-scoring":
+      return hasAdminPermission(permissions, ADMIN_PERMISSIONS.MANAGE);
     default:
       return false;
   }

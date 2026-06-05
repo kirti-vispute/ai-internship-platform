@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CompanyShell } from "@/components/dashboard/company-shell";
 import { SectionPanel } from "@/components/dashboard/section-panel";
-import { SummaryStatCard } from "@/components/dashboard/summary-stat-card";
 import { Button } from "@/components/ui/button";
 import { RoleDashboardGuard } from "@/components/ui/role-dashboard-guard";
 import { clearAuthSession } from "@/lib/session";
@@ -26,6 +25,7 @@ import {
   type CompanyHrInsights,
   type CompanyHrUser,
   fetchCompanyAnalytics,
+  fetchCompanyHiringScoringTemplates,
   assignRecruiterToInternship,
   assignRecruiterToApplication,
   deleteCompanyInternship,
@@ -37,15 +37,16 @@ import {
   searchCandidates,
   CandidateSearchResult,
   addApplicationFeedback,
-  CompanyCurrentUser
+  CompanyCurrentUser,
+  openCompanyApplicationResume
 } from "@/lib/company-portal";
 import { ApplicantDetailsModal, type InterviewFormState } from "@/components/dashboard/applicant-details-modal";
-import { PIPELINE_STAGES } from "@/constants/pipelineStages";
+import { HiringSection, type HiringSectionFocus } from "@/components/dashboard/hiring";
+import { CompanyDashboardHub, MatchedCandidatesView } from "@/components/dashboard/company";
+import { CompanyDashboardPageIntro, companyDashboardStyles } from "@/components/dashboard/company/company-dashboard-layout";
+import { hiringAIEngine, type InterviewScheduleSlot } from "@/lib/ai-hiring";
+import { useToast } from "@/components/ui/toast";
 import { ReportDownloadButton } from "@/components/reports/report-download-button";
-import { EmptyState } from "@/components/dashboard/empty-state";
-import { RecentMessagesWidget } from "@/components/dashboard/recent-messages-widget";
-import { BRANDED_EMPTY_STATES } from "@/lib/brand";
-import { BadgeCheck, Briefcase, Building2, ShieldCheck, UserCheck, Users } from "lucide-react";
 
 export type CompanyDashboardView =
   | "overview"
@@ -81,14 +82,39 @@ const WITH_INTERNSHIPS = new Set<CompanyDashboardView>([
 ]);
 const WITH_APPS = new Set<CompanyDashboardView>([
   "overview",
+  "hiring-active",
   "hiring-applicants",
   "hiring-shortlisted",
   "hiring-pipeline",
+  "matching-ai",
   "reports-feedback",
   "reports-notes",
   "reports-export"
 ]);
+
+const HIRING_HUB_VIEWS = new Set<CompanyDashboardView>([
+  "hiring-active",
+  "hiring-applicants",
+  "hiring-shortlisted",
+  "hiring-pipeline"
+]);
+
+const HIRING_FOCUS_BY_VIEW: Partial<Record<CompanyDashboardView, HiringSectionFocus>> = {
+  "hiring-active": "jobs",
+  "hiring-applicants": "applications",
+  "hiring-shortlisted": "shortlist",
+  "hiring-pipeline": "pipeline"
+};
 const WITH_MATCHES = new Set<CompanyDashboardView>(["overview", "matching-ai"]);
+
+const PROFILE_MODAL_VIEWS = new Set<CompanyDashboardView>([
+  "overview",
+  "matching-ai",
+  "hiring-active",
+  "hiring-applicants",
+  "hiring-shortlisted",
+  "hiring-pipeline"
+]);
 
 const field = "surface-subtle px-3 py-2 text-sm";
 
@@ -101,21 +127,6 @@ function fmtDate(value?: string) {
   const dt = new Date(value);
   if (Number.isNaN(dt.getTime())) return "-";
   return dt.toLocaleDateString();
-}
-
-function fmtAppliedDateTime(value?: string) {
-  if (!value) return "-";
-  const dt = new Date(value);
-  if (Number.isNaN(dt.getTime())) return "-";
-  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-  const d = dt.getDate();
-  const m = months[dt.getMonth()];
-  const y = dt.getFullYear();
-  let h = dt.getHours();
-  const min = dt.getMinutes().toString().padStart(2, "0");
-  const ampm = h >= 12 ? "PM" : "AM";
-  h = h % 12 || 12;
-  return `${d} ${m} ${y}, ${h}:${min} ${ampm}`;
 }
 
 const DEFAULT_INTERVIEW_FORM: InterviewFormState = {
@@ -149,6 +160,7 @@ function normalizeApplicantStage(value: string) {
 
 export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
   const router = useRouter();
+  const { pushToast } = useToast();
   const [profile, setProfile] = useState<CompanyProfile | null>(null);
   const [currentUser, setCurrentUser] = useState<CompanyCurrentUser | null>(null);
   const [internships, setInternships] = useState<CompanyInternship[]>([]);
@@ -244,6 +256,14 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
         else setApps([]);
         if (WITH_MATCHES.has(view)) setMatches(await fetchCompanyMatchedCandidates());
         else setMatches([]);
+        if (WITH_MATCHES.has(view) || view === "overview" || HIRING_HUB_VIEWS.has(view)) {
+          try {
+            const templates = await fetchCompanyHiringScoringTemplates(true);
+            if (templates.length) hiringAIEngine.configureRoleTemplates(templates);
+          } catch {
+            /* defaults remain active */
+          }
+        }
         if (["team-recruiters", "analytics-company", "analytics-salary"].includes(view)) {
           const insights =
             view === "team-recruiters" || view === "analytics-company"
@@ -263,9 +283,25 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
           }
           setAnalytics(await fetchCompanyAnalytics());
         } else {
-          setRecruiters([]);
           setHrInsights(null);
           setAnalytics(null);
+        }
+        if (view === "overview" || HIRING_HUB_VIEWS.has(view)) {
+          const user = companyContext.currentUser;
+          const assignOk =
+            (user?.permissions || []).includes("company:internship:assign") ||
+            ["owner", "ceo"].includes(user?.companyAccountType || "");
+          if (assignOk) {
+            try {
+              setRecruiters(await fetchCompanyRecruiters());
+            } catch {
+              setRecruiters([]);
+            }
+          } else if (view !== "team-recruiters") {
+            setRecruiters([]);
+          }
+        } else if (!["team-recruiters", "analytics-company", "analytics-salary"].includes(view)) {
+          setRecruiters([]);
         }
       } catch (e) {
         setError((e as Error).message || "Failed to load company data.");
@@ -430,7 +466,7 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
   );
 
   useEffect(() => {
-    if (view !== "hiring-applicants" && view !== "hiring-shortlisted") {
+    if (!PROFILE_MODAL_VIEWS.has(view)) {
       setApplicantDetailId(null);
     }
   }, [view]);
@@ -438,25 +474,6 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
   useEffect(() => {
     if (applicantDetailId && !detailApp) setApplicantDetailId(null);
   }, [applicantDetailId, detailApp]);
-
-  const statusCounts = useMemo(() => {
-    const base: Record<string, number> = {
-      applied: 0,
-      shortlisted: 0,
-      under_review: 0,
-      interview_scheduled: 0,
-      technical_round: 0,
-      hr_round: 0,
-      selected: 0,
-      rejected: 0,
-      on_hold: 0
-    };
-    apps.forEach((a) => {
-      const normalized = normalizePipelineStatus(a.status);
-      base[normalized] = (base[normalized] || 0) + 1;
-    });
-    return base;
-  }, [apps]);
 
   const summary = useMemo(
     () => ({
@@ -666,70 +683,79 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
     URL.revokeObjectURL(url);
   }
 
-  function applicantPanel(list: CompanyApplication[], title: string, subtitle: string, emptyText: string) {
+  function openApplicantProfile(applicationId: string) {
+    setApplicantDetailId(applicationId);
+    const application = apps.find((item) => item._id === applicationId);
+    if (application) {
+      setStatusDrafts((prev) => ({ ...prev, [applicationId]: normalizeApplicantStage(application.status) }));
+    }
+  }
+
+  function handleMatchedMessage(_match: CompanyMatchedCandidate, _applicationId: string) {
+    router.push("/dashboard/company/chat");
+  }
+
+  async function handleMatchedShortlist(applicationId: string) {
+    await applyStage(applicationId, "shortlisted", "Shortlisted from AI matched candidates");
+  }
+
+  async function handleMatchedViewResume(applicationId: string) {
+    try {
+      setError(null);
+      await openCompanyApplicationResume(applicationId);
+    } catch (e) {
+      openApplicantProfile(applicationId);
+      setError((e as Error).message || "Resume not available. Opened candidate profile instead.");
+    }
+  }
+
+  async function handleScheduleInterview(applicationId: string, slot: InterviewScheduleSlot) {
+    try {
+      setSaving(true);
+      setError(null);
+      const payload = hiringAIEngine.buildInterviewPayload(slot);
+      const application = await scheduleInterviewRound(applicationId, payload);
+      setApps(await fetchCompanyApplications(true));
+      const latestRound = application.interviewRounds?.[application.interviewRounds.length - 1];
+      const roomLink = latestRound?.meetingLink;
+      pushToast({
+        title: "Interview scheduled",
+        message: roomLink
+          ? `${payload.roundType} interview booked. Platform room: ${roomLink}`
+          : `${payload.roundType} interview booked. Candidate status updated to Interview Scheduled.`,
+        variant: "success"
+      });
+      setSuccess("Interview scheduled successfully.");
+    } catch (e) {
+      const message = (e as Error).message || "Failed to schedule interview.";
+      setError(message);
+      pushToast({ title: "Scheduling failed", message, variant: "error" });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function renderHiringHub() {
     return (
-      <SectionPanel title={title} subtitle={subtitle}>
-        {list.length === 0 ? (
-          <Empty text={emptyText} />
-        ) : (
-          <div className="space-y-3">
-            {list.map((a) => {
-              const matchPct = a.relevanceScore ?? a.matchScore ?? 0;
-              const resumeScore = a.intern?.resume?.score ?? 0;
-              return (
-                <div
-                  key={a._id}
-                  className="surface-subtle flex flex-col gap-4 rounded-xl border border-slate-200 p-4 sm:flex-row sm:items-center sm:justify-between dark:border-slate-700"
-                >
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-base font-semibold text-slate-900 dark:text-slate-100">{a.intern?.fullName || "Candidate"}</p>
-                    <p className="mt-0.5 truncate text-xs text-slate-600 dark:text-slate-300">{a.internship?.role || "Internship"}</p>
-                  </div>
-                  <div className="flex w-full min-w-0 flex-col items-stretch gap-3 sm:w-auto sm:max-w-[min(100%,24rem)] sm:items-end">
-                    <p className="text-left text-xs text-slate-500 dark:text-slate-400 sm:text-right">
-                      Applied: <span className="font-medium text-slate-700 dark:text-slate-200">{fmtAppliedDateTime(a.createdAt)}</span>
-                    </p>
-                    <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
-                      <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-                        <span className="inline-flex min-h-9 min-w-[7.25rem] shrink-0 items-center justify-center whitespace-nowrap rounded-full border border-primary-400 bg-primary-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm dark:border-primary-500 dark:bg-primary-500 dark:text-white">
-                          Match {matchPct}%
-                        </span>
-                        <span className="inline-flex min-h-9 min-w-[7.25rem] shrink-0 items-center justify-center whitespace-nowrap rounded-full border border-slate-300 bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-900 shadow-sm dark:border-slate-500 dark:bg-slate-800 dark:text-slate-50">
-                          Resume {resumeScore}
-                        </span>
-                      </div>
-                      <ReportDownloadButton
-                        reportKey="candidate-evaluation"
-                        applicationId={a._id}
-                        label="Evaluation PDF"
-                        size="sm"
-                      />
-                      <ReportDownloadButton
-                        reportKey="interview"
-                        applicationId={a._id}
-                        label="Interview PDF"
-                        size="sm"
-                      />
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="secondary"
-                        className="w-full shrink-0 border-slate-300 bg-white hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-900 dark:hover:bg-slate-800 sm:w-auto"
-                        onClick={() => {
-                          setApplicantDetailId(a._id);
-                          setStatusDrafts((prev) => ({ ...prev, [a._id]: normalizeApplicantStage(a.status) }));
-                        }}
-                      >
-                        View Details
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </SectionPanel>
+      <HiringSection
+        internships={internships}
+        applications={apps}
+        matches={matches}
+        focus={HIRING_FOCUS_BY_VIEW[view] || "jobs"}
+        isHrScoped={isHrScoped}
+        saving={saving}
+        canAssign={canAssign}
+        recruiters={recruiters}
+        selectedRecruiterByInternship={selectedRecruiterByInternship}
+        onRecruiterChange={(internshipId, recruiterId) =>
+          setSelectedRecruiterByInternship((prev) => ({ ...prev, [internshipId]: recruiterId }))
+        }
+        onAssignInternship={assignInternship}
+        onDeleteInternship={removeInternship}
+        onViewProfile={openApplicantProfile}
+        onViewResume={handleMatchedViewResume}
+        onScheduleInterview={handleScheduleInterview}
+      />
     );
   }
 
@@ -737,29 +763,27 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
     switch (view) {
       case "overview":
         return (
-          <div className="space-y-5">
-            <section className="stat-grid">
-              <SummaryStatCard title="Verification" value={summary.verification.toUpperCase()} icon={ShieldCheck} />
-              <SummaryStatCard title="Workspace" value={summary.roleLabel} icon={Building2} />
-              <SummaryStatCard title="Active Internships" value={summary.activeInternships} icon={Briefcase} />
-              <SummaryStatCard title="Applicants" value={summary.applicants} icon={Users} />
-              <SummaryStatCard title="Shortlisted" value={summary.shortlisted} icon={UserCheck} />
-              <SummaryStatCard title="Matched Candidates" value={summary.matched} icon={BadgeCheck} />
-            </section>
-            <RecentMessagesWidget role="company" chatHref="/dashboard/company/chat" />
-            <SectionPanel title="Latest Hiring Activity" subtitle="Recent applicant activity.">
-              {apps.length === 0 ? <Empty text="No applicants yet." /> : (
-                <div className="space-y-2">{apps.slice(0, 6).map((a) => <div key={a._id} className="surface-subtle px-4 py-3 text-sm text-slate-700 dark:text-slate-300">{a.intern?.fullName || "Candidate"} • {a.internship?.role || "Internship"} • {a.status} • {fmtDate(a.createdAt)}</div>)}</div>
-              )}
-            </SectionPanel>
-            <SectionPanel title="Overview Notes" subtitle="Current account status.">
-              <div className="space-y-2">
-                {summary.activeInternships === 0 && <Empty text="No internships posted yet." />}
-                {summary.applicants === 0 && <Empty text="No applicants yet." />}
-                {summary.matched === 0 && <Empty text="No matched candidates available yet." />}
-              </div>
-            </SectionPanel>
-          </div>
+          <CompanyDashboardHub
+            internships={internships}
+            applications={apps}
+            matches={matches}
+            shortlistedCount={shortlisted.length}
+            isHrScoped={isHrScoped}
+            saving={saving}
+            canAssign={canAssign}
+            recruiters={recruiters}
+            selectedRecruiterByInternship={selectedRecruiterByInternship}
+            onRecruiterChange={(internshipId, recruiterId) =>
+              setSelectedRecruiterByInternship((prev) => ({ ...prev, [internshipId]: recruiterId }))
+            }
+            onAssignInternship={assignInternship}
+            onDeleteInternship={removeInternship}
+            onOpenProfile={openApplicantProfile}
+            onMessage={handleMatchedMessage}
+            onShortlist={handleMatchedShortlist}
+            onViewResume={handleMatchedViewResume}
+            onScheduleInterview={handleScheduleInterview}
+          />
         );
       case "profile":
         return <SectionPanel title="Company Profile" subtitle="Live company profile data.">{!profile ? <Empty text="Company profile not available." /> : <div className="grid gap-3 sm:grid-cols-2"><div className="surface-subtle px-3 py-2.5"><p className="text-xs text-slate-500">Company</p><p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{profile.companyName || "-"}</p></div><div className="surface-subtle px-3 py-2.5"><p className="text-xs text-slate-500">Email</p><p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{profile.companyEmail || "-"}</p></div><div className="surface-subtle px-3 py-2.5"><p className="text-xs text-slate-500">GST</p><p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{profile.gst || "-"}</p></div><div className="surface-subtle px-3 py-2.5"><p className="text-xs text-slate-500">Contact</p><p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{profile.contactName || "-"}</p></div><div className="surface-subtle px-3 py-2.5"><p className="text-xs text-slate-500">Phone</p><p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{profile.phone || "-"}</p></div><div className="surface-subtle px-3 py-2.5"><p className="text-xs text-slate-500">Website</p><p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{profile.website || "-"}</p></div><div className="surface-subtle px-3 py-2.5 sm:col-span-2"><p className="text-xs text-slate-500">Address</p><p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{profile.address || "-"}</p></div><div className="surface-subtle px-3 py-2.5 sm:col-span-2"><p className="text-xs text-slate-500">Description</p><p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{profile.description || "-"}</p></div></div>}</SectionPanel>;
@@ -831,144 +855,31 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
           </SectionPanel>
         );
       case "hiring-active":
-        return (
-          <SectionPanel title="Active Internships" subtitle="Live internships list.">
-            {internships.filter((i) => i.isActive).length === 0 ? (
-              <Empty text="No internships posted yet." />
-            ) : (
-              <div className="space-y-3">
-                {internships.filter((i) => i.isActive).map((i) => (
-                  <div key={i._id} className="surface-subtle flex flex-wrap items-start justify-between gap-3 px-4 py-3">
-                    <div>
-                      <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{i.role}</p>
-                      <p className="text-xs text-slate-600 dark:text-slate-300">{i.location || "Location not specified"} • {i.mode || "Mode not specified"}</p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">Posted: {fmtDate(i.createdAt)}</p>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      {canAssign && recruiters.length > 0 && (
-                        <>
-                          <select
-                            className="surface-subtle rounded-lg border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-600"
-                            value={selectedRecruiterByInternship[i._id] || ""}
-                            onChange={(event) =>
-                              setSelectedRecruiterByInternship((prev) => ({ ...prev, [i._id]: event.target.value }))
-                            }
-                          >
-                            <option value="">Assign recruiter</option>
-                            {recruiters.map((recruiter) => (
-                              <option key={recruiter._id} value={recruiter._id}>
-                                {recruiter.email} ({recruiter.companyAccountType})
-                              </option>
-                            ))}
-                          </select>
-                          <Button type="button" size="sm" variant="secondary" disabled={saving || !selectedRecruiterByInternship[i._id]} onClick={() => assignInternship(i._id)}>
-                            Assign
-                          </Button>
-                        </>
-                      )}
-                      <Button type="button" size="sm" variant="secondary" onClick={() => removeInternship(i._id)} disabled={saving || isHrScoped}>
-                      Delete Internship
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </SectionPanel>
-        );
       case "hiring-applicants":
-        return (
-          <SectionPanel title="Applicants" subtitle={isHrScoped ? "Assigned candidates in your recruiter workspace." : "All applicants across internships."}>
-            {apps.length === 0 ? (
-              <EmptyState
-                title={BRANDED_EMPTY_STATES.applicants.title}
-                hint={BRANDED_EMPTY_STATES.applicants.hint}
-                ctaLabel={BRANDED_EMPTY_STATES.applicants.ctaLabel}
-                ctaHref={BRANDED_EMPTY_STATES.applicants.ctaHref}
-                presetKey="applicants"
-              />
-            ) : (
-              <div className="space-y-3">
-                {apps.map((a) => (
-                  <div key={a._id} className="surface-subtle flex flex-wrap items-center justify-between gap-3 px-4 py-3">
-                    <div>
-                      <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{a.intern?.fullName || "Candidate"}</p>
-                      <p className="text-xs text-slate-600 dark:text-slate-300">{a.internship?.role || "Internship"} • {a.status}</p>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      {canAssign && recruiters.length > 0 && (
-                        <>
-                          <select
-                            className="surface-subtle rounded-lg border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-600"
-                            value={selectedRecruiterByApplication[a._id] || ""}
-                            onChange={(event) =>
-                              setSelectedRecruiterByApplication((prev) => ({ ...prev, [a._id]: event.target.value }))
-                            }
-                          >
-                            <option value="">Assign recruiter</option>
-                            {recruiters.map((recruiter) => (
-                              <option key={recruiter._id} value={recruiter._id}>
-                                {recruiter.email} ({recruiter.companyAccountType})
-                              </option>
-                            ))}
-                          </select>
-                          <Button type="button" size="sm" variant="secondary" disabled={!selectedRecruiterByApplication[a._id] || saving} onClick={() => assignApplication(a._id)}>
-                            Assign
-                          </Button>
-                        </>
-                      )}
-                      <ReportDownloadButton
-                        reportKey="candidate-evaluation"
-                        applicationId={a._id}
-                        label="Evaluation PDF"
-                        size="sm"
-                      />
-                      <ReportDownloadButton
-                        reportKey="interview"
-                        applicationId={a._id}
-                        label="Interview PDF"
-                        size="sm"
-                      />
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="secondary"
-                        className="w-full shrink-0 border-slate-300 bg-white hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-900 dark:hover:bg-slate-800 sm:w-auto"
-                        onClick={() => {
-                          setApplicantDetailId(a._id);
-                          setStatusDrafts((prev) => ({ ...prev, [a._id]: normalizeApplicantStage(a.status) }));
-                        }}
-                      >
-                        View Details
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </SectionPanel>
-        );
       case "hiring-shortlisted":
-        return applicantPanel(shortlisted, "Shortlisted", "Candidates in shortlisted stage.", "No shortlisted candidates yet.");
       case "hiring-pipeline":
-        return (
-          <SectionPanel title="Hiring Pipeline" subtitle="Real status breakdown.">
-            {apps.length === 0 ? (
-              <Empty text="No applicants yet." />
-            ) : (
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {PIPELINE_STAGES.map((stage) => (
-                  <div key={stage} className="surface-subtle px-3 py-2.5">
-                    <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">{stage.replace(/_/g, " ")}</p>
-                    <p className="text-xl font-bold text-slate-900 dark:text-slate-100">{statusCounts[stage] || 0}</p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </SectionPanel>
-        );
+        return renderHiringHub();
       case "matching-ai":
-        return <SectionPanel title="AI Matched Candidates" subtitle="Backend-ranked matched candidates.">{matches.length === 0 ? <Empty text="No matched candidates available yet." /> : <div className="space-y-2">{matches.map((m, idx) => <div key={`${m.internshipId}-${m.internProfile?._id || idx}`} className="surface-subtle flex flex-wrap items-center justify-between gap-2 px-4 py-3"><div><p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{m.internProfile?.fullName || "Candidate"}</p><p className="text-xs text-slate-600 dark:text-slate-300">{m.internshipRole}</p></div><p className="text-sm font-semibold text-primary-700 dark:text-primary-300">{m.score}%</p></div>)}</div>}</SectionPanel>;
+        return (
+          <div className={companyDashboardStyles.pageStack}>
+            <CompanyDashboardPageIntro
+              title="AI Matched Candidates"
+              subtitle="Full AI-ranked shortlist with explainable insights and one-click interview scheduling."
+            />
+            <MatchedCandidatesView
+              matches={matches}
+              applications={apps}
+              internships={internships}
+              defaultLimit={0}
+              saving={saving}
+              onOpenProfile={openApplicantProfile}
+              onMessage={handleMatchedMessage}
+              onShortlist={handleMatchedShortlist}
+              onViewResume={handleMatchedViewResume}
+              onScheduleInterview={handleScheduleInterview}
+            />
+          </div>
+        );
       case "matching-search":
         return (
           <SectionPanel title="Candidate Search" subtitle="Search candidates by name or email.">
@@ -1023,7 +934,7 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
       case "reports-notes":
         return <SectionPanel title="Hiring Notes" subtitle="Stage notes captured in pipeline updates.">{apps.flatMap((a) => a.stageHistory || []).filter((h) => h.note?.trim()).length === 0 ? <Empty text="No hiring notes available yet." /> : <div className="space-y-2">{apps.flatMap((a) => (a.stageHistory || []).filter((h) => h.note?.trim()).map((h, idx) => ({ id: `${a._id}-${idx}`, name: a.intern?.fullName || "Candidate", role: a.internship?.role || "Internship", stage: h.stage, note: h.note, changedAt: h.changedAt }))).sort((a, b) => new Date(b.changedAt || 0).getTime() - new Date(a.changedAt || 0).getTime()).map((n) => <div key={n.id} className="surface-subtle px-4 py-3"><p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{n.name}</p><p className="text-xs text-slate-500 dark:text-slate-400">{n.role} • {n.stage} • {fmtDate(n.changedAt)}</p><p className="mt-1 text-sm text-slate-700 dark:text-slate-300">{n.note}</p></div>)}</div>}</SectionPanel>;
       case "reports-export":
-        return <SectionPanel title="Reports / Export" subtitle={isHrScoped ? "Export your assigned hiring records." : "Export company hiring reports."}><div className="space-y-3"><div className="grid gap-3 sm:grid-cols-3"><div className="surface-subtle px-3 py-2.5"><p className="text-xs text-slate-500">Internships</p><p className="text-lg font-semibold text-slate-900 dark:text-slate-100">{internships.length}</p></div><div className="surface-subtle px-3 py-2.5"><p className="text-xs text-slate-500">Applicants</p><p className="text-lg font-semibold text-slate-900 dark:text-slate-100">{apps.length}</p></div><div className="surface-subtle px-3 py-2.5"><p className="text-xs text-slate-500">Shortlisted</p><p className="text-lg font-semibold text-slate-900 dark:text-slate-100">{shortlisted.length}</p></div></div><div className="flex flex-wrap gap-2"><ReportDownloadButton reportKey="hiring" label="Download Hiring Report PDF" /><Button type="button" onClick={exportCsv} disabled={apps.length === 0}>Export Applicants CSV</Button></div>{apps.length === 0 && <Empty text="No applicant data available for export." />}</div></SectionPanel>;
+        return <SectionPanel title="Reports / Export" subtitle={isHrScoped ? "Export your assigned hiring records." : "Export company hiring reports."}><div className="space-y-4"><div className="stat-grid sm:grid-cols-3"><div className="company-dashboard-metric-tile"><p className="ds-label">Internships</p><p className="ds-stat-value mt-1">{internships.length}</p></div><div className="company-dashboard-metric-tile"><p className="ds-label">Applicants</p><p className="ds-stat-value mt-1">{apps.length}</p></div><div className="company-dashboard-metric-tile"><p className="ds-label">Shortlisted</p><p className="ds-stat-value mt-1">{shortlisted.length}</p></div></div><div className="flex flex-wrap gap-2"><ReportDownloadButton reportKey="hiring" label="Download Hiring Report PDF" /><Button type="button" onClick={exportCsv} disabled={apps.length === 0}>Export Applicants CSV</Button></div>{apps.length === 0 && <Empty text="No applicant data available for export." />}</div></SectionPanel>;
       case "team-recruiters":
         return (
           <SectionPanel title="HR Management" subtitle="CEO controls: create HR accounts, permissions, performance insights, and removal.">
@@ -1032,11 +943,11 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
             ) : (
               <div className="space-y-5">
                 {hrInsights && (
-                  <div className="grid gap-3 sm:grid-cols-4">
-                    <div className="surface-subtle px-3 py-2.5"><p className="text-xs text-slate-500">HR Users</p><p className="text-lg font-semibold">{hrInsights.summary.totalHrUsers}</p></div>
-                    <div className="surface-subtle px-3 py-2.5"><p className="text-xs text-slate-500">Assigned Candidates</p><p className="text-lg font-semibold">{hrInsights.summary.totalAssignedCandidates}</p></div>
-                    <div className="surface-subtle px-3 py-2.5"><p className="text-xs text-slate-500">Total Hires</p><p className="text-lg font-semibold">{hrInsights.summary.totalHires}</p></div>
-                    <div className="surface-subtle px-3 py-2.5"><p className="text-xs text-slate-500">Avg Conversion</p><p className="text-lg font-semibold">{hrInsights.summary.averageConversionRate}%</p></div>
+                  <div className="stat-grid sm:grid-cols-2 lg:grid-cols-4">
+                    <div className="company-dashboard-metric-tile"><p className="ds-label">HR Users</p><p className="ds-stat-value mt-1">{hrInsights.summary.totalHrUsers}</p></div>
+                    <div className="company-dashboard-metric-tile"><p className="ds-label">Assigned Candidates</p><p className="ds-stat-value mt-1">{hrInsights.summary.totalAssignedCandidates}</p></div>
+                    <div className="company-dashboard-metric-tile"><p className="ds-label">Total Hires</p><p className="ds-stat-value mt-1">{hrInsights.summary.totalHires}</p></div>
+                    <div className="company-dashboard-metric-tile"><p className="ds-label">Avg Conversion</p><p className="ds-stat-value mt-1">{hrInsights.summary.averageConversionRate}%</p></div>
                   </div>
                 )}
 
@@ -1140,17 +1051,17 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
               <Empty text="Analytics not available." />
             ) : (
               <div className="space-y-4">
-                <div className="grid gap-3 sm:grid-cols-3">
-                  <div className="surface-subtle px-3 py-2.5"><p className="text-xs text-slate-500">Total Hires</p><p className="text-lg font-semibold">{analytics.hiringAnalytics.totalHires}</p></div>
-                  <div className="surface-subtle px-3 py-2.5"><p className="text-xs text-slate-500">Total Applications</p><p className="text-lg font-semibold">{analytics.hiringAnalytics.totalApplications}</p></div>
-                  <div className="surface-subtle px-3 py-2.5"><p className="text-xs text-slate-500">Internship Performance</p><p className="text-lg font-semibold">{analytics.hiringAnalytics.internshipPerformance}</p></div>
+                <div className="stat-grid sm:grid-cols-3">
+                  <div className="company-dashboard-metric-tile"><p className="ds-label">Total Hires</p><p className="ds-stat-value mt-1">{analytics.hiringAnalytics.totalHires}</p></div>
+                  <div className="company-dashboard-metric-tile"><p className="ds-label">Total Applications</p><p className="ds-stat-value mt-1">{analytics.hiringAnalytics.totalApplications}</p></div>
+                  <div className="company-dashboard-metric-tile"><p className="ds-label">Internship Performance</p><p className="ds-stat-value mt-1">{analytics.hiringAnalytics.internshipPerformance}</p></div>
                 </div>
-                <div className="space-y-2">
+                <div className="company-dashboard-list-stack">
                   {analytics.recruiterPerformance.map((item) => {
                     const hrMatch = hrInsights?.hrUsers.find((hr) => hr.id === item.recruiterId);
                     const label = hrMatch ? `${hrMatch.name} (${hrMatch.email})` : `Recruiter ${item.recruiterId}`;
                     return (
-                      <div key={item.recruiterId} className="surface-subtle px-4 py-3 text-sm">
+                      <div key={item.recruiterId} className="company-dashboard-item-card ds-body">
                         {label} • Handled {item.candidatesHandled} • Hired {item.hiredCandidates} • Conversion {item.conversionRate}%
                       </div>
                     );
@@ -1168,9 +1079,9 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
             ) : !analytics ? (
               <Empty text="Salary analytics not available." />
             ) : (
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="surface-subtle px-3 py-2.5"><p className="text-xs text-slate-500">Average Package</p><p className="text-lg font-semibold">{analytics.salaryAnalytics.averagePackage}</p></div>
-                <div className="surface-subtle px-3 py-2.5"><p className="text-xs text-slate-500">Total Salary Expenditure</p><p className="text-lg font-semibold">{analytics.salaryAnalytics.totalSalaryExpenditure}</p></div>
+              <div className="stat-grid sm:grid-cols-2">
+                <div className="company-dashboard-metric-tile"><p className="ds-label">Average Package</p><p className="ds-stat-value mt-1">{analytics.salaryAnalytics.averagePackage}</p></div>
+                <div className="company-dashboard-metric-tile"><p className="ds-label">Total Salary Expenditure</p><p className="ds-stat-value mt-1">{analytics.salaryAnalytics.totalSalaryExpenditure}</p></div>
               </div>
             )}
           </SectionPanel>
@@ -1191,7 +1102,7 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
         {loading ? (
           <div className="surface-muted px-4 py-3 text-sm text-slate-700 dark:text-slate-300">Loading company dashboard...</div>
         ) : (
-          <div className="space-y-5">
+          <div className="space-y-5 dashboard-stack">
             {error && <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300">{error}</div>}
             {success && <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300">{success}</div>}
             {viewNode}

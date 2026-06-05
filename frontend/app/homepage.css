@@ -8,13 +8,13 @@ body:has(.internai-home) {
 .internai-home {
   --hp-deep: #090a0f;
   --hp-mid: #1b2735;
-  --hp-surface: rgba(22, 31, 48, 0.65);
-  --hp-surface-raised: rgba(27, 39, 53, 0.78);
-  --hp-border: rgba(255, 255, 255, 0.07);
-  --hp-border-strong: rgba(255, 255, 255, 0.11);
-  --hp-text: #e5e7eb;
-  --hp-muted: #9caab8;
-  --hp-accent: rgba(200, 220, 255, 0.92);
+  --hp-surface: rgba(18, 26, 40, 0.9);
+  --hp-surface-raised: rgba(30, 42, 58, 0.96);
+  --hp-border: rgba(255, 255, 255, 0.12);
+  --hp-border-strong: rgba(255, 255, 255, 0.2);
+  --hp-text: #f3f4f6;
+  --hp-muted: #b4c2d0;
+  --hp-accent: #d8e8ff;
   --hp-gap: 4rem;
   color: var(--hp-text);
   font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;

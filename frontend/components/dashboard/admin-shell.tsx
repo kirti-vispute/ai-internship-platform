@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useMemo, useState } from "react";
 import {
   Activity,
+  Award,
   BarChart3,
   Bell,
   Building2,
@@ -69,7 +70,15 @@ function buildSections(permissions: string[]): SidebarSection[] {
               }
             ]
           : []),
-        { label: "Internships", href: "/dashboard/admin/internships", icon: <AppIcon icon={ClipboardList} /> }
+        { label: "Internships", href: "/dashboard/admin/internships", icon: <AppIcon icon={ClipboardList} /> },
+        ...(can(ADMIN_PERMISSIONS.CERTIFICATION_REVIEW)
+          ? [{
+              label: "Certification Review",
+              href: "/dashboard/admin/certification-review",
+              icon: <AppIcon icon={Award} />,
+              permission: ADMIN_PERMISSIONS.CERTIFICATION_REVIEW
+            }]
+          : [])
       ]
     },
     {
@@ -88,6 +97,9 @@ function buildSections(permissions: string[]): SidebarSection[] {
       items: [
         { label: "Platform Statistics", href: "/dashboard/admin/analytics", icon: <AppIcon icon={BarChart3} /> },
         { label: "Notifications", href: "/dashboard/admin/notifications", icon: <AppIcon icon={Bell} /> },
+        ...(can(ADMIN_PERMISSIONS.MANAGE)
+          ? [{ label: "AI Hiring Scoring", href: "/dashboard/admin/hiring-scoring", icon: <AppIcon icon={BarChart3} /> }]
+          : []),
         { label: "Settings", href: "/dashboard/admin/settings", icon: <AppIcon icon={Settings} /> }
       ]
     }

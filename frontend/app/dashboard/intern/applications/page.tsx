@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { ExternalLink } from "@/components/ui/external-link";
+import { extractInterviewRoomIdFromLink } from "@/lib/interview-portal";
 import { RoleDashboardGuard } from "@/components/ui/role-dashboard-guard";
 import { clearAuthSession } from "@/lib/session";
 import { InternShell } from "@/components/dashboard/intern-shell";
@@ -16,7 +18,6 @@ import {
   withdrawApplication
 } from "@/lib/intern-portal";
 import { SkillChips } from "@/components/dashboard/skill-chips";
-import { ExternalLink } from "@/components/ui/external-link";
 import { ApplicationPipelineStepper } from "@/components/dashboard/application-pipeline-stepper";
 import { DashboardPageHeader } from "@/components/dashboard/dashboard-page-header";
 import { useToast } from "@/components/ui/toast";
@@ -207,11 +208,22 @@ export default function InternApplicationsPage() {
                             {round.interviewDate ? new Date(round.interviewDate).toLocaleDateString() : "-"} {round.interviewTime || ""}
                             {round.mode ? ` · ${round.mode}` : ""}
                           </p>
-                          {round.meetingLink && (
-                            <ExternalLink href={round.meetingLink} className="mt-1 text-xs">
-                              Join meeting
-                            </ExternalLink>
-                          )}
+                          {round.meetingLink ? (
+                            extractInterviewRoomIdFromLink(round.meetingLink) ? (
+                              <Button
+                                type="button"
+                                size="sm"
+                                className="mt-2"
+                                onClick={() => router.push(`/interview/${extractInterviewRoomIdFromLink(round.meetingLink)}`)}
+                              >
+                                Join Interview Room
+                              </Button>
+                            ) : (
+                              <ExternalLink href={round.meetingLink} className="mt-1 text-xs">
+                                Join meeting
+                              </ExternalLink>
+                            )
+                          ) : null}
                         </li>
                       ))}
                     </ul>

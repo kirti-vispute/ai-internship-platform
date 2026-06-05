@@ -79,8 +79,8 @@ const COMPANY_LOGIN_PRESETS: Record<
 
 function AuthPortalLinks({ role }: { role: AuthRole }) {
   return (
-    <div className="mt-6 space-y-2 border-t border-slate-200 pt-4 text-xs dark:border-slate-700">
-      <p className="font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">Other portals</p>
+    <div className="mt-6 space-y-2 border-t border-[var(--ds-border)] pt-4 text-xs">
+      <p className="ds-label">Other portals</p>
       <div className="flex flex-wrap gap-x-4 gap-y-1">
         {role !== "intern" && (
           <Link href="/auth/intern" className="font-semibold text-primary-600 hover:text-primary-700 dark:text-primary-300" data-cursor="link">
@@ -289,7 +289,7 @@ export function RoleAuthForm({ role }: { role: AuthRole }) {
     <Card className="animate-reveal">
       <AuthBrandHeader />
       <div className="mb-6">
-        <h1 className="text-3xl font-black tracking-tight text-ink dark:text-slate-100">{roleTitle}</h1>
+        <h1 className="ds-h1">{roleTitle}</h1>
         <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{roleCopy}</p>
       </div>
       <div className="mb-4 grid grid-cols-2 rounded-xl bg-slate-100 p-1 dark:bg-slate-800">
@@ -319,7 +319,7 @@ export function RoleAuthForm({ role }: { role: AuthRole }) {
         </button>
       </div>
 
-      <p className="mb-4 text-xs text-slate-500 dark:text-slate-400">
+      <p className="ds-caption mb-4">
         {role === "intern" ? "Looking for company access?" : "Looking for intern access?"}{" "}
         <Link
           href={role === "intern" ? "/auth/company" : "/auth/intern"}
@@ -352,7 +352,7 @@ export function RoleAuthForm({ role }: { role: AuthRole }) {
                       className={`rounded-xl border px-3 py-3 text-left transition ${
                         active
                           ? "border-primary-500 bg-primary-50 shadow-soft dark:border-primary-400 dark:bg-primary-950/40"
-                          : "border-slate-200 bg-white hover:border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:hover:border-slate-600"
+                          : "border-slate-200 bg-white hover:border-slate-300  dark:bg-slate-900 dark:hover:border-slate-600"
                       }`}
                     >
                       <p className="text-sm font-bold text-slate-900 dark:text-slate-100">{preset.title}</p>

@@ -37,7 +37,7 @@ export function DashboardPreviewSection() {
             <span className="h-2.5 w-2.5 rounded-full bg-rose-400/80" />
             <span className="h-2.5 w-2.5 rounded-full bg-amber-400/80" />
             <span className="h-2.5 w-2.5 rounded-full bg-internai-green/80" />
-            <span className="ml-2 text-xs font-medium text-internai-muted">InternAI · Dashboard</span>
+            <span className="ml-2 text-xs font-medium text-internai-muted">CareerSetu · Dashboard</span>
           </div>
 
           <div className="grid gap-4 p-4 sm:p-6 lg:grid-cols-[1.2fr_1fr]">

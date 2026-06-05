@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { BRAND_NAME } from "@/lib/brand";
+import { BRAND_LOGO_PATH, BRAND_NAME } from "@/lib/brand";
 
 type PortalBrandHeaderProps = {
   portalLabel: string;
@@ -7,12 +7,12 @@ type PortalBrandHeaderProps = {
 
 export function PortalBrandHeader({ portalLabel }: PortalBrandHeaderProps) {
   return (
-    <div className="mb-6 rounded-2xl bg-gradient-to-r from-primary-600 to-blue-600 p-4 text-white shadow-glow dark:from-primary-700 dark:to-cyan-600">
+    <div className="ds-card mb-6 p-4">
       <div className="flex items-center gap-3">
-        <Image src="/brand/logo-icon.svg" alt="" width={36} height={36} className="shrink-0 rounded-lg" aria-hidden />
+        <Image src={BRAND_LOGO_PATH} alt="" width={36} height={36} className="shrink-0 rounded-lg object-contain" aria-hidden />
         <div className="min-w-0">
-          <p className="text-xs uppercase tracking-[0.18em] text-primary-100">{portalLabel}</p>
-          <h2 className="mt-1 truncate text-xl font-black tracking-tight">{BRAND_NAME}</h2>
+          <p className="ds-label">{portalLabel}</p>
+          <h2 className="ds-h2 mt-1 truncate">{BRAND_NAME}</h2>
         </div>
       </div>
     </div>

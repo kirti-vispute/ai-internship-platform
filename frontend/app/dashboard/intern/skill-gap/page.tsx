@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { RoleDashboardGuard } from "@/components/ui/role-dashboard-guard";
 import { InternShell } from "@/components/dashboard/intern-shell";
-import { ResumeIntelligenceDashboard } from "@/components/dashboard/resume-intelligence-dashboard";
+import { SkillGapAnalysisPanel } from "@/components/dashboard/skill-gap-analysis-panel";
 import { clearAuthSession } from "@/lib/session";
 import { InternProfile, fetchInternProfileWithScore } from "@/lib/intern-portal";
 import { FEATURE_FLAGS } from "@/constants/featureFlags";
@@ -81,7 +81,7 @@ export default function InternSkillGapPage() {
                   <ReportDownloadButton reportKey="skill-gap" label="Download Skill Gap PDF" disabled={!profile?.resumeUploaded} />
                 </div>
 
-                <ResumeIntelligenceDashboard
+                <SkillGapAnalysisPanel
                   profile={profile}
                   analysis={profile?.resume?.analysis}
                   loadingRole={loadingRole}

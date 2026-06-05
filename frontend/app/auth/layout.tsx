@@ -2,6 +2,7 @@
 
 import { Suspense } from "react";
 import { AuthSessionRedirect } from "@/components/auth/auth-session-redirect";
+import { PlatformLayout } from "@/components/layout/platform-layout";
 import { usePathname } from "next/navigation";
 import type { AuthRole } from "@/lib/session";
 
@@ -18,16 +19,16 @@ function AuthLayoutInner({ children }: { children: React.ReactNode }) {
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
-    <Suspense
-      fallback={
-        <section className="container-shell py-12">
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-600 shadow-soft dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
-            Loading...
-          </div>
-        </section>
-      }
-    >
-      <AuthLayoutInner>{children}</AuthLayoutInner>
-    </Suspense>
+    <PlatformLayout>
+      <Suspense
+        fallback={
+          <section className="container-shell ds-page-section">
+            <div className="ds-card ds-animate-in p-6 text-sm text-[var(--ds-muted)]">Loading...</div>
+          </section>
+        }
+      >
+        <AuthLayoutInner>{children}</AuthLayoutInner>
+      </Suspense>
+    </PlatformLayout>
   );
 }

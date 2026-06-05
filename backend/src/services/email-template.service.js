@@ -1,6 +1,6 @@
-const BRAND_NAME = "InternAI";
-const BRAND_TAGLINE = "AI-Powered Internship & Placement Management";
+const { BRAND_NAME, BRAND_TAGLINE, BRAND_SUPPORT_EMAIL } = require("../constants/brand");
 const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:3000";
+const LOGO_URL = `${CLIENT_URL.replace(/\/$/, "")}/brand/logo.png`;
 
 function escapeHtml(value = "") {
   return String(value)
@@ -29,7 +29,7 @@ function buildBrandedEmailHtml({ subject, bodyHtml, preheader = "" }) {
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
                 <tr>
                   <td width="44" valign="middle">
-                    <div style="width:36px;height:36px;border-radius:9px;background:rgba(255,255,255,0.2);text-align:center;line-height:36px;font-weight:800;font-size:14px;">IA</div>
+                    <img src="${LOGO_URL}" alt="${BRAND_NAME}" width="36" height="36" style="display:block;width:36px;height:36px;border-radius:9px;object-fit:contain;background:#ffffff;" />
                   </td>
                   <td valign="middle" style="padding-left:10px;">
                     <p style="margin:0;font-size:20px;font-weight:800;letter-spacing:0.2px;">${BRAND_NAME}</p>
@@ -48,7 +48,7 @@ function buildBrandedEmailHtml({ subject, bodyHtml, preheader = "" }) {
             <td style="padding:18px 28px;border-top:1px solid #e2e8f0;background:#f8fafc;font-size:11px;color:#64748b;line-height:1.5;">
               <p style="margin:0 0 6px;font-weight:700;color:#0f172a;">${BRAND_NAME}</p>
               <p style="margin:0;">This is an automated message from the ${BRAND_NAME} platform. Please do not reply directly to this email.</p>
-              <p style="margin:10px 0 0;"><a href="${CLIENT_URL}" style="color:#1f6fff;text-decoration:none;">Visit InternAI Portal</a> · <a href="mailto:support@internai.example" style="color:#1f6fff;text-decoration:none;">Support</a></p>
+              <p style="margin:10px 0 0;"><a href="${CLIENT_URL}" style="color:#1f6fff;text-decoration:none;">Visit ${BRAND_NAME} Portal</a> · <a href="mailto:${BRAND_SUPPORT_EMAIL}" style="color:#1f6fff;text-decoration:none;">Support</a></p>
               <p style="margin:10px 0 0;">© ${new Date().getFullYear()} ${BRAND_NAME}. All rights reserved.</p>
             </td>
           </tr>

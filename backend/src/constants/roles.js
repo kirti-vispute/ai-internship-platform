@@ -25,6 +25,7 @@ const PERMISSION_KEYS = Object.freeze({
   ADMIN_COMPANY_SUSPEND: "admin:company:suspend",
   ADMIN_REPORT_REVIEW: "admin:report:review",
   ADMIN_ACTIVITY_VIEW: "admin:activity:view",
+  ADMIN_CERTIFICATION_REVIEW: "admin:certification:review",
   COMPANY_ASSIGNED_SCOPE: "company:scope:assigned",
   COMPANY_CANDIDATE_ASSIGN: "company:candidate:assign",
   COMPANY_INTERNSHIP_ASSIGN: "company:internship:assign",
@@ -59,6 +60,7 @@ const ROLE_PERMISSIONS = Object.freeze({
   [PLATFORM_ROLES.VERIFICATION_ADMIN]: [
     PERMISSION_KEYS.ADMIN_COMPANY_VERIFY,
     PERMISSION_KEYS.ADMIN_COMPANY_SUSPEND,
+    PERMISSION_KEYS.ADMIN_CERTIFICATION_REVIEW,
     PERMISSION_KEYS.ADMIN_ACTIVITY_VIEW
   ],
   [PLATFORM_ROLES.MODERATION_ADMIN]: [

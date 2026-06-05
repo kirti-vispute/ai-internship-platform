@@ -5,8 +5,15 @@ function notFoundMiddleware(req, res, next) {
 }
 
 function errorMiddleware(err, req, res, next) {
-  const statusCode = err.statusCode || 500;
-  const message = err.message || "Internal server error";
+  let statusCode = err.statusCode || 500;
+  let message = err.message || "Internal server error";
+
+  if (err.name === "MulterError") {
+    statusCode = 400;
+    message = err.code === "LIMIT_FILE_SIZE" ? "Certificate file exceeds maximum allowed size." : err.message;
+  } else if (String(message).toLowerCase().includes("unsupported file format")) {
+    statusCode = 400;
+  }
 
   if (process.env.NODE_ENV !== "test") {
     // eslint-disable-next-line no-console

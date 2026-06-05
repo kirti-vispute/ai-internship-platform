@@ -23,6 +23,9 @@ const {
 } = require("../services/company-access.service");
 const companyQuery = require("../services/company-query.service");
 const { buildCompanyAnalytics } = require("../services/company-analytics.service");
+const { isEnabled } = require("../config/feature-flags");
+const interviewRoomService = require("../services/interview-room.service");
+const { notifyInterviewScheduled } = require("../services/interview-workflow.service");
 
 function normalizeIncomingSkills(value) {
   const list = Array.isArray(value) ? value : [];
@@ -347,21 +350,41 @@ exports.scheduleInterviewRound = asyncHandler(async (req, res) => {
   application.status = APPLICATION_STATUS.INTERVIEW_SCHEDULED;
   application.stageHistory.push({ stage: "interview_scheduled", note: "Interview round scheduled" });
   await application.save();
+
+  const round = application.interviewRounds[application.interviewRounds.length - 1];
+  let interviewRoomLink = round.meetingLink;
+
+  if (
+    isEnabled("ENABLE_INTERVIEW_ROOMS") &&
+    round.mode === "online" &&
+    !interviewRoomLink
+  ) {
+    const room = await interviewRoomService.createRoomForRound({
+      application,
+      round,
+      roundType
+    });
+    interviewRoomLink = interviewRoomService.resolveClientInterviewUrl(room.roomId);
+    round.meetingLink = interviewRoomLink;
+    await application.save();
+  }
+
   const internProfile = await InternProfile.findById(application.internId || application.intern).select("email");
   if (internProfile?.email) {
     sendNotificationEmail({
       to: internProfile.email,
       subject: "Interview Scheduled",
-      text: "An interview round has been scheduled for your application.",
+      text: interviewRoomLink
+        ? `An interview round has been scheduled. Join here: ${interviewRoomLink}`
+        : "An interview round has been scheduled for your application.",
       type: "interview_scheduled"
     });
   }
-  await notifyInternByProfileId(application.internId || application.intern, {
-    type: NOTIFICATION_TYPES.INTERVIEW_SCHEDULED,
-    title: "Interview scheduled",
-    message: `${roundType} interview on ${new Date(interviewDate).toLocaleDateString()} at ${interviewTime}.`,
-    link: "/dashboard/intern/track-progress",
-    metadata: { applicationId: application._id }
+  await notifyInterviewScheduled({
+    application,
+    round,
+    companyUserId: req.user._id,
+    interviewRoomLink
   });
 
   res.json({ message: "Interview round scheduled", application, meta: buildListMeta(req.user) });

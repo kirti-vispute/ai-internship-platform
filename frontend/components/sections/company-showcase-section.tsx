@@ -8,7 +8,7 @@ export function CompanyShowcaseSection() {
       <ScrollReveal variant="soft-scale" distance={12}>
         <SectionHeading
           eyebrow="Hiring partners"
-          title="Companies on InternAI"
+          title="Companies on CareerSetu"
           description="Verified employers use our platform to discover prepared interns and run transparent hiring pipelines."
           align="center"
           className="mx-auto"

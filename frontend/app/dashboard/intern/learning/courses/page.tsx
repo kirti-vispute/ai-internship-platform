@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { RoleDashboardGuard } from "@/components/ui/role-dashboard-guard";
 import { InternShell } from "@/components/dashboard/intern-shell";
 import { DashboardPageHeader } from "@/components/dashboard/dashboard-page-header";
-import { LearningPathPanel } from "@/components/dashboard/learning-path-panel";
+import { LearningCoursesModule } from "@/components/dashboard/learning-courses-module";
 import { clearAuthSession } from "@/lib/session";
 import { InternProfile, fetchInternProfileWithScore } from "@/lib/intern-portal";
 
@@ -17,6 +17,7 @@ export default function LearningCoursesPage() {
   useEffect(() => {
     fetchInternProfileWithScore(true)
       .then((data) => setProfile(data))
+      .catch(() => null)
       .finally(() => setLoading(false));
   }, []);
 
@@ -28,18 +29,19 @@ export default function LearningCoursesPage() {
   return (
     <RoleDashboardGuard expectedRole="intern">
       <InternShell welcomeName={profile?.fullName} onLogout={handleLogout}>
-        <div className="dashboard-stack max-w-3xl">
+        <div className="dashboard-stack">
           <DashboardPageHeader
-            eyebrow="Student layer"
-            title="Learning path"
-            subtitle="Role-aligned picks from your skill analysis — not a full course catalog."
+            eyebrow="Learning"
+            title="Courses"
+            subtitle="Free, verified courses from Coursera, NPTEL, Kaggle, freeCodeCamp, Microsoft Learn, Google Learn, and more. Every link opens the real external platform."
           />
+
           {loading ? (
-            <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm text-slate-600 dark:border-slate-800 dark:bg-slate-900/40 dark:text-slate-400">
-              Loading recommendations…
+            <div className="rounded-2xl border border-slate-200/70 bg-white px-6 py-12 text-center text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-400">
+              Loading courses…
             </div>
           ) : (
-            <LearningPathPanel profile={profile} />
+            <LearningCoursesModule profile={profile} />
           )}
         </div>
       </InternShell>

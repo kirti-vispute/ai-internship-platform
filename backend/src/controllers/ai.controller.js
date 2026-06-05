@@ -2,13 +2,27 @@ const InternProfile = require("../models/InternProfile");
 const Internship = require("../models/Internship");
 const asyncHandler = require("../utils/asyncHandler");
 const AppError = require("../utils/AppError");
-const { parseResumeText, calculateResumeScore, getSkillGap, recommendInternships, rankApplicantsForInternship } = require("../services/ai.service");
 const { normalizeSkillList } = require("../utils/skill-normalizer");
 const { buildRoadmap } = require("../services/roadmap.service");
+const aiGateway = require("../services/ai-gateway.service");
+const { recordAnalyticsEvent } = require("../infrastructure/db/postgres.client");
 
 function getParsedResumeSkills(profile) {
   const parsedSkills = profile?.resume?.parsed?.skills;
   return normalizeSkillList(Array.isArray(parsedSkills) ? parsedSkills : []);
+}
+
+async function trackAiEvent(req, eventName, payload = {}) {
+  try {
+    await recordAnalyticsEvent({
+      eventName,
+      userId: req.user?._id ? String(req.user._id) : null,
+      role: req.user?.role || null,
+      payload
+    });
+  } catch {
+    // Analytics must never block primary AI flows.
+  }
 }
 
 exports.parseResume = asyncHandler(async (req, res) => {
@@ -17,8 +31,10 @@ exports.parseResume = asyncHandler(async (req, res) => {
     throw new AppError("text is required", 400);
   }
 
-  const parsed = parseResumeText(text);
-  res.json({ parsed });
+  const userId = req.user?._id ? String(req.user._id) : req.ip;
+  const result = await aiGateway.parseResumeEnhanced({ text, userId });
+  await trackAiEvent(req, "ai.parse_resume", { cacheHit: result.meta?.cacheHit });
+  res.json({ parsed: result.parsed, meta: result.meta });
 });
 
 exports.computeResumeScore = asyncHandler(async (req, res) => {
@@ -35,7 +51,9 @@ exports.computeResumeScore = asyncHandler(async (req, res) => {
     throw new AppError("Intern profile not found", 404);
   }
 
-  const score = calculateResumeScore(profile);
+  const userId = req.user?._id ? String(req.user._id) : req.ip;
+  const score = await aiGateway.computeResumeScoreCached(profile, userId);
+  await trackAiEvent(req, "ai.resume_score", { cacheHit: score.cacheHit });
   res.json({ score });
 });
 
@@ -51,7 +69,13 @@ exports.computeSkillGap = asyncHandler(async (req, res) => {
     throw new AppError("Internship not found", 404);
   }
 
-  const analysis = getSkillGap(internSkills || [], internship.skillsRequired || []);
+  const userId = req.user?._id ? String(req.user._id) : req.ip;
+  const analysis = await aiGateway.computeSkillGapCached(
+    internSkills || [],
+    internship.skillsRequired || [],
+    userId
+  );
+  await trackAiEvent(req, "ai.skill_gap", { cacheHit: analysis.cacheHit });
   res.json({ analysis });
 });
 
@@ -75,8 +99,9 @@ exports.recommend = asyncHandler(async (req, res) => {
   }
 
   const internships = await Internship.find({ isActive: true }).populate("company");
-  const recommendations = recommendInternships(profile, internships, { internSkills: parsedSkills });
-
+  const userId = req.user?._id ? String(req.user._id) : req.ip;
+  const recommendations = await aiGateway.recommendInternshipsCached(profile, internships, { internSkills: parsedSkills }, userId);
+  await trackAiEvent(req, "ai.recommendations", { count: recommendations?.length || 0 });
   res.json({ recommendations });
 });
 
@@ -92,8 +117,9 @@ exports.matchCandidates = asyncHandler(async (req, res) => {
   }
 
   const profiles = await InternProfile.find({});
-  const ranked = rankApplicantsForInternship(internship, profiles);
-
+  const userId = req.user?._id ? String(req.user._id) : req.ip;
+  const ranked = await aiGateway.rankApplicantsCached(internship, profiles, userId);
+  await trackAiEvent(req, "ai.match_candidates", { count: ranked?.length || 0 });
   res.json({ matches: ranked });
 });
 
