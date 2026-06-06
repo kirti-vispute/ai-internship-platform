@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 48" fill="none" role="img" aria-label="InternAI">
+  <defs>
+    <linearGradient id="ia-dark-mark" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1f6fff"/>
+      <stop offset="1" stop-color="#22d3ee"/>
+    </linearGradient>
+  </defs>
+  <rect x="0" y="4" width="40" height="40" rx="10" fill="url(#ia-dark-mark)"/>
+  <path d="M12 30V18h4v6l6-5 6 5v-6h4v12h-6v-6l-6 5-6-5v6z" fill="#fff"/>
+  <text x="52" y="32" fill="#0f172a" font-family="Manrope,Segoe UI,sans-serif" font-size="22" font-weight="800">InternAI</text>
+</svg>

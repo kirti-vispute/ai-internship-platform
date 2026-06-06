@@ -1,0 +1,321 @@
+"use client";
+
+import { useEffect, useLayoutEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { SectionPanel } from "@/components/dashboard/section-panel";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { DashboardPageHeader } from "@/components/dashboard/dashboard-page-header";
+import { useToast } from "@/components/ui/toast";
+import { apiRequest } from "@/lib/api-client";
+import { InternProfile, fetchInternProfile, invalidateInternCache, peekInternProfile } from "@/lib/intern-portal";
+import { SkillSelector } from "@/components/dashboard/skill-selector";
+import { SectionTabButton } from "@/components/icons/section-tab-button";
+import { EDIT_TAB_ICONS } from "@/components/icons/section-tab-icons";
+import { validateLinkedInUrl } from "@/lib/validation";
+
+type EditSectionKey = "personal" | "education" | "learning" | "skills";
+
+const EDIT_SECTIONS: Array<{ key: EditSectionKey; label: string }> = [
+  { key: "personal", label: "Personal Information" },
+  { key: "education", label: "Education" },
+  { key: "learning", label: "Courses & Certifications" },
+  { key: "skills", label: "Skills" }
+];
+
+export default function EditInternProfilePage() {
+  const router = useRouter();
+  const { pushToast } = useToast();
+  const [profile, setProfile] = useState<InternProfile | null>(null);
+  const [activeSection, setActiveSection] = useState<EditSectionKey>("personal");
+
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [mobile, setMobile] = useState("");
+  const [address, setAddress] = useState("");
+  const [linkedinUrl, setLinkedinUrl] = useState("");
+  const [githubUrl, setGithubUrl] = useState("");
+  const [portfolioUrl, setPortfolioUrl] = useState("");
+  const [summary, setSummary] = useState("");
+
+  const [college, setCollege] = useState("");
+  const [degree, setDegree] = useState("");
+  const [branch, setBranch] = useState("");
+  const [cgpa, setCgpa] = useState("");
+  const [passingYear, setPassingYear] = useState("");
+
+  const [courseName, setCourseName] = useState("");
+  const [coursePlatform, setCoursePlatform] = useState("");
+  const [courseCompletionDate, setCourseCompletionDate] = useState("");
+  const [courseCertificateUrl, setCourseCertificateUrl] = useState("");
+  const [courseVerificationLink, setCourseVerificationLink] = useState("");
+
+  const [certName, setCertName] = useState("");
+  const [certIssuer, setCertIssuer] = useState("");
+  const [certYear, setCertYear] = useState("");
+  const [certCertificateUrl, setCertCertificateUrl] = useState("");
+  const [certVerificationLink, setCertVerificationLink] = useState("");
+
+  const [skills, setSkills] = useState<string[]>([]);
+  const [softSkills, setSoftSkills] = useState<string[]>([]);
+
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useLayoutEffect(() => {
+    const cached = peekInternProfile();
+    if (cached) {
+      setProfile(cached);
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        setError(null);
+        const data = await fetchInternProfile(true);
+        setProfile(data);
+
+        const parsedSkills = Array.isArray(data.resume?.parsed?.skills) ? data.resume?.parsed?.skills : [];
+        const mergedTechnical = Array.from(new Set([...(data.skills || []), ...parsedSkills].map((item) => String(item).trim()).filter(Boolean)));
+
+        const edu = data.educationDetails?.[0];
+        const course = data.courseEntries?.[0];
+        const cert = data.certificationEntries?.[0];
+
+        setFullName(data.fullName || "");
+        setEmail(data.email || "");
+        setMobile(data.mobile || "");
+        setAddress(data.address || data.profileSections?.personalInformation?.location || "");
+        setLinkedinUrl(data.linkedinUrl || "");
+        setGithubUrl(data.githubUrl || "");
+        setPortfolioUrl(data.portfolioUrl || "");
+        setSummary(data.summary || data.bio || data.profileSections?.professionalSummary || "");
+
+        setCollege(edu?.college || "");
+        setDegree(edu?.degree || "");
+        setBranch(edu?.branch || "");
+        setCgpa(edu?.cgpa || "");
+        setPassingYear(edu?.passingYear || "");
+
+        setCourseName(course?.courseName || "");
+        setCoursePlatform(course?.platform || "");
+        setCourseCompletionDate(course?.completionDate || "");
+        setCourseCertificateUrl(course?.certificateUrl || "");
+        setCourseVerificationLink(course?.verificationLink || "");
+
+        setCertName(cert?.name || "");
+        setCertIssuer(cert?.issuer || "");
+        setCertYear(cert?.year || "");
+        setCertCertificateUrl(cert?.certificateUrl || "");
+        setCertVerificationLink(cert?.verificationLink || "");
+
+        setSkills(mergedTechnical);
+        setSoftSkills(data.softSkills || []);
+      } catch (err) {
+        setError((err as Error).message || "Failed to load profile.");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    void load();
+  }, []);
+
+  const completionHint = useMemo(() => {
+    const checks = [
+      Boolean(fullName),
+      Boolean(mobile),
+      skills.length > 0,
+      Boolean(summary),
+      Boolean(college),
+      Boolean(courseName || certName)
+    ];
+    return Math.round((checks.filter(Boolean).length / checks.length) * 100);
+  }, [fullName, mobile, skills.length, summary, college, courseName, certName]);
+
+  async function save() {
+    try {
+      setSaving(true);
+      setError(null);
+
+      if (linkedinUrl && !validateLinkedInUrl(linkedinUrl)) {
+        setError("Please enter a valid LinkedIn URL.");
+        return;
+      }
+
+      const response = await apiRequest<{ profile: InternProfile }>("/api/intern/profile", {
+        method: "PUT",
+        body: JSON.stringify({
+          fullName,
+          mobile,
+          skills,
+          softSkills,
+          summary,
+          bio: summary,
+          address,
+          linkedinUrl,
+          githubUrl,
+          portfolioUrl,
+          educationDetails: [{ college, degree, branch, cgpa, passingYear }],
+          courseEntries: courseName
+            ? [
+                {
+                  courseName,
+                  platform: coursePlatform,
+                  completionDate: courseCompletionDate,
+                  certificateUrl: courseCertificateUrl,
+                  verificationLink: courseVerificationLink
+                }
+              ]
+            : [],
+          certificationEntries: certName
+            ? [
+                {
+                  name: certName,
+                  issuer: certIssuer,
+                  year: certYear,
+                  certificateUrl: certCertificateUrl,
+                  verificationLink: certVerificationLink
+                }
+              ]
+            : [],
+          profileSections: {
+            personalInformation: {
+              location: address,
+              headline: degree ? `${degree}${branch ? ` · ${branch}` : ""}` : ""
+            },
+            professionalSummary: summary
+          }
+        })
+      });
+
+      invalidateInternCache();
+      setProfile(response.profile);
+      setSkills(response.profile.skills || skills);
+      setSoftSkills(response.profile.softSkills || softSkills);
+      pushToast({ variant: "success", title: "Profile updated", message: "Your profile changes were saved." });
+    } catch (err) {
+      const message = (err as Error).message || "Failed to update profile.";
+      setError(message);
+      pushToast({ variant: "error", title: "Update failed", message });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="dashboard-stack">
+          <DashboardPageHeader
+            eyebrow="My Profile"
+            title="Edit Profile"
+            subtitle="Manage your profile with structured sections for better clarity and recruiter readiness."
+            actions={<span className="rounded-full bg-primary-100 px-3 py-1 text-xs font-semibold text-primary-700 dark:bg-primary-900/35 dark:text-primary-300">{completionHint}% complete</span>}
+          />
+
+          {loading ? (
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
+              Loading profile form...
+            </div>
+          ) : (
+            <>
+              <div className="surface-subtle rounded-2xl p-2">
+                <div className="flex flex-wrap gap-2">
+                  {EDIT_SECTIONS.map((section) => (
+                    <SectionTabButton
+                      key={section.key}
+                      label={section.label}
+                      icon={EDIT_TAB_ICONS[section.key]}
+                      active={activeSection === section.key}
+                      onClick={() => setActiveSection(section.key)}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {error ? (
+                <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300">
+                  {error}
+                </div>
+              ) : null}
+
+              {activeSection === "personal" && (
+                <SectionPanel title="Personal Information" subtitle="Contact details, social links, and professional summary.">
+                  <div className="form-grid">
+                    <Input label="Full Name" value={fullName} onChange={(e) => setFullName(e.target.value)} />
+                    <Input label="Email" value={email} onChange={(e) => setEmail(e.target.value)} disabled />
+                    <Input label="Phone" value={mobile} onChange={(e) => setMobile(e.target.value)} />
+                    <Input label="Address" value={address} onChange={(e) => setAddress(e.target.value)} />
+                    <Input label="LinkedIn" value={linkedinUrl} onChange={(e) => setLinkedinUrl(e.target.value)} />
+                    <Input label="GitHub" value={githubUrl} onChange={(e) => setGithubUrl(e.target.value)} />
+                    <Input label="Portfolio" value={portfolioUrl} onChange={(e) => setPortfolioUrl(e.target.value)} />
+                  </div>
+                  <div className="mt-4">
+                    <Textarea label="Professional Summary" value={summary} onChange={(e) => setSummary(e.target.value)} rows={5} />
+                  </div>
+                </SectionPanel>
+              )}
+
+              {activeSection === "education" && (
+                <SectionPanel title="Education" subtitle="Academic background for eligibility and recruiter context.">
+                  <div className="form-grid">
+                    <Input label="College" value={college} onChange={(e) => setCollege(e.target.value)} />
+                    <Input label="Degree" value={degree} onChange={(e) => setDegree(e.target.value)} />
+                    <Input label="Branch" value={branch} onChange={(e) => setBranch(e.target.value)} />
+                    <Input label="CGPA" value={cgpa} onChange={(e) => setCgpa(e.target.value)} />
+                    <Input label="Graduation Year" value={passingYear} onChange={(e) => setPassingYear(e.target.value)} />
+                  </div>
+                </SectionPanel>
+              )}
+
+              {activeSection === "learning" && (
+                <SectionPanel title="Courses & Certifications" subtitle="Learning records, certificate details, and verification links.">
+                  <div className="grid gap-4 lg:grid-cols-2">
+                    <div className="space-y-3">
+                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">Courses</p>
+                      <Input label="Course Name" value={courseName} onChange={(e) => setCourseName(e.target.value)} />
+                      <Input label="Platform" value={coursePlatform} onChange={(e) => setCoursePlatform(e.target.value)} />
+                      <Input label="Completion Date" value={courseCompletionDate} onChange={(e) => setCourseCompletionDate(e.target.value)} />
+                      <Input label="Certificate URL" value={courseCertificateUrl} onChange={(e) => setCourseCertificateUrl(e.target.value)} />
+                      <Input label="Verification Link" value={courseVerificationLink} onChange={(e) => setCourseVerificationLink(e.target.value)} />
+                    </div>
+
+                    <div className="space-y-3">
+                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">Certifications</p>
+                      <Input label="Certification Name" value={certName} onChange={(e) => setCertName(e.target.value)} />
+                      <Input label="Issuer" value={certIssuer} onChange={(e) => setCertIssuer(e.target.value)} />
+                      <Input label="Year" value={certYear} onChange={(e) => setCertYear(e.target.value)} />
+                      <Input label="Certificate URL" value={certCertificateUrl} onChange={(e) => setCertCertificateUrl(e.target.value)} />
+                      <Input label="Verification Link" value={certVerificationLink} onChange={(e) => setCertVerificationLink(e.target.value)} />
+                    </div>
+                  </div>
+                </SectionPanel>
+              )}
+
+              {activeSection === "skills" && (
+                <SectionPanel title="Skills" subtitle="Manage technical and soft skills separately.">
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">Technical Skills</p>
+                  <SkillSelector selected={skills} onChange={setSkills} />
+                  <div className="mt-4">
+                    <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">Soft Skills</p>
+                    <SkillSelector selected={softSkills} onChange={setSoftSkills} />
+                  </div>
+                </SectionPanel>
+              )}
+
+              <div className="flex flex-wrap gap-2">
+                <Button type="button" size="sm" onClick={save} disabled={saving}>
+                  {saving ? "Saving..." : "Save Changes"}
+                </Button>
+                <Button type="button" size="sm" variant="secondary" onClick={() => router.push("/dashboard/intern/profile")}>
+                  Cancel
+                </Button>
+              </div>
+            </>
+          )}
+    </div>
+  );
+}

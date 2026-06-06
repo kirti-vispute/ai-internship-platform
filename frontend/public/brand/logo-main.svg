@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none" role="img" aria-label="InternAI">
+  <defs>
+    <linearGradient id="ia-grad" x1="12" y1="8" x2="108" y2="112" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1f6fff"/>
+      <stop offset="1" stop-color="#22d3ee"/>
+    </linearGradient>
+  </defs>
+  <rect x="8" y="8" width="104" height="104" rx="22" fill="url(#ia-grad)"/>
+  <path d="M36 78V42h10v22l18-14 18 14V42h10v36H74V58L54 74 36 58v20z" fill="#fff"/>
+  <circle cx="84" cy="36" r="7" fill="#fff" fill-opacity="0.92"/>
+  <circle cx="84" cy="36" r="3" fill="#1f6fff"/>
+</svg>
