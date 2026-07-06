@@ -116,6 +116,18 @@ export async function logoutAuthSession(): Promise<void> {
   }
 }
 
+export class ApiRequestError extends Error {
+  status: number;
+  details?: Record<string, unknown>;
+
+  constructor(message: string, status: number, details?: Record<string, unknown>) {
+    super(message);
+    this.name = "ApiRequestError";
+    this.status = status;
+    this.details = details;
+  }
+}
+
 export async function apiRequest<T>(path: string, options: ApiRequestOptions = {}, retry = true): Promise<T> {
   const headers = new Headers(options.headers || {});
   headers.set("Accept", "application/json");
@@ -171,7 +183,8 @@ export async function apiRequest<T>(path: string, options: ApiRequestOptions = {
   }
 
   if (!response.ok) {
-    const serverMessage = (data as { message?: string }).message;
+    const errorPayload = data as { message?: string; error?: Record<string, unknown> };
+    const serverMessage = errorPayload.message;
     if (process.env.NODE_ENV !== "production") {
       console.error("[apiRequest] API error response", {
         url,
@@ -181,7 +194,11 @@ export async function apiRequest<T>(path: string, options: ApiRequestOptions = {
         body: data
       });
     }
-    throw new Error(serverMessage || `Request failed (${response.status} ${response.statusText})`);
+    throw new ApiRequestError(
+      serverMessage || `Request failed (${response.status} ${response.statusText})`,
+      response.status,
+      errorPayload.error
+    );
   }
 
   return data as T;

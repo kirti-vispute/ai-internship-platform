@@ -144,7 +144,6 @@ export function AdminShell({ welcomeName, adminRole, permissions = [], onLogout,
             meta={roleLabel}
             onOpenMenu={() => setMobileOpen(true)}
             onLogout={onLogout}
-            switchHref="/auth/admin"
           />
 
           <main className="relative z-10 mx-auto w-full max-w-[1240px] p-4 lg:p-5">{children}</main>

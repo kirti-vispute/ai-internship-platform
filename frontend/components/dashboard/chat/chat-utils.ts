@@ -6,6 +6,7 @@ export type MessageGroup = {
   id: string;
   senderRole: ChatMessage["senderRole"];
   mine: boolean;
+  isInterviewEvent: boolean;
   messages: ChatMessage[];
 };
 
@@ -51,11 +52,14 @@ export function groupMessages(messages: ChatMessage[], role: ChatRole): MessageG
 
   for (const message of messages) {
     const mine = isOwnMessage(message, role);
+    const isInterviewEvent = isInterviewEventMessage(message.body);
     const last = groups[groups.length - 1];
     const lastTime = last ? new Date(last.messages[last.messages.length - 1].createdAt || 0).getTime() : 0;
     const currentTime = new Date(message.createdAt || 0).getTime();
     const sameGroup =
       last &&
+      !isInterviewEvent &&
+      !last.isInterviewEvent &&
       last.senderRole === message.senderRole &&
       Number.isFinite(lastTime) &&
       Number.isFinite(currentTime) &&
@@ -68,6 +72,7 @@ export function groupMessages(messages: ChatMessage[], role: ChatRole): MessageG
         id: `${message._id}-group`,
         senderRole: message.senderRole,
         mine,
+        isInterviewEvent,
         messages: [message]
       });
     }
@@ -111,6 +116,21 @@ function normalizeInterviewHref(raw: string): string {
   } catch {
     return trimmed;
   }
+}
+
+/** True when a message is a system-generated interview notification (contains a "View Interview Details" link). */
+export function isInterviewEventMessage(body: string): boolean {
+  return VIEW_INTERVIEW_DETAILS_RE.test(body);
+}
+
+export type InterviewEventStatus = "scheduled" | "rescheduled" | "cancelled" | "completed";
+
+/** Derives the interview status from the message text (backend wording: "rescheduled", "cancelled", "completed", else scheduled). */
+export function getInterviewEventStatus(body: string): InterviewEventStatus {
+  if (/rescheduled/i.test(body)) return "rescheduled";
+  if (/cancelled/i.test(body)) return "cancelled";
+  if (/completed/i.test(body)) return "completed";
+  return "scheduled";
 }
 
 /** Split automated interview messages into readable text + CTA link. */

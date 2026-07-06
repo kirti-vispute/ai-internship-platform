@@ -16,14 +16,6 @@ import { AppIcon } from "@/components/icons/app-icon";
 import type { InternProfile, ResumeAnalysis } from "@/lib/intern-portal";
 import { cn } from "@/lib/utils";
 
-const TARGET_ROLES = [
-  { key: "full_stack_developer", label: "Full Stack Developer" },
-  { key: "frontend_developer", label: "Frontend Developer" },
-  { key: "backend_developer", label: "Backend Developer" },
-  { key: "data_scientist", label: "Data Scientist" },
-  { key: "ai_ml_engineer", label: "AI / ML Engineer" }
-] as const;
-
 type Props = {
   profile: InternProfile | null;
   analysis: ResumeAnalysis | null | undefined;
@@ -202,34 +194,11 @@ export function ResumeIntelligenceDashboard({ profile, analysis, onTargetRoleCha
       ) : null}
 
       {/* Header */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h2 className="text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100">Resume Intelligence</h2>
-          <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
-            ATS-weighted analysis · {analysis?.intelligenceVersion === "v2" ? "Structured engine active" : "Refresh score for V2"}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <label htmlFor="target-role" className="text-xs font-medium text-slate-500 dark:text-slate-400">
-            Career target
-          </label>
-          <select
-            id="target-role"
-            className="ds-input ds-select h-auto min-h-[2.75rem] py-2 text-sm font-medium disabled:opacity-70"
-            value={targetRole}
-            disabled={loadingRole}
-            onChange={(e) => {
-              setTargetRole(e.target.value);
-              onTargetRoleChange?.(e.target.value);
-            }}
-          >
-            {TARGET_ROLES.map((role) => (
-              <option key={role.key} value={role.key}>
-                {role.label}
-              </option>
-            ))}
-          </select>
-        </div>
+      <div>
+        <h2 className="text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100">Resume Intelligence</h2>
+        <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
+          ATS-weighted analysis · {analysis?.intelligenceVersion === "v2" ? "Structured engine active" : "Refresh score for V2"}
+        </p>
       </div>
 
       {/* Resume Score — centered hero */}

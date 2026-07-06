@@ -7,8 +7,8 @@ import { getActiveInternships, normalizeRawStatus } from "@/components/dashboard
 import { evaluateCandidateProjects } from "./project-evaluation-engine";
 import {
   buildMatchExplanation,
-  buildRejectionAnalysis,
   evaluateCandidate,
+  generateRejectionReason,
   meetsRecommendedHireCriteria
 } from "./master-evaluation-engine";
 import { setRoleScoringTemplates } from "./role-scoring-config";
@@ -19,7 +19,6 @@ import type {
   InterviewScheduleSlot,
   MatchExplanation,
   RankedCandidate,
-  RejectionReason,
   HiringPrediction,
   BestCandidateRecommendation,
   RoleScoringTemplate
@@ -110,34 +109,6 @@ function candidateKey(ranked: RankedCandidate) {
 function isSelectedStatus(status: string) {
   const normalized = normalizeRawStatus(status);
   return normalized === "selected" || normalized === "offered";
-}
-
-function generateRejectionReasonInternal(
-  ranked: RankedCandidate,
-  internships: CompanyInternship[],
-  recommendedId: string | null
-): RejectionReason {
-  const key = candidateKey(ranked);
-  if (recommendedId && key === recommendedId) {
-    return buildRejectionAnalysis(ranked.evaluation, ranked, {
-      sufficient: false,
-      overallSummary: "Recommended candidate — rejection analysis not applicable.",
-      skillGapReason: "This candidate is the recommended hire for this role."
-    });
-  }
-
-  if (ranked.application && isSelectedStatus(ranked.application.status)) {
-    return buildRejectionAnalysis(ranked.evaluation, ranked, {
-      sufficient: false,
-      overallSummary: "Selected candidate — rejection analysis not applicable.",
-      skillGapReason: "Candidate has already been selected."
-    });
-  }
-
-  const internship = resolveInternship(ranked.internshipId, internships);
-  void internship;
-
-  return buildRejectionAnalysis(ranked.evaluation, ranked, { sufficient: true });
 }
 
 function mapCurrentFunnelStage(status: string) {
@@ -405,24 +376,31 @@ const hiringAIEngineCore = {
   },
 
   buildInterviewPayload(slot: InterviewScheduleSlot) {
-    return {
+    const payload: {
+      roundType: string;
+      interviewDate: string;
+      interviewTime: string;
+      mode: "online" | "offline" | "";
+      meetingLink?: string;
+      location?: string;
+      notes?: string;
+    } = {
       roundType: slot.roundType,
       interviewDate: slot.interviewDate,
       interviewTime: slot.interviewTime,
       mode: slot.mode || "online"
     };
+    const meetingLink = slot.meetingLink?.trim();
+    const location = slot.location?.trim();
+    const notes = slot.notes?.trim();
+    if (meetingLink) payload.meetingLink = meetingLink;
+    if (location) payload.location = location;
+    if (notes) payload.notes = notes;
+    return payload;
   },
 
   scheduleInterview(_candidateId: string, slot: InterviewScheduleSlot) {
     return hiringAIEngineCore.buildInterviewPayload(slot);
-  },
-
-  generateRejectionReason(
-    ranked: RankedCandidate,
-    internships: CompanyInternship[],
-    recommendedId: string | null = null
-  ): RejectionReason {
-    return generateRejectionReasonInternal(ranked, internships, recommendedId);
   },
 
   computeHiringPrediction(jobId: string, input: CandidateRankingInput): HiringPrediction {
@@ -437,6 +415,10 @@ const hiringAIEngineCore = {
 
   recommendBestCandidate(jobId: string, input: CandidateRankingInput) {
     return recommendBestCandidateInternal(jobId, input);
+  },
+
+  generateRejectionReason(evaluation: RankedCandidate["evaluation"], candidateName?: string) {
+    return generateRejectionReason(evaluation, candidateName);
   },
 
   recommendBestCandidatesByRole(input: CandidateRankingInput) {
@@ -462,7 +444,6 @@ export type {
   MatchExplanation,
   FunnelAnalytics,
   InterviewScheduleSlot,
-  RejectionReason,
   HiringPrediction,
   BestCandidateRecommendation,
   CandidateEvaluation,
@@ -470,7 +451,7 @@ export type {
 } from "./types";
 
 export { evaluateCandidateProjects } from "./project-evaluation-engine";
-export { evaluateCandidate, buildMatchExplanation, buildRejectionAnalysis } from "./master-evaluation-engine";
+export { evaluateCandidate, buildMatchExplanation, generateRejectionReason } from "./master-evaluation-engine";
 export {
   DEFAULT_ROLE_TEMPLATES,
   getRoleScoringTemplates,

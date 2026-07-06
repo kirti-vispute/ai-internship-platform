@@ -1,9 +1,12 @@
-import { fileExists, makeCheck, readText } from "../lib/utils.mjs";
+import { fileExists, makeCheck, readText, readBackendSource } from "../lib/utils.mjs";
 
 export async function runAiChecks() {
   const checks = [];
 
-  const scorer = readText("backend/src/services/scorer.service.js");
+  const scorer = readBackendSource(
+    "backend/src/modules/students/services/scorer.service.js",
+    "backend/src/services/scorer.service.js"
+  );
   checks.push(
     makeCheck({
       id: "ai.scorer-validation",
@@ -14,7 +17,10 @@ export async function runAiChecks() {
     })
   );
 
-  const gateway = readText("backend/src/services/ai-gateway.service.js");
+  const gateway = readBackendSource(
+    "backend/src/modules/ai/services/ai-gateway.service.js",
+    "backend/src/services/ai-gateway.service.js"
+  );
   checks.push(
     makeCheck({
       id: "ai.gateway-cache",
@@ -25,7 +31,10 @@ export async function runAiChecks() {
     })
   );
 
-  const router = readText("backend/src/infrastructure/ai/ai-provider.router.js");
+  const router = readBackendSource(
+    "backend/src/shared/infrastructure/ai/ai-provider.router.js",
+    "backend/src/infrastructure/ai/ai-provider.router.js"
+  );
   checks.push(
     makeCheck({
       id: "ai.provider-fallback",
@@ -37,7 +46,10 @@ export async function runAiChecks() {
     })
   );
 
-  const orchestrator = readText("backend/src/services/ai-orchestrator.service.js");
+  const orchestrator = readBackendSource(
+    "backend/src/modules/ai/services/ai-orchestrator.service.js",
+    "backend/src/services/ai-orchestrator.service.js"
+  );
   checks.push(
     makeCheck({
       id: "ai.orchestrator",

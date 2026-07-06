@@ -1,9 +1,12 @@
-import { makeCheck, readText } from "../lib/utils.mjs";
+import { makeCheck, readText, readBackendSource } from "../lib/utils.mjs";
 
 export async function runSecurityChecks({ target }) {
   const checks = [];
 
-  const authMiddleware = readText("backend/src/middleware/auth.middleware.js");
+  const authMiddleware = readBackendSource(
+    "backend/src/shared/middleware/auth.middleware.js",
+    "backend/src/middleware/auth.middleware.js"
+  );
   checks.push(
     makeCheck({
       id: "sec.jwt-middleware",
@@ -25,7 +28,10 @@ export async function runSecurityChecks({ target }) {
     })
   );
 
-  const interviewService = readText("backend/src/services/interview-room.service.js");
+  const interviewService = readBackendSource(
+    "backend/src/modules/interviews/services/interview-room.service.js",
+    "backend/src/services/interview-room.service.js"
+  );
   checks.push(
     makeCheck({
       id: "sec.interview-unauthorized",
@@ -36,7 +42,10 @@ export async function runSecurityChecks({ target }) {
     })
   );
 
-  const chatRoutes = readText("backend/src/routes/chat.routes.js");
+  const chatRoutes = readBackendSource(
+    "backend/src/modules/chat/routes/chat.routes.js",
+    "backend/src/routes/chat.routes.js"
+  );
   checks.push(
     makeCheck({
       id: "sec.chat-auth",

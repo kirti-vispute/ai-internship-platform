@@ -1,5 +1,2 @@
-const PORTFOLIO_THEMES = Object.freeze(["midnight", "aurora", "slate"]);
-
-const PORTFOLIO_STATUSES = Object.freeze(["draft", "published", "disabled"]);
-
-module.exports = { PORTFOLIO_THEMES, PORTFOLIO_STATUSES };
+/** Legacy shim — use modules/ or shared/ directly in new code */
+module.exports = require("../modules/portfolio/constants/portfolio-themes.js");

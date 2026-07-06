@@ -201,25 +201,15 @@ export type InterviewScheduleSlot = {
   interviewDate: string;
   interviewTime: string;
   mode?: "online" | "offline" | "";
+  meetingLink?: string;
+  location?: string;
+  notes?: string;
 };
 
 export type CandidateRankingInput = {
   matches: CompanyMatchedCandidate[];
   applications: CompanyApplication[];
   internships: CompanyInternship[];
-};
-
-export type RejectionReason = {
-  sufficient: boolean;
-  skillGapReason: string;
-  experienceMismatchReason: string;
-  testPerformanceReason: string;
-  overallSummary: string;
-  skillGaps: string[];
-  projectRelevanceGaps: string[];
-  testPerformanceGaps: string[];
-  experienceGaps: string[];
-  actionableFeedback: string[];
 };
 
 export type HiringPrediction = {

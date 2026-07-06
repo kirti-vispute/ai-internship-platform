@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { OTPInput } from "@/components/ui/otp-input";
 import { PasswordStrength } from "@/components/ui/password-strength";
-import { apiRequest } from "@/lib/api-client";
+import { apiRequest, ApiRequestError } from "@/lib/api-client";
 import { resolvePostLoginRedirect } from "@/lib/auth-routes";
 import { clearAuthSession, setAuthSession } from "@/lib/session";
 import { validateEmail, validateGST, validatePhone } from "@/lib/validation";
@@ -97,6 +97,26 @@ const COMPANY_LOGIN_PRESETS: Record<
   }
 };
 
+const OTP_RESEND_DEFAULT_SECONDS = 60;
+
+function useCountdown(initialSeconds: number) {
+  const [secondsLeft, setSecondsLeft] = useState(initialSeconds);
+
+  useEffect(() => {
+    if (secondsLeft <= 0) return;
+    const timer = window.setInterval(() => {
+      setSecondsLeft((current) => Math.max(0, current - 1));
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [secondsLeft]);
+
+  const startCountdown = useCallback((seconds: number) => {
+    setSecondsLeft(Math.max(0, seconds));
+  }, []);
+
+  return { secondsLeft, startCountdown, canProceed: secondsLeft <= 0 };
+}
+
 function AuthPortalLinks({ role }: { role: AuthRole }) {
   return (
     <div className="mt-6 space-y-2 border-t border-[var(--ds-border)] pt-4 text-xs">
@@ -135,9 +155,20 @@ export function RoleAuthForm({ role }: { role: AuthRole }) {
   const [otp, setOtp] = useState("");
   const [otpSent, setOtpSent] = useState(false);
   const [otpVerified, setOtpVerified] = useState(false);
+  const [otpSending, setOtpSending] = useState(false);
+  const [otpVerifying, setOtpVerifying] = useState(false);
+  const { secondsLeft: otpResendSeconds, startCountdown: startOtpResendCountdown, canProceed: canResendOtp } =
+    useCountdown(0);
   const [resetOtpMode, setResetOtpMode] = useState(false);
   const [resetOtpSent, setResetOtpSent] = useState(false);
   const [resetOtp, setResetOtp] = useState("");
+  const [resetOtpSending, setResetOtpSending] = useState(false);
+  const [resetOtpVerifying, setResetOtpVerifying] = useState(false);
+  const {
+    secondsLeft: resetResendSeconds,
+    startCountdown: startResetResendCountdown,
+    canProceed: canResendResetOtp
+  } = useCountdown(0);
   const [newPassword, setNewPassword] = useState("");
   const [companyLoginType, setCompanyLoginType] = useState<CompanyLoginType>("hr");
   const [internLoginType, setInternLoginType] = useState<InternLoginType>("intern1");
@@ -145,6 +176,156 @@ export function RoleAuthForm({ role }: { role: AuthRole }) {
   useEffect(() => {
     clearAuthSession();
   }, []);
+
+  useEffect(() => {
+    setOtp("");
+    setOtpSent(false);
+    setOtpVerified(false);
+    startOtpResendCountdown(0);
+  }, [internData.email, startOtpResendCountdown]);
+
+  const handleSendInternOtp = useCallback(
+    async (isResend = false) => {
+      if (!validateEmail(internData.email)) {
+        setFeedback({ type: "error", message: "Enter a valid email before sending OTP." });
+        return;
+      }
+
+      try {
+        setOtpSending(true);
+        setFeedback(null);
+        const response = await apiRequest<{ message: string; retryAfterSeconds?: number; devOtp?: string }>(
+          "/api/auth/intern/send-otp",
+          {
+            method: "POST",
+            body: JSON.stringify({ email: internData.email.trim().toLowerCase() })
+          }
+        );
+        setOtpSent(true);
+        setOtpVerified(false);
+        setOtp("");
+        startOtpResendCountdown(response.retryAfterSeconds ?? OTP_RESEND_DEFAULT_SECONDS);
+        let message = isResend ? "OTP resent to your email." : "OTP sent to your email.";
+        if (response.devOtp) {
+          message += ` Dev code: ${response.devOtp}`;
+        }
+        setFeedback({ type: "success", message });
+      } catch (error) {
+        if (error instanceof ApiRequestError && error.details?.retryAfterSeconds) {
+          startOtpResendCountdown(Number(error.details.retryAfterSeconds));
+        }
+        setFeedback({ type: "error", message: (error as Error).message });
+      } finally {
+        setOtpSending(false);
+      }
+    },
+    [internData.email, startOtpResendCountdown]
+  );
+
+  const handleVerifyInternOtp = useCallback(
+    async (code?: string) => {
+      const otpCode = (code ?? otp).trim();
+      if (otpCode.length !== 6) {
+        setFeedback({ type: "error", message: "Enter the 6-digit OTP." });
+        return;
+      }
+      if (!validateEmail(internData.email)) {
+        setFeedback({ type: "error", message: "Enter a valid email before verifying OTP." });
+        return;
+      }
+
+      try {
+        setOtpVerifying(true);
+        setFeedback(null);
+        const response = await apiRequest<{ message: string; verified?: boolean }>("/api/auth/intern/verify-otp", {
+          method: "POST",
+          body: JSON.stringify({ email: internData.email.trim().toLowerCase(), otp: otpCode })
+        });
+        setOtpVerified(true);
+        setFeedback({ type: "success", message: response.message || "Email verified. Complete signup now." });
+      } catch (error) {
+        setOtpVerified(false);
+        setFeedback({ type: "error", message: (error as Error).message });
+      } finally {
+        setOtpVerifying(false);
+      }
+    },
+    [internData.email, otp]
+  );
+
+  const handleSendPasswordResetOtp = useCallback(
+    async (isResend = false) => {
+      if (!validateEmail(loginData.email)) {
+        setFeedback({ type: "error", message: "Enter a valid email first." });
+        return;
+      }
+
+      try {
+        setResetOtpSending(true);
+        setFeedback(null);
+        const response = await apiRequest<{ message: string; retryAfterSeconds?: number; devOtp?: string }>(
+          "/api/auth/password/send-otp",
+          {
+            method: "POST",
+            body: JSON.stringify({ email: loginData.email.trim().toLowerCase() })
+          }
+        );
+        setResetOtpSent(true);
+        setResetOtp("");
+        startResetResendCountdown(response.retryAfterSeconds ?? OTP_RESEND_DEFAULT_SECONDS);
+        let message = response.message || (isResend ? "Password reset OTP resent." : "Password reset OTP sent.");
+        if (response.devOtp) {
+          message += ` Dev code: ${response.devOtp}`;
+        }
+        setFeedback({ type: "success", message });
+      } catch (error) {
+        if (error instanceof ApiRequestError && error.details?.retryAfterSeconds) {
+          startResetResendCountdown(Number(error.details.retryAfterSeconds));
+        }
+        setFeedback({ type: "error", message: (error as Error).message });
+      } finally {
+        setResetOtpSending(false);
+      }
+    },
+    [loginData.email, startResetResendCountdown]
+  );
+
+  const handleResetPassword = useCallback(async () => {
+    if (!validateEmail(loginData.email)) {
+      setFeedback({ type: "error", message: "Enter a valid email first." });
+      return;
+    }
+    if (resetOtp.length !== 6) {
+      setFeedback({ type: "error", message: "Enter the 6-digit OTP." });
+      return;
+    }
+    if (newPassword.length < 8) {
+      setFeedback({ type: "error", message: "Password must be at least 8 characters." });
+      return;
+    }
+
+    try {
+      setResetOtpVerifying(true);
+      setFeedback(null);
+      await apiRequest("/api/auth/password/reset", {
+        method: "POST",
+        body: JSON.stringify({
+          email: loginData.email.trim().toLowerCase(),
+          otp: resetOtp,
+          newPassword
+        })
+      });
+      setFeedback({ type: "success", message: "Password reset successful. You can now log in." });
+      setResetOtpMode(false);
+      setResetOtpSent(false);
+      setResetOtp("");
+      setNewPassword("");
+    } catch (error) {
+      setFeedback({ type: "error", message: (error as Error).message });
+    } finally {
+      setResetOtpVerifying(false);
+    }
+  }, [loginData.email, newPassword, resetOtp]);
 
   const roleTitle = useMemo(() => (role === "intern" ? "Intern Access" : "Company Access"), [role]);
   const roleCopy = useMemo(
@@ -313,7 +494,7 @@ export function RoleAuthForm({ role }: { role: AuthRole }) {
         setIsLoading(false);
       }
     },
-    [companyData, internData, role, router, validateCompanySignup, validateInternSignup]
+    [companyData, internData, otpVerified, role, router, searchParams, validateCompanySignup, validateInternSignup]
   );
 
   return (
@@ -493,39 +674,55 @@ export function RoleAuthForm({ role }: { role: AuthRole }) {
             </button>
           </div>
           {resetOtpMode && (
-            <div className="space-y-2 rounded-xl border border-slate-200 p-3">
-              <Button
-                type="button"
-                size="sm"
-                onClick={async () => {
-                  if (!validateEmail(loginData.email)) {
-                    setFeedback({ type: "error", message: "Enter a valid email first." });
-                    return;
-                  }
-                  await apiRequest("/api/auth/password/send-otp", { method: "POST", body: JSON.stringify({ email: loginData.email }) });
-                  setResetOtpSent(true);
-                  setFeedback({ type: "success", message: "Password reset OTP sent." });
-                }}
-              >
-                Send Reset OTP
-              </Button>
-              {resetOtpSent && (
+            <div className="space-y-2 rounded-xl border border-slate-200 p-3 dark:border-slate-700">
+              {!resetOtpSent ? (
+                <Button type="button" size="sm" disabled={resetOtpSending} onClick={() => handleSendPasswordResetOtp(false)}>
+                  {resetOtpSending ? (
+                    <span className="inline-flex items-center gap-2">
+                      <LoadingSpinner /> Sending OTP
+                    </span>
+                  ) : (
+                    "Send Reset OTP"
+                  )}
+                </Button>
+              ) : (
                 <>
-                  <OTPInput value={resetOtp} onChange={setResetOtp} />
-                  <Input label="New Password" type={showPassword ? "text" : "password"} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
-                  <Button
-                    type="button"
-                    size="sm"
-                    onClick={async () => {
-                      await apiRequest("/api/auth/password/reset", {
-                        method: "POST",
-                        body: JSON.stringify({ email: loginData.email, otp: resetOtp, newPassword })
-                      });
-                      setFeedback({ type: "success", message: "Password reset successful. You can now log in." });
-                    }}
-                  >
-                    Reset Password
-                  </Button>
+                  <OTPInput
+                    value={resetOtp}
+                    onChange={setResetOtp}
+                    disabled={resetOtpVerifying}
+                    onComplete={() => undefined}
+                  />
+                  <Input
+                    label="New Password"
+                    type={showPassword ? "text" : "password"}
+                    value={newPassword}
+                    onChange={(event) => setNewPassword(event.target.value)}
+                  />
+                  <div className="flex flex-wrap gap-2">
+                    <Button type="button" size="sm" disabled={resetOtpVerifying} onClick={() => handleResetPassword()}>
+                      {resetOtpVerifying ? (
+                        <span className="inline-flex items-center gap-2">
+                          <LoadingSpinner /> Resetting
+                        </span>
+                      ) : (
+                        "Reset Password"
+                      )}
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="secondary"
+                      disabled={!canResendResetOtp || resetOtpSending}
+                      onClick={() => handleSendPasswordResetOtp(true)}
+                    >
+                      {canResendResetOtp
+                        ? resetOtpSending
+                          ? "Resending..."
+                          : "Resend OTP"
+                        : `Resend in ${resetResendSeconds}s`}
+                    </Button>
+                  </div>
                 </>
               )}
             </div>
@@ -584,45 +781,66 @@ export function RoleAuthForm({ role }: { role: AuthRole }) {
                 onChange={(event) => setInternData((prev) => ({ ...prev, confirmPassword: event.target.value }))}
                 error={errors.confirmPassword}
               />
-              <div className="rounded-xl border border-slate-200 p-3">
+              <div className="rounded-xl border border-slate-200 p-3 dark:border-slate-700">
                 <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Email Verification OTP</p>
                 {!otpSent ? (
-                  <Button
-                    type="button"
-                    size="sm"
-                    onClick={async () => {
-                      if (!validateEmail(internData.email)) {
-                        setFeedback({ type: "error", message: "Enter a valid email before sending OTP." });
-                        return;
-                      }
-                      await apiRequest("/api/auth/intern/send-otp", {
-                        method: "POST",
-                        body: JSON.stringify({ email: internData.email })
-                      });
-                      setOtpSent(true);
-                      setFeedback({ type: "success", message: "OTP sent to your email." });
-                    }}
-                  >
-                    Send OTP
+                  <Button type="button" size="sm" disabled={otpSending} onClick={() => handleSendInternOtp(false)}>
+                    {otpSending ? (
+                      <span className="inline-flex items-center gap-2">
+                        <LoadingSpinner /> Sending OTP
+                      </span>
+                    ) : (
+                      "Send OTP"
+                    )}
                   </Button>
                 ) : (
-                  <div className="space-y-2">
-                    <OTPInput value={otp} onChange={setOtp} />
-                    <Button
-                      type="button"
-                      size="sm"
-                      disabled={otpVerified}
-                      onClick={async () => {
-                        await apiRequest("/api/auth/intern/verify-otp", {
-                          method: "POST",
-                          body: JSON.stringify({ email: internData.email, otp })
-                        });
-                        setOtpVerified(true);
-                        setFeedback({ type: "success", message: "OTP verified. Complete signup now." });
+                  <div className="space-y-3">
+                    <OTPInput
+                      value={otp}
+                      onChange={setOtp}
+                      disabled={otpVerified || otpVerifying}
+                      onComplete={(code) => {
+                        if (!otpVerified && !otpVerifying) {
+                          void handleVerifyInternOtp(code);
+                        }
                       }}
-                    >
-                      {otpVerified ? "OTP Verified" : "Verify OTP"}
-                    </Button>
+                    />
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        disabled={otpVerified || otpVerifying}
+                        onClick={() => handleVerifyInternOtp()}
+                      >
+                        {otpVerifying ? (
+                          <span className="inline-flex items-center gap-2">
+                            <LoadingSpinner /> Verifying
+                          </span>
+                        ) : otpVerified ? (
+                          "OTP Verified"
+                        ) : (
+                          "Verify OTP"
+                        )}
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="secondary"
+                        disabled={otpVerified || !canResendOtp || otpSending}
+                        onClick={() => handleSendInternOtp(true)}
+                      >
+                        {canResendOtp
+                          ? otpSending
+                            ? "Resending..."
+                            : "Resend OTP"
+                          : `Resend in ${otpResendSeconds}s`}
+                      </Button>
+                    </div>
+                    {otpVerified && (
+                      <p className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                        Email verified. You can create your account now.
+                      </p>
+                    )}
                   </div>
                 )}
               </div>

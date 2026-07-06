@@ -559,26 +559,10 @@ body:has(.internai-platform) {
   min-width: 0;
 }
 
-/* Chat module — keep bubble & list contrast (avoid global slate remaps) */
-.internai-platform [data-chat-ui] .chat-bubble-mine {
-  background-color: rgb(37 99 235) !important;
-  color: #fff !important;
-}
-
-.internai-platform [data-chat-ui] .chat-bubble-mine p {
-  color: inherit !important;
-}
-
-.internai-platform [data-chat-ui] .chat-bubble-theirs {
-  background-color: rgb(30 41 59 / 0.92) !important;
-  color: #f1f5f9 !important;
-  border-color: rgb(71 85 105 / 0.55) !important;
-}
-
-.internai-platform [data-chat-ui] .chat-bubble-theirs p {
-  color: inherit !important;
-}
-
+/* Chat module — structural/scroll plumbing only. Bubble colors and text
+   colors are owned by the component (dark-mode aware Tailwind classes);
+   do NOT hardcode colors here with !important, it silently defeats every
+   future style change made in chat-thread-panel.tsx / chat-list-panel.tsx. */
 .internai-platform [data-chat-ui] .chat-bubble-mine a,
 .internai-platform [data-chat-ui] .chat-bubble-theirs a {
   text-decoration: none;
@@ -587,8 +571,6 @@ body:has(.internai-platform) {
 .internai-platform [data-chat-workspace] {
   display: flex;
   flex-direction: column;
-  height: calc(100dvh - 11rem);
-  min-height: 32rem;
 }
 
 .internai-platform [data-chat-ui] {
@@ -598,8 +580,7 @@ body:has(.internai-platform) {
   align-items: stretch;
 }
 
-.internai-platform [data-chat-ui] > aside,
-.internai-platform [data-chat-ui] > section {
+.internai-platform [data-chat-ui] > * {
   min-height: 0;
 }
 
@@ -613,15 +594,6 @@ body:has(.internai-platform) {
   position: sticky;
   bottom: 0;
   z-index: 1;
-}
-
-.internai-platform [data-chat-ui] button[type="button"].chat-conversation-item {
-  color: inherit !important;
-}
-
-.internai-platform [data-chat-ui] button[type="button"].chat-conversation-item p,
-.internai-platform [data-chat-ui] button[type="button"].chat-conversation-item span {
-  color: inherit !important;
 }
 
 @media (min-width: 1024px) {

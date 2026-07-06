@@ -1,4 +1,4 @@
-import { fileExists, makeCheck, readText } from "../lib/utils.mjs";
+import { fileExists, makeCheck, readText, readBackendSource } from "../lib/utils.mjs";
 
 const PERF_THRESHOLD_MS = Number(process.env.DEPLOY_GUARD_HEALTH_MAX_MS || 2500);
 
@@ -19,7 +19,10 @@ async function probeHealth(url) {
 export async function runPerformanceChecks({ target }) {
   const checks = [];
 
-  const platformConfig = readText("backend/src/config/platform.config.js");
+  const platformConfig = readBackendSource(
+    "backend/src/shared/config/platform.config.js",
+    "backend/src/config/platform.config.js"
+  );
   checks.push(
     makeCheck({
       id: "perf.ai-cache-config",
@@ -30,7 +33,10 @@ export async function runPerformanceChecks({ target }) {
     })
   );
 
-  const cacheService = readText("backend/src/infrastructure/cache/cache.service.js");
+  const cacheService = readBackendSource(
+    "backend/src/shared/infrastructure/cache/cache.service.js",
+    "backend/src/infrastructure/cache/cache.service.js"
+  );
   checks.push(
     makeCheck({
       id: "perf.redis-fallback",

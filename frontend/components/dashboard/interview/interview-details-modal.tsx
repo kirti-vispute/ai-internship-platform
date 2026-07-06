@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
-import { CalendarClock, Download, CalendarPlus, MapPin, MessageSquare, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { CalendarClock, Check, Copy, Download, CalendarPlus, MapPin, MessageSquare, X } from "lucide-react";
 import type { ScheduledInterviewRecord } from "@/lib/interview-workflow";
 import {
   formatInterviewDateTime,
@@ -9,7 +9,7 @@ import {
 } from "@/lib/interview-workflow";
 import { downloadInterviewIcs, openGoogleCalendarForInterview } from "@/lib/interview-calendar-export";
 import { InterviewJoinButton } from "@/components/dashboard/interview/interview-join-button";
-import { formatInterviewJoinHint } from "@/lib/interview-join";
+import { formatInterviewJoinHint, resolveInterviewJoinHref } from "@/lib/interview-join";
 import { InterviewStatusChip } from "./interview-status-chip";
 import { Button } from "@/components/ui/button";
 
@@ -28,6 +28,8 @@ export function InterviewDetailsModal({
   chatHref = "/dashboard/intern/chat",
   onClose
 }: InterviewDetailsModalProps) {
+  const [copied, setCopied] = useState(false);
+
   useEffect(() => {
     if (!open) return;
     function onKeyDown(event: KeyboardEvent) {
@@ -37,9 +39,30 @@ export function InterviewDetailsModal({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [open, onClose]);
 
+  useEffect(() => {
+    if (!open) setCopied(false);
+  }, [open]);
+
   if (!open || !interview) return null;
 
   const joinHint = formatInterviewJoinHint(interview);
+  const joinHref = resolveInterviewJoinHref(interview);
+
+  async function copyMeetingLink() {
+    if (!joinHref) return;
+    const absolute = /^https?:\/\//i.test(joinHref)
+      ? joinHref
+      : typeof window !== "undefined"
+        ? `${window.location.origin}${joinHref}`
+        : joinHref;
+    try {
+      await navigator.clipboard.writeText(absolute);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard unavailable — ignore silently */
+    }
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4">
@@ -104,6 +127,12 @@ export function InterviewDetailsModal({
             <Download className="h-3.5 w-3.5" />
             Download .ics
           </Button>
+          {joinHref ? (
+            <Button type="button" size="sm" variant="secondary" onClick={copyMeetingLink} aria-label="Copy meeting link">
+              {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+              {copied ? "Copied" : "Copy Link"}
+            </Button>
+          ) : null}
         </div>
 
         <div className="mt-5 flex flex-wrap justify-end gap-2">

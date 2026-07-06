@@ -167,7 +167,6 @@ export function CompanyShell({ welcomeName, companyAccountType, permissions, onL
             welcomeName={welcomeName || "Company"}
             onOpenMenu={() => setMobileOpen(true)}
             onLogout={onLogout}
-            switchHref="/auth/company"
             notificationHref="/dashboard/company/notifications"
             notificationRole="company"
             notificationUnreadCount={notificationUnread}

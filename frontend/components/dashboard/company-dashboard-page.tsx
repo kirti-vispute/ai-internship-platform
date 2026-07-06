@@ -623,6 +623,26 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
     }
   }
 
+  function buildRejectionNote(application: CompanyApplication): string {
+    const fallbackMatch: CompanyMatchedCandidate = {
+      internshipId: application.internship?._id || "",
+      internshipRole: application.internship?.role || "Role",
+      score: application.matchScore || 0,
+      internProfile: {
+        _id: application.intern?._id,
+        fullName: application.intern?.fullName,
+        skills: application.intern?.skills
+      }
+    };
+    const match =
+      matches.find(
+        (item) => item.internshipId === application.internship?._id && item.internProfile?._id === application.intern?._id
+      ) || fallbackMatch;
+    const internship = internships.find((item) => item._id === application.internship?._id);
+    const evaluation = hiringAIEngine.evaluateCandidate(match, application, internship);
+    return hiringAIEngine.generateRejectionReason(evaluation, application.intern?.fullName);
+  }
+
   async function applyStage(applicationId: string, status: string, note = "") {
     try {
       setSaving(true);
@@ -754,7 +774,10 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
         ? await updateInterviewRound(applicationId, roundId, {
             interviewDate: payload.interviewDate,
             interviewTime: payload.interviewTime,
-            mode: payload.mode
+            mode: payload.mode,
+            ...(payload.meetingLink ? { meetingLink: payload.meetingLink } : {}),
+            ...(payload.location ? { location: payload.location } : {}),
+            ...(payload.notes ? { notes: payload.notes } : {})
           })
         : await scheduleInterviewRound(applicationId, payload);
 
@@ -1159,9 +1182,12 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
                 inputClassName={field}
                 statusDraft={statusDrafts[detailApp._id] ?? normalizeApplicantStage(detailApp.status)}
                 onStatusDraftChange={(value) => setStatusDrafts((prev) => ({ ...prev, [detailApp._id]: value }))}
-                onSaveStatus={() =>
-                  applyStage(detailApp._id, statusDrafts[detailApp._id] ?? normalizeApplicantStage(detailApp.status), "Status updated from hiring dashboard")
-                }
+                onSaveStatus={() => {
+                  const nextStatus = statusDrafts[detailApp._id] ?? normalizeApplicantStage(detailApp.status);
+                  const note =
+                    nextStatus === "rejected" ? buildRejectionNote(detailApp) : "Status updated from hiring dashboard";
+                  applyStage(detailApp._id, nextStatus, note);
+                }}
                 interviewForm={interviewForms[detailApp._id] ?? DEFAULT_INTERVIEW_FORM}
                 onInterviewFormChange={(patch) =>
                   setInterviewForms((prev) => ({

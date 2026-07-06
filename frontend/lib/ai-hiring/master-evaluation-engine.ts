@@ -7,7 +7,6 @@ import type {
   CandidateProjectPortfolioEvaluation,
   MatchExplanation,
   RecommendationLevel,
-  RejectionReason,
   ScoreBreakdownItem,
   ScoreFactorKey
 } from "./types";
@@ -322,64 +321,6 @@ export function buildMatchExplanation(evaluation: CandidateEvaluation, rankedPos
   };
 }
 
-export function buildRejectionAnalysis(
-  evaluation: CandidateEvaluation,
-  ranked: { rankingPosition: number; matchScore: number },
-  options: { sufficient: boolean; overallSummary?: string; skillGapReason?: string; experienceMismatchReason?: string; testPerformanceReason?: string } = { sufficient: true }
-): RejectionReason {
-  if (!options.sufficient) {
-    return {
-      sufficient: false,
-      skillGapReason: options.skillGapReason || "",
-      experienceMismatchReason: options.experienceMismatchReason || "",
-      testPerformanceReason: options.testPerformanceReason || "",
-      overallSummary: options.overallSummary || "Rejection analysis not applicable.",
-      skillGaps: [],
-      projectRelevanceGaps: [],
-      testPerformanceGaps: [],
-      experienceGaps: [],
-      actionableFeedback: []
-    };
-  }
-
-  const skillGaps = evaluation.weaknesses.filter((item) => item.toLowerCase().includes("skill"));
-  const projectRelevanceGaps = evaluation.weaknesses.filter((item) => item.toLowerCase().includes("project"));
-  const testPerformanceGaps = evaluation.weaknesses.filter((item) => item.toLowerCase().includes("assessment") || item.toLowerCase().includes("test"));
-  const experienceGaps = evaluation.weaknesses.filter((item) => item.toLowerCase().includes("experience"));
-
-  const skillGapReason =
-    skillGaps[0] || "Skill alignment is below top-ranked candidates based on verified profile and project evidence.";
-  const experienceMismatchReason =
-    experienceGaps[0] ||
-    "Experience depth is lower than stronger applicants when combined with skills, assessments, and verified projects.";
-  const testPerformanceReason =
-    testPerformanceGaps[0] || "Assessment signals are weaker than top candidates or not fully documented.";
-
-  const actionableFeedback = [
-    skillGaps[0] ? `Close skill gaps: ${skillGaps[0].replace(/^Missing required skills: /i, "")}` : null,
-    projectRelevanceGaps[0] ? "Add verified project descriptions, tech stacks, and repository links." : null,
-    testPerformanceGaps[0] ? "Improve assessment performance and ensure scores are reflected on the profile." : null,
-    experienceGaps[0] ? "Document internships, roles, or project-led experience with measurable outcomes." : null
-  ].filter((item): item is string => Boolean(item));
-
-  const overallSummary =
-    options.overallSummary ||
-    `Rank #${ranked.rankingPosition} at ${evaluation.overallScore}/100. Decision reflects skills, verified projects, assessments, experience, and overall fit — never a single weak project or missing GitHub alone. ${skillGapReason}`;
-
-  return {
-    sufficient: true,
-    skillGapReason,
-    experienceMismatchReason,
-    testPerformanceReason,
-    overallSummary: overallSummary.slice(0, 320),
-    skillGaps,
-    projectRelevanceGaps,
-    testPerformanceGaps,
-    experienceGaps,
-    actionableFeedback
-  };
-}
-
 export function meetsRecommendedHireCriteria(evaluation: CandidateEvaluation, isTopRanked: boolean) {
   const criticalSkillsVerified = evaluation.strengths.some((item) => item.toLowerCase().includes("skill"));
   return (
@@ -388,6 +329,18 @@ export function meetsRecommendedHireCriteria(evaluation: CandidateEvaluation, is
     evaluation.overallScore >= 70 &&
     criticalSkillsVerified
   );
+}
+
+export function generateRejectionReason(evaluation: CandidateEvaluation, candidateName?: string): string {
+  const name = candidateName?.trim() || "the candidate";
+  const gaps = evaluation.weaknesses.slice(0, 2);
+
+  if (gaps.length === 0) {
+    return `${name} was not selected for this role. The application scored ${evaluation.overallScore}/100 against the role's requirements, and other candidates presented a closer fit at this time.`;
+  }
+
+  const gapLine = gaps.join(" "); // each entry is already a full clause, e.g. "Missing required skills: X, Y"
+  return `${name} was not selected for this role. ${gapLine}. This assessment is based on verified skills, project evidence, and application data available at review time.`;
 }
 
 export { RECOMMENDED_HIRE_CONFIDENCE, resolveRecommendationLevel, resolveConfidenceTier };

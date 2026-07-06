@@ -1,20 +1,2 @@
-const ActivityLog = require("../models/ActivityLog");
-
-async function logActivity({
-  actorUser = null,
-  actorRole = "",
-  entityType,
-  entityId = null,
-  action,
-  metadata = null,
-  ipAddress = ""
-}) {
-  if (!entityType || !action) return;
-  try {
-    await ActivityLog.create({ actorUser, actorRole, entityType, entityId, action, metadata, ipAddress });
-  } catch {
-    // Logging must never fail user flows.
-  }
-}
-
-module.exports = { logActivity };
+/** Legacy shim — use modules/ or shared/ directly in new code */
+module.exports = require("../modules/analytics/services/activity-log.service.js");
