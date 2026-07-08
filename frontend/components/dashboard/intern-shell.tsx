@@ -2,6 +2,7 @@
 
 import { memo, useCallback, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
+import { AnimatedBackground } from "@/components/dashboard/AnimatedBackground";
 import { PortalBrandHeader } from "@/components/brand/portal-brand-header";
 import { DashboardShellHeader } from "@/components/dashboard/dashboard-shell-header";
 import { DashboardSidebarNav } from "@/components/dashboard/dashboard-sidebar-nav";
@@ -107,6 +108,7 @@ export function InternShell({ welcomeName, onLogout, children }: InternShellProp
         />
 
         <div className="relative min-w-0 flex-1 overflow-hidden">
+          <AnimatedBackground className="opacity-75" />
           <InternShellHeader
             welcomeName={welcomeName}
             notificationUnread={notificationUnread}

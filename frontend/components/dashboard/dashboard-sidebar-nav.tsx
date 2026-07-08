@@ -22,6 +22,8 @@ export type DashboardSidebarSection = {
   title: string;
   items: DashboardSidebarItem[];
   collapsible?: boolean;
+  /** Icon shown in the collapsible header. Defaults to a user icon (intern profile). */
+  collapsibleIcon?: LucideIcon;
 };
 
 type DashboardSidebarNavProps = {
@@ -114,6 +116,7 @@ function CollapsibleSidebarSection({
 }) {
   const [open, setOpen] = useState(false);
   const panelId = `sidebar-section-${slugifySectionTitle(section.title)}`;
+  const HeaderIcon = section.collapsibleIcon ?? UserCircle2;
 
   const toggle = useCallback(() => setOpen((prev) => !prev), []);
 
@@ -137,7 +140,7 @@ function CollapsibleSidebarSection({
         aria-controls={panelId}
         className="flex w-full items-center gap-2 rounded-lg px-3 py-1.5 text-left transition-colors duration-100 hover:bg-slate-100 dark:hover:bg-slate-800"
       >
-        <UserCircle2 className="h-3.5 w-3.5 shrink-0 text-slate-400 dark:text-slate-500" aria-hidden="true" />
+        <HeaderIcon className="h-3.5 w-3.5 shrink-0 text-slate-400 dark:text-slate-500" aria-hidden="true" />
         <span className="flex-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500">
           {section.title}
         </span>

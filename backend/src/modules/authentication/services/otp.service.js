@@ -2,11 +2,12 @@ const buildTransporter = require("../../../shared/config/mailer");
 const { buildEmailFromText } = require("../../../services/email-template.service");
 const { NOTIFICATION_TYPES } = require("../../../constants/notification-types");
 const { VALIDATION_RULES } = require("../../../constants/validation-rules");
+const { BRAND_NAME } = require("../../../shared/constants/brand");
 const AppError = require("../../../shared/utils/AppError");
 const logger = require("../../../shared/logger");
 
 async function sendOtpEmail({ to, otp }) {
-  const subject = "CareerSetu OTP Verification";
+  const subject = `${BRAND_NAME} OTP Verification`;
   const text = `Your verification code is ${otp}. It expires in ${VALIDATION_RULES.OTP_EXPIRY_MINUTES} minutes. Do not share this code with anyone.`;
 
   const transporter = buildTransporter();

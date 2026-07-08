@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import {
   Activity,
   BarChart3,
+  Bookmark,
   Briefcase,
   Calendar,
   CheckCircle2,
@@ -130,6 +131,7 @@ export function StatisticsCards({
   profileCompletion,
   applications,
   interviewCount,
+  savedCount = 0,
   loading
 }: {
   profile: InternProfile | null;
@@ -137,6 +139,7 @@ export function StatisticsCards({
   profileCompletion: number;
   applications: Application[];
   interviewCount: number;
+  savedCount?: number;
   loading?: boolean;
 }) {
   const offers = applications.filter((app) => OFFER_STATUSES.has(String(app.status || "").toLowerCase())).length;
@@ -149,13 +152,14 @@ export function StatisticsCards({
     { label: "Profile Completion", value: `${profileCompletion}%`, icon: CheckCircle2 },
     { label: "Applications", value: applications.length, icon: ClipboardList },
     { label: "Interviews", value: interviewCount, icon: Calendar },
-    { label: "Offers", value: offers, icon: Trophy }
+    { label: "Offers", value: offers, icon: Trophy },
+    { label: "Saved Internships", value: savedCount, icon: Bookmark }
   ];
 
   if (loading) {
     return (
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-        {Array.from({ length: 6 }).map((_, i) => (
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {Array.from({ length: 7 }).map((_, i) => (
           <Skeleton key={i} className="h-24 w-full rounded-2xl" />
         ))}
       </div>
@@ -163,7 +167,7 @@ export function StatisticsCards({
   }
 
   return (
-    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
       {stats.map((stat, idx) => (
         <ScrollReveal key={stat.label} variant="fade-up" distance={10} delayMs={idx * 40}>
           <motion.div whileHover={{ y: -3 }} transition={{ duration: 0.2 }} className={cn(cardBase, "p-4")}>

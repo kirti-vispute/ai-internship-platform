@@ -2,11 +2,8 @@
 
 import { useEffect, useLayoutEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CompanyShell } from "@/components/dashboard/company-shell";
 import { SectionPanel } from "@/components/dashboard/section-panel";
 import { Button } from "@/components/ui/button";
-import { RoleDashboardGuard } from "@/components/ui/role-dashboard-guard";
-import { logoutAuthSession } from "@/lib/api-client";
 import {
   CompanyApplication,
   CompanyInternship,
@@ -49,7 +46,7 @@ import { HiringSection, type HiringSectionFocus } from "@/components/dashboard/h
 import { CompanyDashboardHub, MatchedCandidatesView } from "@/components/dashboard/company";
 import { CompanyDashboardPageIntro, companyDashboardStyles } from "@/components/dashboard/company/company-dashboard-layout";
 import { hiringAIEngine, type InterviewScheduleSlot } from "@/lib/ai-hiring";
-import { extractScheduledInterviews, findOverlappingInterviews } from "@/lib/interview-workflow";
+import { extractScheduledInterviews, findOverlappingInterviews, type ScheduledInterviewRecord } from "@/lib/interview-workflow";
 import { useToast } from "@/components/ui/toast";
 import { ReportDownloadButton } from "@/components/reports/report-download-button";
 
@@ -121,7 +118,8 @@ const PROFILE_MODAL_VIEWS = new Set<CompanyDashboardView>([
   "hiring-pipeline"
 ]);
 
-const field = "surface-subtle px-3 py-2 text-sm";
+const field =
+  "surface-subtle px-3 py-2 text-sm transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-primary-500/60 focus:border-primary-400 disabled:opacity-50 disabled:cursor-not-allowed";
 
 function Empty({ text }: { text: string }) {
   return <div className="surface-subtle px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{text}</div>;
@@ -385,11 +383,6 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
     };
   }, [debouncedQuery, view]);
 
-  async function logout() {
-    await logoutAuthSession();
-    router.push("/auth/company");
-  }
-
   const shortlisted = useMemo(() => apps.filter((a) => normalizePipelineStatus(a.status) === "shortlisted"), [apps]);
   const isHrScoped = useMemo(() => currentUser?.companyAccountType === "hr", [currentUser?.companyAccountType]);
   const canManageRecruiters = useMemo(
@@ -623,26 +616,6 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
     }
   }
 
-  function buildRejectionNote(application: CompanyApplication): string {
-    const fallbackMatch: CompanyMatchedCandidate = {
-      internshipId: application.internship?._id || "",
-      internshipRole: application.internship?.role || "Role",
-      score: application.matchScore || 0,
-      internProfile: {
-        _id: application.intern?._id,
-        fullName: application.intern?.fullName,
-        skills: application.intern?.skills
-      }
-    };
-    const match =
-      matches.find(
-        (item) => item.internshipId === application.internship?._id && item.internProfile?._id === application.intern?._id
-      ) || fallbackMatch;
-    const internship = internships.find((item) => item._id === application.internship?._id);
-    const evaluation = hiringAIEngine.evaluateCandidate(match, application, internship);
-    return hiringAIEngine.generateRejectionReason(evaluation, application.intern?.fullName);
-  }
-
   async function applyStage(applicationId: string, status: string, note = "") {
     try {
       setSaving(true);
@@ -705,6 +678,26 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
       setSuccess("Interview round updated.");
     } catch (e) {
       setError((e as Error).message || "Failed to update interview round.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleCancelInterview(item: ScheduledInterviewRecord) {
+    try {
+      setSaving(true);
+      setError(null);
+      await updateInterviewRound(item.applicationId, item.interviewId, { status: "rejected" });
+      setApps(await fetchCompanyApplications(true));
+      pushToast({
+        title: "Interview cancelled",
+        message: `${item.candidateName || item.role}'s ${item.interviewType || "interview"} has been cancelled.`,
+        variant: "info"
+      });
+    } catch (e) {
+      const message = (e as Error).message || "Failed to cancel interview.";
+      setError(message);
+      pushToast({ title: "Cancel failed", message, variant: "error" });
     } finally {
       setSaving(false);
     }
@@ -851,6 +844,7 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
             onShortlist={handleMatchedShortlist}
             onViewResume={handleMatchedViewResume}
             onScheduleInterview={handleScheduleInterview}
+            onCancelInterview={handleCancelInterview}
           />
         );
       case "profile":
@@ -1159,57 +1153,44 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
     }
   })();
 
-  return (
-    <RoleDashboardGuard expectedRole="company">
-      <CompanyShell
-        welcomeName={profile?.companyName}
-        companyAccountType={currentUser?.companyAccountType}
-        permissions={currentUser?.permissions || []}
-        onLogout={logout}
-      >
-        {loading ? (
-          <div className="surface-muted px-4 py-3 text-sm text-slate-700 dark:text-slate-300">Loading company dashboard...</div>
-        ) : (
-          <div className="space-y-5 dashboard-stack">
-            {error && <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300">{error}</div>}
-            {success && <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300">{success}</div>}
-            {viewNode}
-            {detailApp && (
-              <ApplicantDetailsModal
-                application={detailApp}
-                onClose={() => setApplicantDetailId(null)}
-                saving={saving}
-                inputClassName={field}
-                statusDraft={statusDrafts[detailApp._id] ?? normalizeApplicantStage(detailApp.status)}
-                onStatusDraftChange={(value) => setStatusDrafts((prev) => ({ ...prev, [detailApp._id]: value }))}
-                onSaveStatus={() => {
-                  const nextStatus = statusDrafts[detailApp._id] ?? normalizeApplicantStage(detailApp.status);
-                  const note =
-                    nextStatus === "rejected" ? buildRejectionNote(detailApp) : "Status updated from hiring dashboard";
-                  applyStage(detailApp._id, nextStatus, note);
-                }}
-                interviewForm={interviewForms[detailApp._id] ?? DEFAULT_INTERVIEW_FORM}
-                onInterviewFormChange={(patch) =>
-                  setInterviewForms((prev) => ({
-                    ...prev,
-                    [detailApp._id]: { ...(prev[detailApp._id] ?? DEFAULT_INTERVIEW_FORM), ...patch }
-                  }))
-                }
-                onCreateInterview={() => createInterviewRound(detailApp._id)}
-                onUpdateRound={(roundId, status) => updateRoundStatus(detailApp._id, roundId, status)}
-                feedbackDraft={feedbackDrafts[detailApp._id] || { feedback: "", rating: 3, visibility: "candidate" }}
-                onFeedbackDraftChange={(patch) =>
-                  setFeedbackDrafts((prev) => ({
-                    ...prev,
-                    [detailApp._id]: { ...(prev[detailApp._id] || { feedback: "", rating: 3, visibility: "candidate" }), ...patch }
-                  }))
-                }
-                onSubmitFeedback={() => submitFeedback(detailApp._id)}
-              />
-            )}
-          </div>
-        )}
-      </CompanyShell>
-    </RoleDashboardGuard>
+  return loading ? (
+    <div className="surface-muted px-4 py-3 text-sm text-slate-700 dark:text-slate-300">Loading company dashboard...</div>
+  ) : (
+    <div className="space-y-5 dashboard-stack">
+      {error && <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300">{error}</div>}
+      {success && <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300">{success}</div>}
+      {viewNode}
+      {detailApp && (
+        <ApplicantDetailsModal
+          application={detailApp}
+          onClose={() => setApplicantDetailId(null)}
+          saving={saving}
+          inputClassName={field}
+          statusDraft={statusDrafts[detailApp._id] ?? normalizeApplicantStage(detailApp.status)}
+          onStatusDraftChange={(value) => setStatusDrafts((prev) => ({ ...prev, [detailApp._id]: value }))}
+          onSaveStatus={() => {
+            const nextStatus = statusDrafts[detailApp._id] ?? normalizeApplicantStage(detailApp.status);
+            applyStage(detailApp._id, nextStatus, "Status updated from hiring dashboard");
+          }}
+          interviewForm={interviewForms[detailApp._id] ?? DEFAULT_INTERVIEW_FORM}
+          onInterviewFormChange={(patch) =>
+            setInterviewForms((prev) => ({
+              ...prev,
+              [detailApp._id]: { ...(prev[detailApp._id] ?? DEFAULT_INTERVIEW_FORM), ...patch }
+            }))
+          }
+          onCreateInterview={() => createInterviewRound(detailApp._id)}
+          onUpdateRound={(roundId, status) => updateRoundStatus(detailApp._id, roundId, status)}
+          feedbackDraft={feedbackDrafts[detailApp._id] || { feedback: "", rating: 3, visibility: "candidate" }}
+          onFeedbackDraftChange={(patch) =>
+            setFeedbackDrafts((prev) => ({
+              ...prev,
+              [detailApp._id]: { ...(prev[detailApp._id] || { feedback: "", rating: 3, visibility: "candidate" }), ...patch }
+            }))
+          }
+          onSubmitFeedback={() => submitFeedback(detailApp._id)}
+        />
+      )}
+    </div>
   );
 }

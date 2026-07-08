@@ -26,6 +26,7 @@ export type ScheduledInterviewRecord = {
   meetingLink?: string;
   roomId?: string | null;
   mode?: "online" | "offline" | "";
+  notes?: string;
   rawRoundStatus?: string;
 };
 
@@ -39,6 +40,11 @@ export type CountdownParts = {
 };
 
 export const INTERVIEW_DEFAULT_DURATION_MINUTES = 60;
+
+/** Selectable durations shown in the scheduling UI. Informational only — the
+ *  fixed INTERVIEW_DEFAULT_DURATION_MINUTES constant above still drives real
+ *  overlap detection and join-window/status timing (unchanged business logic). */
+export const INTERVIEW_DURATION_OPTIONS = [30, 45, 60, 90] as const;
 
 const JOIN_WINDOW_MS = 15 * 60 * 1000;
 const LATE_JOIN_MS = 3 * 60 * 60 * 1000;
@@ -109,34 +115,79 @@ export function resolveInterviewDisplayStatus(
 }
 
 export function interviewStatusMeta(status: InterviewDisplayStatus) {
-  const map: Record<InterviewDisplayStatus, { label: string; emoji: string; className: string }> = {
+  const map: Record<InterviewDisplayStatus, { label: string; dotClassName: string; className: string }> = {
     scheduled: {
       label: "Scheduled",
-      emoji: "🟡",
+      dotClassName: "bg-amber-500 dark:bg-amber-400",
       className: "bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300"
     },
     upcoming: {
       label: "Upcoming",
-      emoji: "🔵",
+      dotClassName: "bg-sky-500 dark:bg-sky-400",
       className: "bg-sky-100 text-sky-800 dark:bg-sky-950/50 dark:text-sky-300"
     },
     in_progress: {
       label: "In Progress",
-      emoji: "🟣",
+      dotClassName: "bg-violet-500 dark:bg-violet-400 animate-pulse",
       className: "bg-violet-100 text-violet-800 dark:bg-violet-950/50 dark:text-violet-300"
     },
     completed: {
       label: "Completed",
-      emoji: "🟢",
+      dotClassName: "bg-emerald-500 dark:bg-emerald-400",
       className: "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300"
     },
     cancelled: {
       label: "Cancelled",
-      emoji: "🔴",
+      dotClassName: "bg-rose-500 dark:bg-rose-400",
       className: "bg-rose-100 text-rose-800 dark:bg-rose-950/50 dark:text-rose-300"
     }
   };
   return map[status];
+}
+
+/* Interviewer name + selected duration have no dedicated backend fields (no schema
+   change permitted), so they're captured inside the existing free-text `notes`
+   field behind an HTML-comment-style meta line, stripped from the editable
+   textarea and re-parsed for display. This keeps the feature genuinely
+   persisted through the existing API contract instead of faking it client-only. */
+const INTERVIEW_META_RE = /^<!--interview-meta interviewer="([^"]*)" duration="(\d+)"-->\n?/;
+
+export function encodeInterviewNotes(meta: { interviewer?: string; durationMinutes?: number }, notes: string): string {
+  const interviewer = (meta.interviewer || "").trim().replace(/"/g, "'");
+  const duration = meta.durationMinutes || INTERVIEW_DEFAULT_DURATION_MINUTES;
+  const cleanNotes = notes.replace(INTERVIEW_META_RE, "");
+  if (!interviewer && duration === INTERVIEW_DEFAULT_DURATION_MINUTES) return cleanNotes;
+  return `<!--interview-meta interviewer="${interviewer}" duration="${duration}"-->\n${cleanNotes}`;
+}
+
+export function decodeInterviewNotes(rawNotes?: string): {
+  interviewer: string;
+  durationMinutes: number;
+  notes: string;
+} {
+  const raw = String(rawNotes || "");
+  const match = raw.match(INTERVIEW_META_RE);
+  if (!match) return { interviewer: "", durationMinutes: INTERVIEW_DEFAULT_DURATION_MINUTES, notes: raw };
+  return {
+    interviewer: match[1] || "",
+    durationMinutes: Number(match[2]) || INTERVIEW_DEFAULT_DURATION_MINUTES,
+    notes: raw.slice(match[0].length)
+  };
+}
+
+/** Unique interviewer names previously entered by this company, most-recent first — powers the searchable combobox. */
+export function getInterviewerSuggestions(records: ScheduledInterviewRecord[]): string[] {
+  const seen = new Set<string>();
+  const ordered: string[] = [];
+  [...records]
+    .sort((a, b) => (parseInterviewDateTime(b.interviewDate, b.interviewTime)?.getTime() || 0) - (parseInterviewDateTime(a.interviewDate, a.interviewTime)?.getTime() || 0))
+    .forEach((item) => {
+      const { interviewer } = decodeInterviewNotes(item.notes);
+      if (!interviewer || seen.has(interviewer.toLowerCase())) return;
+      seen.add(interviewer.toLowerCase());
+      ordered.push(interviewer);
+    });
+  return ordered;
 }
 
 const INTERVIEW_DATE_LOCALE = "en-IN";
@@ -251,6 +302,7 @@ function extractAllFromApplication(app: Application | CompanyApplication): Sched
       meetingLink,
       roomId: extractInterviewRoomIdFromLink(meetingLink),
       mode: round.mode,
+      notes: round.notes,
       rawRoundStatus: round.status
     };
   });
@@ -353,6 +405,7 @@ export function mapApiInterviewToRecord(item: ScheduledInterview): ScheduledInte
     meetingLink: item.meetingLink,
     roomId: item.roomId ?? extractInterviewRoomIdFromLink(item.meetingLink),
     mode: item.mode,
+    notes: item.notes,
     rawRoundStatus
   };
 }

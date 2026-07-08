@@ -1,25 +1,62 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   AlertTriangle,
+  Award,
+  Briefcase,
   CalendarDays,
   Clock,
-  Info,
+  Code2,
+  Globe,
   Link2,
   MapPin,
   StickyNote,
+  Timer,
+  UserSearch,
+  Users,
   Video,
   X
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { InterviewScheduleSlot } from "@/lib/ai-hiring";
-import { INTERVIEW_DEFAULT_DURATION_MINUTES } from "@/lib/interview-workflow";
+import {
+  decodeInterviewNotes,
+  encodeInterviewNotes,
+  INTERVIEW_DEFAULT_DURATION_MINUTES,
+  INTERVIEW_DURATION_OPTIONS
+} from "@/lib/interview-workflow";
+import { InterviewerCombobox } from "./interviewer-combobox";
 
-const INTERVIEW_TYPES = ["Technical Round", "HR Round", "Final Round"] as const;
-type InterviewType = (typeof INTERVIEW_TYPES)[number];
+const INTERVIEW_TYPES: Array<{ value: string; icon: typeof Users }> = [
+  { value: "HR Round", icon: Users },
+  { value: "Technical Round", icon: Code2 },
+  { value: "Managerial Round", icon: Briefcase },
+  { value: "Final Round", icon: Award }
+];
+const INTERVIEW_TYPE_VALUES = INTERVIEW_TYPES.map((item) => item.value);
+type InterviewType = (typeof INTERVIEW_TYPE_VALUES)[number];
 type InterviewMode = "online" | "offline";
+
+/* Platform quick-select maps onto the existing mode + meetingLink fields —
+   no new API fields. The platform is re-derived from the link for display. */
+type Platform = "meet" | "zoom" | "teams" | "offline";
+
+const PLATFORMS: Array<{ value: Platform; label: string; placeholder?: string }> = [
+  { value: "meet", label: "Google Meet", placeholder: "https://meet.google.com/…" },
+  { value: "zoom", label: "Zoom", placeholder: "https://zoom.us/j/…" },
+  { value: "teams", label: "Microsoft Teams", placeholder: "https://teams.microsoft.com/…" },
+  { value: "offline", label: "Offline" }
+];
+
+export function detectPlatformFromLink(link?: string): Platform {
+  const value = String(link || "").toLowerCase();
+  if (value.includes("zoom.us")) return "zoom";
+  if (value.includes("teams.microsoft") || value.includes("teams.live")) return "teams";
+  return "meet";
+}
 
 type InterviewScheduleModalProps = {
   open: boolean;
@@ -28,6 +65,7 @@ type InterviewScheduleModalProps = {
   mode?: "schedule" | "reschedule";
   initialSlot?: Partial<InterviewScheduleSlot>;
   overlapWarning?: string | null;
+  interviewerSuggestions?: string[];
   onClose: () => void;
   onConfirm: (slot: InterviewScheduleSlot) => void | Promise<void>;
 };
@@ -42,13 +80,17 @@ export function InterviewScheduleModal({
   mode = "schedule",
   initialSlot,
   overlapWarning,
+  interviewerSuggestions = [],
   onClose,
   onConfirm
 }: InterviewScheduleModalProps) {
   const [roundType, setRoundType] = useState<InterviewType>("Technical Round");
   const [interviewDate, setInterviewDate] = useState("");
   const [interviewTime, setInterviewTime] = useState("");
+  const [durationMinutes, setDurationMinutes] = useState<number>(INTERVIEW_DEFAULT_DURATION_MINUTES);
+  const [interviewer, setInterviewer] = useState("");
   const [interviewMode, setInterviewMode] = useState<InterviewMode>("online");
+  const [platform, setPlatform] = useState<Platform>("meet");
   const [meetingLink, setMeetingLink] = useState("");
   const [location, setLocation] = useState("");
   const [notes, setNotes] = useState("");
@@ -56,13 +98,21 @@ export function InterviewScheduleModal({
 
   useEffect(() => {
     if (!open) return;
-    setRoundType((initialSlot?.roundType as InterviewType) || "Technical Round");
+    const nextType = INTERVIEW_TYPE_VALUES.includes(initialSlot?.roundType as InterviewType)
+      ? (initialSlot?.roundType as InterviewType)
+      : "Technical Round";
+    setRoundType(nextType);
     setInterviewDate(initialSlot?.interviewDate || "");
     setInterviewTime(initialSlot?.interviewTime || "");
-    setInterviewMode(initialSlot?.mode === "offline" ? "offline" : "online");
+    const offline = initialSlot?.mode === "offline";
+    setInterviewMode(offline ? "offline" : "online");
+    setPlatform(offline ? "offline" : detectPlatformFromLink(initialSlot?.meetingLink));
     setMeetingLink(initialSlot?.meetingLink || "");
     setLocation(initialSlot?.location || "");
-    setNotes(initialSlot?.notes || "");
+    const decoded = decodeInterviewNotes(initialSlot?.notes);
+    setInterviewer(decoded.interviewer);
+    setDurationMinutes(decoded.durationMinutes);
+    setNotes(decoded.notes);
     setTouched(false);
   }, [
     open,
@@ -100,8 +150,6 @@ export function InterviewScheduleModal({
 
   const isValid = Object.keys(errors).length === 0;
 
-  if (!open) return null;
-
   const isReschedule = mode === "reschedule";
 
   function handleConfirm() {
@@ -114,23 +162,35 @@ export function InterviewScheduleModal({
       mode: interviewMode,
       meetingLink: interviewMode === "online" ? meetingLink.trim() : "",
       location: interviewMode === "offline" ? location.trim() : "",
-      notes: notes.trim()
+      notes: encodeInterviewNotes({ interviewer, durationMinutes }, notes.trim())
     });
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4">
+    <AnimatePresence>
+      {open ? (
+    <motion.div
+      className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.18 }}
+    >
       <button
         type="button"
         className="absolute inset-0 bg-slate-900/50 backdrop-blur-[2px]"
         onClick={onClose}
         aria-label="Close scheduling dialog"
       />
-      <div
+      <motion.div
         role="dialog"
         aria-modal="true"
         aria-labelledby="schedule-interview-title"
         className="relative z-10 flex max-h-[92vh] w-full max-w-lg flex-col overflow-hidden rounded-t-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-900 sm:rounded-2xl"
+        initial={{ opacity: 0, scale: 0.96, y: 12 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.96, y: 12 }}
+        transition={{ duration: 0.2, ease: "easeOut" }}
       >
         {/* Header */}
         <div className="flex items-start justify-between gap-3 border-b border-slate-200 bg-gradient-to-r from-primary-600/10 via-violet-500/10 to-transparent px-5 py-4 dark:border-slate-700">
@@ -161,21 +221,29 @@ export function InterviewScheduleModal({
         <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-5">
           {/* Interview type */}
           <div>
-            <label htmlFor="interview-round-type" className="mb-1 block text-xs font-semibold text-slate-600 dark:text-slate-300">
-              Interview round
-            </label>
-            <select
-              id="interview-round-type"
-              className={fieldClass}
-              value={roundType}
-              onChange={(event) => setRoundType(event.target.value as InterviewType)}
-            >
-              {INTERVIEW_TYPES.map((type) => (
-                <option key={type} value={type}>
-                  {type}
-                </option>
-              ))}
-            </select>
+            <span className="mb-1.5 block text-xs font-semibold text-slate-600 dark:text-slate-300">Interview type</span>
+            <div className="grid grid-cols-2 gap-2" role="group" aria-label="Interview type">
+              {INTERVIEW_TYPES.map(({ value: type, icon: Icon }) => {
+                const active = roundType === type;
+                return (
+                  <button
+                    key={type}
+                    type="button"
+                    aria-pressed={active}
+                    onClick={() => setRoundType(type)}
+                    className={cn(
+                      "flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500",
+                      active
+                        ? "border-primary-500 bg-primary-50 text-primary-700 dark:border-primary-500 dark:bg-primary-950/40 dark:text-primary-200"
+                        : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
+                    )}
+                  >
+                    <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                    <span className="truncate">{type.replace(" Round", "")}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           {/* Date + time */}
@@ -211,42 +279,87 @@ export function InterviewScheduleModal({
             </div>
           </div>
 
-          {/* Duration (fixed) */}
-          <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-300">
-            <Info className="h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden />
-            <span>
-              Each interview is provisioned for <strong className="font-semibold text-slate-800 dark:text-slate-100">{INTERVIEW_DEFAULT_DURATION_MINUTES} minutes</strong>.
-            </span>
-          </div>
-
-          {/* Mode toggle */}
+          {/* Duration */}
           <div>
-            <span className="mb-1.5 block text-xs font-semibold text-slate-600 dark:text-slate-300">Interview mode</span>
-            <div className="grid grid-cols-2 gap-2" role="group" aria-label="Interview mode">
-              {([
-                { value: "online" as const, label: "Online", icon: Video },
-                { value: "offline" as const, label: "In person", icon: MapPin }
-              ]).map(({ value, label, icon: Icon }) => {
-                const active = interviewMode === value;
+            <label className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300">
+              <Timer className="h-3.5 w-3.5" aria-hidden /> Duration
+            </label>
+            <div className="grid grid-cols-4 gap-2" role="group" aria-label="Interview duration">
+              {INTERVIEW_DURATION_OPTIONS.map((minutes) => {
+                const active = durationMinutes === minutes;
                 return (
                   <button
-                    key={value}
+                    key={minutes}
                     type="button"
                     aria-pressed={active}
-                    onClick={() => setInterviewMode(value)}
+                    onClick={() => setDurationMinutes(minutes)}
                     className={cn(
-                      "flex items-center justify-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500",
+                      "rounded-lg border px-2 py-2 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500",
                       active
                         ? "border-primary-500 bg-primary-50 text-primary-700 dark:border-primary-500 dark:bg-primary-950/40 dark:text-primary-200"
                         : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
                     )}
                   >
-                    <Icon className="h-4 w-4" aria-hidden />
-                    {label}
+                    {minutes} min
                   </button>
                 );
               })}
             </div>
+            <p className="mt-1 text-xs text-slate-400">
+              Shown to your team on the interview card. Join windows and overlap checks always use the platform&apos;s standard {INTERVIEW_DEFAULT_DURATION_MINUTES}-minute slot.
+            </p>
+          </div>
+
+          {/* Interviewer */}
+          <div>
+            <label htmlFor="interview-interviewer" className="mb-1 flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300">
+              <UserSearch className="h-3.5 w-3.5" aria-hidden /> Interviewer <span className="font-normal text-slate-400">(optional)</span>
+            </label>
+            <InterviewerCombobox
+              value={interviewer}
+              onChange={setInterviewer}
+              suggestions={interviewerSuggestions}
+              placeholder="Search past interviewers or type a name…"
+            />
+          </div>
+
+          {/* Platform quick-select (maps to existing online/offline mode) */}
+          <div>
+            <span className="mb-1.5 block text-xs font-semibold text-slate-600 dark:text-slate-300">Meeting platform</span>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4" role="group" aria-label="Meeting platform">
+              {PLATFORMS.map(({ value, label }) => {
+                const active = platform === value;
+                const Icon = value === "offline" ? MapPin : Video;
+                return (
+                  <button
+                    key={value}
+                    type="button"
+                    aria-pressed={active}
+                    onClick={() => {
+                      setPlatform(value);
+                      setInterviewMode(value === "offline" ? "offline" : "online");
+                    }}
+                    className={cn(
+                      "flex items-center justify-center gap-1.5 rounded-lg border px-2 py-2 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500",
+                      active
+                        ? "border-primary-500 bg-primary-50 text-primary-700 dark:border-primary-500 dark:bg-primary-950/40 dark:text-primary-200"
+                        : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
+                    )}
+                  >
+                    <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                    <span className="truncate">{label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Timezone (informational — times are stored as entered) */}
+          <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+            <Globe className="h-3.5 w-3.5 shrink-0" aria-hidden />
+            <span>
+              Timezone: {typeof Intl !== "undefined" ? Intl.DateTimeFormat().resolvedOptions().timeZone : "local"}
+            </span>
           </div>
 
           {/* Conditional: link or location */}
@@ -259,7 +372,7 @@ export function InterviewScheduleModal({
                 id="interview-link"
                 type="url"
                 inputMode="url"
-                placeholder="https://meet.example.com/room"
+                placeholder={PLATFORMS.find((item) => item.value === platform)?.placeholder || "https://meet.example.com/room"}
                 className={cn(fieldClass, touched && errors.link && "border-rose-400 focus:border-rose-400 focus:ring-rose-400/30")}
                 value={meetingLink}
                 aria-invalid={Boolean(touched && errors.link)}
@@ -324,10 +437,12 @@ export function InterviewScheduleModal({
             className="bg-gradient-to-r from-primary-600 to-violet-600 text-white hover:from-primary-500 hover:to-violet-500"
             onClick={handleConfirm}
           >
-            {saving ? (isReschedule ? "Updating…" : "Scheduling…") : isReschedule ? "Confirm Reschedule" : "Confirm Schedule"}
+            {saving ? (isReschedule ? "Updating…" : "Scheduling…") : isReschedule ? "Confirm Reschedule" : "Schedule Interview"}
           </Button>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
+      ) : null}
+    </AnimatePresence>
   );
 }

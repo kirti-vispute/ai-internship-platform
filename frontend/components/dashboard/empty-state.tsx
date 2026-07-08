@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { AppIcon } from "@/components/icons/app-icon";
 import { EMPTY_STATE_ICONS } from "@/components/icons/empty-state-icons";
 import { BRAND_NAME } from "@/lib/brand";
+import { ScrollReveal } from "@/components/animations/ScrollReveal";
 import { cn } from "@/lib/utils";
 
 type EmptyStateProps = {
@@ -30,22 +31,24 @@ export function EmptyState({
   const IconComponent = icon || (presetKey ? EMPTY_STATE_ICONS[presetKey] : Inbox);
 
   return (
-    <div className={cn("ds-card border-dashed px-6 py-10 text-center", className)}>
-      <div className="ds-stat-icon mx-auto mb-4">
-        <AppIcon icon={IconComponent} size="lg" />
-      </div>
-      <p className="ds-h3">{title}</p>
-      {hint && <p className="ds-caption mt-1">{hint}</p>}
-      {action && <div className="mt-4 flex justify-center">{action}</div>}
-      {!action && ctaLabel && ctaHref && (
-        <div className="mt-4 flex justify-center">
-          <Button href={ctaHref} size="sm" variant="secondary">
-            {ctaLabel}
-          </Button>
+    <ScrollReveal variant="fade-up" distance={8}>
+      <div className={cn("ds-card border-dashed px-6 py-10 text-center", className)}>
+        <div className="ds-stat-icon mx-auto mb-4">
+          <AppIcon icon={IconComponent} size="lg" />
         </div>
-      )}
-      <p className="ds-label mt-4">{BRAND_NAME}</p>
-    </div>
+        <p className="ds-h3">{title}</p>
+        {hint && <p className="ds-caption mt-1">{hint}</p>}
+        {action && <div className="mt-4 flex justify-center">{action}</div>}
+        {!action && ctaLabel && ctaHref && (
+          <div className="mt-4 flex justify-center">
+            <Button href={ctaHref} size="sm" variant="secondary">
+              {ctaLabel}
+            </Button>
+          </div>
+        )}
+        <p className="ds-label mt-4">{BRAND_NAME}</p>
+      </div>
+    </ScrollReveal>
   );
 }
 

@@ -13,12 +13,12 @@ export function InterviewStatusChip({ status, className }: InterviewStatusChipPr
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold",
+        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold",
         meta.className,
         className
       )}
     >
-      <span aria-hidden>{meta.emoji}</span>
+      <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", meta.dotClassName)} aria-hidden />
       {meta.label}
     </span>
   );

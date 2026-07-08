@@ -331,16 +331,4 @@ export function meetsRecommendedHireCriteria(evaluation: CandidateEvaluation, is
   );
 }
 
-export function generateRejectionReason(evaluation: CandidateEvaluation, candidateName?: string): string {
-  const name = candidateName?.trim() || "the candidate";
-  const gaps = evaluation.weaknesses.slice(0, 2);
-
-  if (gaps.length === 0) {
-    return `${name} was not selected for this role. The application scored ${evaluation.overallScore}/100 against the role's requirements, and other candidates presented a closer fit at this time.`;
-  }
-
-  const gapLine = gaps.join(" "); // each entry is already a full clause, e.g. "Missing required skills: X, Y"
-  return `${name} was not selected for this role. ${gapLine}. This assessment is based on verified skills, project evidence, and application data available at review time.`;
-}
-
 export { RECOMMENDED_HIRE_CONFIDENCE, resolveRecommendationLevel, resolveConfidenceTier };

@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useMemo, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 type ToastVariant = "success" | "error" | "info";
@@ -40,17 +41,28 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   return (
     <ToastContext.Provider value={value}>
       {children}
-      <div className="pointer-events-none fixed bottom-4 right-4 z-[100] flex w-full max-w-sm flex-col gap-2 px-4 sm:px-0">
-        {toasts.map((toast) => (
-          <div
-            key={toast.id}
-            className={cn("pointer-events-auto rounded-xl border px-4 py-3 shadow-soft animate-fade-up", variantStyles[toast.variant])}
-            role="status"
-          >
-            <p className="text-sm font-semibold">{toast.title}</p>
-            {toast.message && <p className="mt-1 text-xs opacity-90">{toast.message}</p>}
-          </div>
-        ))}
+      <div
+        className="pointer-events-none fixed bottom-4 right-4 z-[100] flex w-full max-w-sm flex-col gap-2 px-4 sm:px-0"
+        aria-live="polite"
+        aria-atomic="false"
+      >
+        <AnimatePresence initial={false}>
+          {toasts.map((toast) => (
+            <motion.div
+              key={toast.id}
+              layout
+              initial={{ opacity: 0, y: 12, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.96, transition: { duration: 0.15, ease: "easeIn" } }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
+              className={cn("pointer-events-auto rounded-xl border px-4 py-3 shadow-soft", variantStyles[toast.variant])}
+              role="status"
+            >
+              <p className="text-sm font-semibold">{toast.title}</p>
+              {toast.message && <p className="mt-1 text-xs opacity-90">{toast.message}</p>}
+            </motion.div>
+          ))}
+        </AnimatePresence>
       </div>
     </ToastContext.Provider>
   );

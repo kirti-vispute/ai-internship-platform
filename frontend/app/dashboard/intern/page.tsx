@@ -15,6 +15,7 @@ import {
   Application,
   InAppNotification,
   InternProfile,
+  InternshipListing,
   Recommendation,
   fetchInternApplications,
   fetchInternInterviews,
@@ -22,14 +23,16 @@ import {
   fetchInternProfile,
   fetchInternProfileWithScore,
   fetchInternRecommendations,
+  fetchSavedInternships,
   peekInternApplications,
-  peekInternProfile
+  peekInternProfile,
+  peekSavedInternships
 } from "@/lib/intern-portal";
 import { mapApiInterviewsToRecords, type ScheduledInterviewRecord } from "@/lib/interview-workflow";
 import { UpcomingInterviewsWidget } from "@/components/dashboard/intern/upcoming-interviews-widget";
 import { ScheduledInterviewsPanel } from "@/components/dashboard/intern/scheduled-interviews-panel";
 import { WeaknessAnalysisPanel } from "@/components/dashboard/intern/weakness-analysis-panel";
-import { buildWeaknessOptions } from "@/lib/intern-weakness-analysis";
+import { buildWeaknessOptions, analyzeInternshipWeaknesses } from "@/lib/intern-weakness-analysis";
 import {
   AiInsightsCard,
   AtsReadinessCard,
@@ -45,6 +48,17 @@ import {
   RecommendationsCard,
   StatisticsCards
 } from "@/components/dashboard/intern/dashboard-overview-extras";
+import { CareerProgressHub } from "@/components/dashboard/intern/career-progress-hub";
+import { WeeklyAiInsights } from "@/components/dashboard/intern/weekly-ai-insights";
+import { ProgressChartsPanel } from "@/components/dashboard/intern/progress-charts-panel";
+
+function DashboardGroupHeading({ children }: { children: React.ReactNode }) {
+  return (
+    <h2 className="pt-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
+      {children}
+    </h2>
+  );
+}
 
 export default function InternDashboardOverviewPage() {
   const [profile, setProfile] = useState<InternProfile | null>(null);
@@ -53,6 +67,7 @@ export default function InternDashboardOverviewPage() {
   const [notifications, setNotifications] = useState<InAppNotification[]>([]);
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [recommendationsLoading, setRecommendationsLoading] = useState(true);
+  const [savedInternships, setSavedInternships] = useState<InternshipListing[]>([]);
   const [missingSkills, setMissingSkills] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -60,8 +75,10 @@ export default function InternDashboardOverviewPage() {
   useLayoutEffect(() => {
     const cachedProfile = peekInternProfile();
     const cachedApps = peekInternApplications();
+    const cachedSaved = peekSavedInternships();
     if (cachedProfile) setProfile(cachedProfile);
     if (cachedApps?.length) setApplications(cachedApps);
+    if (cachedSaved?.length) setSavedInternships(cachedSaved);
     if (cachedProfile || cachedApps?.length) setLoading(false);
   }, []);
 
@@ -75,11 +92,12 @@ export default function InternDashboardOverviewPage() {
       const recommendationSkills =
         loadedProfile.resume?.parsed?.skills?.length ? loadedProfile.resume.parsed.skills : loadedProfile.skills;
 
-      const [apps, interviews, recommendationList, alerts] = await Promise.all([
+      const [apps, interviews, recommendationList, alerts, saved] = await Promise.all([
         fetchInternApplications(),
         fetchInternInterviews().catch(() => []),
         fetchInternRecommendations(recommendationSkills).catch(() => []),
-        fetchInternNotifications().catch(() => ({ notifications: [], unreadCount: 0 }))
+        fetchInternNotifications().catch(() => ({ notifications: [], unreadCount: 0 })),
+        fetchSavedInternships().catch(() => [])
       ]);
 
       void fetchInternProfileWithScore()
@@ -90,6 +108,7 @@ export default function InternDashboardOverviewPage() {
       setInterviewRecords(mapApiInterviewsToRecords(interviews || []));
       setRecommendations(recommendationList || []);
       setNotifications((alerts.notifications || []).slice(0, 5));
+      setSavedInternships(saved || []);
 
       const missing = new Set<string>();
       (recommendationList || []).forEach((item) => {
@@ -114,6 +133,11 @@ export default function InternDashboardOverviewPage() {
     () => buildWeaknessOptions(recommendations, applications),
     [recommendations, applications]
   );
+
+  const topWeakness = useMemo(() => {
+    const analysis = analyzeInternshipWeaknesses(profile, weaknessOptions[0] ?? null);
+    return analysis?.weaknesses[0] ?? null;
+  }, [profile, weaknessOptions]);
 
   const profileCompletion = useMemo(() => {
     if (!profile) return 0;
@@ -176,6 +200,7 @@ export default function InternDashboardOverviewPage() {
             <>
               <DashboardHero profile={profile} analysis={profile?.resume?.analysis} profileCompletion={profileCompletion} readiness={readiness} />
 
+              <DashboardGroupHeading>Snapshot</DashboardGroupHeading>
               <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                 <AtsReadinessCard profile={profile} analysis={profile?.resume?.analysis} />
                 <AiInsightsCard profile={profile} analysis={profile?.resume?.analysis} />
@@ -183,25 +208,37 @@ export default function InternDashboardOverviewPage() {
                 <PlacementReadinessCard readiness={readiness} analysis={profile?.resume?.analysis} />
               </section>
 
-              <RecommendationsCard recommendations={recommendations} loading={recommendationsLoading} />
-
+              <DashboardGroupHeading>Key Metrics</DashboardGroupHeading>
               <StatisticsCards
                 profile={profile}
                 analysis={profile?.resume?.analysis}
                 profileCompletion={profileCompletion}
                 applications={applications}
                 interviewCount={interviewCount}
+                savedCount={savedInternships.length}
               />
+
+              <DashboardGroupHeading>Career Progress</DashboardGroupHeading>
+              <CareerProgressHub profile={profile} analysis={profile?.resume?.analysis} readiness={readiness} />
+
+              <DashboardGroupHeading>Analytics</DashboardGroupHeading>
+              <DashboardCharts applications={applications} analysis={profile?.resume?.analysis} />
+              <ProgressChartsPanel applications={applications} interviewRecords={interviewRecords} />
+
+              <DashboardGroupHeading>Weekly AI Insights</DashboardGroupHeading>
+              <WeeklyAiInsights analysis={profile?.resume?.analysis} applications={applications} topWeakness={topWeakness} />
+
+              <DashboardGroupHeading>Opportunities</DashboardGroupHeading>
+              <RecommendationsCard recommendations={recommendations} loading={recommendationsLoading} />
 
               <QuickActions />
 
+              <DashboardGroupHeading>Activity</DashboardGroupHeading>
               <ActivityTimeline
                 applications={applications}
                 interviewRecords={interviewRecords}
                 notifications={notifications}
               />
-
-              <DashboardCharts applications={applications} analysis={profile?.resume?.analysis} />
 
               <WeaknessAnalysisPanel
                 profile={profile}

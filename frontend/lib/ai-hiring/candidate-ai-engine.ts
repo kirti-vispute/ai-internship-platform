@@ -8,7 +8,6 @@ import { evaluateCandidateProjects } from "./project-evaluation-engine";
 import {
   buildMatchExplanation,
   evaluateCandidate,
-  generateRejectionReason,
   meetsRecommendedHireCriteria
 } from "./master-evaluation-engine";
 import { setRoleScoringTemplates } from "./role-scoring-config";
@@ -417,10 +416,6 @@ const hiringAIEngineCore = {
     return recommendBestCandidateInternal(jobId, input);
   },
 
-  generateRejectionReason(evaluation: RankedCandidate["evaluation"], candidateName?: string) {
-    return generateRejectionReason(evaluation, candidateName);
-  },
-
   recommendBestCandidatesByRole(input: CandidateRankingInput) {
     return getActiveInternships(input.internships)
       .map((internship) => recommendBestCandidateInternal(internship._id, input))
@@ -451,7 +446,7 @@ export type {
 } from "./types";
 
 export { evaluateCandidateProjects } from "./project-evaluation-engine";
-export { evaluateCandidate, buildMatchExplanation, generateRejectionReason } from "./master-evaluation-engine";
+export { evaluateCandidate, buildMatchExplanation } from "./master-evaluation-engine";
 export {
   DEFAULT_ROLE_TEMPLATES,
   getRoleScoringTemplates,

@@ -40,6 +40,10 @@ import { StatusBadge } from "@/components/icons/status-badge";
 import { BRANDED_EMPTY_STATES } from "@/lib/brand";
 import { AdminCertificationReview } from "@/components/dashboard/admin-certification-review";
 import { AdminHiringScoringPanel } from "@/components/dashboard/admin-hiring-scoring-panel";
+import { AdminGrowthCharts } from "@/components/dashboard/admin/admin-growth-charts";
+import { AdminRecentActivityPanel } from "@/components/dashboard/admin/admin-recent-activity-panel";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { useDebouncedValue } from "@/lib/use-debounced-value";
 
 export type AdminDashboardView =
   | "overview"
@@ -168,6 +172,25 @@ function AdminDashboardInner({ view }: { view: AdminDashboardView }) {
   const [rejectingId, setRejectingId] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState("");
 
+  const debouncedSearch = useDebouncedValue(search);
+  const debouncedCompanySearch = useDebouncedValue(companySearch);
+  const debouncedLogSearch = useDebouncedValue(logSearch);
+
+  const [companyPage, setCompanyPage] = useState(1);
+  const [internshipPage, setInternshipPage] = useState(1);
+  const [reportPage, setReportPage] = useState(1);
+  const PAGE_SIZE = 10;
+
+  const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
+
+  const [confirmAction, setConfirmAction] = useState<
+    | { type: "delete-user"; user: AdminUser }
+    | { type: "suspend-company"; company: AdminCompany }
+    | { type: "remove-internship"; internship: AdminInternship }
+    | null
+  >(null);
+
   useEffect(() => {
     if (!canAccessAdminView(view, permissions)) {
       router.replace("/dashboard/admin");
@@ -181,12 +204,13 @@ function AdminDashboardInner({ view }: { view: AdminDashboardView }) {
       try {
         // The overview needs everything; specific views fetch their own slice.
         if (view === "overview") {
-          const [m, u, c, i, r] = await Promise.all([
+          const [m, u, c, i, r, l] = await Promise.all([
             fetchAdminMetrics(force),
-            fetchAdminUsers({ limit: 50, force }),
+            fetchAdminUsers({ limit: 100, force }),
             fetchAdminCompanies({ force }),
             fetchAdminInternships(force),
-            fetchAdminReports(force)
+            fetchAdminReports(force),
+            fetchAdminActivityLogs({ page: 1, limit: 20, force })
           ]);
           setMetrics(m);
           setUsers(u.users);
@@ -194,8 +218,9 @@ function AdminDashboardInner({ view }: { view: AdminDashboardView }) {
           setCompanies(c);
           setInternships(i);
           setReports(r);
+          setLogs(l.logs || []);
         } else if (view === "users") {
-          const response = await fetchAdminUsers({ page: userPage, limit: 50, q: search, role: roleFilter, force });
+          const response = await fetchAdminUsers({ page: userPage, limit: 50, q: debouncedSearch, role: roleFilter, force });
           setUsers(response.users);
           setUserTotal(response.total);
         } else if (view === "analytics") {
@@ -203,15 +228,15 @@ function AdminDashboardInner({ view }: { view: AdminDashboardView }) {
           setCompanies(await fetchAdminCompanies({ force }));
           setInternships(await fetchAdminInternships(force));
         } else if (view === "companies") {
-          setCompanies(await fetchAdminCompanies({ q: companySearch, force }));
+          setCompanies(await fetchAdminCompanies({ q: debouncedCompanySearch, force }));
         } else if (view === "verification") {
-          setCompanies(await fetchAdminCompanies({ status: "pending", q: companySearch, force }));
+          setCompanies(await fetchAdminCompanies({ status: "pending", q: debouncedCompanySearch, force }));
         } else if (view === "internships") {
           setInternships(await fetchAdminInternships(force));
         } else if (view === "reports") {
           setReports(await fetchAdminReports(force));
         } else if (view === "activity-logs") {
-          const response = await fetchAdminActivityLogs({ page: logsPage, limit: 30, q: logSearch, force });
+          const response = await fetchAdminActivityLogs({ page: logsPage, limit: 30, q: debouncedLogSearch, force });
           setLogs(response.logs || []);
           setLogsTotal(response.total || 0);
         } else if (view === "notifications") {
@@ -227,12 +252,19 @@ function AdminDashboardInner({ view }: { view: AdminDashboardView }) {
         setLoading(false);
       }
     },
-    [view, userPage, search, roleFilter, companySearch, logsPage, logSearch]
+    [view, userPage, debouncedSearch, roleFilter, debouncedCompanySearch, logsPage, debouncedLogSearch]
   );
 
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  useEffect(() => {
+    setCompanyPage(1);
+    setInternshipPage(1);
+    setReportPage(1);
+    setSelectedUserIds(new Set());
+  }, [view]);
 
   const handleLogout = useCallback(async () => {
     await logoutAuthSession();
@@ -351,6 +383,55 @@ function AdminDashboardInner({ view }: { view: AdminDashboardView }) {
     }
   }, []);
 
+  const runConfirmedAction = useCallback(async () => {
+    if (!confirmAction) return;
+    setBulkBusy(true);
+    try {
+      if (confirmAction.type === "delete-user") {
+        await handleSoftDeleteUser(confirmAction.user);
+      } else if (confirmAction.type === "suspend-company") {
+        await handleVerify(confirmAction.company, "suspended", "Suspended by admin");
+      } else if (confirmAction.type === "remove-internship") {
+        await moderateAdminInternship(confirmAction.internship._id, { removePost: true });
+        await loadData(true);
+      }
+    } finally {
+      setBulkBusy(false);
+      setConfirmAction(null);
+    }
+  }, [confirmAction, handleSoftDeleteUser, handleVerify, loadData]);
+
+  const toggleUserSelection = useCallback((userId: string) => {
+    setSelectedUserIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(userId)) next.delete(userId);
+      else next.add(userId);
+      return next;
+    });
+  }, []);
+
+  const handleBulkUserActivation = useCallback(
+    async (isActive: boolean) => {
+      if (!canUpdateUsers || selectedUserIds.size === 0) return;
+      setBulkBusy(true);
+      try {
+        const targets = users.filter((u) => selectedUserIds.has(u._id));
+        for (const user of targets) {
+          await updateAdminUser(user._id, { isActive });
+        }
+        const response = await fetchAdminUsers({ page: userPage, limit: 50, q: debouncedSearch, role: roleFilter, force: true });
+        setUsers(response.users);
+        setUserTotal(response.total);
+        setSelectedUserIds(new Set());
+      } catch (err) {
+        setError((err as Error).message || "Bulk action failed");
+      } finally {
+        setBulkBusy(false);
+      }
+    },
+    [canUpdateUsers, selectedUserIds, users, userPage, debouncedSearch, roleFilter]
+  );
+
   const stats = useMemo(() => {
     const interns = users.filter((u) => u.role === "intern").length;
     const companyUsers = users.filter((u) => u.role === "company").length;
@@ -374,6 +455,25 @@ function AdminDashboardInner({ view }: { view: AdminDashboardView }) {
     [companies]
   );
   const filteredUsers = users;
+
+  const visibleCompanies = view === "verification" ? pendingCompanies : companies;
+  const companyTotalPages = Math.max(1, Math.ceil(visibleCompanies.length / PAGE_SIZE));
+  const pagedCompanies = useMemo(
+    () => visibleCompanies.slice((companyPage - 1) * PAGE_SIZE, companyPage * PAGE_SIZE),
+    [visibleCompanies, companyPage]
+  );
+
+  const internshipTotalPages = Math.max(1, Math.ceil(internships.length / PAGE_SIZE));
+  const pagedInternships = useMemo(
+    () => internships.slice((internshipPage - 1) * PAGE_SIZE, internshipPage * PAGE_SIZE),
+    [internships, internshipPage]
+  );
+
+  const reportTotalPages = Math.max(1, Math.ceil(reports.length / PAGE_SIZE));
+  const pagedReports = useMemo(
+    () => reports.slice((reportPage - 1) * PAGE_SIZE, reportPage * PAGE_SIZE),
+    [reports, reportPage]
+  );
 
   if (!canAccessAdminView(view, permissions)) {
     return null;
@@ -403,71 +503,101 @@ function AdminDashboardInner({ view }: { view: AdminDashboardView }) {
             <ReportDownloadButton reportKey="platform-statistics" label="Download Platform Statistics PDF" />
           </div>
           {loading ? (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <Skeleton key={i} className="h-28 w-full" />
-              ))}
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <Skeleton key={`row1-${i}`} className="h-28 w-full" />
+                ))}
+              </div>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <Skeleton key={`row2-${i}`} className="h-28 w-full" />
+                ))}
+              </div>
+              <div className="grid gap-4 lg:grid-cols-3">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <Skeleton key={`row3-${i}`} className="h-56 w-full" />
+                ))}
+              </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <SummaryStatCard title="Total Users" value={users.length} hint={`${stats.interns} interns · ${stats.companyUsers} companies`} icon={Users} />
-              <SummaryStatCard title="Companies" value={stats.totalCompanies} hint={`${stats.pending} pending verification`} icon={Building2} />
-              <SummaryStatCard title="Internships" value={stats.activeInternships} hint="Active postings on platform" icon={ClipboardList} />
-              <SummaryStatCard title="Open Reports" value={stats.openReports} hint={`${reports.length} total reports`} icon={Flag} />
-            </div>
+            <>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <SummaryStatCard title="Total Students" value={stats.totalStudents} hint="Registered intern accounts" icon={GraduationCap} />
+                <SummaryStatCard title="Total Companies" value={stats.totalCompanies} hint={`${stats.pending} pending verification`} icon={Building2} />
+                <SummaryStatCard title="Active Internships" value={stats.activeInternships} hint="Active postings on platform" icon={ClipboardList} />
+                <SummaryStatCard
+                  title="Total Applications"
+                  value="—"
+                  hint="Not exposed by the admin API yet"
+                  icon={Users}
+                />
+              </div>
+
+              <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <SummaryStatCard title="Interviews" value={stats.activeInterviews} hint="Ongoing interview pipeline" icon={Calendar} />
+                <SummaryStatCard title="Offers" value={stats.totalHires} hint="Selected or offered applications" icon={UserCheck} />
+                <SummaryStatCard title="Pending Verifications" value={stats.pending} hint="Companies awaiting approval" icon={Building2} />
+                <SummaryStatCard title="Reports" value={stats.openReports} hint={`${reports.length} total reports`} icon={Flag} />
+              </div>
+
+              <div className="mt-6">
+                <AdminGrowthCharts users={users} companies={companies} internships={internships} />
+              </div>
+
+              <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
+                <AdminRecentActivityPanel logs={logs} />
+
+                <div className="space-y-4">
+                  <Card title="Pending Verification" subtitle="Companies awaiting approval">
+                    {pendingCompanies.length === 0 ? (
+                      <EmptyState title="No pending companies" hint="All companies have been reviewed." presetKey="companies" />
+                    ) : (
+                      <ul className="space-y-2">
+                        {pendingCompanies.slice(0, 5).map((company) => (
+                          <li
+                            key={company._id}
+                            className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-3 py-2.5 dark:border-slate-700 dark:bg-slate-900/60"
+                          >
+                            <div className="min-w-0">
+                              <p className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">{company.companyName}</p>
+                              <p className="truncate text-xs text-slate-500 dark:text-slate-400">{company.companyEmail}</p>
+                            </div>
+                            <Button size="sm" href="/dashboard/admin/verification" variant="secondary">
+                              Review
+                            </Button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </Card>
+
+                  <Card title="Open Reports" subtitle="Abuse reports needing attention">
+                    {reports.filter((r) => r.status === "open").length === 0 ? (
+                      <EmptyState title="No open reports" hint="The moderation queue is clear." presetKey="reports" />
+                    ) : (
+                      <ul className="space-y-2">
+                        {reports
+                          .filter((r) => r.status === "open")
+                          .slice(0, 5)
+                          .map((report) => (
+                            <li
+                              key={report._id}
+                              className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 dark:border-slate-700 dark:bg-slate-900/60"
+                            >
+                              <p className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">
+                                {report.company?.companyName || "Unknown company"}
+                              </p>
+                              <p className="truncate text-xs text-slate-500 dark:text-slate-400">{report.reason}</p>
+                            </li>
+                          ))}
+                      </ul>
+                    )}
+                  </Card>
+                </div>
+              </div>
+            </>
           )}
-
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-            <Card title="Pending Verification" subtitle="Companies awaiting approval">
-              {loading ? (
-                <LoadingRows rows={3} />
-              ) : pendingCompanies.length === 0 ? (
-                <EmptyState title="No pending companies" hint="All companies have been reviewed." presetKey="companies" />
-              ) : (
-                <ul className="space-y-2">
-                  {pendingCompanies.slice(0, 5).map((company) => (
-                    <li
-                      key={company._id}
-                      className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-3 py-2.5 dark:border-slate-700 dark:bg-slate-900/60"
-                    >
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">{company.companyName}</p>
-                        <p className="truncate text-xs text-slate-500 dark:text-slate-400">{company.companyEmail}</p>
-                      </div>
-                      <Button size="sm" href="/dashboard/admin/verification" variant="secondary">
-                        Review
-                      </Button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </Card>
-
-            <Card title="Open Reports" subtitle="Abuse reports needing attention">
-              {loading ? (
-                <LoadingRows rows={3} />
-              ) : reports.filter((r) => r.status === "open").length === 0 ? (
-                <EmptyState title="No open reports" hint="The moderation queue is clear." presetKey="reports" />
-              ) : (
-                <ul className="space-y-2">
-                  {reports
-                    .filter((r) => r.status === "open")
-                    .slice(0, 5)
-                    .map((report) => (
-                      <li
-                        key={report._id}
-                        className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 dark:border-slate-700 dark:bg-slate-900/60"
-                      >
-                        <p className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">
-                          {report.company?.companyName || "Unknown company"}
-                        </p>
-                        <p className="truncate text-xs text-slate-500 dark:text-slate-400">{report.reason}</p>
-                      </li>
-                    ))}
-                </ul>
-              )}
-            </Card>
-          </div>
         </div>
       )}
 
@@ -506,10 +636,42 @@ function AdminDashboardInner({ view }: { view: AdminDashboardView }) {
                   Apply filters
                 </Button>
               </div>
+
+              {canUpdateUsers && selectedUserIds.size > 0 && (
+                <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-primary-200 bg-primary-50/70 px-3 py-2.5 dark:border-primary-900/50 dark:bg-primary-950/30">
+                  <span className="text-sm font-semibold text-primary-800 dark:text-primary-200">
+                    {selectedUserIds.size} user{selectedUserIds.size > 1 ? "s" : ""} selected
+                  </span>
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="secondary" disabled={bulkBusy} onClick={() => handleBulkUserActivation(true)}>
+                      Activate
+                    </Button>
+                    <Button size="sm" variant="secondary" disabled={bulkBusy} onClick={() => handleBulkUserActivation(false)}>
+                      Deactivate
+                    </Button>
+                    <Button size="sm" variant="ghost" disabled={bulkBusy} onClick={() => setSelectedUserIds(new Set())}>
+                      Clear
+                    </Button>
+                  </div>
+                </div>
+              )}
+
               <div className="overflow-x-auto">
               <table className="w-full min-w-[760px] text-left text-sm">
                 <thead>
                   <tr className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500 dark:border-slate-700 dark:text-slate-400">
+                    {canUpdateUsers && (
+                      <th className="w-10 px-3 py-2.5">
+                        <input
+                          type="checkbox"
+                          aria-label="Select all users on this page"
+                          checked={filteredUsers.length > 0 && filteredUsers.every((u) => selectedUserIds.has(u._id))}
+                          onChange={(event) => {
+                            setSelectedUserIds(event.target.checked ? new Set(filteredUsers.map((u) => u._id)) : new Set());
+                          }}
+                        />
+                      </th>
+                    )}
                     <th className="px-3 py-2.5">Email</th>
                     <th className="px-3 py-2.5">Role</th>
                     <th className="px-3 py-2.5">Admin Role</th>
@@ -521,6 +683,16 @@ function AdminDashboardInner({ view }: { view: AdminDashboardView }) {
                 <tbody>
                   {filteredUsers.map((user) => (
                     <tr key={user._id} className="border-b border-slate-100 last:border-0 dark:border-slate-800">
+                      {canUpdateUsers && (
+                        <td className="px-3 py-3">
+                          <input
+                            type="checkbox"
+                            aria-label={`Select ${user.email}`}
+                            checked={selectedUserIds.has(user._id)}
+                            onChange={() => toggleUserSelection(user._id)}
+                          />
+                        </td>
+                      )}
                       <td className="px-3 py-3 font-medium text-slate-800 dark:text-slate-100">{user.email}</td>
                       <td className="px-3 py-3">
                         <StatusBadge status={user.role} />
@@ -565,7 +737,7 @@ function AdminDashboardInner({ view }: { view: AdminDashboardView }) {
                             </>
                           )}
                           {canDeleteUsers && (
-                            <Button size="sm" variant="secondary" disabled={busyId === user._id} onClick={() => handleSoftDeleteUser(user)}>
+                            <Button size="sm" variant="secondary" disabled={busyId === user._id} onClick={() => setConfirmAction({ type: "delete-user", user })}>
                               Soft Delete
                             </Button>
                           )}
@@ -599,7 +771,10 @@ function AdminDashboardInner({ view }: { view: AdminDashboardView }) {
           <div className="flex flex-wrap gap-2">
             <input
               value={companySearch}
-              onChange={(event) => setCompanySearch(event.target.value)}
+              onChange={(event) => {
+                setCompanySearch(event.target.value);
+                setCompanyPage(1);
+              }}
               className="min-w-[220px] flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-900"
               placeholder="Search companies..."
             />
@@ -609,14 +784,15 @@ function AdminDashboardInner({ view }: { view: AdminDashboardView }) {
           </div>
           {loading ? (
             <LoadingRows />
-          ) : (view === "verification" ? pendingCompanies : companies).length === 0 ? (
+          ) : visibleCompanies.length === 0 ? (
             <EmptyState
               title={view === "verification" ? "No pending companies" : "No companies registered"}
               hint={view === "verification" ? "All companies have been reviewed." : undefined}
               presetKey="companies"
             />
           ) : (
-            (view === "verification" ? pendingCompanies : companies).map((company) => (
+            <>
+            {pagedCompanies.map((company) => (
               <Card key={company._id}>
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div className="min-w-0">
@@ -682,7 +858,7 @@ function AdminDashboardInner({ view }: { view: AdminDashboardView }) {
                         size="sm"
                         variant="secondary"
                         disabled={busyId === company._id}
-                        onClick={() => handleVerify(company, "suspended", "Suspended by admin")}
+                        onClick={() => setConfirmAction({ type: "suspend-company", company })}
                       >
                         Suspend
                       </Button>
@@ -713,7 +889,21 @@ function AdminDashboardInner({ view }: { view: AdminDashboardView }) {
                   </div>
                 )}
               </Card>
-            ))
+            ))}
+            <div className="flex items-center justify-between pt-1 text-xs text-slate-500">
+              <span>
+                Page {companyPage} of {companyTotalPages} · {visibleCompanies.length} compan{visibleCompanies.length === 1 ? "y" : "ies"}
+              </span>
+              <div className="flex gap-2">
+                <Button size="sm" variant="secondary" disabled={companyPage <= 1} onClick={() => setCompanyPage((p) => Math.max(1, p - 1))}>
+                  Previous
+                </Button>
+                <Button size="sm" variant="secondary" disabled={companyPage >= companyTotalPages} onClick={() => setCompanyPage((p) => Math.min(companyTotalPages, p + 1))}>
+                  Next
+                </Button>
+              </div>
+            </div>
+            </>
           )}
         </div>
       )}
@@ -739,7 +929,7 @@ function AdminDashboardInner({ view }: { view: AdminDashboardView }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {internships.map((internship) => (
+                  {pagedInternships.map((internship) => (
                     <tr key={internship._id} className="border-b border-slate-100 last:border-0 dark:border-slate-800">
                       <td className="px-3 py-3 font-medium text-slate-800 dark:text-slate-100">{internship.role}</td>
                       <td className="px-3 py-3 text-slate-600 dark:text-slate-300">{internship.company?.companyName || "—"}</td>
@@ -764,10 +954,7 @@ function AdminDashboardInner({ view }: { view: AdminDashboardView }) {
                           <Button
                             size="sm"
                             variant="ghost"
-                            onClick={async () => {
-                              await moderateAdminInternship(internship._id, { removePost: true });
-                              await loadData(true);
-                            }}
+                            onClick={() => setConfirmAction({ type: "remove-internship", internship })}
                           >
                             Remove
                           </Button>
@@ -777,6 +964,19 @@ function AdminDashboardInner({ view }: { view: AdminDashboardView }) {
                   ))}
                 </tbody>
               </table>
+              <div className="flex items-center justify-between pt-3 text-xs text-slate-500">
+                <span>
+                  Page {internshipPage} of {internshipTotalPages} · {internships.length} internships
+                </span>
+                <div className="flex gap-2">
+                  <Button size="sm" variant="secondary" disabled={internshipPage <= 1} onClick={() => setInternshipPage((p) => Math.max(1, p - 1))}>
+                    Previous
+                  </Button>
+                  <Button size="sm" variant="secondary" disabled={internshipPage >= internshipTotalPages} onClick={() => setInternshipPage((p) => Math.min(internshipTotalPages, p + 1))}>
+                    Next
+                  </Button>
+                </div>
+              </div>
             </div>
           )}
         </Card>
@@ -789,7 +989,8 @@ function AdminDashboardInner({ view }: { view: AdminDashboardView }) {
           ) : reports.length === 0 ? (
             <EmptyState title={BRANDED_EMPTY_STATES.reports.title} hint={BRANDED_EMPTY_STATES.reports.hint} presetKey="reports" />
           ) : (
-            reports.map((report) => (
+            <>
+            {pagedReports.map((report) => (
               <Card key={report._id}>
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div className="min-w-0">
@@ -858,7 +1059,21 @@ function AdminDashboardInner({ view }: { view: AdminDashboardView }) {
                   )}
                 </div>
               </Card>
-            ))
+            ))}
+            <div className="flex items-center justify-between pt-1 text-xs text-slate-500">
+              <span>
+                Page {reportPage} of {reportTotalPages} · {reports.length} reports
+              </span>
+              <div className="flex gap-2">
+                <Button size="sm" variant="secondary" disabled={reportPage <= 1} onClick={() => setReportPage((p) => Math.max(1, p - 1))}>
+                  Previous
+                </Button>
+                <Button size="sm" variant="secondary" disabled={reportPage >= reportTotalPages} onClick={() => setReportPage((p) => Math.min(reportTotalPages, p + 1))}>
+                  Next
+                </Button>
+              </div>
+            </div>
+            </>
           )}
         </div>
       )}
@@ -1001,6 +1216,32 @@ function AdminDashboardInner({ view }: { view: AdminDashboardView }) {
           </div>
         </Card>
       )}
+
+      <ConfirmDialog
+        open={confirmAction !== null}
+        title={
+          confirmAction?.type === "delete-user"
+            ? `Soft delete ${confirmAction.user.email}?`
+            : confirmAction?.type === "suspend-company"
+              ? `Suspend ${confirmAction.company.companyName}?`
+              : confirmAction?.type === "remove-internship"
+                ? `Remove "${confirmAction.internship.role}" posting?`
+                : ""
+        }
+        description={
+          confirmAction?.type === "delete-user"
+            ? "The account is deactivated and marked deleted. This can be reversed by reactivating the user."
+            : confirmAction?.type === "suspend-company"
+              ? "The company loses platform access until reinstated by an admin."
+              : confirmAction?.type === "remove-internship"
+                ? "This internship posting will be removed from the platform."
+                : undefined
+        }
+        confirmLabel={confirmAction?.type === "delete-user" ? "Soft Delete" : confirmAction?.type === "suspend-company" ? "Suspend" : "Remove"}
+        busy={bulkBusy}
+        onConfirm={runConfirmedAction}
+        onCancel={() => setConfirmAction(null)}
+      />
     </AdminShell>
   );
 }

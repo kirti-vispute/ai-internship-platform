@@ -10,6 +10,7 @@ const { computeResumeScore } = require("../../../services/scorer.service");
 const { buildCompanyAnalytics } = require("../../../services/company-analytics.service");
 const { applicationScopeFilter } = require("../../../services/company-access.service");
 const { USER_ROLES } = require("../../../constants/enums");
+const { BRAND_NAME, PORTAL_NAME } = require("../../../shared/constants/brand");
 
 function getParsedResumeSkills(profile) {
   const parsed = profile?.resume?.parsed || {};
@@ -268,7 +269,7 @@ async function buildPlatformStatisticsData() {
   ]);
 
   return {
-    subject: { name: "CareerSetu Platform", email: "admin@internai.local", role: "Administrator" },
+    subject: { name: PORTAL_NAME, email: "admin@internai.local", role: "Administrator" },
     statistics: {
       totalStudents,
       totalCompanies,
@@ -294,7 +295,7 @@ async function buildVerificationReportData(companyId) {
   if (!company) throw new AppError("Company not found", 404);
 
   return {
-    subject: { name: "CareerSetu Admin", email: "admin@internai.local", role: "Administrator" },
+    subject: { name: `${BRAND_NAME} Admin`, email: "admin@internai.local", role: "Administrator" },
     company: {
       name: company.companyName,
       email: company.companyEmail,

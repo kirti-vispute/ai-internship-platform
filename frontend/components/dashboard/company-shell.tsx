@@ -10,6 +10,7 @@ import {
   Download,
   FilePlus2,
   GitBranch,
+  Landmark,
   LayoutGrid,
   MessageSquare,
   Pencil,
@@ -21,7 +22,7 @@ import {
 import { AnimatedBackground } from "@/components/dashboard/AnimatedBackground";
 import { PortalBrandHeader } from "@/components/brand/portal-brand-header";
 import { DashboardShellHeader } from "@/components/dashboard/dashboard-shell-header";
-import { DashboardSidebarNav } from "@/components/dashboard/dashboard-sidebar-nav";
+import { DashboardSidebarNav, type DashboardSidebarSection } from "@/components/dashboard/dashboard-sidebar-nav";
 import { ROLE_WELCOME_LABEL, ROLE_WELCOME_TAGLINE } from "@/lib/auth-routes";
 import { AppIcon } from "@/components/icons/app-icon";
 import { FEATURE_FLAGS } from "@/constants/featureFlags";
@@ -29,17 +30,7 @@ import { useMessagingUnread } from "@/lib/use-messaging-unread";
 import { useNotificationUnread } from "@/lib/use-notification-unread";
 import { cn } from "@/lib/utils";
 
-type SidebarItem = {
-  label: string;
-  href: string;
-  icon: React.ReactNode;
-  badge?: number;
-};
-
-type SidebarSection = {
-  title: string;
-  items: SidebarItem[];
-};
+type SidebarSection = DashboardSidebarSection;
 
 type CompanyShellProps = {
   welcomeName?: string;
@@ -71,8 +62,10 @@ function buildSections({
     },
     {
       title: "Company Profile",
+      collapsible: true,
+      collapsibleIcon: Building2,
       items: [
-        { label: "Company Profile", href: "/dashboard/company/profile", icon: <AppIcon icon={Building2} /> },
+        { label: "Company Profile", href: "/dashboard/company/profile", icon: <AppIcon icon={Landmark} /> },
         { label: "Edit Company Profile", href: "/dashboard/company/profile/edit", icon: <AppIcon icon={Pencil} /> },
         { label: "Verification Status", href: "/dashboard/company/profile/verification", icon: <AppIcon icon={ShieldCheck} /> }
       ]

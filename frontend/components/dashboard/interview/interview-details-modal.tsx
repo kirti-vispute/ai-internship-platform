@@ -1,12 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CalendarClock, Check, Copy, Download, CalendarPlus, MapPin, MessageSquare, X } from "lucide-react";
+import { CalendarClock, Check, Copy, Download, CalendarPlus, MapPin, MessageSquare, StickyNote, UserRound, X } from "lucide-react";
 import type { ScheduledInterviewRecord } from "@/lib/interview-workflow";
-import {
-  formatInterviewDateTime,
-  INTERVIEW_DEFAULT_DURATION_MINUTES
-} from "@/lib/interview-workflow";
+import { decodeInterviewNotes, formatInterviewDateTime } from "@/lib/interview-workflow";
 import { downloadInterviewIcs, openGoogleCalendarForInterview } from "@/lib/interview-calendar-export";
 import { InterviewJoinButton } from "@/components/dashboard/interview/interview-join-button";
 import { formatInterviewJoinHint, resolveInterviewJoinHref } from "@/lib/interview-join";
@@ -47,6 +44,7 @@ export function InterviewDetailsModal({
 
   const joinHint = formatInterviewJoinHint(interview);
   const joinHref = resolveInterviewJoinHref(interview);
+  const { interviewer, durationMinutes, notes } = decodeInterviewNotes(interview.notes);
 
   async function copyMeetingLink() {
     if (!joinHref) return;
@@ -103,7 +101,7 @@ export function InterviewDetailsModal({
               <p className="text-slate-600 dark:text-slate-300">
                 {formatInterviewDateTime(interview.interviewDate, interview.interviewTime)}
               </p>
-              <p className="mt-0.5 text-xs text-slate-500">Duration: {INTERVIEW_DEFAULT_DURATION_MINUTES} minutes</p>
+              <p className="mt-0.5 text-xs text-slate-500">Duration: {durationMinutes} minutes</p>
               {joinHint ? <p className="mt-1 text-xs text-primary-700 dark:text-primary-300">{joinHint}</p> : null}
             </div>
           </div>
@@ -113,6 +111,24 @@ export function InterviewDetailsModal({
               <div>
                 <p className="font-medium">Mode</p>
                 <p className="capitalize text-slate-600 dark:text-slate-300">{interview.mode}</p>
+              </div>
+            </div>
+          ) : null}
+          {interviewer ? (
+            <div className="flex items-start gap-3 text-sm text-slate-700 dark:text-slate-200">
+              <UserRound className="mt-0.5 h-4 w-4 shrink-0 text-primary-600 dark:text-primary-400" />
+              <div>
+                <p className="font-medium">Interviewer</p>
+                <p className="text-slate-600 dark:text-slate-300">{interviewer}</p>
+              </div>
+            </div>
+          ) : null}
+          {notes ? (
+            <div className="flex items-start gap-3 text-sm text-slate-700 dark:text-slate-200">
+              <StickyNote className="mt-0.5 h-4 w-4 shrink-0 text-primary-600 dark:text-primary-400" />
+              <div>
+                <p className="font-medium">Notes</p>
+                <p className="whitespace-pre-wrap text-slate-600 dark:text-slate-300">{notes}</p>
               </div>
             </div>
           ) : null}

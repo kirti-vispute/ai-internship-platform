@@ -1,6 +1,7 @@
 "use client";
 
-import { memo, useCallback, useEffect, useMemo, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   AlertCircle,
   Award,
@@ -53,6 +54,12 @@ type InterviewCalendarProps = {
   applications?: Application[] | CompanyApplication[];
   interviewRecords?: ScheduledInterviewRecord[];
   audience?: Audience;
+};
+
+const calendarSlideVariants = {
+  enter: (dir: 1 | -1) => ({ opacity: 0, x: dir * 16 }),
+  center: { opacity: 1, x: 0 },
+  exit: (dir: 1 | -1) => ({ opacity: 0, x: -dir * 16 })
 };
 
 const EMPTY_ENTRIES: CalendarDayEntry[] = [];
@@ -167,7 +174,7 @@ function EventCard({
     <button
       type="button"
       onClick={() => onSelect(event)}
-      className="group flex w-full items-stretch gap-0 overflow-hidden rounded-xl border border-slate-200 bg-white text-left transition duration-150 hover:border-primary-300 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:border-slate-700 dark:bg-slate-900 dark:hover:border-primary-800"
+      className="group flex w-full items-stretch gap-0 overflow-hidden rounded-xl border border-slate-200 bg-white text-left transition-[transform,box-shadow,border-color] duration-150 hover:-translate-y-px hover:border-primary-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:border-slate-700 dark:bg-slate-900 dark:hover:border-primary-800"
     >
       <span className={cn("w-1 shrink-0", accent.bar)} aria-hidden />
       <span className="flex min-w-0 flex-1 items-start gap-3 px-3 py-2.5">
@@ -229,9 +236,9 @@ const MonthDayCell = memo(function MonthDayCell({
     <div
       role="gridcell"
       className={cn(
-        "group relative flex min-h-[104px] flex-col gap-1 border-b border-r border-slate-100 p-1.5 transition-colors duration-150 dark:border-slate-800",
+        "group relative flex min-h-[104px] flex-col gap-1 border-b border-r border-slate-100 p-1.5 transition-colors duration-150 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-900/40",
         !inMonth && "bg-slate-50/60 dark:bg-slate-950/40",
-        isToday && "bg-primary-50/40 dark:bg-primary-950/20",
+        isToday && "bg-primary-50/40 dark:bg-primary-950/30",
         isSelected && "ring-2 ring-inset ring-primary-400 dark:ring-primary-600"
       )}
     >
@@ -419,27 +426,32 @@ export function InterviewCalendar({ applications = [], interviewRecords, audienc
     });
   }, []);
 
-  const goToday = useCallback(() => setCursor(new Date()), []);
-  const stepBackward = useCallback(
-    () =>
-      setCursor((current) => {
-        const next = new Date(current);
-        if (view === "month") next.setMonth(current.getMonth() - 1);
-        else next.setDate(current.getDate() - 7);
-        return next;
-      }),
-    [view]
-  );
-  const stepForward = useCallback(
-    () =>
-      setCursor((current) => {
-        const next = new Date(current);
-        if (view === "month") next.setMonth(current.getMonth() + 1);
-        else next.setDate(current.getDate() + 7);
-        return next;
-      }),
-    [view]
-  );
+const directionRef = useRef<1 | -1>(1);
+
+  const goToday = useCallback(() => {
+    setCursor((current) => {
+      directionRef.current = new Date() >= current ? 1 : -1;
+      return new Date();
+    });
+  }, []);
+  const stepBackward = useCallback(() => {
+    directionRef.current = -1;
+    setCursor((current) => {
+      const next = new Date(current);
+      if (view === "month") next.setMonth(current.getMonth() - 1);
+      else next.setDate(current.getDate() - 7);
+      return next;
+    });
+  }, [view]);
+  const stepForward = useCallback(() => {
+    directionRef.current = 1;
+    setCursor((current) => {
+      const next = new Date(current);
+      if (view === "month") next.setMonth(current.getMonth() + 1);
+      else next.setDate(current.getDate() + 7);
+      return next;
+    });
+  }, [view]);
 
   const selectEvent = useCallback((event: ScheduledInterviewRecord) => setSelected(event), []);
   const openDay = useCallback((dateKey: string) => setDayModalKey(dateKey), []);
@@ -482,14 +494,21 @@ export function InterviewCalendar({ applications = [], interviewRecords, audienc
                 aria-selected={view === mode}
                 onClick={() => setView(mode)}
                 className={cn(
-                  "inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 sm:flex-none",
+                  "relative inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 sm:flex-none",
                   view === mode
-                    ? "bg-primary-600 text-white shadow-sm"
+                    ? "text-white"
                     : "text-slate-600 hover:bg-white hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100"
                 )}
               >
-                <Icon className="h-3.5 w-3.5" aria-hidden />
-                {label}
+                {view === mode ? (
+                  <motion.span
+                    layoutId="calendar-view-pill"
+                    className="absolute inset-0 rounded-lg bg-primary-600 shadow-sm"
+                    transition={{ type: "spring", stiffness: 420, damping: 34 }}
+                  />
+                ) : null}
+                <Icon className="relative h-3.5 w-3.5" aria-hidden />
+                <span className="relative">{label}</span>
               </button>
             ))}
           </div>
@@ -581,11 +600,19 @@ export function InterviewCalendar({ applications = [], interviewRecords, audienc
           showSkeleton ? (
             <CalendarSkeleton />
           ) : (
-            <div
-              className="overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-700"
-              role="grid"
-              aria-label={`${monthLabel} ${cursor.getFullYear()}`}
-            >
+            <AnimatePresence mode="popLayout" initial={false} custom={directionRef.current}>
+              <motion.div
+                key={`${cursor.getFullYear()}-${cursor.getMonth()}`}
+                custom={directionRef.current}
+                variants={calendarSlideVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{ duration: 0.18, ease: "easeOut" }}
+                className="overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-700"
+                role="grid"
+                aria-label={`${monthLabel} ${cursor.getFullYear()}`}
+              >
               <div className="grid grid-cols-7 border-b border-slate-200 bg-slate-50 text-center text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500 dark:border-slate-700 dark:bg-slate-900/60">
                 {WEEKDAYS.map((label) => (
                   <div key={label} role="columnheader" className="px-2 py-2">
@@ -613,7 +640,8 @@ export function InterviewCalendar({ applications = [], interviewRecords, audienc
                   );
                 })}
               </div>
-            </div>
+              </motion.div>
+            </AnimatePresence>
           )
         ) : null}
 
@@ -622,7 +650,17 @@ export function InterviewCalendar({ applications = [], interviewRecords, audienc
           showSkeleton ? (
             <CalendarSkeleton />
           ) : (
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-7">
+            <AnimatePresence mode="popLayout" initial={false} custom={directionRef.current}>
+              <motion.div
+                key={toLocalDateKey(weekStart)}
+                custom={directionRef.current}
+                variants={calendarSlideVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{ duration: 0.18, ease: "easeOut" }}
+                className="grid gap-3 sm:grid-cols-2 lg:grid-cols-7"
+              >
               {weekDays.map((day) => {
                 const dayKey = toLocalDateKey(day);
                 const events = eventsForDay(day);
@@ -681,7 +719,8 @@ export function InterviewCalendar({ applications = [], interviewRecords, audienc
                   </div>
                 );
               })}
-            </div>
+              </motion.div>
+            </AnimatePresence>
           )
         ) : null}
 
