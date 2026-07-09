@@ -1,6 +1,10 @@
 const { COMPANY_ACCOUNT_TYPES } = require("../../../constants/enums");
 const { PERMISSION_KEYS } = require("../../../constants/roles");
 const AppError = require("../../../shared/utils/AppError");
+const {
+  ALL_SIDEBAR_MODULE_KEYS,
+  HR_DEFAULT_SIDEBAR_MODULES
+} = require("../../../constants/sidebar-modules");
 
 /** @typedef {"hr" | "executive"} CompanyAccessTier */
 
@@ -115,6 +119,16 @@ function assertCanUpdateCompanyProfile(user) {
   }
 }
 
+function resolveEffectiveSidebarModules(user = {}) {
+  if (isCompanyAdminUser(user)) return [...ALL_SIDEBAR_MODULE_KEYS];
+  if (Array.isArray(user.sidebarModules)) return user.sidebarModules;
+  return [...HR_DEFAULT_SIDEBAR_MODULES];
+}
+
+function hasSidebarModule(user = {}, moduleKey) {
+  return resolveEffectiveSidebarModules(user).includes(moduleKey);
+}
+
 function buildListMeta(user = {}) {
   const tier = getAccessTier(user);
   return {
@@ -144,5 +158,7 @@ module.exports = {
   assertExecutiveAccess,
   assertCanPostInternships,
   assertCanUpdateCompanyProfile,
-  buildListMeta
+  buildListMeta,
+  resolveEffectiveSidebarModules,
+  hasSidebarModule
 };

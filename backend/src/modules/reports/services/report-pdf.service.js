@@ -54,7 +54,7 @@ function drawBrandMark(doc, x, y, size = 28) {
   doc.save();
   doc.roundedRect(x, y, size, size, 6).fill(COLORS.primary);
   doc.fillColor("#ffffff").font("Helvetica-Bold").fontSize(size * 0.38);
-  doc.text("CS", x + size * 0.18, y + size * 0.28, { width: size * 0.64, align: "center" });
+  doc.text("IA", x + size * 0.18, y + size * 0.28, { width: size * 0.64, align: "center" });
   doc.restore();
 }
 

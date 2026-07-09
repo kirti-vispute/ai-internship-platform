@@ -2,7 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import type { CompanyApplication, CompanyInternship, CompanyMatchedCandidate } from "@/lib/company-portal";
+import type { CompanyApplication, CompanyInternship, CompanyMatchedCandidate, CompanyCurrentUser } from "@/lib/company-portal";
+import { hasSidebarModule, SIDEBAR_MODULE_KEYS } from "@/lib/company-portal";
 import type { InterviewScheduleSlot } from "@/lib/ai-hiring";
 import { RecentMessagesWidget } from "@/components/dashboard/recent-messages-widget";
 import { ShortlistPanel } from "@/components/dashboard/hiring/shortlist-panel";
@@ -48,6 +49,7 @@ type CompanyDashboardHubProps = {
   matches: CompanyMatchedCandidate[];
   shortlistedCount: number;
   isHrScoped: boolean;
+  currentUser?: CompanyCurrentUser | null;
   saving: boolean;
   canAssign: boolean;
   recruiters: RecruiterOption[];
@@ -69,6 +71,7 @@ export function CompanyDashboardHub({
   matches,
   shortlistedCount,
   isHrScoped,
+  currentUser,
   saving,
   canAssign,
   recruiters,
@@ -120,7 +123,13 @@ export function CompanyDashboardHub({
     <>
       <div className={companyDashboardStyles.pageStack}>
         <CompanyDashboardPageIntro
-          title="Company Dashboard"
+          title={
+            isHrScoped
+              ? "Company HR Dashboard"
+              : currentUser?.companyAccountType === "ceo"
+                ? "Company CEO Dashboard"
+                : "Company Dashboard"
+          }
           subtitle={
             isHrScoped
               ? "Your assigned recruitment workspace."
@@ -184,15 +193,19 @@ export function CompanyDashboardHub({
                 onScheduleInterview={(applicationId, candidateName) => setScheduleTarget({ applicationId, candidateName })}
               />
 
-              <InterviewSchedulingPanel
-                applications={applications}
-                saving={saving}
-                onViewProfile={onOpenProfile}
-                onScheduleInterview={setScheduleTarget}
-                onCancelInterview={onCancelInterview}
-              />
+              {hasSidebarModule(currentUser, SIDEBAR_MODULE_KEYS.INTERVIEW_SCHEDULING) && (
+                <InterviewSchedulingPanel
+                  applications={applications}
+                  saving={saving}
+                  onViewProfile={onOpenProfile}
+                  onScheduleInterview={setScheduleTarget}
+                  onCancelInterview={onCancelInterview}
+                />
+              )}
 
-              <InterviewCalendar applications={applications} audience="company" />
+              {hasSidebarModule(currentUser, SIDEBAR_MODULE_KEYS.INTERVIEW_CALENDAR) && (
+                <InterviewCalendar applications={applications} audience="company" />
+              )}
 
               <RoleHiringIntelligencePanel
                 matches={matches}

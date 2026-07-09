@@ -23,7 +23,114 @@ export type CompanyCurrentUser = {
   email: string;
   companyAccountType: "owner" | "hr" | "ceo";
   permissions: string[];
+  sidebarModules: string[];
 };
+
+/**
+ * Sidebar/permission module registry — mirrors
+ * backend/src/modules/companies/constants/sidebar-modules.js.
+ * `reserved: true` = key exists for future-proofing, no page wired up yet.
+ * `executiveOnly: true` = toggling this for an HR only grants read-only
+ * access; account creation/deletion/permission-editing stays CEO/Owner-only.
+ */
+export const SIDEBAR_MODULE_KEYS = {
+  DASHBOARD: "dashboard",
+  INTERNSHIPS: "internships",
+  APPLICATIONS: "applications",
+  CANDIDATE_SEARCH: "candidate_search",
+  SAVED_CANDIDATES: "saved_candidates",
+  INTERVIEW_SCHEDULING: "interview_scheduling",
+  INTERVIEW_CALENDAR: "interview_calendar",
+  MESSAGES: "messages",
+  ANALYTICS: "analytics",
+  AI_INSIGHTS: "ai_insights",
+  HIRING_REPORTS: "hiring_reports",
+  COMPANY_PROFILE: "company_profile",
+  VERIFICATION_STATUS: "verification_status",
+  HR_MANAGEMENT: "hr_management",
+  TEAM_MEMBERS: "team_members",
+  SETTINGS: "settings"
+} as const;
+
+export type SidebarModuleKey = (typeof SIDEBAR_MODULE_KEYS)[keyof typeof SIDEBAR_MODULE_KEYS];
+
+export type SidebarModuleRegistryEntry = {
+  key: SidebarModuleKey;
+  label: string;
+  group: string;
+  reserved?: boolean;
+  executiveOnly?: boolean;
+  description?: string;
+};
+
+export const SIDEBAR_MODULE_DESCRIPTIONS: Record<SidebarModuleKey, string> = {
+  dashboard: "Dashboard Overview page, including the Interview Scheduling widget.",
+  internships: "Active Internships listing.",
+  applications: "Applicants, Shortlisted, and Hiring Pipeline views.",
+  candidate_search: "Search all candidates on the platform.",
+  saved_candidates: "Bookmarked candidate shortlist.",
+  interview_scheduling: "Schedule and manage interview rounds from the dashboard.",
+  interview_calendar: "Calendar view of scheduled interviews on the dashboard.",
+  messages: "In-app messaging with candidates.",
+  analytics: "Company hiring analytics and recruiter performance.",
+  ai_insights: "AI-matched candidate recommendations.",
+  hiring_reports: "Feedback, hiring notes, and downloadable reports.",
+  company_profile: "View and edit the company profile.",
+  verification_status: "Company verification status page.",
+  hr_management: "Read-only team roster. Creating, deleting, or editing HR permissions always stays CEO/Owner-only.",
+  team_members: "Read-only team roster (same view as HR Management).",
+  settings: "Reserved for a future Company Settings page."
+};
+
+export const SIDEBAR_MODULE_REGISTRY: SidebarModuleRegistryEntry[] = [
+  { key: SIDEBAR_MODULE_KEYS.DASHBOARD, label: "Dashboard", group: "Dashboard" },
+  { key: SIDEBAR_MODULE_KEYS.INTERNSHIPS, label: "Internships", group: "Recruitment" },
+  { key: SIDEBAR_MODULE_KEYS.APPLICATIONS, label: "Applications", group: "Recruitment" },
+  { key: SIDEBAR_MODULE_KEYS.CANDIDATE_SEARCH, label: "Candidate Search", group: "Recruitment" },
+  { key: SIDEBAR_MODULE_KEYS.SAVED_CANDIDATES, label: "Saved Candidates", group: "Recruitment" },
+  { key: SIDEBAR_MODULE_KEYS.INTERVIEW_SCHEDULING, label: "Interview Scheduling", group: "Interviews" },
+  { key: SIDEBAR_MODULE_KEYS.INTERVIEW_CALENDAR, label: "Interview Calendar", group: "Interviews" },
+  { key: SIDEBAR_MODULE_KEYS.MESSAGES, label: "Messages", group: "Messaging" },
+  { key: SIDEBAR_MODULE_KEYS.ANALYTICS, label: "Analytics", group: "Analytics" },
+  { key: SIDEBAR_MODULE_KEYS.AI_INSIGHTS, label: "AI Insights", group: "Analytics" },
+  { key: SIDEBAR_MODULE_KEYS.HIRING_REPORTS, label: "Hiring Reports", group: "Analytics" },
+  { key: SIDEBAR_MODULE_KEYS.COMPANY_PROFILE, label: "Company Profile", group: "Company" },
+  { key: SIDEBAR_MODULE_KEYS.VERIFICATION_STATUS, label: "Verification Status", group: "Company" },
+  { key: SIDEBAR_MODULE_KEYS.HR_MANAGEMENT, label: "HR Management", group: "Team", executiveOnly: true },
+  { key: SIDEBAR_MODULE_KEYS.TEAM_MEMBERS, label: "Team Members", group: "Team", executiveOnly: true },
+  { key: SIDEBAR_MODULE_KEYS.SETTINGS, label: "Settings", group: "Settings", reserved: true }
+];
+
+export const HR_DEFAULT_SIDEBAR_MODULES: SidebarModuleKey[] = [
+  SIDEBAR_MODULE_KEYS.DASHBOARD,
+  SIDEBAR_MODULE_KEYS.INTERNSHIPS,
+  SIDEBAR_MODULE_KEYS.APPLICATIONS,
+  SIDEBAR_MODULE_KEYS.CANDIDATE_SEARCH,
+  SIDEBAR_MODULE_KEYS.SAVED_CANDIDATES,
+  SIDEBAR_MODULE_KEYS.INTERVIEW_SCHEDULING,
+  SIDEBAR_MODULE_KEYS.INTERVIEW_CALENDAR,
+  SIDEBAR_MODULE_KEYS.MESSAGES,
+  SIDEBAR_MODULE_KEYS.ANALYTICS,
+  SIDEBAR_MODULE_KEYS.AI_INSIGHTS,
+  SIDEBAR_MODULE_KEYS.HIRING_REPORTS,
+  SIDEBAR_MODULE_KEYS.COMPANY_PROFILE,
+  SIDEBAR_MODULE_KEYS.VERIFICATION_STATUS
+];
+
+type SidebarModuleAccessUser = {
+  companyAccountType?: CompanyCurrentUser["companyAccountType"];
+  sidebarModules?: string[];
+};
+
+export function isCompanyExecutive(user?: SidebarModuleAccessUser | null) {
+  return user?.companyAccountType === "owner" || user?.companyAccountType === "ceo";
+}
+
+export function hasSidebarModule(user: SidebarModuleAccessUser | null | undefined, moduleKey: SidebarModuleKey) {
+  if (!user) return false;
+  if (isCompanyExecutive(user)) return true;
+  return (user.sidebarModules || HR_DEFAULT_SIDEBAR_MODULES).includes(moduleKey);
+}
 
 export type CompanyInternship = {
   _id: string;
@@ -224,7 +331,7 @@ export async function updateCompanyProfile(payload: Partial<CompanyProfile>) {
   const cached = getCache<{ profile: CompanyProfile; currentUser: CompanyCurrentUser }>("company:profile");
   setCache("company:profile", {
     profile: response.profile,
-    currentUser: cached?.currentUser || { _id: "", email: "", companyAccountType: "owner", permissions: [] }
+    currentUser: cached?.currentUser || { _id: "", email: "", companyAccountType: "owner", permissions: [], sidebarModules: [] }
   });
   return response.profile;
 }
@@ -245,6 +352,7 @@ export type CompanyHrUser = {
   email: string;
   isActive: boolean;
   permissions: string[];
+  sidebarModules: string[];
   assignedCandidates: number;
   assignedInternships: number;
   performanceMetrics: CompanyHrPerformance;
@@ -294,6 +402,7 @@ export async function createCompanyHrUser(payload: {
   email: string;
   password: string;
   permissions?: string[];
+  sidebarModules?: string[];
 }) {
   const response = await apiRequest<{ message: string; hrUser: CompanyHrUser }>("/api/company/hr/create", {
     method: "POST",
@@ -313,12 +422,12 @@ export async function deleteCompanyHrUser(hrId: string) {
   return response;
 }
 
-export async function updateCompanyHrPermissions(hrId: string, permissions: string[]) {
-  const response = await apiRequest<{ message: string; hrUser: { id: string; permissions: string[] } }>(
+export async function updateCompanyHrPermissions(hrId: string, permissions: string[], sidebarModules?: string[]) {
+  const response = await apiRequest<{ message: string; hrUser: { id: string; permissions: string[]; sidebarModules: string[] } }>(
     `/api/company/hr/${hrId}/permissions`,
     {
       method: "PATCH",
-      body: JSON.stringify({ permissions })
+      body: JSON.stringify({ permissions, sidebarModules })
     }
   );
   cacheStore.delete("company:hr-insights");

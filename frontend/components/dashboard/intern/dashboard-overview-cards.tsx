@@ -26,7 +26,6 @@ export type ReadinessTone = "green" | "amber" | "red";
 export type Readiness = {
   score: number;
   tone: ReadinessTone;
-  emoji: string;
   label: string;
 };
 
@@ -38,6 +37,12 @@ const READINESS_STYLES: Record<ReadinessTone, string> = {
   red: "border-rose-200/80 bg-rose-50/90 text-rose-700 dark:border-rose-800/50 dark:bg-rose-950/40 dark:text-rose-300"
 };
 
+const READINESS_DOT: Record<ReadinessTone, string> = {
+  green: "bg-emerald-500 dark:bg-emerald-400",
+  amber: "bg-amber-500 dark:bg-amber-400",
+  red: "bg-rose-500 dark:bg-rose-400"
+};
+
 const READINESS_BAR: Record<ReadinessTone, string> = {
   green: "from-emerald-400 to-emerald-600",
   amber: "from-amber-400 to-amber-600",
@@ -47,9 +52,9 @@ const READINESS_BAR: Record<ReadinessTone, string> = {
 /** Reuses the backend-computed recruiterReadiness composite score (already ATS/skill/project-weighted) as the single source of truth for readiness across Hero + Placement Readiness card. */
 export function getPlacementReadiness(analysis: ResumeAnalysis | null | undefined, fallbackScore = 0): Readiness {
   const score = Math.round(analysis?.compositeScores?.recruiterReadiness ?? analysis?.overallScore ?? fallbackScore);
-  if (score >= 75) return { score, tone: "green", emoji: "\u{1F7E2}", label: "Placement Ready" };
-  if (score >= 50) return { score, tone: "amber", emoji: "\u{1F7E1}", label: "Almost Ready" };
-  return { score, tone: "red", emoji: "\u{1F534}", label: "Needs Improvement" };
+  if (score >= 75) return { score, tone: "green", label: "Placement Ready" };
+  if (score >= 50) return { score, tone: "amber", label: "Almost Ready" };
+  return { score, tone: "red", label: "Needs Improvement" };
 }
 
 export function ReadinessBadge({ readiness, className }: { readiness: Readiness; className?: string }) {
@@ -61,7 +66,7 @@ export function ReadinessBadge({ readiness, className }: { readiness: Readiness;
         className
       )}
     >
-      <span aria-hidden>{readiness.emoji}</span>
+      <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", READINESS_DOT[readiness.tone])} aria-hidden />
       {readiness.label}
     </span>
   );
@@ -121,7 +126,7 @@ export function DashboardHero({
       <motion.div
         whileHover={{ y: -2 }}
         transition={{ duration: 0.2, ease: "easeOut" }}
-        className="rounded-2xl border border-primary-200/60 bg-gradient-to-br from-primary-50/90 via-white to-violet-50/70 p-6 shadow-sm dark:border-primary-900/40 dark:from-primary-950/30 dark:via-slate-900 dark:to-violet-950/20"
+        className="rounded-2xl border border-primary-200/60 bg-gradient-to-br from-primary-50/90 via-white to-violet-50/70 p-6 shadow-[0_1px_2px_rgba(0,0,0,0.16),0_10px_28px_-14px_rgba(0,0,0,0.4)] dark:border-primary-900/40 dark:from-primary-950/30 dark:via-slate-900 dark:to-violet-950/20"
       >
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-4">

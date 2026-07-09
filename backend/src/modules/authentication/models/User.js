@@ -92,6 +92,10 @@ const userSchema = new mongoose.Schema(
     hrCustomPermissions: {
       type: [String],
       default: []
+    },
+    sidebarModules: {
+      type: [String],
+      default: undefined
     }
   },
   { timestamps: true }

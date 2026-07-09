@@ -10,10 +10,12 @@ const allowRoles = require("../../../shared/middleware/role.middleware");
 const {
   requireCanPostInternship,
   requireCanUpdateCompanyProfile,
-  requireManageRecruiters,
   requireCeoHrManagement,
-  requireAssignRecruiters
+  requireAssignRecruiters,
+  requireSidebarModule,
+  requireViewRecruiters
 } = require("../../../shared/middleware/company-access.middleware");
+const { SIDEBAR_MODULE_KEYS } = require("../../../constants/sidebar-modules");
 
 const router = express.Router();
 
@@ -33,7 +35,11 @@ router.post(
 );
 
 router.get("/internships/:id/applicants", companyController.getApplicantsForInternship);
-router.get("/internships/:id/matched-candidates", companyController.getAiMatchedCandidates);
+router.get(
+  "/internships/:id/matched-candidates",
+  requireSidebarModule(SIDEBAR_MODULE_KEYS.AI_INSIGHTS),
+  companyController.getAiMatchedCandidates
+);
 router.get("/applications", companyController.getAllApplications);
 router.get("/interns/:internProfileId/portfolio", portfolioController.getInternPortfolioSummary);
 
@@ -52,18 +58,30 @@ router.post("/hr/create", requireCeoHrManagement(), companyHrController.createHr
 router.delete("/hr/:id", requireCeoHrManagement(), companyHrController.deleteHr);
 router.patch("/hr/:id/permissions", requireCeoHrManagement(), companyHrController.patchHrPermissions);
 
-router.get("/recruiters", requireManageRecruiters(), companyController.getRecruiters);
+router.get("/recruiters", requireViewRecruiters(), companyController.getRecruiters);
 router.post("/recruiters", requireCeoHrManagement(), companyHrController.createHr);
 router.delete("/recruiters/:userId", requireCeoHrManagement(), companyHrController.deleteHr);
-router.get("/analytics", companyController.getCompanyAnalytics);
+router.get("/analytics", requireSidebarModule(SIDEBAR_MODULE_KEYS.ANALYTICS), companyController.getCompanyAnalytics);
 router.get("/hiring-scoring/templates", hiringScoringController.listTemplates);
 
 router.get("/notifications", notificationController.listNotifications);
 router.patch("/notifications/read-all", notificationController.markAllNotificationsRead);
 router.patch("/notifications/:notificationId/read", notificationController.markNotificationRead);
 
-router.get("/reports/hiring", reportController.downloadCompanyHiringReport);
-router.get("/reports/candidate-evaluation/:applicationId", reportController.downloadCompanyCandidateEvaluation);
-router.get("/reports/interview/:applicationId", reportController.downloadCompanyInterviewReport);
+router.get(
+  "/reports/hiring",
+  requireSidebarModule(SIDEBAR_MODULE_KEYS.HIRING_REPORTS),
+  reportController.downloadCompanyHiringReport
+);
+router.get(
+  "/reports/candidate-evaluation/:applicationId",
+  requireSidebarModule(SIDEBAR_MODULE_KEYS.HIRING_REPORTS),
+  reportController.downloadCompanyCandidateEvaluation
+);
+router.get(
+  "/reports/interview/:applicationId",
+  requireSidebarModule(SIDEBAR_MODULE_KEYS.HIRING_REPORTS),
+  reportController.downloadCompanyInterviewReport
+);
 
 module.exports = router;

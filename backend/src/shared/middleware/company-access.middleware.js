@@ -6,7 +6,9 @@ const {
   canManageHrAccounts,
   canAssignRecruiters,
   canViewGlobalAnalytics,
-  isHrScopedUser
+  isHrScopedUser,
+  hasSidebarModule,
+  isCompanyAdminUser
 } = require("../../services/company-access.service");
 const AppError = require("../utils/AppError");
 
@@ -89,6 +91,25 @@ function requireGlobalAnalytics() {
   };
 }
 
+/** Gate a route behind a CEO-assigned sidebar module. CEO/Owner always pass. */
+function requireSidebarModule(moduleKey) {
+  return (req, res, next) => {
+    if (!hasSidebarModule(req.user, moduleKey)) {
+      return sendError(res, { statusCode: 403, message: "Access denied: module not enabled for this account" });
+    }
+    return next();
+  };
+}
+
+/** Read-only team roster access: full recruiter managers, or an HR granted the team_members/hr_management module. */
+function requireViewRecruiters() {
+  return (req, res, next) => {
+    if (isCompanyAdminUser(req.user) || canManageRecruiters(req.user)) return next();
+    if (hasSidebarModule(req.user, "team_members") || hasSidebarModule(req.user, "hr_management")) return next();
+    return sendError(res, { statusCode: 403, message: "Forbidden: cannot view team members" });
+  };
+}
+
 module.exports = {
   requireExecutiveCompany,
   requireCanPostInternship,
@@ -96,5 +117,7 @@ module.exports = {
   requireManageRecruiters,
   requireCeoHrManagement,
   requireAssignRecruiters,
-  requireGlobalAnalytics
+  requireGlobalAnalytics,
+  requireSidebarModule,
+  requireViewRecruiters
 };

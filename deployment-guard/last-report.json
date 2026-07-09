@@ -13,7 +13,7 @@
   "failedCount": 1,
   "warningCount": 1,
   "target": "backend",
-  "durationMs": 2583,
+  "durationMs": 2293,
   "checks": [
     {
       "id": "func.routes",

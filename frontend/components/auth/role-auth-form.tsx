@@ -412,6 +412,7 @@ export function RoleAuthForm({ role }: { role: AuthRole }) {
           refreshToken?: string;
           role: AuthRole;
           permissions?: string[];
+          companyAccountType?: string;
         }>(endpoint, {
           method: "POST",
           body: JSON.stringify(loginData)
@@ -420,10 +421,11 @@ export function RoleAuthForm({ role }: { role: AuthRole }) {
         setAuthSession(response.role, response.token, {
           refreshToken: response.refreshToken,
           email: loginData.email.trim().toLowerCase(),
-          permissions: response.permissions || []
+          permissions: response.permissions || [],
+          companyAccountType: response.companyAccountType || null
         });
         setFeedback({ type: "success", message: response.message });
-        router.push(resolvePostLoginRedirect(response.role, searchParams.get("next")));
+        router.push(resolvePostLoginRedirect(response.role, searchParams.get("next"), response.companyAccountType));
       } catch (error) {
         setFeedback({ type: "error", message: (error as Error).message });
       } finally {

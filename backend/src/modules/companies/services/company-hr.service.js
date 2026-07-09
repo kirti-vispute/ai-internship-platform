@@ -10,6 +10,10 @@ const {
   HR_DEFAULT_PERMISSIONS,
   normalizeHrPermissions
 } = require("../../../constants/hr-permissions");
+const {
+  HR_DEFAULT_SIDEBAR_MODULES,
+  normalizeSidebarModules
+} = require("../../../constants/sidebar-modules");
 const { buildRecruiterPerformance } = require("../../../services/company-analytics.service");
 
 function assertCompanyHrUser(user, companyId) {
@@ -31,7 +35,7 @@ async function listCompanyHrUsers(companyId) {
     companyAccountType: COMPANY_ACCOUNT_TYPES.HR,
     isDeleted: false
   })
-    .select("_id email displayName companyAccountType isActive permissions hrCustomPermissions createdAt updatedAt lastLoginAt")
+    .select("_id email displayName companyAccountType isActive permissions hrCustomPermissions sidebarModules createdAt updatedAt lastLoginAt")
     .lean();
 }
 
@@ -75,6 +79,7 @@ async function buildHrInsights(companyId) {
       email: hr.email,
       isActive: hr.isActive,
       permissions: hr.permissions || [],
+      sidebarModules: Array.isArray(hr.sidebarModules) ? hr.sidebarModules : [...HR_DEFAULT_SIDEBAR_MODULES],
       assignedCandidates,
       assignedInternships,
       performanceMetrics: {
@@ -115,7 +120,7 @@ async function buildHrInsights(companyId) {
   };
 }
 
-async function createHrAccount(companyId, { name, email, password, permissions }) {
+async function createHrAccount(companyId, { name, email, password, permissions, sidebarModules }) {
   if (!email || !password) {
     throw new AppError("email and password are required", 400);
   }
@@ -128,6 +133,8 @@ async function createHrAccount(companyId, { name, email, password, permissions }
   if (existing) throw new AppError("Email already exists", 409);
 
   const hrCustomPermissions = normalizeHrPermissions(permissions);
+  const requestedModules = normalizeSidebarModules(sidebarModules);
+  const effectiveModules = requestedModules.length > 0 ? requestedModules : [...HR_DEFAULT_SIDEBAR_MODULES];
 
   const user = await User.create({
     email: normalizedEmail,
@@ -137,7 +144,8 @@ async function createHrAccount(companyId, { name, email, password, permissions }
     companyProfileRef: companyId,
     displayName: String(name || "").trim() || normalizedEmail.split("@")[0],
     hrCustomPermissions: hrCustomPermissions.filter((p) => HR_ASSIGNABLE_PERMISSIONS.includes(p)),
-    permissions: hrCustomPermissions
+    permissions: hrCustomPermissions,
+    sidebarModules: effectiveModules
   });
 
   return {
@@ -146,6 +154,7 @@ async function createHrAccount(companyId, { name, email, password, permissions }
     email: user.email,
     isActive: user.isActive,
     permissions: user.permissions,
+    sidebarModules: user.sidebarModules,
     assignedCandidates: 0,
     assignedInternships: 0,
     performanceMetrics: {
@@ -191,7 +200,7 @@ async function deleteHrAccount(companyId, hrUserId, deletedBy) {
   return { id: hr._id, email: hr.email, deleted: true };
 }
 
-async function updateHrPermissions(companyId, hrUserId, permissions) {
+async function updateHrPermissions(companyId, hrUserId, permissions, sidebarModules) {
   const hr = await User.findOne({
     _id: hrUserId,
     role: "company",
@@ -204,6 +213,9 @@ async function updateHrPermissions(companyId, hrUserId, permissions) {
   const nextPermissions = normalizeHrPermissions(permissions);
   hr.hrCustomPermissions = nextPermissions.filter((p) => HR_ASSIGNABLE_PERMISSIONS.includes(p));
   hr.permissions = nextPermissions;
+  if (sidebarModules !== undefined) {
+    hr.sidebarModules = normalizeSidebarModules(sidebarModules);
+  }
   await hr.save();
 
   assertCompanyHrUser(hr, companyId);
@@ -212,13 +224,15 @@ async function updateHrPermissions(companyId, hrUserId, permissions) {
     id: hr._id,
     name: hr.displayName || hr.email,
     email: hr.email,
-    permissions: hr.permissions
+    permissions: hr.permissions,
+    sidebarModules: Array.isArray(hr.sidebarModules) ? hr.sidebarModules : [...HR_DEFAULT_SIDEBAR_MODULES]
   };
 }
 
 module.exports = {
   HR_ASSIGNABLE_PERMISSIONS,
   HR_DEFAULT_PERMISSIONS,
+  HR_DEFAULT_SIDEBAR_MODULES,
   normalizeHrPermissions,
   listCompanyHrUsers,
   buildHrInsights,

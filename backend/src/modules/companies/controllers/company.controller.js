@@ -21,7 +21,8 @@ const {
   canManageRecruiters,
   canAssignRecruiters,
   buildListMeta,
-  applicantsQueryForInternship
+  applicantsQueryForInternship,
+  resolveEffectiveSidebarModules
 } = require("../../../services/company-access.service");
 const companyQuery = require("../../../services/company-query.service");
 const portfolioService = require("../../../services/portfolio.service");
@@ -102,7 +103,8 @@ exports.getProfile = asyncHandler(async (req, res) => {
         _id: req.user._id,
         email: req.user.email,
         companyAccountType: req.user.companyAccountType || "owner",
-        permissions: req.user.permissions || []
+        permissions: req.user.permissions || [],
+        sidebarModules: resolveEffectiveSidebarModules(req.user)
       }
     },
     meta: buildListMeta(req.user)

@@ -39,8 +39,13 @@ import {
   peekCompanyApplications,
   peekCompanyInternships,
   peekCompanyProfile,
-  prefetchCompanyDashboardData
+  prefetchCompanyDashboardData,
+  hasSidebarModule,
+  SIDEBAR_MODULE_KEYS,
+  HR_DEFAULT_SIDEBAR_MODULES,
+  type SidebarModuleKey
 } from "@/lib/company-portal";
+import { SidebarModulePicker } from "@/components/dashboard/company/sidebar-module-picker";
 import { ApplicantDetailsModal, type InterviewFormState } from "@/components/dashboard/applicant-details-modal";
 import { HiringSection, type HiringSectionFocus } from "@/components/dashboard/hiring";
 import { CompanyDashboardHub, MatchedCandidatesView } from "@/components/dashboard/company";
@@ -49,6 +54,7 @@ import { hiringAIEngine, type InterviewScheduleSlot } from "@/lib/ai-hiring";
 import { extractScheduledInterviews, findOverlappingInterviews, type ScheduledInterviewRecord } from "@/lib/interview-workflow";
 import { useToast } from "@/components/ui/toast";
 import { ReportDownloadButton } from "@/components/reports/report-download-button";
+import { AccessDenied } from "@/components/dashboard/access-denied";
 
 export type CompanyDashboardView =
   | "overview"
@@ -69,6 +75,35 @@ export type CompanyDashboardView =
   | "team-recruiters"
   | "analytics-company"
   | "analytics-salary";
+
+/** Module required to view each route. Views absent from this map (e.g. hiring-post,
+ * which is gated by the existing hardcoded HR-cannot-post rule) have no module gate. */
+const VIEW_MODULE_MAP: Partial<Record<CompanyDashboardView, SidebarModuleKey | SidebarModuleKey[]>> = {
+  overview: SIDEBAR_MODULE_KEYS.DASHBOARD,
+  profile: SIDEBAR_MODULE_KEYS.COMPANY_PROFILE,
+  "profile-edit": SIDEBAR_MODULE_KEYS.COMPANY_PROFILE,
+  verification: SIDEBAR_MODULE_KEYS.VERIFICATION_STATUS,
+  "hiring-active": SIDEBAR_MODULE_KEYS.INTERNSHIPS,
+  "hiring-applicants": SIDEBAR_MODULE_KEYS.APPLICATIONS,
+  "hiring-shortlisted": SIDEBAR_MODULE_KEYS.APPLICATIONS,
+  "hiring-pipeline": SIDEBAR_MODULE_KEYS.APPLICATIONS,
+  "matching-ai": SIDEBAR_MODULE_KEYS.AI_INSIGHTS,
+  "matching-search": SIDEBAR_MODULE_KEYS.CANDIDATE_SEARCH,
+  "matching-saved": SIDEBAR_MODULE_KEYS.SAVED_CANDIDATES,
+  "reports-feedback": SIDEBAR_MODULE_KEYS.HIRING_REPORTS,
+  "reports-notes": SIDEBAR_MODULE_KEYS.HIRING_REPORTS,
+  "reports-export": SIDEBAR_MODULE_KEYS.HIRING_REPORTS,
+  "team-recruiters": [SIDEBAR_MODULE_KEYS.HR_MANAGEMENT, SIDEBAR_MODULE_KEYS.TEAM_MEMBERS],
+  "analytics-company": SIDEBAR_MODULE_KEYS.ANALYTICS,
+  "analytics-salary": SIDEBAR_MODULE_KEYS.ANALYTICS
+};
+
+function isViewAllowed(currentUser: CompanyCurrentUser | null, view: CompanyDashboardView) {
+  const requirement = VIEW_MODULE_MAP[view];
+  if (!requirement) return true;
+  const keys = Array.isArray(requirement) ? requirement : [requirement];
+  return keys.some((key) => hasSidebarModule(currentUser, key));
+}
 
 const WITH_INTERNSHIPS = new Set<CompanyDashboardView>([
   "overview",
@@ -184,8 +219,10 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
   const [hrInsights, setHrInsights] = useState<CompanyHrInsights | null>(null);
   const [hrForm, setHrForm] = useState({ name: "", email: "", password: "" });
   const [hrFormPermissions, setHrFormPermissions] = useState<string[]>([...HR_ASSIGNABLE_PERMISSIONS]);
+  const [hrFormModules, setHrFormModules] = useState<string[]>([...HR_DEFAULT_SIDEBAR_MODULES]);
   const [selectedHrId, setSelectedHrId] = useState<string | null>(null);
   const [permissionDraft, setPermissionDraft] = useState<string[]>([]);
+  const [moduleDraft, setModuleDraft] = useState<string[]>([]);
   const [hrActionLoading, setHrActionLoading] = useState(false);
   const [selectedRecruiterByInternship, setSelectedRecruiterByInternship] = useState<Record<string, string>>({});
   const [selectedRecruiterByApplication, setSelectedRecruiterByApplication] = useState<Record<string, string>>({});
@@ -273,6 +310,9 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
         const companyContext = await fetchCompanyProfile();
         setProfile(companyContext.profile);
         setCurrentUser(companyContext.currentUser);
+        if (!isViewAllowed(companyContext.currentUser, view)) {
+          return;
+        }
         if (WITH_INTERNSHIPS.has(view)) setInternships(await fetchCompanyInternships());
         if (WITH_APPS.has(view)) setApps(await fetchCompanyApplications());
         if (WITH_MATCHES.has(view)) setMatches(await fetchCompanyMatchedCandidates());
@@ -420,10 +460,12 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
         name: hrForm.name.trim(),
         email: hrForm.email.trim(),
         password: hrForm.password,
-        permissions: hrFormPermissions
+        permissions: hrFormPermissions,
+        sidebarModules: hrFormModules
       });
       setHrForm({ name: "", email: "", password: "" });
       setHrFormPermissions([...HR_ASSIGNABLE_PERMISSIONS]);
+      setHrFormModules([...HR_DEFAULT_SIDEBAR_MODULES]);
       setSuccess("HR account created successfully.");
       await reloadHrManagement();
     } catch (e) {
@@ -452,13 +494,14 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
   function openHrInsights(hr: CompanyHrUser) {
     setSelectedHrId(hr.id);
     setPermissionDraft([...hr.permissions.filter((p) => HR_ASSIGNABLE_PERMISSIONS.includes(p as (typeof HR_ASSIGNABLE_PERMISSIONS)[number]))]);
+    setModuleDraft(hr.sidebarModules?.length ? [...hr.sidebarModules] : [...HR_DEFAULT_SIDEBAR_MODULES]);
   }
 
   async function handleSaveHrPermissions(hrId: string) {
     try {
       setHrActionLoading(true);
       setError(null);
-      await updateCompanyHrPermissions(hrId, permissionDraft);
+      await updateCompanyHrPermissions(hrId, permissionDraft, moduleDraft);
       setSuccess("HR permissions updated.");
       await reloadHrManagement();
     } catch (e) {
@@ -820,7 +863,12 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
     );
   }
 
+  const viewAllowed = isViewAllowed(currentUser, view);
+
   const viewNode: React.ReactNode = (() => {
+    if (!viewAllowed) {
+      return <AccessDenied hint="Your Company Admin hasn't enabled this module for your account. Ask them to update your permissions." />;
+    }
     switch (view) {
       case "overview":
         return (
@@ -830,6 +878,7 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
             matches={matches}
             shortlistedCount={shortlisted.length}
             isHrScoped={isHrScoped}
+            currentUser={currentUser}
             saving={saving}
             canAssign={canAssign}
             recruiters={recruiters}
@@ -1036,6 +1085,12 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
                       </label>
                     ))}
                   </div>
+
+                  <div>
+                    <p className="mb-2 text-sm font-semibold text-slate-900 dark:text-slate-100">Sidebar Modules</p>
+                    <SidebarModulePicker value={hrFormModules} onChange={setHrFormModules} />
+                  </div>
+
                   <Button type="button" onClick={handleCreateHr} disabled={hrActionLoading}>
                     {hrActionLoading ? "Saving..." : "Add HR"}
                   </Button>
@@ -1091,6 +1146,10 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
                                 </label>
                               ))}
                             </div>
+
+                            <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-slate-500">Sidebar Modules</p>
+                            <SidebarModulePicker value={moduleDraft} onChange={setModuleDraft} className="mt-2" />
+
                             <div className="mt-3">
                               <Button type="button" onClick={() => handleSaveHrPermissions(hr.id)} disabled={hrActionLoading}>
                                 Save Permissions

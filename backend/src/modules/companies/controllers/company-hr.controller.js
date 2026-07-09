@@ -12,6 +12,7 @@ const {
   listCompanyHrUsers
 } = require("../../../services/company-hr.service");
 const { HR_ASSIGNABLE_PERMISSIONS } = require("../../../constants/hr-permissions");
+const { SIDEBAR_MODULE_REGISTRY } = require("../../../constants/sidebar-modules");
 
 async function getCompanyProfileByUserId(userId) {
   const user = await User.findById(userId).select("companyProfileRef").lean();
@@ -30,7 +31,7 @@ exports.createHr = asyncHandler(async (req, res) => {
   return sendSuccess(res, {
     statusCode: 201,
     message: "HR account created",
-    data: { hrUser },
+    data: { hrUser, sidebarModuleRegistry: SIDEBAR_MODULE_REGISTRY },
     meta: buildListMeta(req.user)
   });
 });
@@ -48,19 +49,22 @@ exports.deleteHr = asyncHandler(async (req, res) => {
 exports.getHrInsights = asyncHandler(async (req, res) => {
   const company = await getCompanyProfileByUserId(req.user._id);
   const insights = await buildHrInsights(company._id);
-  return sendSuccess(res, { data: { ...insights }, meta: buildListMeta(req.user) });
+  return sendSuccess(res, {
+    data: { ...insights, assignablePermissions: HR_ASSIGNABLE_PERMISSIONS, sidebarModuleRegistry: SIDEBAR_MODULE_REGISTRY },
+    meta: buildListMeta(req.user)
+  });
 });
 
 exports.patchHrPermissions = asyncHandler(async (req, res) => {
   const company = await getCompanyProfileByUserId(req.user._id);
-  const { permissions } = req.body || {};
+  const { permissions, sidebarModules } = req.body || {};
   if (!Array.isArray(permissions)) {
     throw new AppError("permissions array is required", 400);
   }
-  const hrUser = await updateHrPermissions(company._id, req.params.id, permissions);
+  const hrUser = await updateHrPermissions(company._id, req.params.id, permissions, sidebarModules);
   return sendSuccess(res, {
     message: "HR permissions updated",
-    data: { hrUser, assignablePermissions: HR_ASSIGNABLE_PERMISSIONS },
+    data: { hrUser, assignablePermissions: HR_ASSIGNABLE_PERMISSIONS, sidebarModuleRegistry: SIDEBAR_MODULE_REGISTRY },
     meta: buildListMeta(req.user)
   });
 });

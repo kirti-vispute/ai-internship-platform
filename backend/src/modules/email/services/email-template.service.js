@@ -1,6 +1,6 @@
 const { BRAND_NAME, BRAND_TAGLINE, BRAND_SUPPORT_EMAIL } = require("../../../constants/brand");
 const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:3000";
-const LOGO_URL = `${CLIENT_URL.replace(/\/$/, "")}/brand/favicon-512.png`;
+const LOGO_URL = `${CLIENT_URL.replace(/\/$/, "")}/brand/favicon-48.png`;
 
 function escapeHtml(value = "") {
   return String(value)

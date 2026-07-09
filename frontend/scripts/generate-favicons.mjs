@@ -3,44 +3,54 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const publicDir = path.join(__dirname, "..", "public", "brand");
+const root = path.join(__dirname, "..");
+const publicDir = path.join(root, "public", "brand");
+const source = path.join(publicDir, "icon-mark.png");
 
-const svg = `<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 32 32">
-  <defs>
-    <linearGradient id="g" x1="2" y1="2" x2="30" y2="30" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#1f6fff"/>
-      <stop offset="1" stop-color="#22d3ee"/>
-    </linearGradient>
-  </defs>
-  <rect width="32" height="32" rx="8" fill="url(#g)"/>
-  <path d="M9 21V11h3v5l5-4 5 4v-5h3v10h-5v-5l-5 4-5-4v5z" fill="#fff"/>
-</svg>`;
+/** Pads the (non-square) icon mark onto a square canvas, centered, preserving aspect ratio. */
+async function squareIcon(sharp, size, background) {
+  const inner = Math.round(size * 0.82);
+  const resized = await sharp(source)
+    .resize(inner, inner, { fit: "inside", withoutEnlargement: false })
+    .toBuffer();
+  const meta = await sharp(resized).metadata();
+  const left = Math.round((size - (meta.width || inner)) / 2);
+  const top = Math.round((size - (meta.height || inner)) / 2);
+
+  return sharp({
+    create: { width: size, height: size, channels: 4, background }
+  })
+    .composite([{ input: resized, left, top }])
+    .png()
+    .toBuffer();
+}
 
 async function main() {
   let sharp;
   try {
     sharp = (await import("sharp")).default;
   } catch {
-    console.log("sharp not installed; skipping PNG favicon generation. SVG icons remain active.");
+    console.log("sharp not installed; skipping favicon generation.");
     return;
   }
 
   await mkdir(publicDir, { recursive: true });
-  const sizes = [16, 32, 48, 180, 512];
-  const buffers = await Promise.all(
-    sizes.map((size) => sharp(Buffer.from(svg)).resize(size, size).png().toBuffer())
-  );
+  const transparent = { r: 0, g: 0, b: 0, alpha: 0 };
+  const darkTile = { r: 7, g: 13, b: 26, alpha: 1 }; // matches platform bg (#070d1a)
 
-  for (let i = 0; i < sizes.length; i += 1) {
-    const size = sizes[i];
-    const filename = size === 180 ? "apple-touch-icon.png" : `favicon-${size}.png`;
-    await writeFile(path.join(publicDir, filename), buffers[i]);
-  }
+  const favicon16 = await squareIcon(sharp, 16, transparent);
+  const favicon32 = await squareIcon(sharp, 32, transparent);
+  const favicon48 = await squareIcon(sharp, 48, transparent);
+  const appleTouch = await squareIcon(sharp, 180, darkTile);
+  const nextIcon = await squareIcon(sharp, 64, transparent);
 
-  const icoBuffer = await sharp(buffers[1]).resize(32, 32).toFormat("png").toBuffer();
-  await writeFile(path.join(publicDir, "..", "favicon.ico"), icoBuffer);
-  console.log("Favicon PNG assets generated in public/brand and public/favicon.ico");
+  await writeFile(path.join(publicDir, "favicon-16.png"), favicon16);
+  await writeFile(path.join(publicDir, "favicon-32.png"), favicon32);
+  await writeFile(path.join(publicDir, "favicon-48.png"), favicon48);
+  await writeFile(path.join(publicDir, "apple-touch-icon.png"), appleTouch);
+  await writeFile(path.join(root, "app", "icon.png"), nextIcon);
+
+  console.log("Favicon PNG assets generated from public/brand/icon-mark.png");
 }
 
 main().catch((error) => {

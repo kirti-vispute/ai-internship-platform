@@ -6,6 +6,19 @@ export const DASHBOARD_PATH: Record<AuthRole, string> = {
   admin: "/dashboard/admin"
 };
 
+export const COMPANY_CEO_DASHBOARD_PATH = "/dashboard/companyCEO";
+export const COMPANY_HR_DASHBOARD_PATH = "/dashboard/companyHR";
+
+const EXECUTIVE_COMPANY_ACCOUNT_TYPES = new Set(["owner", "ceo"]);
+
+export function isExecutiveCompanyAccountType(companyAccountType?: string | null): boolean {
+  return EXECUTIVE_COMPANY_ACCOUNT_TYPES.has(companyAccountType || "owner");
+}
+
+export function getCompanyDashboardPath(companyAccountType?: string | null): string {
+  return isExecutiveCompanyAccountType(companyAccountType) ? COMPANY_CEO_DASHBOARD_PATH : COMPANY_HR_DASHBOARD_PATH;
+}
+
 export const PROFILE_PATH: Record<AuthRole, string> = {
   intern: "/dashboard/intern/profile",
   company: "/dashboard/company/profile",
@@ -55,9 +68,15 @@ export function isPathAllowedForRole(path: string, role: AuthRole): boolean {
   return path.startsWith(DASHBOARD_PATH[role]);
 }
 
-export function resolvePostLoginRedirect(role: AuthRole, next?: string | null): string {
-  const dashboard = getDashboardPathForRole(role);
+export function resolvePostLoginRedirect(role: AuthRole, next?: string | null, companyAccountType?: string | null): string {
+  const dashboard = role === "company" ? getCompanyDashboardPath(companyAccountType) : getDashboardPathForRole(role);
   if (!next || !next.startsWith("/")) return dashboard;
+  // A stale `next` targeting the other company sub-dashboard (e.g. saved before
+  // a session expired on /dashboard/companyCEO) must never override the
+  // account's own role-correct dashboard.
+  if (role === "company" && (next.startsWith(COMPANY_CEO_DASHBOARD_PATH) || next.startsWith(COMPANY_HR_DASHBOARD_PATH))) {
+    return next.startsWith(dashboard) ? next : dashboard;
+  }
   if (isPathAllowedForRole(next, role)) return next;
   return dashboard;
 }

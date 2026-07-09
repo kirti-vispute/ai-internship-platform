@@ -130,7 +130,7 @@ export function Navbar({ theme = "light" }: NavbarProps) {
         {isAuthPage ? (
           <span className="inline-block h-[34px] w-[34px] shrink-0" aria-hidden />
         ) : (
-          <InternAILogo variant="navbar" href="/" />
+          <InternAILogo href="/" />
         )}
 
         <div className="hidden items-center gap-2 md:flex">
