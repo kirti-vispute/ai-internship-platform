@@ -3,7 +3,9 @@ require("dotenv").config();
 const http = require("http");
 const app = require("./app");
 const connectDB = require("./config/db");
+const { bootstrapPlatformServices } = require("./infrastructure/bootstrap");
 const { initChatSocket } = require("./socket/chat.socket");
+const { initInterviewSocket } = require("./socket/interview.socket");
 
 function resolvePort() {
   const rawPort = process.env.PORT;
@@ -25,9 +27,13 @@ async function startServer() {
   console.log(`[startup] Using PORT=${port}`);
 
   await connectDB();
+  const platformStatus = await bootstrapPlatformServices();
+  // eslint-disable-next-line no-console
+  console.log("[startup] Platform services:", platformStatus);
 
   const server = http.createServer(app);
   initChatSocket(server);
+  initInterviewSocket();
 
   server.listen(port, () => {
     // eslint-disable-next-line no-console

@@ -1,5 +1,6 @@
 const { normalizeSkillList } = require("../utils/skill-normalizer");
 const { computeSkillMatch } = require("../utils/compute-skill-match");
+const { evaluateCandidateProjects } = require("./project-evaluation.service");
 
 function unique(items = []) {
   return [...new Set(items)];
@@ -219,8 +220,12 @@ function rankApplicantsForInternship(internship, applicantProfiles = []) {
     .map((profile) => {
       const resumeScore = calculateResumeScore(profile);
       const internSkills = normalizeSkillList(profile?.resume?.parsed?.skills || profile?.skills || []);
-      const match = computeSkillMatch(internSkills, internship.skillsRequired || [], []);
-      const finalScore = Math.round(match.requiredMatchPercent * 0.7 + resumeScore * 0.3);
+      const match = computeSkillMatch(internSkills, internship.skillsRequired || [], internship.prioritySkills || []);
+      const portfolio = evaluateCandidateProjects(profile, internship.skillsRequired || [], internship.prioritySkills || []);
+      const projectScore = portfolio.roleRelevanceScore ?? (portfolio.sufficient ? portfolio.aggregateScores.qualityScore : 0);
+      const finalScore = Math.round(
+        match.requiredMatchPercent * 0.55 + resumeScore * 0.2 + projectScore * 0.25
+      );
 
       return {
         profile,
@@ -229,6 +234,7 @@ function rankApplicantsForInternship(internship, applicantProfiles = []) {
           missing: match.missingRequiredSkills,
           matchPercent: match.requiredMatchPercent
         },
+        projectEvaluation: portfolio,
         score: Math.min(100, finalScore)
       };
     })

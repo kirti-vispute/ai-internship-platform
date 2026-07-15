@@ -51,7 +51,7 @@ export async function downloadEnterpriseReport(
   }
 
   const blob = await response.blob();
-  const reportNumber = response.headers.get("X-Report-Number") || "InternAI-Report";
+  const reportNumber = response.headers.get("X-Report-Number") || "CareerSetu-Report";
   const filename = `${reportNumber}.pdf`;
 
   const url = URL.createObjectURL(blob);

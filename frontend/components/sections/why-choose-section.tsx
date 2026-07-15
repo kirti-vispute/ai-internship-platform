@@ -24,7 +24,7 @@ export function WhyChooseSection() {
     <section className="py-20 sm:py-24">
       <div className="container-shell">
         <ScrollReveal variant="slide-right" distance={18} className="max-w-3xl">
-          <h2 className="text-3xl font-black tracking-tight text-slate-900 dark:text-slate-100 sm:text-4xl">Why InternAI stands out</h2>
+          <h2 className="text-3xl font-black tracking-tight text-slate-900 dark:text-slate-100 sm:text-4xl">Why CareerSetu stands out</h2>
           <p className="mt-3 text-sm leading-6 text-slate-700 dark:text-slate-300 sm:text-base">
             Built for outcome-focused internship matching with consistency, trust, and intelligent iteration.
           </p>

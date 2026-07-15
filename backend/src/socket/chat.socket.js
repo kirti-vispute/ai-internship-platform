@@ -40,7 +40,7 @@ async function emitUnreadToCompanyUsers(companyId, excludeUserId) {
 }
 
 function initChatSocket(server) {
-  if (!isEnabled("ENABLE_CHAT")) {
+  if (!isEnabled("ENABLE_CHAT") && !isEnabled("ENABLE_INTERVIEW_ROOMS")) {
     return null;
   }
 
@@ -74,6 +74,10 @@ function initChatSocket(server) {
 
   io.on("connection", (socket) => {
     socket.join(`user:${socket.user._id}`);
+
+    if (!isEnabled("ENABLE_CHAT")) {
+      return;
+    }
 
     socket.on("conversation:join", async ({ conversationId }, callback) => {
       try {

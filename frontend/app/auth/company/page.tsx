@@ -1,17 +1,10 @@
 import { RoleAuthForm } from "@/components/auth/role-auth-form";
-import { Footer } from "@/components/layout/footer";
-import { Navbar } from "@/components/layout/navbar";
+import { AuthPageShell } from "@/components/layout/auth-page-shell";
 
 export default function CompanyAuthPage() {
   return (
-    <main>
-      <Navbar />
-      <section className="container-shell py-10 sm:py-14">
-        <div className="mx-auto max-w-2xl">
-          <RoleAuthForm role="company" />
-        </div>
-      </section>
-      <Footer />
-    </main>
+    <AuthPageShell>
+      <RoleAuthForm role="company" />
+    </AuthPageShell>
   );
 }

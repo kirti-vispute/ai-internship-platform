@@ -1,0 +1,46 @@
+{
+  "totalBugsFound": 28,
+  "criticalIssuesFixed": 8,
+  "UIIssuesFixed": 5,
+  "APIIssuesFixed": 6,
+  "AIConsistencyFixed": 4,
+  "remainingRisks": [
+    "Mock technical page is a DSA practice hub (not a timed proctored exam) — by design unless full technical exam is added",
+    "Section-level timers in aptitude tests are tracked but not enforced as hard limits",
+    "Socket.io on single backend instance — horizontal scaling would need Redis adapter",
+    "WebRTC interviews may fail on strict NAT without a free TURN relay",
+    "Footer #privacy and #terms hash links have no target sections yet"
+  ],
+  "fixesApplied": {
+    "navigation": [
+      "Fixed broken company empty-state CTA (/dashboard/company/internships → /dashboard/company/hiring/post)",
+      "Added company-specific notifications empty state",
+      "Added company Join Interview Room in applicant modal",
+      "Interview room auth redirect respects logged-in role when available"
+    ],
+    "messaging": [
+      "Fixed message:status payload mismatch (delivery/read receipts)",
+      "REST intern→company messages now emit realtime message:new to company team",
+      "Socket join waits for connection before conversation:join",
+      "Active thread auto-marks read on incoming messages",
+      "Safer optimistic message deduplication"
+    ],
+    "interviews": [
+      "Interview chat appends sent message from API ACK (not only socket echo)",
+      "Removed unsafe session.role non-null assertion"
+    ],
+    "aptitudeTests": [
+      "Fixed timer drift (stable interval + ref-based time spent)",
+      "Timeout auto-submit now sets autoSubmitted=true",
+      "Prevented duplicate result saves via dedupeKey",
+      "Refresh recovery no longer falsely marks fullscreen cheating",
+      "Clearer in-progress attempt messaging",
+      "Proctor log merge includes fullscreen fields"
+    ],
+    "ai": [
+      "Empty resume score path returns aiValidation with insufficient_data",
+      "Skill gap insufficient-data view shows confidence badge",
+      "Resume dashboard no longer renders NaN% confidence"
+    ]
+  }
+}

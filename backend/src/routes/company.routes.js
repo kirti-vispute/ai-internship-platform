@@ -3,6 +3,7 @@ const companyController = require("../controllers/company.controller");
 const notificationController = require("../controllers/notification.controller");
 const reportController = require("../controllers/report.controller");
 const companyHrController = require("../controllers/company-hr.controller");
+const hiringScoringController = require("../controllers/hiring-scoring.controller");
 const authMiddleware = require("../middleware/auth.middleware");
 const allowRoles = require("../middleware/role.middleware");
 const {
@@ -52,6 +53,7 @@ router.get("/recruiters", requireManageRecruiters(), companyController.getRecrui
 router.post("/recruiters", requireCeoHrManagement(), companyHrController.createHr);
 router.delete("/recruiters/:userId", requireCeoHrManagement(), companyHrController.deleteHr);
 router.get("/analytics", companyController.getCompanyAnalytics);
+router.get("/hiring-scoring/templates", hiringScoringController.listTemplates);
 
 router.get("/notifications", notificationController.listNotifications);
 router.patch("/notifications/read-all", notificationController.markAllNotificationsRead);

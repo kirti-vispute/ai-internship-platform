@@ -17,7 +17,9 @@ const VIEW_MAP: Record<string, AdminDashboardView> = {
   "activity-logs": "activity-logs",
   analytics: "analytics",
   notifications: "notifications",
-  settings: "settings"
+  settings: "settings",
+  "hiring-scoring": "hiring-scoring",
+  "certification-review": "certification-review"
 };
 
 export default async function AdminDashboardViewRoute({

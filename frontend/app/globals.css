@@ -32,10 +32,7 @@ body {
   padding: 0;
   min-height: 100%;
   color: var(--text);
-  background:
-    radial-gradient(circle at 8% 10%, rgba(37, 99, 235, 0.2), transparent 30%),
-    radial-gradient(circle at 95% 0%, rgba(14, 165, 233, 0.16), transparent 34%),
-    linear-gradient(180deg, #060b16 0%, #0a1222 50%, #060b16 100%);
+  background: #090a0f;
   transition: background 300ms ease, color 300ms ease;
 }
 

@@ -7,17 +7,12 @@ const cookieParser = require("cookie-parser");
 const rateLimit = require("express-rate-limit");
 const mongoSanitize = require("express-mongo-sanitize");
 
-const authRoutes = require("./routes/auth.routes");
-const internRoutes = require("./routes/intern.routes");
-const companyRoutes = require("./routes/company.routes");
-const internshipRoutes = require("./routes/internship.routes");
-const applicationRoutes = require("./routes/application.routes");
-const aiRoutes = require("./routes/ai.routes");
-const adminRoutes = require("./routes/admin.routes");
-const candidateRoutes = require("./routes/candidate.routes");
-const skillRoutes = require("./routes/skill.routes");
-const companiesRoutes = require("./routes/companies.routes");
-const chatRoutes = require("./routes/chat.routes");
+const { mountModularApi, getModuleManifest } = require("./modules");
+const { bootstrapPlatformServices } = require("./infrastructure/bootstrap");
+const { getCacheBackendLabel } = require("./infrastructure/cache/redis.client");
+const { isPostgresEnabled } = require("./infrastructure/db/postgres.client");
+const { isCloudinaryEnabled } = require("./infrastructure/storage/storage.adapter");
+const { PLATFORM_CONFIG } = require("./config/platform.config");
 
 const { notFoundMiddleware, errorMiddleware } = require("./middleware/error.middleware");
 const { sendSuccess } = require("./utils/api-response");
@@ -77,27 +72,50 @@ app.use(
   })
 );
 
-app.get("/health", (req, res) => sendSuccess(res, { data: { status: "ok", service: "ai-internship-platform-api" } }));
+let platformStatus = {
+  bootstrapped: false,
+  cache: "memory",
+  postgres: false,
+  storage: PLATFORM_CONFIG.storage.provider
+};
 
-function mountApi(prefix) {
-  app.use(`${prefix}/auth`, authRoutes);
-  app.use(`${prefix}/intern`, internRoutes);
-  app.use(`${prefix}/company`, companyRoutes);
-  app.use(`${prefix}/internships`, internshipRoutes);
-  app.use(`${prefix}/applications`, applicationRoutes);
-  app.use(`${prefix}/ai`, aiRoutes);
-  app.use(`${prefix}/admin`, adminRoutes);
-  app.use(`${prefix}/candidates`, candidateRoutes);
-  app.use(`${prefix}/skills`, skillRoutes);
-  app.use(`${prefix}/companies`, companiesRoutes);
-  app.use(`${prefix}/chat`, chatRoutes);
-}
+bootstrapPlatformServices()
+  .then((status) => {
+    platformStatus = { bootstrapped: true, ...status };
+  })
+  .catch(() => {
+    platformStatus = {
+      bootstrapped: false,
+      cache: getCacheBackendLabel(),
+      postgres: isPostgresEnabled(),
+      storage: isCloudinaryEnabled() ? "cloudinary" : "local"
+    };
+  });
 
-mountApi("/api");
-mountApi("/api/v1");
+app.get("/health", (req, res) =>
+  sendSuccess(res, {
+    data: {
+      status: "ok",
+      service: "ai-internship-platform-api",
+      architecture: "serverless-modular-single-deploy",
+      modules: getModuleManifest(),
+      platform: platformStatus,
+      freeTier: {
+        frontend: "vercel",
+        backend: PLATFORM_CONFIG.deployment.target,
+        cache: platformStatus.cache || getCacheBackendLabel(),
+        database: "mongodb-atlas-free + optional-neon-postgres",
+        storage: isCloudinaryEnabled() ? "cloudinary" : "local",
+        realtime: "webrtc-p2p + socket-signaling"
+      }
+    }
+  })
+);
+
+mountModularApi(app, "/api");
+mountModularApi(app, "/api/v1");
 
 app.use(notFoundMiddleware);
 app.use(errorMiddleware);
 
 module.exports = app;
-

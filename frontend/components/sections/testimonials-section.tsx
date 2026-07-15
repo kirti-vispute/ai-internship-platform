@@ -9,7 +9,7 @@ export function TestimonialsSection() {
         <SectionHeading
           eyebrow="Social proof"
           title="What teams are saying"
-          description="Interns and recruiters share how InternAI improves readiness, matching quality, and hiring velocity."
+          description="Interns and recruiters share how CareerSetu improves readiness, matching quality, and hiring velocity."
         />
       </ScrollReveal>
 

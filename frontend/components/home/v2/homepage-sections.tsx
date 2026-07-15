@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Briefcase, Check, FileUp, GraduationCap, LineChart, Sparkles, Target } from "lucide-react";
 import { ScrollReveal } from "@/components/animations/ScrollReveal";
 import { SmartAuthLink } from "@/components/navigation/smart-auth-link";
+import { BRAND_NAME, BRAND_TAGLINE } from "@/lib/brand";
 
 const REPLAY = { once: false as const };
 
@@ -44,11 +45,11 @@ function HpSection({
 
 export function HomepageHero() {
   return (
-    <section className="hp-hero">
+    <section id="hero" className="hp-hero">
       <div className="hp-hero-inner">
         <div className="hp-hero-copy">
           <ScrollReveal variant="soft-scale" distance={12} {...REPLAY}>
-            <p className="hp-hero-eyebrow">InternAI</p>
+            <p className="hp-hero-eyebrow">{BRAND_NAME}</p>
           </ScrollReveal>
 
           <ScrollReveal variant="fade-up" distance={14} delayMs={60} {...REPLAY}>
@@ -60,9 +61,9 @@ export function HomepageHero() {
 
           <ScrollReveal variant="fade-up" distance={10} delayMs={120} {...REPLAY}>
             <div className="hp-hero-lines">
+              <p>{BRAND_TAGLINE}</p>
               <p>Career acceleration for interns.</p>
               <p>Smarter hiring for companies.</p>
-              <p>Enterprise-ready placement system.</p>
             </div>
           </ScrollReveal>
 
@@ -125,7 +126,7 @@ const STEPS = [
 
 export function HomepageHowItWorks() {
   return (
-    <HpSection id="how-it-works" label="Process" title="How InternAI works">
+    <HpSection id="how-it-works" label="Process" title={`How ${BRAND_NAME} works`}>
       <div className="hp-reveal-zone">
         <ScrollReveal
           variant="stagger-children"

@@ -4,6 +4,7 @@
     "private": true,
     "scripts": {
         "dev": "next dev",
+        "prebuild": "node ../deployment-guard/run.mjs --target=frontend",
         "build": "next build",
         "start": "next start",
         "lint": "next lint",
@@ -12,7 +13,9 @@
         "server:seed": "npm --prefix ../backend run seed",
         "scorer:install": "npm --prefix ../backend run scorer:install",
         "scorer:dev": "npm --prefix ../backend run scorer:dev",
-        "brand:favicons": "node scripts/generate-favicons.mjs"
+        "brand:favicons": "node scripts/generate-favicons.mjs",
+        "courses:validate": "node scripts/validate-course-recommendations.mjs",
+        "courses:repair": "node scripts/repair-course-recommendations.mjs"
     },
     "dependencies": {
         "@react-three/drei": "^10.7.7",

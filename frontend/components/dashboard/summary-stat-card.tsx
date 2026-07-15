@@ -13,20 +13,20 @@ type SummaryStatCardProps = {
 
 export function SummaryStatCard({ title, value, suffix, hint, icon }: SummaryStatCardProps) {
   return (
-    <ScrollReveal variant="soft-scale" distance={12}>
-      <Card className="h-full border-none bg-gradient-to-br from-white to-slate-50 dark:from-slate-900 dark:to-slate-800">
+    <ScrollReveal variant="fade-up" distance={10}>
+      <Card className="ds-stat-card h-full">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600 dark:text-slate-300">{title}</p>
-            <p className="mt-2 text-3xl font-black tracking-tight text-slate-900 dark:text-slate-100">
+            <p className="ds-label">{title}</p>
+            <p className="ds-stat-value">
               {value}
               {suffix || ""}
             </p>
-            {hint && <p className="mt-2 text-xs text-slate-600 dark:text-slate-400">{hint}</p>}
+            {hint && <p className="ds-caption mt-2">{hint}</p>}
           </div>
           {icon ? (
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white shadow-soft dark:border-slate-700 dark:bg-slate-900">
-              <AppIcon icon={icon} size="md" className="text-primary-600 dark:text-primary-400" />
+            <span className="ds-stat-icon">
+              <AppIcon icon={icon} size="md" />
             </span>
           ) : null}
         </div>

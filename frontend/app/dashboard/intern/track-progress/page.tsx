@@ -102,7 +102,7 @@ export default function TrackProgressPage() {
                             <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{app.internship?.role || "Internship"}</p>
                             <p className="text-xs text-slate-600 dark:text-slate-300">{app.internship?.company?.companyName || "Company"} • Applied {app.appliedAt ? new Date(app.appliedAt).toLocaleDateString() : "-"}</p>
                           </div>
-                          <p className={`rounded-full px-2 py-1 text-xs font-semibold ${isRejected ? "bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300" : "bg-primary-100 text-primary-700 dark:bg-primary-900/40 dark:text-primary-300"}`}>
+                          <p className={`rounded-full px-2 py-1 text-xs font-semibold ${isRejected ? "ds-pill-danger border border-rose-400/35 bg-rose-900/55 text-rose-200" : "ds-badge"}`}>
                             {isRejected ? "Rejected" : `Current: ${statusLabel}`}
                           </p>
                         </div>

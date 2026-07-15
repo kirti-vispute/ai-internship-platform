@@ -75,18 +75,18 @@ export function AdminAuthForm() {
     <Card className="animate-reveal">
       <AuthBrandHeader />
       <div className="mb-6 flex items-center gap-3">
-        <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-500 to-blue-600 text-white shadow-glow">
-          <AppIcon icon={ShieldCheck} size="md" className="text-white" />
+        <span className="ds-stat-icon">
+          <AppIcon icon={ShieldCheck} size="md" />
         </span>
         <div>
-          <h1 className="text-3xl font-black tracking-tight text-ink dark:text-slate-100">Admin Console</h1>
-          <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+          <h1 className="ds-h1">Admin Console</h1>
+          <p className="ds-caption mt-1">
             Secure access for platform administrators.
           </p>
         </div>
       </div>
 
-      <p className="mb-4 text-xs text-slate-500 dark:text-slate-400">
+      <p className="ds-caption mb-4">
         Not an admin? Use one of the role portals below.
       </p>
       <div className="mb-6 flex flex-wrap gap-x-4 gap-y-1 text-xs">

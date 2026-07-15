@@ -1,7 +1,9 @@
-export const BRAND_NAME = "InternAI";
-export const BRAND_TAGLINE = "AI-Powered Internship & Placement Management";
-export const BRAND_TAGLINE_ALT = "Connecting Talent with Opportunity";
-export const BRAND_PORTAL_NAME = "InternAI Internship & Placement Management Portal";
+export const BRAND_NAME = "CareerSetu";
+export const BRAND_TAGLINE = "Connecting Skills to Success";
+export const BRAND_TAGLINE_ALT = "Connecting Skills to Success";
+export const BRAND_PORTAL_NAME = "CareerSetu Platform";
+export const BRAND_LOGO_PATH = "/brand/logo.png";
+export const BRAND_SUPPORT_EMAIL = "support@careersetu.example";
 
 export const LOADING_MESSAGES = [
   "Preparing your opportunities...",
@@ -36,11 +38,17 @@ export const BRANDED_EMPTY_STATES = {
     ctaLabel: "View Applications",
     ctaHref: "/dashboard/intern/applications"
   },
+  companyNotifications: {
+    title: "No Notifications",
+    hint: "Applicant updates, chat messages, and hiring alerts will appear here.",
+    ctaLabel: "Open Hiring Pipeline",
+    ctaHref: "/dashboard/company/hiring/applicants"
+  },
   applicants: {
     title: "No Applicants Yet",
     hint: "Post internships and share listings to start receiving candidate applications.",
     ctaLabel: "Post Internship",
-    ctaHref: "/dashboard/company/internships"
+    ctaHref: "/dashboard/company/hiring/post"
   },
   reports: {
     title: "No Reports to Review",

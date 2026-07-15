@@ -28,9 +28,7 @@ export function AuthSessionRedirect({ expectedRole, children }: AuthSessionRedir
   if (!ready) {
     return (
       <section className="container-shell py-12">
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-600 shadow-soft dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
-          Loading...
-        </div>
+        <div className="ds-card p-6 text-sm text-[var(--ds-muted)]">Loading...</div>
       </section>
     );
   }

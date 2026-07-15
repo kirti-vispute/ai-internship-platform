@@ -3,6 +3,7 @@ import { Inbox } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AppIcon } from "@/components/icons/app-icon";
 import { EMPTY_STATE_ICONS } from "@/components/icons/empty-state-icons";
+import { BRAND_NAME } from "@/lib/brand";
 import { cn } from "@/lib/utils";
 
 type EmptyStateProps = {
@@ -29,17 +30,12 @@ export function EmptyState({
   const IconComponent = icon || (presetKey ? EMPTY_STATE_ICONS[presetKey] : Inbox);
 
   return (
-    <div
-      className={cn(
-        "rounded-2xl border border-dashed border-slate-300 bg-slate-50/60 px-6 py-10 text-center dark:border-slate-700 dark:bg-slate-900/40",
-        className
-      )}
-    >
-      <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-slate-200 bg-white shadow-soft dark:border-slate-700 dark:bg-slate-900">
-        <AppIcon icon={IconComponent} size="lg" className="text-primary-600 dark:text-primary-400" />
+    <div className={cn("ds-card border-dashed px-6 py-10 text-center", className)}>
+      <div className="ds-stat-icon mx-auto mb-4">
+        <AppIcon icon={IconComponent} size="lg" />
       </div>
-      <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">{title}</p>
-      {hint && <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{hint}</p>}
+      <p className="ds-h3">{title}</p>
+      {hint && <p className="ds-caption mt-1">{hint}</p>}
       {action && <div className="mt-4 flex justify-center">{action}</div>}
       {!action && ctaLabel && ctaHref && (
         <div className="mt-4 flex justify-center">
@@ -48,7 +44,7 @@ export function EmptyState({
           </Button>
         </div>
       )}
-      <p className="mt-4 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">InternAI</p>
+      <p className="ds-label mt-4">{BRAND_NAME}</p>
     </div>
   );
 }

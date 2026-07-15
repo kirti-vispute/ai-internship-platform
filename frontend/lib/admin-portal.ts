@@ -281,6 +281,49 @@ export async function resolveReport(reportId: string, resolutionNote = "") {
   return response.report;
 }
 
+export type AdminHiringScoringTemplate = {
+  roleKey: string;
+  roleLabel: string;
+  weights: { skills: number; tests: number; projects: number; experience: number; resume: number };
+  enabled: { skills: boolean; tests: boolean; projects: boolean; experience: boolean; resume: boolean };
+  version?: number;
+  isActive?: boolean;
+  updatedAt?: string;
+  history?: Array<{
+    version: number;
+    weights: AdminHiringScoringTemplate["weights"];
+    enabled: AdminHiringScoringTemplate["enabled"];
+    changedAt?: string;
+  }>;
+};
+
+export async function fetchAdminHiringScoringTemplates(force = false) {
+  return withCache("admin:hiring-scoring", force, async () => {
+    const response = await apiRequest<{ templates: AdminHiringScoringTemplate[] }>("/api/admin/hiring-scoring/templates");
+    return response.templates || [];
+  });
+}
+
+export async function saveAdminHiringScoringTemplate(payload: AdminHiringScoringTemplate) {
+  const response = await apiRequest<{ template: AdminHiringScoringTemplate; message: string }>("/api/admin/hiring-scoring/templates", {
+    method: "PUT",
+    body: JSON.stringify(payload)
+  });
+  cacheStore.delete("admin:hiring-scoring");
+  return response.template;
+}
+
+export async function previewAdminHiringScoringTemplate(payload: {
+  weights: AdminHiringScoringTemplate["weights"];
+  enabled: AdminHiringScoringTemplate["enabled"];
+  factorScores?: AdminHiringScoringTemplate["weights"];
+}) {
+  return apiRequest<{ overallScore: number }>("/api/admin/hiring-scoring/preview", {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+}
+
 export async function updateAdminUser(
   userId: string,
   payload: { isActive?: boolean; role?: "intern" | "company" | "admin"; adminRole?: "super_admin" | "verification_admin" | "moderation_admin" | "support_admin" }

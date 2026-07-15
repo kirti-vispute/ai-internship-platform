@@ -202,7 +202,9 @@ async function callScorer(text) {
   throw lastError;
 }
 
-function buildAnalysisPayload(overallScore, analysis, scorerWarnings = [], intelligenceV2 = null) {
+const { validateResumeExtraction } = require("./ai-orchestrator.service");
+
+function buildAnalysisPayload(overallScore, analysis, scorerWarnings = [], intelligenceV2 = null, parsed = {}) {
   const base = {
     overallScore,
     intelligenceVersion: intelligenceV2?.intelligenceVersion || "v1",
@@ -226,6 +228,11 @@ function buildAnalysisPayload(overallScore, analysis, scorerWarnings = [], intel
     base.dimensionBreakdown = intelligenceV2.dimensionBreakdown;
     base.skillIntelligence = intelligenceV2.skillIntelligence;
     base.quality = intelligenceV2.quality;
+    base.aiValidation = validateResumeExtraction({
+      parsed,
+      intelligenceV2,
+      quality: intelligenceV2.quality || {}
+    });
   }
 
   return base;
@@ -248,7 +255,14 @@ async function computeResumeScore({ profile, resumeText, targetRoleKey = "full_s
         improvements: ["Upload a resume to receive detailed analysis."],
         criticalIssues: [],
         warnings: [],
-        checks: {}
+        checks: {},
+        insufficientData: true,
+        aiValidation: {
+          confidenceScore: 0,
+          validationStatus: "insufficient_data",
+          confidenceTier: "low",
+          explanationTrace: "No resume text available for analysis."
+        }
       }
     };
   }
@@ -278,7 +292,8 @@ async function computeResumeScore({ profile, resumeText, targetRoleKey = "full_s
         resumeScore,
         analysis,
         scorerMeta.warnings || [],
-        intelligenceV2
+        intelligenceV2,
+        profile?.resume?.parsed || {}
       )
     };
   }

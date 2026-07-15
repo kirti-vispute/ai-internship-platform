@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import Image from "next/image";
+import { BRAND_LOGO_PATH, BRAND_NAME } from "@/lib/brand";
 
 type AnimatedLogoProps = {
   size?: number;
@@ -25,7 +26,7 @@ export function AnimatedLogo({ size = 72, className = "" }: AnimatedLogoProps) {
         animate={{ y: [0, -3, 0] }}
         transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
       >
-        <Image src="/brand/logo-loading.svg" alt="InternAI" width={size} height={size} priority className="relative z-10" />
+        <Image src={BRAND_LOGO_PATH} alt={BRAND_NAME} width={size} height={size} priority className="relative z-10 object-contain" />
       </motion.div>
     </motion.div>
   );

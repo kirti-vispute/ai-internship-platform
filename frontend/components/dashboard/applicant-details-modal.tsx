@@ -2,8 +2,10 @@
 
 import { useEffect } from "react";
 import { createPortal } from "react-dom";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import type { CompanyApplication } from "@/lib/company-portal";
+import { extractInterviewRoomIdFromLink } from "@/lib/interview-portal";
 import { ApplicantParsedResume } from "@/components/dashboard/applicant-parsed-resume";
 
 function fmtDate(value?: string) {
@@ -79,6 +81,7 @@ export function ApplicantDetailsModal({
   onFeedbackDraftChange,
   onSubmitFeedback
 }: ApplicantDetailsModalProps) {
+  const router = useRouter();
   const currentStage = normalizeStage(a.status);
   const matchPct = a.relevanceScore ?? a.matchScore ?? 0;
   const resumeScore = a.intern?.resume?.score ?? 0;
@@ -223,6 +226,15 @@ export function ApplicantDetailsModal({
                               <span className="capitalize">{round.status || ""}</span>
                             </span>
                             <div className="flex flex-wrap gap-2">
+                              {round.meetingLink && extractInterviewRoomIdFromLink(round.meetingLink) ? (
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  onClick={() => router.push(`/interview/${extractInterviewRoomIdFromLink(round.meetingLink)}`)}
+                                >
+                                  Join Interview Room
+                                </Button>
+                              ) : null}
                               <Button type="button" size="sm" variant="secondary" onClick={() => round._id && onUpdateRound(round._id, "completed")} disabled={saving || !round._id}>
                                 Completed
                               </Button>

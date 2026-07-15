@@ -33,7 +33,7 @@ export function HeroSection() {
           <motion.div style={{ y: textY }}>
             <div className="relative">
               <div className="internai-hero-title-aura" aria-hidden />
-              <h1 className="internai-heading-display internai-hero-glow">InternAI</h1>
+              <h1 className="internai-heading-display internai-hero-glow">CareerSetu</h1>
             </div>
             <div className="mt-4 space-y-1.5">
               {HERO_LINES.map((line, i) => (
@@ -53,7 +53,7 @@ export function HeroSection() {
                 Start as Intern
               </Link>
               <Link href="/auth/company" className="internai-btn-secondary">
-                Hire with InternAI
+                Hire with CareerSetu
               </Link>
             </div>
           </motion.div>

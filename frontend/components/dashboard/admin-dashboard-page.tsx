@@ -37,6 +37,8 @@ import { ReportDownloadButton } from "@/components/reports/report-download-butto
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { StatusBadge } from "@/components/icons/status-badge";
 import { BRANDED_EMPTY_STATES } from "@/lib/brand";
+import { AdminCertificationReview } from "@/components/dashboard/admin-certification-review";
+import { AdminHiringScoringPanel } from "@/components/dashboard/admin-hiring-scoring-panel";
 
 export type AdminDashboardView =
   | "overview"
@@ -48,7 +50,9 @@ export type AdminDashboardView =
   | "activity-logs"
   | "analytics"
   | "notifications"
-  | "settings";
+  | "settings"
+  | "hiring-scoring"
+  | "certification-review";
 
 const VIEW_META: Record<AdminDashboardView, { title: string; subtitle: string }> = {
   overview: { title: "Platform Overview", subtitle: "Live snapshot of platform health, users, and moderation." },
@@ -60,7 +64,15 @@ const VIEW_META: Record<AdminDashboardView, { title: string; subtitle: string }>
   "activity-logs": { title: "Activity Logs", subtitle: "Audit trail of administrative and hiring actions." },
   analytics: { title: "Platform Analytics", subtitle: "Real-time KPIs and operational trends." },
   notifications: { title: "Notifications", subtitle: "Recent operational alerts and moderation notifications." },
-  settings: { title: "Settings", subtitle: "Administrative controls and platform safeguards." }
+  settings: { title: "Settings", subtitle: "Administrative controls and platform safeguards." },
+  "hiring-scoring": {
+    title: "AI Hiring Scoring",
+    subtitle: "Configure role-specific evaluation weights with validation and version history."
+  },
+  "certification-review": {
+    title: "Certification Review",
+    subtitle: "Approve or reject intern course completion submissions."
+  }
 };
 
 function formatDate(value?: string) {
@@ -955,6 +967,14 @@ function AdminDashboardInner({ view }: { view: AdminDashboardView }) {
           )}
         </Card>
       )}
+
+      {view === "certification-review" && (
+        <Card title={meta.title} subtitle={meta.subtitle}>
+          <AdminCertificationReview />
+        </Card>
+      )}
+
+      {view === "hiring-scoring" && hasAdminPermission(permissions, ADMIN_PERMISSIONS.MANAGE) && <AdminHiringScoringPanel />}
 
       {view === "settings" && (
         <Card title="Administrative Settings" subtitle="Safety controls and account policy preferences">

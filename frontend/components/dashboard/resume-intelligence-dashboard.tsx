@@ -4,15 +4,14 @@ import { useMemo, useState } from "react";
 import {
   AlertTriangle,
   CheckCircle2,
-  GraduationCap,
-  Layers,
   Lightbulb,
   Sparkles,
-  Target,
   TrendingUp
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { ScrollReveal } from "@/components/animations/ScrollReveal";
+import { AiConfidenceBadge } from "@/components/dashboard/ai-confidence-badge";
+import { SkillGapAnalysisPanel } from "@/components/dashboard/skill-gap-analysis-panel";
 import { AppIcon } from "@/components/icons/app-icon";
 import type { InternProfile, ResumeAnalysis } from "@/lib/intern-portal";
 import { cn } from "@/lib/utils";
@@ -157,76 +156,13 @@ function InsightCard({
   );
 }
 
-function LevelDots({ filled, tone }: { filled: number; tone: "muted" | "accent" }) {
-  return (
-    <span className="flex items-center gap-1">
-      {Array.from({ length: 5 }).map((_, i) => (
-        <span
-          key={i}
-          className={cn(
-            "h-1.5 w-1.5 rounded-full",
-            i < filled
-              ? tone === "accent"
-                ? "bg-sky-500 dark:bg-sky-400"
-                : "bg-slate-400 dark:bg-slate-500"
-              : "bg-slate-200 dark:bg-slate-700"
-          )}
-        />
-      ))}
-    </span>
-  );
-}
-
-function gapSuggestion(skill: string, learning?: string[]) {
-  const match = learning?.find((tip) => tip.toLowerCase().includes(skill.toLowerCase()));
-  if (match) return match;
-  return `Add a project or certification that demonstrates ${skill}.`;
-}
-
-function SkillGapCard({ skill, suggestion }: { skill: string; suggestion: string }) {
-  return (
-    <div className={cn(cardBase, cardHover, "p-5")}>
-      <div className="flex items-start justify-between gap-3">
-        <h4 className="text-sm font-semibold capitalize text-slate-900 dark:text-slate-100">{skill}</h4>
-        <span className="shrink-0 rounded-full bg-amber-50 px-2.5 py-0.5 text-[11px] font-semibold text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">
-          Gap
-        </span>
-      </div>
-
-      <div className="mt-4 space-y-2">
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-[11px] font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">Current</span>
-          <LevelDots filled={0} tone="muted" />
-        </div>
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-[11px] font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">Required</span>
-          <LevelDots filled={5} tone="accent" />
-        </div>
-      </div>
-
-      <p className="mt-4 line-clamp-1 text-xs text-slate-500 dark:text-slate-400">{suggestion}</p>
-    </div>
-  );
-}
-
 export function ResumeIntelligenceDashboard({ profile, analysis, onTargetRoleChange, loadingRole }: Props) {
   const [targetRole, setTargetRole] = useState(
     analysis?.skillIntelligence?.targetRoleKey || "full_stack_developer"
   );
 
   const composite = analysis?.compositeScores;
-  const skillIntel = analysis?.skillIntelligence;
   const overall = composite?.overall ?? analysis?.overallScore ?? profile?.resume?.score ?? 0;
-
-  const categoryEntries = useMemo(() => {
-    if (!skillIntel?.categorized) return [];
-    return Object.entries(skillIntel.categorized).filter(([, skills]) => skills.length > 0);
-  }, [skillIntel?.categorized]);
-
-  const skillGaps = useMemo(() => {
-    const gaps = skillIntel?.skillGaps?.length ? skillIntel.skillGaps : skillIntel?.careerMatch?.missingSkills || [];
-    return gaps.slice(0, 8);
-  }, [skillIntel?.skillGaps, skillIntel?.careerMatch?.missingSkills]);
 
   const breakdown = useMemo(
     () =>
@@ -256,6 +192,15 @@ export function ResumeIntelligenceDashboard({ profile, analysis, onTargetRoleCha
 
   return (
     <div className="space-y-8">
+      {analysis?.aiValidation ? (
+        <AiConfidenceBadge
+          confidenceScore={analysis.aiValidation.confidenceScore}
+          validationStatus={analysis.aiValidation.validationStatus}
+          confidenceTier={analysis.aiValidation.confidenceTier}
+          explanationTrace={analysis.aiValidation.explanationTrace}
+        />
+      ) : null}
+
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -270,7 +215,7 @@ export function ResumeIntelligenceDashboard({ profile, analysis, onTargetRoleCha
           </label>
           <select
             id="target-role"
-            className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+            className="ds-input ds-select h-auto min-h-[2.75rem] py-2 text-sm font-medium disabled:opacity-70"
             value={targetRole}
             disabled={loadingRole}
             onChange={(e) => {
@@ -339,98 +284,35 @@ export function ResumeIntelligenceDashboard({ profile, analysis, onTargetRoleCha
 
       {/* Skill Gap Analysis */}
       <ScrollReveal variant="fade-up" distance={14}>
-        <section className="space-y-6">
-          <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <h2 className="text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100">Skill Gap Analysis</h2>
-              <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
-                {skillIntel?.targetRole ? `Benchmarked against ${skillIntel.targetRole}` : "Benchmarked against your career target"}
-              </p>
-            </div>
-            {typeof skillIntel?.careerMatch?.matchPercent === "number" && (
-              <span className="inline-flex w-fit items-center gap-1.5 rounded-full border border-slate-200/70 bg-slate-50/70 px-3 py-1 text-xs font-semibold text-slate-600 dark:border-slate-800 dark:bg-slate-900/50 dark:text-slate-300">
-                <AppIcon icon={Target} size="xs" className="text-sky-500" />
-                {skillIntel.careerMatch.matchPercent}% role match
-              </span>
-            )}
-          </div>
-
-          {/* Gap cards */}
-          {skillGaps.length > 0 ? (
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              {skillGaps.map((skill) => (
-                <SkillGapCard key={skill} skill={skill} suggestion={gapSuggestion(skill, skillIntel?.learningRecommendations)} />
-              ))}
-            </div>
-          ) : (
-            <div className={cn(cardBase, "flex items-center gap-3 px-6 py-5")}>
-              <AppIcon icon={CheckCircle2} size="sm" className="text-emerald-500" />
-              <p className="text-sm text-slate-600 dark:text-slate-300">
-                No major skill gaps detected for this target role. Keep your resume current to maintain alignment.
-              </p>
-            </div>
-          )}
-
-          {/* Skills grouped by category */}
-          {categoryEntries.length > 0 && (
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <AppIcon icon={Layers} size="sm" className="text-slate-500 dark:text-slate-400" />
-                <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Your Skills by Category</h3>
-              </div>
-              <div className="grid gap-4 md:grid-cols-2">
-                {categoryEntries.map(([category, skills]) => (
-                  <div key={category} className={cn(cardBase, cardHover, "p-5")}>
-                    <div className="mb-3 flex items-center justify-between gap-2">
-                      <p className="text-sm font-semibold capitalize text-slate-900 dark:text-slate-100">{category}</p>
-                      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-500 dark:bg-slate-800 dark:text-slate-400">
-                        {skills.length}
-                      </span>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {skills.map((skill) => (
-                        <span
-                          key={skill}
-                          className="rounded-lg border border-slate-200/70 bg-slate-50/70 px-2.5 py-1 text-xs font-medium capitalize text-slate-700 transition-colors hover:border-sky-300 hover:bg-sky-50 hover:text-sky-700 dark:border-slate-700 dark:bg-slate-900/50 dark:text-slate-300 dark:hover:border-sky-500/50 dark:hover:bg-sky-950/30 dark:hover:text-sky-300"
-                        >
-                          {skill}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Learning path */}
-          {(skillIntel?.learningRecommendations || []).length > 0 && (
-            <div className={cn(cardBase, cardHover, "p-6")}>
-              <div className="mb-4 flex items-center gap-2">
-                <AppIcon icon={GraduationCap} size="sm" className="text-sky-600 dark:text-sky-400" />
-                <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Suggested Learning Path</h3>
-              </div>
-              <ul className="space-y-2.5">
-                {(skillIntel?.learningRecommendations || []).slice(0, 5).map((item, idx) => (
-                  <li key={idx} className="flex gap-2.5 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-                    <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-sky-500" />
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </section>
+        <SkillGapAnalysisPanel
+          profile={profile}
+          analysis={analysis}
+          targetRoleKey={targetRole}
+          loadingRole={loadingRole}
+          showRoleSelector={false}
+          onTargetRoleChange={(roleKey) => {
+            setTargetRole(roleKey);
+            onTargetRoleChange?.(roleKey);
+          }}
+        />
       </ScrollReveal>
 
-      {analysis?.quality && !analysis.quality.isReliable && (
+      {analysis?.quality && !analysis.quality.isReliable && (() => {
+        const raw = analysis.confidence ?? analysis.quality?.confidence;
+        const confidencePct =
+          typeof raw === "number" && Number.isFinite(raw)
+            ? Math.round(raw * (raw <= 1 ? 100 : 1))
+            : typeof analysis.aiValidation?.confidenceScore === "number"
+              ? Math.round(analysis.aiValidation.confidenceScore)
+              : null;
+        if (confidencePct == null) return null;
+        return (
         <div className="rounded-2xl border border-amber-200/70 bg-amber-50/60 px-5 py-4 text-xs text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-200">
-          <p className="font-semibold">
-            Analysis confidence: {Math.round((analysis.confidence ?? analysis.quality.confidence) * 100)}%
-          </p>
+          <p className="font-semibold">Analysis confidence: {confidencePct}%</p>
           <p className="mt-1">Improve extraction quality: {(analysis.quality.issues || []).join(" ")}</p>
         </div>
-      )}
+        );
+      })()}
     </div>
   );
 }

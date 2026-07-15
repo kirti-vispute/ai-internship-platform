@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { AnimatedLogo } from "@/components/brand/animated-logo";
-import { LOADING_MESSAGES } from "@/lib/brand";
+import { BRAND_NAME, LOADING_MESSAGES } from "@/lib/brand";
 
 type InternAILoaderProps = {
   message?: string;
@@ -38,7 +38,7 @@ export function InternAILoader({
     >
       <AnimatedLogo size={compact ? 52 : 72} />
       <div>
-        <p className="text-sm font-bold text-slate-800 dark:text-slate-100">InternAI</p>
+        <p className="text-sm font-bold text-slate-800 dark:text-slate-100">{BRAND_NAME}</p>
         <p className="mt-1 text-xs text-slate-500 transition-opacity duration-300 dark:text-slate-400">{displayMessage}</p>
       </div>
       <div className="flex gap-1">

@@ -56,10 +56,8 @@ export function RoleDashboardGuard({ expectedRole, children }: RoleDashboardGuar
 
   if (!allowed) {
     return (
-      <section className="container-shell py-12">
-        <div className="animate-reveal rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-600 shadow-soft dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
-          {statusMessage}
-        </div>
+      <section className="container-shell ds-page-section">
+        <div className="ds-card ds-animate-in p-6 text-sm text-[var(--ds-muted)]">{statusMessage}</div>
       </section>
     );
   }

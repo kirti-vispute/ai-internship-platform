@@ -8,11 +8,13 @@ import { getAuthSession } from "@/lib/session";
 import { FEATURE_FLAGS } from "@/constants/featureFlags";
 
 type MessageStatusPayload = {
-  messageId: string;
-  conversationId: string;
+  messageId?: string;
+  conversationId?: string;
   status: "sent" | "delivered" | "read";
   deliveredAt?: string | null;
   readAt?: string | null;
+  _id?: string;
+  conversation?: string;
 };
 
 type ChatSocketHandlers = {
@@ -69,14 +71,28 @@ export function useChatSocket(handlers: ChatSocketHandlers) {
 
   function joinConversation(conversationId: string) {
     return new Promise<boolean>((resolve) => {
+      const emitJoin = () => {
+        const socket = socketRef.current;
+        if (!socket) {
+          resolve(false);
+          return;
+        }
+        socket.emit("conversation:join", { conversationId }, (response?: { ok?: boolean }) => {
+          resolve(Boolean(response?.ok));
+        });
+      };
+
       const socket = socketRef.current;
-      if (!socket?.connected) {
+      if (!socket) {
         resolve(false);
         return;
       }
-      socket.emit("conversation:join", { conversationId }, (response?: { ok?: boolean }) => {
-        resolve(Boolean(response?.ok));
-      });
+      if (socket.connected) {
+        emitJoin();
+        return;
+      }
+      socket.once("connect", emitJoin);
+      socket.once("connect_error", () => resolve(false));
     });
   }
 

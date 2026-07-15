@@ -360,8 +360,14 @@ async function sendMessage(user, conversationId, body) {
 
   await notifyChatRecipient(conversation, senderRole, text.slice(0, 120), user._id);
 
-  const recipientRole = senderRole === "intern" ? "company" : "intern";
-  if (recipientRole === "intern") {
+  socketEmitters().emitToConversation(conversation._id, "message:new", payload);
+
+  if (senderRole === "intern") {
+    const companyUsers = await findCompanyTeamUsers(conversation.company);
+    for (const companyUser of companyUsers) {
+      socketEmitters().emitToUser(companyUser._id, "message:new", payload);
+    }
+  } else {
     socketEmitters().emitToUser(conversation.internUser, "message:new", payload);
   }
 

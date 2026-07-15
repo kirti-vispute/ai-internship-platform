@@ -60,7 +60,7 @@ const REPORT_DEFINITIONS = {
   }
 };
 
-const PORTAL_NAME = "InternAI Internship & Placement Management Portal";
+const { PORTAL_NAME } = require("./brand");
 const REPORT_VERSION = "1.0";
 
 module.exports = {

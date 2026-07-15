@@ -42,7 +42,14 @@ export function getAuthPathForRole(role: AuthRole): string {
   return AUTH_PATH[role];
 }
 
+export function isInterviewPath(path: string): boolean {
+  return path.startsWith("/interview/");
+}
+
 export function isPathAllowedForRole(path: string, role: AuthRole): boolean {
+  if (isInterviewPath(path)) {
+    return role === "intern" || role === "company";
+  }
   if (!path.startsWith("/dashboard/")) return false;
   if (role === "admin") return path.startsWith("/dashboard/admin");
   return path.startsWith(DASHBOARD_PATH[role]);

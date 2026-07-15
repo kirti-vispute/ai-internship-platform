@@ -67,7 +67,7 @@ export default function CompanyNotificationsPage() {
   return (
     <RoleDashboardGuard expectedRole="company">
       <CompanyShell welcomeName={profile?.companyName} onLogout={handleLogout}>
-        <div className="dashboard-stack">
+        <div className="dashboard-stack company-dashboard-stack">
           <DashboardPageHeader
             eyebrow="Updates"
             title="Notifications"
@@ -93,24 +93,24 @@ export default function CompanyNotificationsPage() {
           {error && <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300">{error}</div>}
 
           {!loading && !error && notifications.length === 0 && (
-            <BrandedEmptyState preset={BRANDED_EMPTY_STATES.notifications} presetKey="notifications" />
+            <BrandedEmptyState preset={BRANDED_EMPTY_STATES.companyNotifications} presetKey="companyNotifications" />
           )}
 
           {!loading && !error && notifications.length > 0 && (
-            <ul className="space-y-2">
+            <ul className="company-dashboard-list-stack">
               {notifications.map((item) => {
                 const href = openLink(item);
                 return (
                   <li
                     key={item._id}
-                    className={`surface-subtle flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between ${item.isRead ? "opacity-80" : ""}`}
+                    className={`company-dashboard-item-card flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between ${item.isRead ? "opacity-80" : ""}`}
                   >
                     <div className="min-w-0">
-                      <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{item.title}</p>
-                      {item.message && <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">{item.message}</p>}
-                      <p className="mt-1 text-[11px] text-slate-500">{item.createdAt ? new Date(item.createdAt).toLocaleString() : ""}</p>
+                      <p className="ds-h3">{item.title}</p>
+                      {item.message && <p className="ds-caption mt-1">{item.message}</p>}
+                      <p className="ds-caption mt-1 opacity-80">{item.createdAt ? new Date(item.createdAt).toLocaleString() : ""}</p>
                     </div>
-                    <div className="flex flex-wrap gap-2">
+                    <div className="company-dashboard-actions-row">
                       {href && (
                         <Button href={href} type="button" size="sm" variant="secondary">
                           Open

@@ -1,5 +1,7 @@
 const express = require("express");
 const adminController = require("../controllers/admin.controller");
+const hiringScoringController = require("../controllers/hiring-scoring.controller");
+const certificationController = require("../controllers/certification.controller");
 const reportController = require("../controllers/report.controller");
 const authMiddleware = require("../middleware/auth.middleware");
 const allowRoles = require("../middleware/role.middleware");
@@ -25,7 +27,24 @@ router.get("/reports", allowPermissions("admin:report:review"), adminController.
 router.patch("/reports/:reportId/resolve", allowPermissions("admin:report:review"), adminController.resolveReport);
 router.get("/activity-logs", allowPermissions("admin:activity:view"), adminController.getActivityLogs);
 
+router.get("/certifications", allowPermissions("admin:certification:review"), certificationController.listCertificationsAdmin);
+router.patch(
+  "/certifications/:certificationId/review",
+  allowPermissions("admin:certification:review"),
+  certificationController.reviewCertificationAdmin
+);
+router.get(
+  "/certifications/:certificationId/file",
+  allowPermissions("admin:certification:review"),
+  certificationController.downloadCertificateAdmin
+);
+
 router.get("/reports/platform-statistics", reportController.downloadAdminPlatformStatistics);
 router.get("/reports/verification/:companyId", allowPermissions("admin:company:verify"), reportController.downloadAdminVerificationReport);
+
+router.get("/hiring-scoring/templates", allowPermissions("admin:manage"), hiringScoringController.listTemplates);
+router.post("/hiring-scoring/templates", allowPermissions("admin:manage"), hiringScoringController.saveTemplate);
+router.put("/hiring-scoring/templates", allowPermissions("admin:manage"), hiringScoringController.saveTemplate);
+router.post("/hiring-scoring/preview", allowPermissions("admin:manage"), hiringScoringController.previewTemplate);
 
 module.exports = router;

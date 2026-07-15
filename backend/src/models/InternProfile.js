@@ -58,6 +58,19 @@ const internProfileSchema = new mongoose.Schema(
         verificationLink: { type: String, default: "", trim: true }
       }
     ],
+    verifiedCertificationCount: { type: Number, default: 0 },
+    verifiedCertificationEntries: [
+      {
+        name: { type: String, default: "", trim: true },
+        issuer: { type: String, default: "", trim: true },
+        year: { type: String, default: "", trim: true },
+        certificateUrl: { type: String, default: "", trim: true },
+        verificationLink: { type: String, default: "", trim: true },
+        skillCategory: { type: String, default: "", trim: true },
+        verificationStatus: { type: String, default: "verified", trim: true },
+        certificationId: { type: String, default: "", trim: true }
+      }
+    ],
     summary: { type: String, default: "", trim: true },
     interests: [{ type: String, trim: true }],
     completedCourses: [{ type: String, trim: true }],

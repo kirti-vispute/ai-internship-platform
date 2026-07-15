@@ -7,7 +7,8 @@ const FEATURE_FLAGS = Object.freeze({
   ENABLE_AI: toBool(process.env.ENABLE_AI, true),
   ENABLE_NOTIFICATIONS: toBool(process.env.ENABLE_NOTIFICATIONS, true),
   ENABLE_RECORDINGS: toBool(process.env.ENABLE_RECORDINGS, false),
-  ENABLE_CHAT: toBool(process.env.ENABLE_CHAT, true)
+  ENABLE_CHAT: toBool(process.env.ENABLE_CHAT, true),
+  ENABLE_INTERVIEW_ROOMS: toBool(process.env.ENABLE_INTERVIEW_ROOMS, true)
 });
 
 function isEnabled(flagName) {

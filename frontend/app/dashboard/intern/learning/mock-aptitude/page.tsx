@@ -4,8 +4,9 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { RoleDashboardGuard } from "@/components/ui/role-dashboard-guard";
 import { InternShell } from "@/components/dashboard/intern-shell";
-import { LearningAssessmentPanel } from "@/components/dashboard/learning-assessment-panel";
 import { DashboardPageHeader } from "@/components/dashboard/dashboard-page-header";
+import { MockAptitudeHub } from "@/components/dashboard/mock-aptitude-hub";
+import { SectionPanel } from "@/components/dashboard/section-panel";
 import { clearAuthSession } from "@/lib/session";
 import { InternProfile, fetchInternProfile } from "@/lib/intern-portal";
 
@@ -26,14 +27,14 @@ export default function MockAptitudePage() {
     <RoleDashboardGuard expectedRole="intern">
       <InternShell welcomeName={profile?.fullName} onLogout={handleLogout}>
         <div className="dashboard-stack">
-          <DashboardPageHeader eyebrow="Learning" title="Mock Aptitude Test" subtitle="Timed practice for quantitative and logical reasoning." />
-          <LearningAssessmentPanel
-            title="Assigned Tests"
-            subtitle="Your recruiter or learning path will assign aptitude rounds here."
-            emptyTitle="No aptitude tests assigned yet"
-            emptyHint="Check back after your profile is reviewed or when a company assigns a test."
-            practiceAreas={["Quantitative aptitude", "Logical reasoning", "Data interpretation", "Verbal ability"]}
+          <DashboardPageHeader
+            eyebrow="Learning"
+            title="Mock Aptitude Test"
+            subtitle="AMCAT-style timed practice with scoring, mentor feedback, and progress tracking."
           />
+          <SectionPanel title="Aptitude Test Engine">
+            <MockAptitudeHub />
+          </SectionPanel>
         </div>
       </InternShell>
     </RoleDashboardGuard>
