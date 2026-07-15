@@ -110,6 +110,6 @@ export const testimonials = [
     name: "Rohan Mehta",
     role: "HR Operations Manager",
     org: "OrbitWorks",
-    quote: "CareerSetu gives our team one place to track applications, interviews, and feedback without losing context between recruiters."
+    quote: "InternAI gives our team one place to track applications, interviews, and feedback without losing context between recruiters."
   }
 ];

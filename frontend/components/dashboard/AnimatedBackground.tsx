@@ -7,6 +7,9 @@ type AnimatedBackgroundProps = {
 export function AnimatedBackground({ className }: AnimatedBackgroundProps) {
   return (
     <div className={cn("pointer-events-none absolute inset-0 overflow-hidden", className)} aria-hidden="true">
+      {/* Premium top-center ambient glow — the Linear/Vercel/Stripe signature cue. Static (no animation cost). */}
+      <div className="absolute inset-x-0 -top-24 h-[420px] bg-[radial-gradient(ellipse_720px_360px_at_50%_0%,rgba(99,102,241,0.10),transparent_72%)] dark:bg-[radial-gradient(ellipse_720px_360px_at_50%_0%,rgba(129,140,248,0.14),transparent_72%)]" />
+
       <div className="absolute -top-32 left-[8%] h-72 w-72 rounded-full bg-cyan-400/8 blur-3xl animate-pulse-slow dark:bg-cyan-300/10" />
       <div className="absolute right-[6%] top-24 h-64 w-64 rounded-full bg-indigo-400/8 blur-3xl animate-pulse-slow [animation-delay:1.2s] dark:bg-indigo-300/12" />
       <div className="absolute bottom-4 left-1/3 h-56 w-56 rounded-full bg-blue-400/8 blur-3xl animate-pulse-slow [animation-delay:2.2s] dark:bg-blue-300/10" />

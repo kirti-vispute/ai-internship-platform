@@ -13,15 +13,15 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "CareerSetu | Connecting Skills to Success",
-  description: "CareerSetu — Connecting Skills to Success. Internship and placement management for students, companies, and administrators.",
+  title: "InternAI | Connecting Skills to Success",
+  description: "InternAI — Connecting Skills to Success. Internship and placement management for students, companies, and administrators.",
   icons: {
     icon: [
-      { url: "/brand/logo.png", sizes: "any" },
-      { url: "/brand/logo.png", sizes: "32x32", type: "image/png" },
-      { url: "/brand/logo.png", sizes: "16x16", type: "image/png" }
+      { url: "/brand/favicon-48.png", sizes: "any" },
+      { url: "/brand/favicon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/brand/favicon-16.png", sizes: "16x16", type: "image/png" }
     ],
-    apple: [{ url: "/brand/logo.png", sizes: "180x180", type: "image/png" }]
+    apple: [{ url: "/brand/apple-touch-icon.png", sizes: "180x180", type: "image/png" }]
   }
 };
 

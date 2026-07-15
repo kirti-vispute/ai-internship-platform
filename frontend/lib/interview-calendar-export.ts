@@ -49,7 +49,7 @@ export function buildInterviewCalendarEvent(
   ].filter(Boolean);
 
   return {
-    uid: `interview-${interview.interviewId}@careersetu`,
+    uid: `interview-${interview.interviewId}@internai`,
     title,
     description: descriptionLines.join("\n"),
     location: interview.mode === "offline" ? "In-person interview" : joinUrl || "Online interview",
@@ -80,7 +80,7 @@ export function buildInterviewIcsContent(event: InterviewCalendarEvent) {
   const lines = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//CareerSetu//Interview Calendar//EN",
+    "PRODID:-//InternAI//Interview Calendar//EN",
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
     "BEGIN:VEVENT",

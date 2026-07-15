@@ -1,7 +1,7 @@
 require("dotenv").config();
 
-const connectDB = require("./config/db");
-const { seedDatabase } = require("./data/seedDatabase");
+const connectDB = require("./shared/database/db");
+const { seedDatabase } = require("./shared/data/seedDatabase");
 
 async function runSeed() {
   await connectDB();

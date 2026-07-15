@@ -6,7 +6,6 @@ export type {
   FunnelStageAnalytics,
   InterviewScheduleSlot,
   CandidateRankingInput,
-  RejectionReason,
   HiringPrediction,
   BestCandidateRecommendation,
   CandidateEvaluation,

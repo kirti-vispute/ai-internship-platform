@@ -1,9 +1,11 @@
-export const BRAND_NAME = "CareerSetu";
+export const BRAND_NAME = "InternAI";
 export const BRAND_TAGLINE = "Connecting Skills to Success";
 export const BRAND_TAGLINE_ALT = "Connecting Skills to Success";
-export const BRAND_PORTAL_NAME = "CareerSetu Platform";
-export const BRAND_LOGO_PATH = "/brand/logo.png";
-export const BRAND_SUPPORT_EMAIL = "support@careersetu.example";
+export const BRAND_PORTAL_NAME = "InternAI Platform";
+export const BRAND_LOGO_PATH = "/brand/icon-mark.png";
+export const BRAND_LOGO_FULL_PATH = "/brand/logo-full.png";
+export const BRAND_LOGO_FULL_TAGLINE_PATH = "/brand/logo-full-tagline.png";
+export const BRAND_SUPPORT_EMAIL = "support@internai.example";
 
 export const LOADING_MESSAGES = [
   "Preparing your opportunities...",

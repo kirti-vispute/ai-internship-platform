@@ -1,6 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import { AppIcon } from "@/components/icons/app-icon";
 import { DashboardPageHeader } from "@/components/dashboard/dashboard-page-header";
+import { ScrollReveal } from "@/components/animations/ScrollReveal";
 import { cn } from "@/lib/utils";
 
 export const companyDashboardStyles = {
@@ -140,11 +141,13 @@ type CompanyDashboardEmptyStateProps = {
 
 export function CompanyDashboardEmptyState({ title, description, children, className }: CompanyDashboardEmptyStateProps) {
   return (
-    <div className={cn(companyDashboardStyles.emptyState, className)}>
-      <p className="ds-body font-medium">{title}</p>
-      {description ? <p className="ds-caption mt-1">{description}</p> : null}
-      {children}
-    </div>
+    <ScrollReveal variant="fade-up" distance={8}>
+      <div className={cn(companyDashboardStyles.emptyState, className)}>
+        <p className="ds-body font-medium">{title}</p>
+        {description ? <p className="ds-caption mt-1">{description}</p> : null}
+        {children}
+      </div>
+    </ScrollReveal>
   );
 }
 

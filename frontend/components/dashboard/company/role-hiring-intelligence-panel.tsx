@@ -1,8 +1,9 @@
 "use client";
 
 import { useMemo } from "react";
-import { Target, TrendingUp } from "lucide-react";
+import { AlertTriangle, ArrowRight, Sparkles, TrendingUp } from "lucide-react";
 import type { CompanyApplication, CompanyInternship, CompanyMatchedCandidate } from "@/lib/company-portal";
+import type { BestCandidateRecommendation, HiringPrediction } from "@/lib/ai-hiring";
 import { hiringAIEngine } from "@/lib/ai-hiring";
 import {
   CompanyDashboardEmptyState,
@@ -11,25 +12,66 @@ import {
   companyDashboardStyles
 } from "./company-dashboard-layout";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 type RoleHiringIntelligencePanelProps = {
   matches: CompanyMatchedCandidate[];
   applications: CompanyApplication[];
   internships: CompanyInternship[];
   onOpenProfile: (applicationId: string) => void;
+  /** Optional: render skeleton loaders while the parent is still fetching source data. */
+  loading?: boolean;
 };
 
-const difficultyTone: Record<string, string> = {
-  Easy: "text-emerald-300 bg-emerald-950/40",
-  Medium: "text-amber-300 bg-amber-950/40",
-  Hard: "text-rose-300 bg-rose-950/40"
+const MAX_VISIBLE_ROLES = 6;
+
+type Priority = "High" | "Medium" | "Low";
+
+const priorityTone: Record<Priority, string> = {
+  High: "text-rose-300 bg-rose-950/40 ring-1 ring-rose-500/30",
+  Medium: "text-amber-300 bg-amber-950/40 ring-1 ring-amber-500/30",
+  Low: "text-emerald-300 bg-emerald-950/40 ring-1 ring-emerald-500/30"
 };
+
+/**
+ * Pure presentation helper — derives a concise, scannable insight from the
+ * existing AI outputs. Does NOT alter recommendation generation or scoring.
+ */
+function buildRecommendationInsight(prediction: HiringPrediction, recommended?: BestCandidateRecommendation) {
+  const priority: Priority =
+    prediction.difficultyLevel === "Hard" || prediction.hiringProbability < 50
+      ? "High"
+      : prediction.difficultyLevel === "Medium" || prediction.hiringProbability < 75
+        ? "Medium"
+        : "Low";
+
+  if (!recommended) {
+    return {
+      priority,
+      mainRecommendation: "Keep sourcing candidates",
+      reason: "No candidate yet clears the match-quality bar for a confident recommendation.",
+      suggestedAction: "Widen outreach or revisit role requirements.",
+      improvementOpportunity: null as string | null
+    };
+  }
+
+  const needsEvidence = Boolean(recommended.projectConfidenceWarning) || recommended.confidenceScore <= 80;
+
+  return {
+    priority,
+    mainRecommendation: `Advance ${recommended.candidateName}`,
+    reason: recommended.whyRecommended[0] || recommended.reasonForSelection,
+    suggestedAction: needsEvidence ? "Verify project evidence, then interview." : "Fast-track to interview.",
+    improvementOpportunity: recommended.projectConfidenceWarning
+  };
+}
 
 export function RoleHiringIntelligencePanel({
   matches,
   applications,
   internships,
-  onOpenProfile
+  onOpenProfile,
+  loading = false
 }: RoleHiringIntelligencePanelProps) {
   const input = useMemo(() => ({ matches, applications, internships }), [matches, applications, internships]);
   const predictions = useMemo(() => hiringAIEngine.computeAllHiringPredictions(input), [input]);
@@ -39,17 +81,37 @@ export function RoleHiringIntelligencePanel({
     [recommendations]
   );
 
-  const visiblePredictions = predictions.filter((item) => item.sufficient).slice(0, 6);
+  const visiblePredictions = predictions.filter((item) => item.sufficient).slice(0, MAX_VISIBLE_ROLES);
+
+  if (loading) {
+    return (
+      <CompanyDashboardSection
+        id="role-hiring-intelligence"
+        icon={TrendingUp}
+        title="AI Recommendation Insights"
+        description="Concise, prioritized hiring recommendations per role."
+      >
+        <div className={companyDashboardStyles.cardGridTwo} aria-hidden>
+          {Array.from({ length: 4 }).map((_, index) => (
+            <RecommendationCardSkeleton key={index} />
+          ))}
+        </div>
+      </CompanyDashboardSection>
+    );
+  }
 
   if (visiblePredictions.length === 0) {
     return (
       <CompanyDashboardSection
         id="role-hiring-intelligence"
         icon={TrendingUp}
-        title="Role Hiring Intelligence"
-        description="Time-to-hire forecasts and recommended hires per role."
+        title="AI Recommendation Insights"
+        description="Concise, prioritized hiring recommendations per role."
       >
-        <CompanyDashboardEmptyState title="Predictions appear once roles receive applicants." />
+        <CompanyDashboardEmptyState
+          title="No recommendations yet"
+          description="Insights appear here once your roles start receiving applicants."
+        />
       </CompanyDashboardSection>
     );
   }
@@ -58,58 +120,225 @@ export function RoleHiringIntelligencePanel({
     <CompanyDashboardSection
       id="role-hiring-intelligence"
       icon={TrendingUp}
-      title="Role Hiring Intelligence"
-      description="Time-to-hire forecasts and recommended hires per role."
+      title="AI Recommendation Insights"
+      description="Concise, prioritized hiring recommendations per role."
     >
       <div className={companyDashboardStyles.cardGridTwo}>
-        {visiblePredictions.map((prediction) => {
-          const recommended = recommendationByJob.get(prediction.jobId);
-          return (
-            <CompanyDashboardItemCard key={prediction.jobId}>
-              <div className="flex flex-wrap items-start justify-between gap-2">
-                <div className="min-w-0">
-                  <h3 className="ds-h3">{prediction.role}</h3>
-                  <p className="ds-caption mt-1">
-                    Est. {prediction.timeToHireEstimate} · {prediction.hiringProbability}% hire probability
-                  </p>
-                </div>
-                <span
-                  className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold ${difficultyTone[prediction.difficultyLevel]}`}
-                >
-                  {prediction.difficultyLevel}
-                </span>
-              </div>
-
-              {recommended ? (
-                <div className="mt-3 rounded-lg border border-emerald-900/50 bg-emerald-950/20 px-3 py-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <Target className="h-3.5 w-3.5 text-emerald-400" />
-                        <p className="ds-label text-emerald-300">Recommended Hire</p>
-                      </div>
-                      <p className="ds-body mt-1 truncate font-medium">{recommended.candidateName}</p>
-                      <p className="ds-caption mt-0.5">
-                        {recommended.matchScore}% match · {recommended.reasonForSelection}
-                      </p>
-                      {recommended.projectConfidenceWarning ? (
-                        <p className="ds-caption mt-1 text-amber-300">{recommended.projectConfidenceWarning}</p>
-                      ) : null}
-                    </div>
-                    {recommended.applicationId ? (
-                      <Button type="button" size="sm" variant="secondary" onClick={() => onOpenProfile(recommended.applicationId!)}>
-                        View
-                      </Button>
-                    ) : null}
-                  </div>
-                </div>
-              ) : (
-                <p className="ds-caption mt-3">Insufficient match quality for a recommended hire yet.</p>
-              )}
-            </CompanyDashboardItemCard>
-          );
-        })}
+        {visiblePredictions.map((prediction) => (
+          <RecommendationCard
+            key={prediction.jobId}
+            prediction={prediction}
+            recommended={recommendationByJob.get(prediction.jobId)}
+            onOpenProfile={onOpenProfile}
+          />
+        ))}
       </div>
     </CompanyDashboardSection>
+  );
+}
+
+type RecommendationCardProps = {
+  prediction: HiringPrediction;
+  recommended?: BestCandidateRecommendation;
+  onOpenProfile: (applicationId: string) => void;
+};
+
+type ConfidenceLevel = "High" | "Medium" | "Low";
+
+const confidenceTone: Record<ConfidenceLevel, { dot: string; badge: string }> = {
+  High: { dot: "bg-emerald-400", badge: "bg-emerald-950/40 text-emerald-300 ring-1 ring-emerald-500/30" },
+  Medium: { dot: "bg-amber-400", badge: "bg-amber-950/40 text-amber-300 ring-1 ring-amber-500/30" },
+  Low: { dot: "bg-rose-400", badge: "bg-rose-950/40 text-rose-300 ring-1 ring-rose-500/30" }
+};
+
+function confidenceLevel(recommended: BestCandidateRecommendation): ConfidenceLevel {
+  if (recommended.confidenceScore >= 80) return "High";
+  if (recommended.confidenceScore >= 55) return "Medium";
+  return "Low";
+}
+
+/** Pulls the skill list out of clauses like "Required skill overlap: JavaScript, React". Presentation only. */
+function extractSkills(clause?: string): string[] {
+  if (!clause || !clause.includes(":")) return [];
+  return clause
+    .slice(clause.indexOf(":") + 1)
+    .split(/[,;]/)
+    .map((skill) => skill.trim())
+    .filter(Boolean)
+    .slice(0, 5);
+}
+
+/** One compact, scannable insight row: colored dot, short title, one-line content. */
+function InsightRow({
+  dot,
+  title,
+  children
+}: {
+  dot: string;
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex gap-2.5 border-t border-white/[0.06] py-2 first:border-t-0 first:pt-0 last:pb-0">
+      <span className={cn("mt-1.5 h-2 w-2 shrink-0 rounded-full", dot)} aria-hidden />
+      <div className="min-w-0 flex-1">
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--ds-text)]">{title}</p>
+        <div className="ds-caption mt-0.5">{children}</div>
+      </div>
+    </div>
+  );
+}
+
+function SkillDots({ skills }: { skills: string[] }) {
+  return (
+    <span className="text-[var(--ds-muted)]">
+      {skills.map((skill, index) => (
+        <span key={skill}>
+          {index > 0 ? <span aria-hidden> · </span> : null}
+          <span className="font-medium text-[var(--ds-text)]">{skill}</span>
+        </span>
+      ))}
+    </span>
+  );
+}
+
+function RecommendationCard({ prediction, recommended, onOpenProfile }: RecommendationCardProps) {
+  const insight = buildRecommendationInsight(prediction, recommended);
+
+  const strengths = recommended?.evaluation?.strengths ?? [];
+  const weaknesses = recommended?.evaluation?.weaknesses ?? [];
+  const strengthSkills = extractSkills(strengths.find((item) => item.includes(":")));
+  const missingSkills = extractSkills(weaknesses.find((item) => /missing/i.test(item)));
+  const confidence = recommended ? confidenceLevel(recommended) : null;
+
+  return (
+    <CompanyDashboardItemCard className="gap-3">
+      {/* Header: role + priority */}
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <h3 className="ds-h3 truncate">{prediction.role}</h3>
+          <p className="ds-caption mt-0.5">
+            Est. {prediction.timeToHireEstimate} · {prediction.difficultyLevel} to fill
+          </p>
+        </div>
+        <span
+          className={cn(
+            "inline-flex shrink-0 items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold",
+            priorityTone[insight.priority]
+          )}
+        >
+          {insight.priority} priority
+        </span>
+      </div>
+
+      {/* Recommended candidate strip */}
+      <div className="rounded-lg border border-white/10 bg-white/[0.02] px-3 py-2.5">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex min-w-0 items-center gap-1.5">
+            <Sparkles className="h-3.5 w-3.5 shrink-0 text-primary-300" aria-hidden />
+            <p className="ds-body truncate font-medium">{insight.mainRecommendation}</p>
+          </div>
+          {recommended && confidence ? (
+            <span
+              className={cn(
+                "inline-flex shrink-0 items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-semibold",
+                confidenceTone[confidence].badge
+              )}
+            >
+              <span className={cn("h-1.5 w-1.5 rounded-full", confidenceTone[confidence].dot)} aria-hidden />
+              {confidence} confidence
+            </span>
+          ) : null}
+        </div>
+
+        {recommended ? (
+          <div className="mt-2">
+            <div
+              className="h-1.5 w-full overflow-hidden rounded-full bg-white/10"
+              role="progressbar"
+              aria-valuenow={recommended.matchScore}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-label={`Match score for ${recommended.candidateName}: ${recommended.matchScore}%`}
+            >
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-primary-500 to-emerald-400"
+                style={{ width: `${Math.min(100, Math.max(0, recommended.matchScore))}%` }}
+              />
+            </div>
+            <p className="mt-1 text-[10px] font-medium uppercase tracking-wide text-[var(--ds-muted)]">
+              {recommended.matchScore}% match · {recommended.recommendationLevel}
+            </p>
+          </div>
+        ) : null}
+      </div>
+
+      {/* Compact insight rows */}
+      <div>
+        {strengthSkills.length > 0 ? (
+          <InsightRow dot="bg-emerald-400" title="Key strengths">
+            <SkillDots skills={strengthSkills} />
+          </InsightRow>
+        ) : (
+          <InsightRow dot="bg-emerald-400" title="Why recommended">
+            <span className="line-clamp-2">{insight.reason}</span>
+          </InsightRow>
+        )}
+
+        {missingSkills.length > 0 ? (
+          <InsightRow dot="bg-amber-400" title="Missing skills">
+            <SkillDots skills={missingSkills} />
+          </InsightRow>
+        ) : null}
+
+        <InsightRow dot="bg-violet-400" title="Next step">
+          {insight.suggestedAction}
+        </InsightRow>
+
+        {insight.improvementOpportunity ? (
+          <InsightRow dot="bg-amber-400" title="Verify first">
+            <span className="line-clamp-2 text-amber-200/90">
+              <AlertTriangle className="mr-1 inline h-3 w-3 align-[-1px]" aria-hidden />
+              {insight.improvementOpportunity}
+            </span>
+          </InsightRow>
+        ) : null}
+      </div>
+
+      {/* Footer pinned to bottom for equal-height alignment */}
+      {recommended?.applicationId ? (
+        <div className="mt-auto pt-1">
+          <Button
+            type="button"
+            size="sm"
+            variant="secondary"
+            className="w-full sm:w-auto"
+            onClick={() => onOpenProfile(recommended.applicationId!)}
+          >
+            View candidate
+            <ArrowRight className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      ) : null}
+    </CompanyDashboardItemCard>
+  );
+}
+
+function RecommendationCardSkeleton() {
+  return (
+    <CompanyDashboardItemCard className="gap-3">
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0 space-y-2">
+          <div className="h-4 w-32 animate-pulse rounded bg-white/10" />
+          <div className="h-3 w-40 animate-pulse rounded bg-white/5" />
+        </div>
+        <div className="h-5 w-20 animate-pulse rounded-full bg-white/10" />
+      </div>
+      <div className="h-16 w-full animate-pulse rounded-lg bg-white/5" />
+      <div className="space-y-2">
+        <div className="h-3 w-full animate-pulse rounded bg-white/5" />
+        <div className="h-3 w-2/3 animate-pulse rounded bg-white/5" />
+      </div>
+    </CompanyDashboardItemCard>
   );
 }

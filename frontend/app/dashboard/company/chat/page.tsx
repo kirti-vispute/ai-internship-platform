@@ -1,47 +1,38 @@
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { RoleDashboardGuard } from "@/components/ui/role-dashboard-guard";
-import { CompanyShell } from "@/components/dashboard/company-shell";
-import { ChatWorkspace } from "@/components/dashboard/chat-workspace";
-import { logoutAuthSession } from "@/lib/api-client";
-import { fetchCompanyProfile, type CompanyCurrentUser, type CompanyProfile } from "@/lib/company-portal";
+import { MessagePage } from "@/components/dashboard/message-page";
+import { AccessDenied } from "@/components/dashboard/access-denied";
+import {
+  fetchCompanyProfile,
+  peekCompanyProfile,
+  hasSidebarModule,
+  SIDEBAR_MODULE_KEYS,
+  type CompanyCurrentUser
+} from "@/lib/company-portal";
 
 export default function CompanyChatPage() {
-  const router = useRouter();
-  const [profile, setProfile] = useState<CompanyProfile | null>(null);
-  const [currentUser, setCurrentUser] = useState<CompanyCurrentUser | null>(null);
+  const [currentUser, setCurrentUser] = useState<CompanyCurrentUser | null>(() => peekCompanyProfile()?.currentUser || null);
 
   useEffect(() => {
+    let cancelled = false;
     fetchCompanyProfile()
-      .then((payload) => {
-        setProfile(payload.profile);
-        setCurrentUser(payload.currentUser);
+      .then((companyContext) => {
+        if (!cancelled) setCurrentUser(companyContext.currentUser);
       })
-      .catch(() => {
-        setProfile(null);
-        setCurrentUser(null);
-      });
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  async function handleLogout() {
-    await logoutAuthSession();
-    router.push("/auth/company");
+  if (currentUser && !hasSidebarModule(currentUser, SIDEBAR_MODULE_KEYS.MESSAGES)) {
+    return <AccessDenied hint="Your Company Admin hasn't enabled Messages for your account. Ask them to update your permissions." />;
   }
 
   return (
-    <RoleDashboardGuard expectedRole="company">
-      <CompanyShell
-        welcomeName={profile?.companyName}
-        companyAccountType={currentUser?.companyAccountType}
-        permissions={currentUser?.permissions}
-        onLogout={handleLogout}
-      >
-        <Suspense fallback={<div className="surface-muted p-4 text-sm text-slate-700 dark:text-slate-300">Loading chat...</div>}>
-          <ChatWorkspace role="company" />
-        </Suspense>
-      </CompanyShell>
-    </RoleDashboardGuard>
+    <Suspense fallback={<div className="surface-muted p-4 text-sm text-slate-700 dark:text-slate-300">Loading chat...</div>}>
+      <MessagePage role="company" />
+    </Suspense>
   );
 }

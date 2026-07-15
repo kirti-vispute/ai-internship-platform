@@ -1,4 +1,5 @@
 const express = require("express");
+const mongoose = require("mongoose");
 const path = require("path");
 const compression = require("compression");
 const helmet = require("helmet");
@@ -8,17 +9,24 @@ const cookieParser = require("cookie-parser");
 const rateLimit = require("express-rate-limit");
 const mongoSanitize = require("express-mongo-sanitize");
 
-const { mountModularApi, getModuleManifest } = require("./modules");
-const { bootstrapPlatformServices } = require("./infrastructure/bootstrap");
-const { getCacheBackendLabel } = require("./infrastructure/cache/redis.client");
-const { isPostgresEnabled } = require("./infrastructure/db/postgres.client");
-const { isCloudinaryEnabled } = require("./infrastructure/storage/storage.adapter");
-const { PLATFORM_CONFIG } = require("./config/platform.config");
+const { mountModularApi, getModuleManifest } = require("./registry");
+const { bootstrapPlatformServices } = require("./shared/infrastructure/bootstrap");
+const { getCacheBackendLabel } = require("./shared/infrastructure/cache/redis.client");
+const { initCache, cacheHealthRoute } = require("./shared/infrastructure/cache");
+const { isPostgresEnabled } = require("./shared/infrastructure/db/postgres.client");
+const { isCloudinaryEnabled } = require("./shared/infrastructure/storage/storage.adapter");
+const { PLATFORM_CONFIG } = require("./shared/config/platform.config");
 
-const { notFoundMiddleware, errorMiddleware } = require("./middleware/error.middleware");
-const { sendSuccess } = require("./utils/api-response");
+const { notFoundMiddleware, errorMiddleware } = require("./shared/middleware/error.middleware");
+const requestIdMiddleware = require("./shared/middleware/request-id.middleware");
+const { sendSuccess } = require("./shared/utils/api-response");
 
 const app = express();
+
+// Render (and most PaaS hosts) terminate TLS at a reverse proxy in front of this
+// process. Without this, express-rate-limit throws on the X-Forwarded-For header
+// and req.ip/req.secure resolve to the proxy instead of the real client.
+app.set("trust proxy", 1);
 
 const configuredClientUrls = String(process.env.CLIENT_URL || "")
   .split(",")
@@ -34,8 +42,24 @@ const allowedOrigins = [
 ].filter(Boolean);
 
 app.use(compression({ threshold: 1024 }));
-app.use(helmet());
-app.use(mongoSanitize());
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'none'"],
+        objectSrc: ["'none'"],
+        frameAncestors: ["'none'"],
+        imgSrc: ["'self'", "data:"],
+        baseUri: ["'none'"]
+      }
+    },
+    // This API is called cross-origin by the separately-hosted frontend and
+    // serves uploaded files (resumes/certificates/images) for it to embed —
+    // helmet's default same-origin CORP would silently block those loads.
+    crossOriginResourcePolicy: { policy: "cross-origin" }
+  })
+);
 app.use(
   cors({
     origin(origin, callback) {
@@ -57,11 +81,20 @@ app.use(
 );
 app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ extended: true }));
+// Must run after body parsing — otherwise req.body is still undefined and never sanitized.
+app.use(mongoSanitize());
 app.use(cookieParser());
-app.use("/uploads", express.static(path.join(__dirname, "../uploads"), { maxAge: "7d", immutable: true }));
+app.use(requestIdMiddleware);
+app.use(
+  "/uploads",
+  express.static(path.join(__dirname, "../uploads"), { maxAge: "7d", immutable: true, dotfiles: "deny", index: false })
+);
 
 if (process.env.NODE_ENV !== "test") {
-  app.use(morgan("dev"));
+  // "dev" is colorized/interactive-terminal-oriented; "combined" is the
+  // standard structured access-log format expected by production log
+  // aggregators (Render, Docker log drains, etc.).
+  app.use(morgan(process.env.NODE_ENV === "production" ? "combined" : "dev"));
 }
 
 app.use(
@@ -94,12 +127,33 @@ bootstrapPlatformServices()
     };
   });
 
+// Warm the shared Redis cache in the background. Never blocks startup and never
+// throws — falls back to MongoDB if Redis is unavailable.
+initCache().catch(() => {});
+
 app.get("/health", (req, res) => {
   res.set("Cache-Control", "no-cache");
   return sendSuccess(res, {
     data: {
       status: "ok",
       service: "ai-internship-platform-api",
+      bootstrapped: platformStatus.bootstrapped
+    }
+  });
+});
+
+// Liveness (/health) says "the process is up." Readiness (/health/ready) says
+// "the process can actually serve traffic" — orchestrators (Render, Docker,
+// k8s) use this distinction to hold traffic back until dependencies are live.
+app.get("/health/ready", (req, res) => {
+  const dbReady = mongoose.connection.readyState === 1;
+  const ready = dbReady && platformStatus.bootstrapped;
+  res.set("Cache-Control", "no-cache");
+  return sendSuccess(res, {
+    statusCode: ready ? 200 : 503,
+    data: {
+      ready,
+      db: dbReady ? "connected" : "not-connected",
       bootstrapped: platformStatus.bootstrapped
     }
   });
@@ -124,6 +178,8 @@ app.get("/health/detailed", (req, res) =>
     }
   })
 );
+
+app.use("/health/cache", cacheHealthRoute);
 
 mountModularApi(app, "/api");
 mountModularApi(app, "/api/v1");

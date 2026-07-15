@@ -13,7 +13,7 @@ const ROUTE_GAP_MS = 200;
 const IMMEDIATE_ROUTE_GAP_MS = 0;
 const HOVER_DEBOUNCE_MS = 80;
 
-/** High-traffic routes warmed first; never prefetch all routes at once in dev. */
+/** High-traffic intern routes warmed first; never prefetch all routes at once in dev. */
 export const PRIORITY_ROUTES = [
   "/dashboard/intern",
   "/dashboard/intern/applications",
@@ -22,10 +22,7 @@ export const PRIORITY_ROUTES = [
   "/dashboard/intern/internships/search",
   "/dashboard/intern/notifications",
   "/dashboard/intern/profile",
-  "/dashboard/intern/resume",
-  "/dashboard/company",
-  "/dashboard/company/hiring/applicants",
-  "/dashboard/company/hiring/active"
+  "/dashboard/intern/resume"
 ] as const;
 
 const PRIORITY_ROUTE_SET = new Set<string>(PRIORITY_ROUTES);

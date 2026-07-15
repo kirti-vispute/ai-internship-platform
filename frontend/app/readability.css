@@ -400,13 +400,26 @@
   color: var(--ds-on-light-text) !important;
 }
 
-/* Sidebar nav — active pale fill (links only; not top navbar) */
-.internai-platform aside nav a[class*="bg-primary-50"] {
+/* Sidebar nav — active pale fill (links only; not top navbar).
+   The "bg-primary-50" class name stays in the DOM even when dark:bg-primary-900
+   is the effective background, so this must not force dark text unconditionally
+   or the active item's label becomes unreadable once dark mode actually renders. */
+.internai-platform aside nav a[class*="bg-primary-50"]:not(.dark *) {
   color: var(--ds-on-light-text) !important;
 }
 
-.internai-platform aside nav a[class*="bg-primary-50"] svg {
+.internai-platform aside nav a[class*="bg-primary-50"]:not(.dark *) svg {
   color: var(--ds-on-light-icon) !important;
+}
+
+.internai-platform.dark aside nav a[class*="bg-primary-50"],
+.dark .internai-platform aside nav a[class*="bg-primary-50"] {
+  color: var(--ds-btn-fg-on-dark) !important;
+}
+
+.internai-platform.dark aside nav a[class*="bg-primary-50"] svg,
+.dark .internai-platform aside nav a[class*="bg-primary-50"] svg {
+  color: var(--ds-btn-fg-on-dark) !important;
 }
 
 /* Active tabs (e.g. Education) — pale/transparent active fill */

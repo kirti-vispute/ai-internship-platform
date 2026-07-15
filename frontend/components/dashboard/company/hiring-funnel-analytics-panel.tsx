@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { memo, useMemo } from "react";
 import { BarChart3 } from "lucide-react";
 import type { CompanyApplication } from "@/lib/company-portal";
 import { hiringAIEngine } from "@/lib/ai-hiring";
@@ -16,7 +16,7 @@ type HiringFunnelAnalyticsPanelProps = {
   applications: CompanyApplication[];
 };
 
-export function HiringFunnelAnalyticsPanel({ applications }: HiringFunnelAnalyticsPanelProps) {
+function HiringFunnelAnalyticsPanelInner({ applications }: HiringFunnelAnalyticsPanelProps) {
   const analytics = useMemo(() => hiringAIEngine.computeFunnelAnalytics(applications), [applications]);
   const maxCount = Math.max(...analytics.stages.map((stage) => stage.count), 1);
 
@@ -75,3 +75,5 @@ export function HiringFunnelAnalyticsPanel({ applications }: HiringFunnelAnalyti
     </CompanyDashboardSection>
   );
 }
+
+export const HiringFunnelAnalyticsPanel = memo(HiringFunnelAnalyticsPanelInner);

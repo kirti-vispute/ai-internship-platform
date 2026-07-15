@@ -8,12 +8,12 @@ import {
   ClipboardList,
   FileText,
   HelpCircle,
+  IdCard,
   LayoutGrid,
   Lightbulb,
   MessageSquare,
   Search,
   Sparkles,
-  User,
   UserPen
 } from "lucide-react";
 import { FEATURE_FLAGS } from "@/constants/featureFlags";
@@ -29,6 +29,7 @@ export type InternSidebarItemConfig = {
 export type InternSidebarSectionConfig = {
   title: string;
   items: InternSidebarItemConfig[];
+  collapsible?: boolean;
 };
 
 const BASE_SECTIONS: InternSidebarSectionConfig[] = [
@@ -38,8 +39,9 @@ const BASE_SECTIONS: InternSidebarSectionConfig[] = [
   },
   {
     title: "My Profile",
+    collapsible: true,
     items: [
-      { label: "Profile", href: "/dashboard/intern/profile", icon: User },
+      { label: "Profile", href: "/dashboard/intern/profile", icon: IdCard },
       { label: "Edit Profile", href: "/dashboard/intern/profile/edit", icon: UserPen, navVariant: "muted" },
       { label: "Resume", href: "/dashboard/intern/resume", icon: FileText },
       { label: "Resume Score", href: "/dashboard/intern/resume/score", icon: Sparkles, navVariant: "muted" },

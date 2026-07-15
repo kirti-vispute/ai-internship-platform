@@ -111,7 +111,7 @@ body:has(.internai-platform) {
   border: 1px solid var(--ds-border);
   border-radius: var(--ds-radius);
   background: var(--ds-surface);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 1px 2px rgba(0, 0, 0, 0.16), 0 10px 28px -14px rgba(0, 0, 0, 0.4);
   background-image: none;
 }
 
@@ -119,7 +119,7 @@ body:has(.internai-platform) {
 .internai-platform .surface-muted {
   position: relative;
   padding: 1.25rem;
-  transition: border-color 0.2s ease, background-color 0.2s ease;
+  transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 }
 
 .internai-platform .ds-card:hover,
@@ -127,6 +127,7 @@ body:has(.internai-platform) {
 .internai-platform .hp-surface--interactive:hover {
   border-color: var(--ds-border-strong);
   background: var(--ds-surface-raised);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 2px 4px rgba(0, 0, 0, 0.2), 0 16px 36px -16px rgba(0, 0, 0, 0.48);
 }
 
 .internai-platform .ds-card > .pointer-events-none {
@@ -249,6 +250,14 @@ body:has(.internai-platform) {
   outline: none;
   border-color: var(--ds-border-strong);
   box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.06);
+}
+
+.internai-platform .ds-input:disabled,
+.internai-platform .ds-textarea:disabled,
+.internai-platform .ds-select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: var(--ds-surface);
 }
 
 .internai-platform .ds-input-label {
@@ -559,26 +568,10 @@ body:has(.internai-platform) {
   min-width: 0;
 }
 
-/* Chat module — keep bubble & list contrast (avoid global slate remaps) */
-.internai-platform [data-chat-ui] .chat-bubble-mine {
-  background-color: rgb(37 99 235) !important;
-  color: #fff !important;
-}
-
-.internai-platform [data-chat-ui] .chat-bubble-mine p {
-  color: inherit !important;
-}
-
-.internai-platform [data-chat-ui] .chat-bubble-theirs {
-  background-color: rgb(30 41 59 / 0.92) !important;
-  color: #f1f5f9 !important;
-  border-color: rgb(71 85 105 / 0.55) !important;
-}
-
-.internai-platform [data-chat-ui] .chat-bubble-theirs p {
-  color: inherit !important;
-}
-
+/* Chat module — structural/scroll plumbing only. Bubble colors and text
+   colors are owned by the component (dark-mode aware Tailwind classes);
+   do NOT hardcode colors here with !important, it silently defeats every
+   future style change made in chat-thread-panel.tsx / chat-list-panel.tsx. */
 .internai-platform [data-chat-ui] .chat-bubble-mine a,
 .internai-platform [data-chat-ui] .chat-bubble-theirs a {
   text-decoration: none;
@@ -587,8 +580,6 @@ body:has(.internai-platform) {
 .internai-platform [data-chat-workspace] {
   display: flex;
   flex-direction: column;
-  height: calc(100dvh - 11rem);
-  min-height: 32rem;
 }
 
 .internai-platform [data-chat-ui] {
@@ -598,8 +589,7 @@ body:has(.internai-platform) {
   align-items: stretch;
 }
 
-.internai-platform [data-chat-ui] > aside,
-.internai-platform [data-chat-ui] > section {
+.internai-platform [data-chat-ui] > * {
   min-height: 0;
 }
 
@@ -613,15 +603,6 @@ body:has(.internai-platform) {
   position: sticky;
   bottom: 0;
   z-index: 1;
-}
-
-.internai-platform [data-chat-ui] button[type="button"].chat-conversation-item {
-  color: inherit !important;
-}
-
-.internai-platform [data-chat-ui] button[type="button"].chat-conversation-item p,
-.internai-platform [data-chat-ui] button[type="button"].chat-conversation-item span {
-  color: inherit !important;
 }
 
 @media (min-width: 1024px) {

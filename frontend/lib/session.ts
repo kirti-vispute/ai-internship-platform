@@ -7,6 +7,7 @@ type StoredSession = {
   refreshToken?: string | null;
   adminRole?: AdminRole | null;
   permissions?: string[];
+  companyAccountType?: string | null;
 };
 
 const AUTH_ROLE_KEY = "internai.auth.role";
@@ -16,11 +17,18 @@ const AUTH_REFRESH_TOKEN_KEY = "internai.auth.refresh_token";
 const AUTH_ADMIN_ROLE_KEY = "internai.auth.admin_role";
 const AUTH_PERMISSIONS_KEY = "internai.auth.permissions";
 const AUTH_EMAIL_KEY = "internai.auth.email";
+const AUTH_COMPANY_ACCOUNT_TYPE_KEY = "internai.auth.company_account_type";
 
 export function setAuthSession(
   role: AuthRole,
   token: string,
-  options?: { refreshToken?: string | null; adminRole?: AdminRole | null; permissions?: string[]; email?: string | null }
+  options?: {
+    refreshToken?: string | null;
+    adminRole?: AdminRole | null;
+    permissions?: string[];
+    email?: string | null;
+    companyAccountType?: string | null;
+  }
 ): void {
   if (typeof window === "undefined") return;
   localStorage.setItem(AUTH_ROLE_KEY, role);
@@ -37,6 +45,8 @@ export function setAuthSession(
   }
   if (options?.email) localStorage.setItem(AUTH_EMAIL_KEY, options.email);
   else localStorage.removeItem(AUTH_EMAIL_KEY);
+  if (options?.companyAccountType) localStorage.setItem(AUTH_COMPANY_ACCOUNT_TYPE_KEY, options.companyAccountType);
+  else localStorage.removeItem(AUTH_COMPANY_ACCOUNT_TYPE_KEY);
   window.dispatchEvent(new Event("internai-auth-change"));
 }
 
@@ -49,6 +59,7 @@ export function clearAuthSession(): void {
   localStorage.removeItem(AUTH_ADMIN_ROLE_KEY);
   localStorage.removeItem(AUTH_PERMISSIONS_KEY);
   localStorage.removeItem(AUTH_EMAIL_KEY);
+  localStorage.removeItem(AUTH_COMPANY_ACCOUNT_TYPE_KEY);
   window.dispatchEvent(new Event("internai-auth-change"));
 }
 
@@ -60,9 +71,19 @@ export function getAuthSession(): {
   adminRole: AdminRole | null;
   permissions: string[];
   email: string | null;
+  companyAccountType: string | null;
 } {
   if (typeof window === "undefined") {
-    return { loggedIn: false, role: null, token: null, refreshToken: null, adminRole: null, permissions: [], email: null };
+    return {
+      loggedIn: false,
+      role: null,
+      token: null,
+      refreshToken: null,
+      adminRole: null,
+      permissions: [],
+      email: null,
+      companyAccountType: null
+    };
   }
 
   const loggedIn = localStorage.getItem(AUTH_LOGGED_IN_KEY) === "true";
@@ -91,8 +112,9 @@ export function getAuthSession(): {
   }
 
   const email = localStorage.getItem(AUTH_EMAIL_KEY);
+  const companyAccountType = localStorage.getItem(AUTH_COMPANY_ACCOUNT_TYPE_KEY);
 
-  return { loggedIn, role, token, refreshToken, adminRole, permissions, email };
+  return { loggedIn, role, token, refreshToken, adminRole, permissions, email, companyAccountType };
 }
 
 export function requireAuthSession(): StoredSession {

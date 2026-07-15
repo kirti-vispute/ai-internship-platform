@@ -1,6 +1,8 @@
 "use client";
 
 import { memo, useCallback, useMemo, useState } from "react";
+import { usePathname } from "next/navigation";
+import { AnimatedBackground } from "@/components/dashboard/AnimatedBackground";
 import { PortalBrandHeader } from "@/components/brand/portal-brand-header";
 import { DashboardShellHeader } from "@/components/dashboard/dashboard-shell-header";
 import { DashboardSidebarNav } from "@/components/dashboard/dashboard-sidebar-nav";
@@ -58,12 +60,14 @@ const InternShellSidebar = memo(function InternShellSidebar({
 const InternShellHeader = memo(function InternShellHeader({
   welcomeName,
   notificationUnread,
+  compact,
   onNotificationUnreadChange,
   onOpenMenu,
   onLogout
 }: {
   welcomeName?: string;
   notificationUnread: number;
+  compact: boolean;
   onNotificationUnreadChange: (count: number) => void;
   onOpenMenu: () => void;
   onLogout: () => void;
@@ -73,9 +77,9 @@ const InternShellHeader = memo(function InternShellHeader({
       welcomeLabel={ROLE_WELCOME_LABEL.intern}
       welcomeTagline={ROLE_WELCOME_TAGLINE.intern}
       welcomeName={welcomeName || "Intern"}
+      compact={compact}
       onOpenMenu={onOpenMenu}
       onLogout={onLogout}
-      switchHref="/auth/intern"
       notificationHref="/dashboard/intern/notifications"
       notificationRole="intern"
       notificationUnreadCount={notificationUnread}
@@ -88,6 +92,8 @@ export function InternShell({ welcomeName, onLogout, children }: InternShellProp
   const [mobileOpen, setMobileOpen] = useState(false);
   const { messageUnread } = useMessagingUnread();
   const { unreadCount: notificationUnread, setUnreadCount: setNotificationUnread } = useNotificationUnread("intern");
+  const pathname = usePathname();
+  const isMessagingRoute = pathname?.startsWith("/dashboard/intern/chat") ?? false;
 
   const onCloseMobile = useCallback(() => setMobileOpen(false), []);
   const onOpenMenu = useCallback(() => setMobileOpen(true), []);
@@ -102,15 +108,24 @@ export function InternShell({ welcomeName, onLogout, children }: InternShellProp
         />
 
         <div className="relative min-w-0 flex-1 overflow-hidden">
+          <AnimatedBackground className="opacity-75" />
           <InternShellHeader
             welcomeName={welcomeName}
             notificationUnread={notificationUnread}
+            compact={isMessagingRoute}
             onNotificationUnreadChange={setNotificationUnread}
             onOpenMenu={onOpenMenu}
             onLogout={onLogout}
           />
 
-          <main className="relative z-10 mx-auto w-full max-w-[1240px] p-4 lg:p-5">{children}</main>
+          <main
+            className={cn(
+              "relative z-10 w-full p-4 lg:p-5",
+              isMessagingRoute ? "mx-auto max-w-none" : "mx-auto max-w-[1240px]"
+            )}
+          >
+            {children}
+          </main>
         </div>
       </div>
     </div>

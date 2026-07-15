@@ -1,15 +1,19 @@
 {
-  "buildStatus": "PASS",
-  "failedChecks": [],
-  "warnings": [],
+  "buildStatus": "FAIL",
+  "failedChecks": [
+    "ai.hiring-engine: Hiring AI engine exports ranking and rejection modules"
+  ],
+  "warnings": [
+    "ui.chat-loading-states: Chat workspace defines loading and error UI"
+  ],
   "performanceScore": 100,
-  "aiReliabilityScore": 100,
-  "uiStabilityScore": 100,
-  "passedCount": 39,
-  "failedCount": 0,
-  "warningCount": 0,
+  "aiReliabilityScore": 88,
+  "uiStabilityScore": 90,
+  "passedCount": 37,
+  "failedCount": 1,
+  "warningCount": 1,
   "target": "backend",
-  "durationMs": 2826,
+  "durationMs": 2293,
   "checks": [
     {
       "id": "func.routes",
@@ -95,9 +99,9 @@
       "id": "ai.hiring-engine",
       "category": "ai",
       "name": "Hiring intelligence engine",
-      "status": "PASS",
+      "status": "FAIL",
       "message": "Hiring AI engine exports ranking and rejection modules",
-      "blocking": false
+      "blocking": true
     },
     {
       "id": "ai.platform-insufficient",
@@ -239,7 +243,7 @@
       "id": "ui.chat-loading-states",
       "category": "ui",
       "name": "Chat loading/error states",
-      "status": "PASS",
+      "status": "WARN",
       "message": "Chat workspace defines loading and error UI",
       "blocking": false
     },

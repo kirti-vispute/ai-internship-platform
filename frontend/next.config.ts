@@ -13,6 +13,14 @@ const nextConfig: NextConfig = {
   },
   images: {
     formats: ["image/avif", "image/webp"]
+  },
+  async rewrites() {
+    return [
+      { source: "/dashboard/companyCEO", destination: "/dashboard/company" },
+      { source: "/dashboard/companyCEO/:path*", destination: "/dashboard/company/:path*" },
+      { source: "/dashboard/companyHR", destination: "/dashboard/company" },
+      { source: "/dashboard/companyHR/:path*", destination: "/dashboard/company/:path*" }
+    ];
   }
 };
 

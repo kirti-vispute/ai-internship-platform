@@ -19,7 +19,7 @@ export function AuthSessionRedirect({ expectedRole, children }: AuthSessionRedir
     const session = getAuthSession();
     if (session.loggedIn && session.role) {
       const next = searchParams.get("next");
-      router.replace(resolvePostLoginRedirect(session.role, next));
+      router.replace(resolvePostLoginRedirect(session.role, next, session.companyAccountType));
       return;
     }
     setReady(true);

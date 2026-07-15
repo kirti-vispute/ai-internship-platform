@@ -2,7 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import type { CompanyApplication, CompanyInternship, CompanyMatchedCandidate } from "@/lib/company-portal";
+import type { CompanyApplication, CompanyInternship, CompanyMatchedCandidate, CompanyCurrentUser } from "@/lib/company-portal";
+import { hasSidebarModule, SIDEBAR_MODULE_KEYS } from "@/lib/company-portal";
 import type { InterviewScheduleSlot } from "@/lib/ai-hiring";
 import { RecentMessagesWidget } from "@/components/dashboard/recent-messages-widget";
 import { ShortlistPanel } from "@/components/dashboard/hiring/shortlist-panel";
@@ -11,12 +12,15 @@ import { ApplicationsSheet } from "@/components/dashboard/hiring/applications-sh
 import { PipelineOverview } from "@/components/dashboard/hiring/pipeline-overview";
 import { QuickActionsPanel } from "@/components/dashboard/hiring/quick-actions-panel";
 import { countInterviewStageCandidates, countOffersSent } from "@/components/dashboard/hiring/hiring-utils";
+import { extractScheduledInterviews, getInterviewerSuggestions, type ScheduledInterviewRecord } from "@/lib/interview-workflow";
 import {
   CompanyDashboardMainGrid,
   CompanyDashboardPageIntro,
   companyDashboardStyles
 } from "./company-dashboard-layout";
 import { DashboardOverviewStats } from "./dashboard-overview-stats";
+import { ApplicationsOverTimePanel } from "./applications-over-time-panel";
+import { InternshipPerformancePanel } from "./internship-performance-panel";
 import { HiringFunnelAnalyticsPanel } from "./hiring-funnel-analytics-panel";
 import { InterviewScheduleModal } from "./interview-schedule-modal";
 import { InterviewSchedulingPanel, type InterviewScheduleTarget } from "./interview-scheduling-panel";
@@ -45,6 +49,7 @@ type CompanyDashboardHubProps = {
   matches: CompanyMatchedCandidate[];
   shortlistedCount: number;
   isHrScoped: boolean;
+  currentUser?: CompanyCurrentUser | null;
   saving: boolean;
   canAssign: boolean;
   recruiters: RecruiterOption[];
@@ -57,6 +62,7 @@ type CompanyDashboardHubProps = {
   onShortlist: (applicationId: string) => void;
   onViewResume: (applicationId: string) => void;
   onScheduleInterview: (applicationId: string, slot: InterviewScheduleSlot, roundId?: string) => Promise<void>;
+  onCancelInterview?: (item: ScheduledInterviewRecord) => Promise<void>;
 };
 
 export function CompanyDashboardHub({
@@ -65,6 +71,7 @@ export function CompanyDashboardHub({
   matches,
   shortlistedCount,
   isHrScoped,
+  currentUser,
   saving,
   canAssign,
   recruiters,
@@ -76,7 +83,8 @@ export function CompanyDashboardHub({
   onMessage,
   onShortlist,
   onViewResume,
-  onScheduleInterview
+  onScheduleInterview,
+  onCancelInterview
 }: CompanyDashboardHubProps) {
   const router = useRouter();
   const [sheet, setSheet] = useState<SheetState>({ mode: "closed" });
@@ -85,6 +93,10 @@ export function CompanyDashboardHub({
   const activeJobsCount = useMemo(() => internships.filter((item) => item.isActive).length, [internships]);
   const interviewCount = useMemo(() => countInterviewStageCandidates(applications), [applications]);
   const offersSent = useMemo(() => countOffersSent(applications), [applications]);
+  const interviewerSuggestions = useMemo(
+    () => getInterviewerSuggestions(extractScheduledInterviews(applications)),
+    [applications]
+  );
 
   const sheetApplications = useMemo(() => {
     if (sheet.mode === "job") {
@@ -111,7 +123,13 @@ export function CompanyDashboardHub({
     <>
       <div className={companyDashboardStyles.pageStack}>
         <CompanyDashboardPageIntro
-          title="Company Dashboard"
+          title={
+            isHrScoped
+              ? "Company HR Dashboard"
+              : currentUser?.companyAccountType === "ceo"
+                ? "Company CEO Dashboard"
+                : "Company Dashboard"
+          }
           subtitle={
             isHrScoped
               ? "Your assigned recruitment workspace."
@@ -129,6 +147,8 @@ export function CompanyDashboardHub({
                 interviews={interviewCount}
                 offersSent={offersSent}
               />
+
+              <ApplicationsOverTimePanel applications={applications} />
 
               <TodayHiringActivityPanel applications={applications} />
 
@@ -173,14 +193,19 @@ export function CompanyDashboardHub({
                 onScheduleInterview={(applicationId, candidateName) => setScheduleTarget({ applicationId, candidateName })}
               />
 
-              <InterviewSchedulingPanel
-                applications={applications}
-                saving={saving}
-                onViewProfile={onOpenProfile}
-                onScheduleInterview={setScheduleTarget}
-              />
+              {hasSidebarModule(currentUser, SIDEBAR_MODULE_KEYS.INTERVIEW_SCHEDULING) && (
+                <InterviewSchedulingPanel
+                  applications={applications}
+                  saving={saving}
+                  onViewProfile={onOpenProfile}
+                  onScheduleInterview={setScheduleTarget}
+                  onCancelInterview={onCancelInterview}
+                />
+              )}
 
-              <InterviewCalendar applications={applications} audience="company" />
+              {hasSidebarModule(currentUser, SIDEBAR_MODULE_KEYS.INTERVIEW_CALENDAR) && (
+                <InterviewCalendar applications={applications} audience="company" />
+              )}
 
               <RoleHiringIntelligencePanel
                 matches={matches}
@@ -190,6 +215,8 @@ export function CompanyDashboardHub({
               />
 
               <HiringFunnelAnalyticsPanel applications={applications} />
+
+              <InternshipPerformancePanel internships={internships} applications={applications} />
 
               <PipelineOverview applications={applications} variant="extended" />
             </>
@@ -219,6 +246,7 @@ export function CompanyDashboardHub({
         candidateName={scheduleTarget?.candidateName}
         mode={scheduleTarget?.roundId ? "reschedule" : "schedule"}
         initialSlot={scheduleTarget?.initialSlot}
+        interviewerSuggestions={interviewerSuggestions}
         saving={saving}
         onClose={() => setScheduleTarget(null)}
         onConfirm={async (slot) => {

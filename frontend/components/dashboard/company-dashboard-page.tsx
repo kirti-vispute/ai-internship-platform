@@ -2,11 +2,8 @@
 
 import { useEffect, useLayoutEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CompanyShell } from "@/components/dashboard/company-shell";
 import { SectionPanel } from "@/components/dashboard/section-panel";
 import { Button } from "@/components/ui/button";
-import { RoleDashboardGuard } from "@/components/ui/role-dashboard-guard";
-import { logoutAuthSession } from "@/lib/api-client";
 import {
   CompanyApplication,
   CompanyInternship,
@@ -42,16 +39,22 @@ import {
   peekCompanyApplications,
   peekCompanyInternships,
   peekCompanyProfile,
-  prefetchCompanyDashboardData
+  prefetchCompanyDashboardData,
+  hasSidebarModule,
+  SIDEBAR_MODULE_KEYS,
+  HR_DEFAULT_SIDEBAR_MODULES,
+  type SidebarModuleKey
 } from "@/lib/company-portal";
+import { SidebarModulePicker } from "@/components/dashboard/company/sidebar-module-picker";
 import { ApplicantDetailsModal, type InterviewFormState } from "@/components/dashboard/applicant-details-modal";
 import { HiringSection, type HiringSectionFocus } from "@/components/dashboard/hiring";
 import { CompanyDashboardHub, MatchedCandidatesView } from "@/components/dashboard/company";
 import { CompanyDashboardPageIntro, companyDashboardStyles } from "@/components/dashboard/company/company-dashboard-layout";
 import { hiringAIEngine, type InterviewScheduleSlot } from "@/lib/ai-hiring";
-import { extractScheduledInterviews, findOverlappingInterviews } from "@/lib/interview-workflow";
+import { extractScheduledInterviews, findOverlappingInterviews, type ScheduledInterviewRecord } from "@/lib/interview-workflow";
 import { useToast } from "@/components/ui/toast";
 import { ReportDownloadButton } from "@/components/reports/report-download-button";
+import { AccessDenied } from "@/components/dashboard/access-denied";
 
 export type CompanyDashboardView =
   | "overview"
@@ -72,6 +75,35 @@ export type CompanyDashboardView =
   | "team-recruiters"
   | "analytics-company"
   | "analytics-salary";
+
+/** Module required to view each route. Views absent from this map (e.g. hiring-post,
+ * which is gated by the existing hardcoded HR-cannot-post rule) have no module gate. */
+const VIEW_MODULE_MAP: Partial<Record<CompanyDashboardView, SidebarModuleKey | SidebarModuleKey[]>> = {
+  overview: SIDEBAR_MODULE_KEYS.DASHBOARD,
+  profile: SIDEBAR_MODULE_KEYS.COMPANY_PROFILE,
+  "profile-edit": SIDEBAR_MODULE_KEYS.COMPANY_PROFILE,
+  verification: SIDEBAR_MODULE_KEYS.VERIFICATION_STATUS,
+  "hiring-active": SIDEBAR_MODULE_KEYS.INTERNSHIPS,
+  "hiring-applicants": SIDEBAR_MODULE_KEYS.APPLICATIONS,
+  "hiring-shortlisted": SIDEBAR_MODULE_KEYS.APPLICATIONS,
+  "hiring-pipeline": SIDEBAR_MODULE_KEYS.APPLICATIONS,
+  "matching-ai": SIDEBAR_MODULE_KEYS.AI_INSIGHTS,
+  "matching-search": SIDEBAR_MODULE_KEYS.CANDIDATE_SEARCH,
+  "matching-saved": SIDEBAR_MODULE_KEYS.SAVED_CANDIDATES,
+  "reports-feedback": SIDEBAR_MODULE_KEYS.HIRING_REPORTS,
+  "reports-notes": SIDEBAR_MODULE_KEYS.HIRING_REPORTS,
+  "reports-export": SIDEBAR_MODULE_KEYS.HIRING_REPORTS,
+  "team-recruiters": [SIDEBAR_MODULE_KEYS.HR_MANAGEMENT, SIDEBAR_MODULE_KEYS.TEAM_MEMBERS],
+  "analytics-company": SIDEBAR_MODULE_KEYS.ANALYTICS,
+  "analytics-salary": SIDEBAR_MODULE_KEYS.ANALYTICS
+};
+
+function isViewAllowed(currentUser: CompanyCurrentUser | null, view: CompanyDashboardView) {
+  const requirement = VIEW_MODULE_MAP[view];
+  if (!requirement) return true;
+  const keys = Array.isArray(requirement) ? requirement : [requirement];
+  return keys.some((key) => hasSidebarModule(currentUser, key));
+}
 
 const WITH_INTERNSHIPS = new Set<CompanyDashboardView>([
   "overview",
@@ -121,7 +153,8 @@ const PROFILE_MODAL_VIEWS = new Set<CompanyDashboardView>([
   "hiring-pipeline"
 ]);
 
-const field = "surface-subtle px-3 py-2 text-sm";
+const field =
+  "surface-subtle px-3 py-2 text-sm transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-primary-500/60 focus:border-primary-400 disabled:opacity-50 disabled:cursor-not-allowed";
 
 function Empty({ text }: { text: string }) {
   return <div className="surface-subtle px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{text}</div>;
@@ -186,8 +219,10 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
   const [hrInsights, setHrInsights] = useState<CompanyHrInsights | null>(null);
   const [hrForm, setHrForm] = useState({ name: "", email: "", password: "" });
   const [hrFormPermissions, setHrFormPermissions] = useState<string[]>([...HR_ASSIGNABLE_PERMISSIONS]);
+  const [hrFormModules, setHrFormModules] = useState<string[]>([...HR_DEFAULT_SIDEBAR_MODULES]);
   const [selectedHrId, setSelectedHrId] = useState<string | null>(null);
   const [permissionDraft, setPermissionDraft] = useState<string[]>([]);
+  const [moduleDraft, setModuleDraft] = useState<string[]>([]);
   const [hrActionLoading, setHrActionLoading] = useState(false);
   const [selectedRecruiterByInternship, setSelectedRecruiterByInternship] = useState<Record<string, string>>({});
   const [selectedRecruiterByApplication, setSelectedRecruiterByApplication] = useState<Record<string, string>>({});
@@ -275,6 +310,9 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
         const companyContext = await fetchCompanyProfile();
         setProfile(companyContext.profile);
         setCurrentUser(companyContext.currentUser);
+        if (!isViewAllowed(companyContext.currentUser, view)) {
+          return;
+        }
         if (WITH_INTERNSHIPS.has(view)) setInternships(await fetchCompanyInternships());
         if (WITH_APPS.has(view)) setApps(await fetchCompanyApplications());
         if (WITH_MATCHES.has(view)) setMatches(await fetchCompanyMatchedCandidates());
@@ -385,11 +423,6 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
     };
   }, [debouncedQuery, view]);
 
-  async function logout() {
-    await logoutAuthSession();
-    router.push("/auth/company");
-  }
-
   const shortlisted = useMemo(() => apps.filter((a) => normalizePipelineStatus(a.status) === "shortlisted"), [apps]);
   const isHrScoped = useMemo(() => currentUser?.companyAccountType === "hr", [currentUser?.companyAccountType]);
   const canManageRecruiters = useMemo(
@@ -427,10 +460,12 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
         name: hrForm.name.trim(),
         email: hrForm.email.trim(),
         password: hrForm.password,
-        permissions: hrFormPermissions
+        permissions: hrFormPermissions,
+        sidebarModules: hrFormModules
       });
       setHrForm({ name: "", email: "", password: "" });
       setHrFormPermissions([...HR_ASSIGNABLE_PERMISSIONS]);
+      setHrFormModules([...HR_DEFAULT_SIDEBAR_MODULES]);
       setSuccess("HR account created successfully.");
       await reloadHrManagement();
     } catch (e) {
@@ -459,13 +494,14 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
   function openHrInsights(hr: CompanyHrUser) {
     setSelectedHrId(hr.id);
     setPermissionDraft([...hr.permissions.filter((p) => HR_ASSIGNABLE_PERMISSIONS.includes(p as (typeof HR_ASSIGNABLE_PERMISSIONS)[number]))]);
+    setModuleDraft(hr.sidebarModules?.length ? [...hr.sidebarModules] : [...HR_DEFAULT_SIDEBAR_MODULES]);
   }
 
   async function handleSaveHrPermissions(hrId: string) {
     try {
       setHrActionLoading(true);
       setError(null);
-      await updateCompanyHrPermissions(hrId, permissionDraft);
+      await updateCompanyHrPermissions(hrId, permissionDraft, moduleDraft);
       setSuccess("HR permissions updated.");
       await reloadHrManagement();
     } catch (e) {
@@ -690,6 +726,26 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
     }
   }
 
+  async function handleCancelInterview(item: ScheduledInterviewRecord) {
+    try {
+      setSaving(true);
+      setError(null);
+      await updateInterviewRound(item.applicationId, item.interviewId, { status: "rejected" });
+      setApps(await fetchCompanyApplications(true));
+      pushToast({
+        title: "Interview cancelled",
+        message: `${item.candidateName || item.role}'s ${item.interviewType || "interview"} has been cancelled.`,
+        variant: "info"
+      });
+    } catch (e) {
+      const message = (e as Error).message || "Failed to cancel interview.";
+      setError(message);
+      pushToast({ title: "Cancel failed", message, variant: "error" });
+    } finally {
+      setSaving(false);
+    }
+  }
+
   function exportCsv() {
     const rows = [["candidate", "email", "internship", "status", "relevanceScore", "createdAt"]];
     apps.forEach((a) => rows.push([a.intern?.fullName || "", a.intern?.email || "", a.internship?.role || "", a.status || "", String(a.relevanceScore ?? a.matchScore ?? 0), a.createdAt || ""]));
@@ -754,7 +810,10 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
         ? await updateInterviewRound(applicationId, roundId, {
             interviewDate: payload.interviewDate,
             interviewTime: payload.interviewTime,
-            mode: payload.mode
+            mode: payload.mode,
+            ...(payload.meetingLink ? { meetingLink: payload.meetingLink } : {}),
+            ...(payload.location ? { location: payload.location } : {}),
+            ...(payload.notes ? { notes: payload.notes } : {})
           })
         : await scheduleInterviewRound(applicationId, payload);
 
@@ -804,7 +863,12 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
     );
   }
 
+  const viewAllowed = isViewAllowed(currentUser, view);
+
   const viewNode: React.ReactNode = (() => {
+    if (!viewAllowed) {
+      return <AccessDenied hint="Your Company Admin hasn't enabled this module for your account. Ask them to update your permissions." />;
+    }
     switch (view) {
       case "overview":
         return (
@@ -814,6 +878,7 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
             matches={matches}
             shortlistedCount={shortlisted.length}
             isHrScoped={isHrScoped}
+            currentUser={currentUser}
             saving={saving}
             canAssign={canAssign}
             recruiters={recruiters}
@@ -828,6 +893,7 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
             onShortlist={handleMatchedShortlist}
             onViewResume={handleMatchedViewResume}
             onScheduleInterview={handleScheduleInterview}
+            onCancelInterview={handleCancelInterview}
           />
         );
       case "profile":
@@ -1019,6 +1085,12 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
                       </label>
                     ))}
                   </div>
+
+                  <div>
+                    <p className="mb-2 text-sm font-semibold text-slate-900 dark:text-slate-100">Sidebar Modules</p>
+                    <SidebarModulePicker value={hrFormModules} onChange={setHrFormModules} />
+                  </div>
+
                   <Button type="button" onClick={handleCreateHr} disabled={hrActionLoading}>
                     {hrActionLoading ? "Saving..." : "Add HR"}
                   </Button>
@@ -1074,6 +1146,10 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
                                 </label>
                               ))}
                             </div>
+
+                            <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-slate-500">Sidebar Modules</p>
+                            <SidebarModulePicker value={moduleDraft} onChange={setModuleDraft} className="mt-2" />
+
                             <div className="mt-3">
                               <Button type="button" onClick={() => handleSaveHrPermissions(hr.id)} disabled={hrActionLoading}>
                                 Save Permissions
@@ -1136,54 +1212,44 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
     }
   })();
 
-  return (
-    <RoleDashboardGuard expectedRole="company">
-      <CompanyShell
-        welcomeName={profile?.companyName}
-        companyAccountType={currentUser?.companyAccountType}
-        permissions={currentUser?.permissions || []}
-        onLogout={logout}
-      >
-        {loading ? (
-          <div className="surface-muted px-4 py-3 text-sm text-slate-700 dark:text-slate-300">Loading company dashboard...</div>
-        ) : (
-          <div className="space-y-5 dashboard-stack">
-            {error && <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300">{error}</div>}
-            {success && <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300">{success}</div>}
-            {viewNode}
-            {detailApp && (
-              <ApplicantDetailsModal
-                application={detailApp}
-                onClose={() => setApplicantDetailId(null)}
-                saving={saving}
-                inputClassName={field}
-                statusDraft={statusDrafts[detailApp._id] ?? normalizeApplicantStage(detailApp.status)}
-                onStatusDraftChange={(value) => setStatusDrafts((prev) => ({ ...prev, [detailApp._id]: value }))}
-                onSaveStatus={() =>
-                  applyStage(detailApp._id, statusDrafts[detailApp._id] ?? normalizeApplicantStage(detailApp.status), "Status updated from hiring dashboard")
-                }
-                interviewForm={interviewForms[detailApp._id] ?? DEFAULT_INTERVIEW_FORM}
-                onInterviewFormChange={(patch) =>
-                  setInterviewForms((prev) => ({
-                    ...prev,
-                    [detailApp._id]: { ...(prev[detailApp._id] ?? DEFAULT_INTERVIEW_FORM), ...patch }
-                  }))
-                }
-                onCreateInterview={() => createInterviewRound(detailApp._id)}
-                onUpdateRound={(roundId, status) => updateRoundStatus(detailApp._id, roundId, status)}
-                feedbackDraft={feedbackDrafts[detailApp._id] || { feedback: "", rating: 3, visibility: "candidate" }}
-                onFeedbackDraftChange={(patch) =>
-                  setFeedbackDrafts((prev) => ({
-                    ...prev,
-                    [detailApp._id]: { ...(prev[detailApp._id] || { feedback: "", rating: 3, visibility: "candidate" }), ...patch }
-                  }))
-                }
-                onSubmitFeedback={() => submitFeedback(detailApp._id)}
-              />
-            )}
-          </div>
-        )}
-      </CompanyShell>
-    </RoleDashboardGuard>
+  return loading ? (
+    <div className="surface-muted px-4 py-3 text-sm text-slate-700 dark:text-slate-300">Loading company dashboard...</div>
+  ) : (
+    <div className="space-y-5 dashboard-stack">
+      {error && <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300">{error}</div>}
+      {success && <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300">{success}</div>}
+      {viewNode}
+      {detailApp && (
+        <ApplicantDetailsModal
+          application={detailApp}
+          onClose={() => setApplicantDetailId(null)}
+          saving={saving}
+          inputClassName={field}
+          statusDraft={statusDrafts[detailApp._id] ?? normalizeApplicantStage(detailApp.status)}
+          onStatusDraftChange={(value) => setStatusDrafts((prev) => ({ ...prev, [detailApp._id]: value }))}
+          onSaveStatus={() => {
+            const nextStatus = statusDrafts[detailApp._id] ?? normalizeApplicantStage(detailApp.status);
+            applyStage(detailApp._id, nextStatus, "Status updated from hiring dashboard");
+          }}
+          interviewForm={interviewForms[detailApp._id] ?? DEFAULT_INTERVIEW_FORM}
+          onInterviewFormChange={(patch) =>
+            setInterviewForms((prev) => ({
+              ...prev,
+              [detailApp._id]: { ...(prev[detailApp._id] ?? DEFAULT_INTERVIEW_FORM), ...patch }
+            }))
+          }
+          onCreateInterview={() => createInterviewRound(detailApp._id)}
+          onUpdateRound={(roundId, status) => updateRoundStatus(detailApp._id, roundId, status)}
+          feedbackDraft={feedbackDrafts[detailApp._id] || { feedback: "", rating: 3, visibility: "candidate" }}
+          onFeedbackDraftChange={(patch) =>
+            setFeedbackDrafts((prev) => ({
+              ...prev,
+              [detailApp._id]: { ...(prev[detailApp._id] || { feedback: "", rating: 3, visibility: "candidate" }), ...patch }
+            }))
+          }
+          onSubmitFeedback={() => submitFeedback(detailApp._id)}
+        />
+      )}
+    </div>
   );
 }

@@ -1,4 +1,4 @@
-import { fileExists, makeCheck, readText } from "../lib/utils.mjs";
+import { fileExists, makeCheck, readText, readBackendSource } from "../lib/utils.mjs";
 
 export async function runInterviewChecks() {
   const checks = [];
@@ -38,7 +38,10 @@ export async function runInterviewChecks() {
     })
   );
 
-  const routes = readText("backend/src/routes/interview.routes.js");
+  const routes = readBackendSource(
+    "backend/src/modules/interviews/routes/interview.routes.js",
+    "backend/src/routes/interview.routes.js"
+  );
   checks.push(
     makeCheck({
       id: "interview.api-auth",
@@ -49,7 +52,10 @@ export async function runInterviewChecks() {
     })
   );
 
-  const service = readText("backend/src/services/interview-room.service.js");
+  const service = readBackendSource(
+    "backend/src/modules/interviews/services/interview-room.service.js",
+    "backend/src/services/interview-room.service.js"
+  );
   checks.push(
     makeCheck({
       id: "interview.access-control",
@@ -65,7 +71,10 @@ export async function runInterviewChecks() {
     })
   );
 
-  const socket = readText("backend/src/socket/interview.socket.js");
+  const socket = readBackendSource(
+    "backend/src/shared/socket/interview.socket.js",
+    "backend/src/socket/interview.socket.js"
+  );
   checks.push(
     makeCheck({
       id: "interview.signaling",

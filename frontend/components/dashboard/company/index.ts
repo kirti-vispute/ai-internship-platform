@@ -7,7 +7,6 @@ export { RoleHiringIntelligencePanel } from "./role-hiring-intelligence-panel";
 export { InterviewScheduleModal } from "./interview-schedule-modal";
 export { AiMatchInsightPanel } from "./ai-match-insight-panel";
 export { ProjectInsightPanel } from "./project-insight-panel";
-export { AiRejectionInsightPanel } from "./ai-rejection-insight-panel";
 export { HiringManagerInsightsPanel } from "./hiring-manager-insights-panel";
 export {
   CompanyDashboardPageIntro,

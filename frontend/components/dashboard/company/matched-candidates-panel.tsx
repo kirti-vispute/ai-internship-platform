@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Brain, ChevronDown, ChevronUp, FileWarning, Sparkles } from "lucide-react";
+import { Brain, ChevronDown, ChevronUp, Sparkles } from "lucide-react";
 import type { CompanyApplication, CompanyInternship, CompanyMatchedCandidate } from "@/lib/company-portal";
 import { hiringAIEngine, type RankedCandidate } from "@/lib/ai-hiring";
 import {
@@ -14,7 +14,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { AiMatchInsightPanel } from "./ai-match-insight-panel";
-import { AiRejectionInsightPanel } from "./ai-rejection-insight-panel";
 
 const DEFAULT_TOP_LIMIT = 10;
 
@@ -47,7 +46,6 @@ export function MatchedCandidatesPanel({
 }: MatchedCandidatesPanelProps) {
   const [expanded, setExpanded] = useState(false);
   const [openInsightKey, setOpenInsightKey] = useState<string | null>(null);
-  const [openRejectionKey, setOpenRejectionKey] = useState<string | null>(null);
 
   const input = useMemo(() => ({ matches, applications, internships }), [matches, applications, internships]);
   const rankedCandidates = useMemo(() => hiringAIEngine.rankAllCandidates(input), [input]);
@@ -90,7 +88,7 @@ export function MatchedCandidatesPanel({
       id="dashboard-matched-candidates"
       icon={Sparkles}
       title="AI Matched Candidates"
-      description={`Top ${defaultLimit} AI-ranked shortlist with explainable match, rejection, and scheduling intelligence.`}
+      description={`Top ${defaultLimit} AI-ranked shortlist with explainable match and scheduling intelligence.`}
       actions={sectionActions}
     >
       {visibleCandidates.length === 0 ? (
@@ -106,15 +104,10 @@ export function MatchedCandidatesPanel({
                 ranked={ranked}
                 internships={internships}
                 isRecommended={isRecommended}
-                recommendedId={recommended?.candidateId ?? null}
                 saving={saving}
                 insightOpen={openInsightKey === cardKey(ranked)}
-                rejectionOpen={openRejectionKey === cardKey(ranked)}
                 onToggleInsight={() =>
                   setOpenInsightKey((current) => (current === cardKey(ranked) ? null : cardKey(ranked)))
-                }
-                onToggleRejection={() =>
-                  setOpenRejectionKey((current) => (current === cardKey(ranked) ? null : cardKey(ranked)))
                 }
                 onOpenProfile={onOpenProfile}
                 onMessage={onMessage}
@@ -138,12 +131,9 @@ type CandidateCardProps = {
   ranked: RankedCandidate;
   internships: CompanyInternship[];
   isRecommended: boolean;
-  recommendedId: string | null;
   saving: boolean;
   insightOpen: boolean;
-  rejectionOpen: boolean;
   onToggleInsight: () => void;
-  onToggleRejection: () => void;
   onOpenProfile: (applicationId: string) => void;
   onMessage: (match: CompanyMatchedCandidate, applicationId: string) => void;
   onShortlist: (applicationId: string) => void;
@@ -155,12 +145,9 @@ function CandidateCard({
   ranked,
   internships,
   isRecommended,
-  recommendedId,
   saving,
   insightOpen,
-  rejectionOpen,
   onToggleInsight,
-  onToggleRejection,
   onOpenProfile,
   onMessage,
   onShortlist,
@@ -171,11 +158,6 @@ function CandidateCard({
   const skills = (match.internProfile?.skills || application?.intern?.skills || []).slice(0, 4);
   const candidateName = match.internProfile?.fullName || "Candidate";
   const explanation = useMemo(() => hiringAIEngine.explainMatch(ranked, internships), [ranked, internships]);
-  const rejection = useMemo(
-    () => hiringAIEngine.generateRejectionReason(ranked, internships, recommendedId),
-    [ranked, internships, recommendedId]
-  );
-  const showRejectionAction = !isRecommended && rejection.sufficient;
 
   return (
     <CompanyDashboardItemCard highlighted={isRecommended} className="group overflow-hidden p-0">
@@ -236,12 +218,6 @@ function CandidateCard({
         </div>
       ) : null}
 
-      {rejectionOpen && showRejectionAction ? (
-        <div className="px-5 pb-3">
-          <AiRejectionInsightPanel reason={rejection} />
-        </div>
-      ) : null}
-
       <div className={cn(companyDashboardStyles.actionsFooter, "px-5 pb-3")}>
         <Button
           type="button"
@@ -256,21 +232,6 @@ function CandidateCard({
           <Brain className="h-3.5 w-3.5" />
           AI Insight
         </Button>
-        {showRejectionAction ? (
-          <Button
-            type="button"
-            size="sm"
-            variant="ghost"
-            disabled={!applicationId || saving}
-            onClick={(event) => {
-              event.stopPropagation();
-              onToggleRejection();
-            }}
-          >
-            <FileWarning className="h-3.5 w-3.5" />
-            Rejection Insight
-          </Button>
-        ) : null}
         <Button
           type="button"
           size="sm"

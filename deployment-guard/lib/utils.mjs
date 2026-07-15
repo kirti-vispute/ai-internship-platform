@@ -16,6 +16,23 @@ export function readText(relativePath) {
   return fs.readFileSync(full, "utf8");
 }
 
+/** Read backend source — resolves legacy shims to modular monolith implementation files. */
+export function readBackendSource(...relativePaths) {
+  for (const relativePath of relativePaths) {
+    const text = readText(relativePath);
+    if (!text) continue;
+    const shimMatch = text.match(/module\.exports\s*=\s*require\(["']([^"']+)["']\)/);
+    if (shimMatch && text.includes("Legacy shim")) {
+      const resolved = path.normalize(path.join(path.dirname(path.join(ROOT, relativePath)), shimMatch[1]));
+      const fromRoot = path.relative(ROOT, resolved).replace(/\\/g, "/");
+      const impl = readText(fromRoot);
+      if (impl && !impl.includes("Legacy shim")) return impl;
+    }
+    if (!text.includes("Legacy shim")) return text;
+  }
+  return readText(relativePaths[0]);
+}
+
 export function globPagesUnder(appSegment) {
   const base = path.join(FRONTEND, "app", appSegment);
   if (!fs.existsSync(base)) return [];
