@@ -5,7 +5,13 @@ import { useRouter } from "next/navigation";
 import { InternShell } from "@/components/dashboard/intern-shell";
 import { RoleDashboardGuard } from "@/components/ui/role-dashboard-guard";
 import { scheduleInitialInternPrefetch } from "@/lib/intern-route-prefetch-scheduler";
-import { fetchInternProfile, peekInternProfile, prefetchInternDashboardData, checkInterviewReminders } from "@/lib/intern-portal";
+import {
+  fetchInternProfile,
+  peekInternProfile,
+  prefetchInternDashboardData,
+  checkInterviewReminders,
+  PROFILE_UPDATED_EVENT
+} from "@/lib/intern-portal";
 import { logoutAuthSession } from "@/lib/api-client";
 import { getAuthSession } from "@/lib/session";
 
@@ -31,14 +37,29 @@ export default function InternDashboardLayout({ children }: { children: React.Re
     checkInterviewReminders().catch(() => undefined);
 
     let cancelled = false;
-    fetchInternProfile()
-      .then((profile) => {
-        if (!cancelled && profile.fullName) setWelcomeName(profile.fullName);
-      })
-      .catch(() => undefined);
+    const syncName = (force = false) => {
+      fetchInternProfile(force)
+        .then((profile) => {
+          if (!cancelled) setWelcomeName(profile.fullName || undefined);
+        })
+        .catch(() => undefined);
+    };
+
+    syncName();
+
+    // This layout stays mounted across every /dashboard/intern/* navigation,
+    // so a resume upload or profile edit on another route (which calls
+    // invalidateInternCache()) would otherwise never reach this already-set
+    // welcomeName state. Re-sync whenever the cache is invalidated, and on
+    // login/logout so a stale name from a previous account never lingers.
+    const onProfileUpdated = () => syncName(true);
+    window.addEventListener(PROFILE_UPDATED_EVENT, onProfileUpdated);
+    window.addEventListener("internai-auth-change", onProfileUpdated);
 
     return () => {
       cancelled = true;
+      window.removeEventListener(PROFILE_UPDATED_EVENT, onProfileUpdated);
+      window.removeEventListener("internai-auth-change", onProfileUpdated);
     };
   }, [router]);
 

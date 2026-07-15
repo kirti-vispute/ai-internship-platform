@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   AlertTriangle,
@@ -23,8 +24,6 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { InterviewScheduleSlot } from "@/lib/ai-hiring";
 import {
-  decodeInterviewNotes,
-  encodeInterviewNotes,
   INTERVIEW_DEFAULT_DURATION_MINUTES,
   INTERVIEW_DURATION_OPTIONS
 } from "@/lib/interview-workflow";
@@ -71,7 +70,11 @@ type InterviewScheduleModalProps = {
 };
 
 const fieldClass =
-  "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/30 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100";
+  "w-full rounded-[var(--ds-radius-sm)] border border-[var(--ds-border)] bg-[var(--ds-surface)] px-3 py-2 text-sm text-[var(--ds-text)] outline-none transition focus:border-[var(--ds-border-strong)] focus:ring-2 focus:ring-primary-500/30";
+
+const TOGGLE_PILL_INACTIVE =
+  "border-[var(--ds-border)] bg-transparent text-[var(--ds-muted)] hover:border-[var(--ds-border-strong)] hover:text-[var(--ds-text)]";
+const TOGGLE_PILL_ACTIVE = "border-[var(--ds-border-strong)] bg-[var(--ds-surface-raised)] text-[var(--ds-accent)]";
 
 export function InterviewScheduleModal({
   open,
@@ -109,10 +112,9 @@ export function InterviewScheduleModal({
     setPlatform(offline ? "offline" : detectPlatformFromLink(initialSlot?.meetingLink));
     setMeetingLink(initialSlot?.meetingLink || "");
     setLocation(initialSlot?.location || "");
-    const decoded = decodeInterviewNotes(initialSlot?.notes);
-    setInterviewer(decoded.interviewer);
-    setDurationMinutes(decoded.durationMinutes);
-    setNotes(decoded.notes);
+    setInterviewer(initialSlot?.interviewers?.[0]?.name || "");
+    setDurationMinutes(initialSlot?.durationMinutes || INTERVIEW_DEFAULT_DURATION_MINUTES);
+    setNotes(initialSlot?.notes || "");
     setTouched(false);
   }, [
     open,
@@ -122,7 +124,9 @@ export function InterviewScheduleModal({
     initialSlot?.mode,
     initialSlot?.meetingLink,
     initialSlot?.location,
-    initialSlot?.notes
+    initialSlot?.notes,
+    initialSlot?.durationMinutes,
+    initialSlot?.interviewers
   ]);
 
   useEffect(() => {
@@ -155,22 +159,28 @@ export function InterviewScheduleModal({
   function handleConfirm() {
     setTouched(true);
     if (!isValid) return;
+    const trimmedInterviewer = interviewer.trim();
     void onConfirm({
       roundType,
       interviewDate,
       interviewTime,
+      durationMinutes,
+      timezone: typeof Intl !== "undefined" ? Intl.DateTimeFormat().resolvedOptions().timeZone : "",
+      interviewers: trimmedInterviewer ? [{ name: trimmedInterviewer, role: "" }] : [],
       mode: interviewMode,
       meetingLink: interviewMode === "online" ? meetingLink.trim() : "",
       location: interviewMode === "offline" ? location.trim() : "",
-      notes: encodeInterviewNotes({ interviewer, durationMinutes }, notes.trim())
+      notes: notes.trim()
     });
   }
 
-  return (
+  if (typeof document === "undefined") return null;
+
+  return createPortal(
     <AnimatePresence>
       {open ? (
     <motion.div
-      className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4"
+      className="fixed inset-0 z-[110] flex items-end justify-center sm:items-center sm:p-4"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -178,7 +188,7 @@ export function InterviewScheduleModal({
     >
       <button
         type="button"
-        className="absolute inset-0 bg-slate-900/50 backdrop-blur-[2px]"
+        className="absolute inset-0 bg-slate-950/65 backdrop-blur-sm"
         onClick={onClose}
         aria-label="Close scheduling dialog"
       />
@@ -186,33 +196,28 @@ export function InterviewScheduleModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="schedule-interview-title"
-        className="relative z-10 flex max-h-[92vh] w-full max-w-lg flex-col overflow-hidden rounded-t-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-900 sm:rounded-2xl"
+        className="ds-card relative z-10 flex max-h-[92vh] w-full max-w-lg flex-col overflow-hidden !p-0 shadow-2xl rounded-t-2xl sm:rounded-2xl"
         initial={{ opacity: 0, scale: 0.96, y: 12 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.96, y: 12 }}
         transition={{ duration: 0.2, ease: "easeOut" }}
       >
         {/* Header */}
-        <div className="flex items-start justify-between gap-3 border-b border-slate-200 bg-gradient-to-r from-primary-600/10 via-violet-500/10 to-transparent px-5 py-4 dark:border-slate-700">
+        <div className="flex items-start justify-between gap-3 border-b border-[var(--ds-border)] bg-gradient-to-r from-white/[0.03] via-transparent to-transparent px-5 py-4">
           <div className="flex items-start gap-3">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-100 text-primary-700 dark:bg-primary-950/50 dark:text-primary-300">
+            <span className="ds-stat-icon shrink-0">
               <CalendarDays className="h-5 w-5" />
             </span>
             <div className="min-w-0">
-              <h2 id="schedule-interview-title" className="text-base font-semibold text-slate-900 dark:text-slate-100">
+              <h2 id="schedule-interview-title" className="ds-h3">
                 {isReschedule ? "Reschedule Interview" : "Schedule Interview"}
               </h2>
-              <p className="mt-0.5 truncate text-xs text-slate-500 dark:text-slate-400">
+              <p className="ds-caption mt-0.5 truncate">
                 {candidateName ? candidateName : "Set the round, date, time, and format"}
               </p>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-lg p-1.5 text-slate-500 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:hover:bg-slate-800"
-            aria-label="Close"
-          >
+          <button type="button" onClick={onClose} className="ds-icon-btn" aria-label="Close">
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -221,7 +226,7 @@ export function InterviewScheduleModal({
         <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-5">
           {/* Interview type */}
           <div>
-            <span className="mb-1.5 block text-xs font-semibold text-slate-600 dark:text-slate-300">Interview type</span>
+            <span className="mb-1.5 block text-xs font-semibold text-[var(--ds-muted)]">Interview type</span>
             <div className="grid grid-cols-2 gap-2" role="group" aria-label="Interview type">
               {INTERVIEW_TYPES.map(({ value: type, icon: Icon }) => {
                 const active = roundType === type;
@@ -234,8 +239,8 @@ export function InterviewScheduleModal({
                     className={cn(
                       "flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500",
                       active
-                        ? "border-primary-500 bg-primary-50 text-primary-700 dark:border-primary-500 dark:bg-primary-950/40 dark:text-primary-200"
-                        : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
+                        ? TOGGLE_PILL_ACTIVE
+                        : TOGGLE_PILL_INACTIVE
                     )}
                   >
                     <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden />
@@ -249,7 +254,7 @@ export function InterviewScheduleModal({
           {/* Date + time */}
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label htmlFor="interview-date" className="mb-1 flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300">
+              <label htmlFor="interview-date" className="mb-1 flex items-center gap-1.5 text-xs font-semibold text-[var(--ds-muted)]">
                 <CalendarDays className="h-3.5 w-3.5" aria-hidden /> Date
               </label>
               <input
@@ -261,10 +266,10 @@ export function InterviewScheduleModal({
                 aria-invalid={Boolean(touched && errors.date)}
                 onChange={(event) => setInterviewDate(event.target.value)}
               />
-              {touched && errors.date ? <p className="mt-1 text-xs text-rose-600 dark:text-rose-400">{errors.date}</p> : null}
+              {touched && errors.date ? <p className="mt-1 text-xs text-[var(--ds-danger)]">{errors.date}</p> : null}
             </div>
             <div>
-              <label htmlFor="interview-time" className="mb-1 flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300">
+              <label htmlFor="interview-time" className="mb-1 flex items-center gap-1.5 text-xs font-semibold text-[var(--ds-muted)]">
                 <Clock className="h-3.5 w-3.5" aria-hidden /> Start time
               </label>
               <input
@@ -275,13 +280,13 @@ export function InterviewScheduleModal({
                 aria-invalid={Boolean(touched && errors.time)}
                 onChange={(event) => setInterviewTime(event.target.value)}
               />
-              {touched && errors.time ? <p className="mt-1 text-xs text-rose-600 dark:text-rose-400">{errors.time}</p> : null}
+              {touched && errors.time ? <p className="mt-1 text-xs text-[var(--ds-danger)]">{errors.time}</p> : null}
             </div>
           </div>
 
           {/* Duration */}
           <div>
-            <label className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300">
+            <label className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold text-[var(--ds-muted)]">
               <Timer className="h-3.5 w-3.5" aria-hidden /> Duration
             </label>
             <div className="grid grid-cols-4 gap-2" role="group" aria-label="Interview duration">
@@ -296,8 +301,8 @@ export function InterviewScheduleModal({
                     className={cn(
                       "rounded-lg border px-2 py-2 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500",
                       active
-                        ? "border-primary-500 bg-primary-50 text-primary-700 dark:border-primary-500 dark:bg-primary-950/40 dark:text-primary-200"
-                        : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
+                        ? TOGGLE_PILL_ACTIVE
+                        : TOGGLE_PILL_INACTIVE
                     )}
                   >
                     {minutes} min
@@ -305,15 +310,15 @@ export function InterviewScheduleModal({
                 );
               })}
             </div>
-            <p className="mt-1 text-xs text-slate-400">
-              Shown to your team on the interview card. Join windows and overlap checks always use the platform&apos;s standard {INTERVIEW_DEFAULT_DURATION_MINUTES}-minute slot.
+            <p className="mt-1 text-xs text-[var(--ds-muted)]">
+              Drives the interview card, join window, and overlap checks for this round.
             </p>
           </div>
 
           {/* Interviewer */}
           <div>
-            <label htmlFor="interview-interviewer" className="mb-1 flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300">
-              <UserSearch className="h-3.5 w-3.5" aria-hidden /> Interviewer <span className="font-normal text-slate-400">(optional)</span>
+            <label htmlFor="interview-interviewer" className="mb-1 flex items-center gap-1.5 text-xs font-semibold text-[var(--ds-muted)]">
+              <UserSearch className="h-3.5 w-3.5" aria-hidden /> Interviewer <span className="font-normal text-[var(--ds-muted)]">(optional)</span>
             </label>
             <InterviewerCombobox
               value={interviewer}
@@ -325,7 +330,7 @@ export function InterviewScheduleModal({
 
           {/* Platform quick-select (maps to existing online/offline mode) */}
           <div>
-            <span className="mb-1.5 block text-xs font-semibold text-slate-600 dark:text-slate-300">Meeting platform</span>
+            <span className="mb-1.5 block text-xs font-semibold text-[var(--ds-muted)]">Meeting platform</span>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4" role="group" aria-label="Meeting platform">
               {PLATFORMS.map(({ value, label }) => {
                 const active = platform === value;
@@ -342,8 +347,8 @@ export function InterviewScheduleModal({
                     className={cn(
                       "flex items-center justify-center gap-1.5 rounded-lg border px-2 py-2 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500",
                       active
-                        ? "border-primary-500 bg-primary-50 text-primary-700 dark:border-primary-500 dark:bg-primary-950/40 dark:text-primary-200"
-                        : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
+                        ? TOGGLE_PILL_ACTIVE
+                        : TOGGLE_PILL_INACTIVE
                     )}
                   >
                     <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden />
@@ -355,7 +360,7 @@ export function InterviewScheduleModal({
           </div>
 
           {/* Timezone (informational — times are stored as entered) */}
-          <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+          <div className="flex items-center gap-2 text-xs text-[var(--ds-muted)]">
             <Globe className="h-3.5 w-3.5 shrink-0" aria-hidden />
             <span>
               Timezone: {typeof Intl !== "undefined" ? Intl.DateTimeFormat().resolvedOptions().timeZone : "local"}
@@ -365,8 +370,8 @@ export function InterviewScheduleModal({
           {/* Conditional: link or location */}
           {interviewMode === "online" ? (
             <div>
-              <label htmlFor="interview-link" className="mb-1 flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300">
-                <Link2 className="h-3.5 w-3.5" aria-hidden /> Meeting link <span className="font-normal text-slate-400">(optional)</span>
+              <label htmlFor="interview-link" className="mb-1 flex items-center gap-1.5 text-xs font-semibold text-[var(--ds-muted)]">
+                <Link2 className="h-3.5 w-3.5" aria-hidden /> Meeting link <span className="font-normal text-[var(--ds-muted)]">(optional)</span>
               </label>
               <input
                 id="interview-link"
@@ -379,14 +384,14 @@ export function InterviewScheduleModal({
                 onChange={(event) => setMeetingLink(event.target.value)}
               />
               {touched && errors.link ? (
-                <p className="mt-1 text-xs text-rose-600 dark:text-rose-400">{errors.link}</p>
+                <p className="mt-1 text-xs text-[var(--ds-danger)]">{errors.link}</p>
               ) : (
-                <p className="mt-1 text-xs text-slate-400">Leave blank to auto-generate a secure platform room.</p>
+                <p className="mt-1 text-xs text-[var(--ds-muted)]">Leave blank to auto-generate a secure platform room.</p>
               )}
             </div>
           ) : (
             <div>
-              <label htmlFor="interview-location" className="mb-1 flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300">
+              <label htmlFor="interview-location" className="mb-1 flex items-center gap-1.5 text-xs font-semibold text-[var(--ds-muted)]">
                 <MapPin className="h-3.5 w-3.5" aria-hidden /> Location
               </label>
               <input
@@ -398,14 +403,14 @@ export function InterviewScheduleModal({
                 aria-invalid={Boolean(touched && errors.location)}
                 onChange={(event) => setLocation(event.target.value)}
               />
-              {touched && errors.location ? <p className="mt-1 text-xs text-rose-600 dark:text-rose-400">{errors.location}</p> : null}
+              {touched && errors.location ? <p className="mt-1 text-xs text-[var(--ds-danger)]">{errors.location}</p> : null}
             </div>
           )}
 
           {/* Notes */}
           <div>
-            <label htmlFor="interview-notes" className="mb-1 flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300">
-              <StickyNote className="h-3.5 w-3.5" aria-hidden /> Notes <span className="font-normal text-slate-400">(optional)</span>
+            <label htmlFor="interview-notes" className="mb-1 flex items-center gap-1.5 text-xs font-semibold text-[var(--ds-muted)]">
+              <StickyNote className="h-3.5 w-3.5" aria-hidden /> Notes <span className="font-normal text-[var(--ds-muted)]">(optional)</span>
             </label>
             <textarea
               id="interview-notes"
@@ -418,7 +423,7 @@ export function InterviewScheduleModal({
           </div>
 
           {overlapWarning ? (
-            <p className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-200">
+            <p className="flex items-start gap-2 rounded-[var(--ds-radius-sm)] border border-amber-400/25 bg-amber-400/10 px-3 py-2 text-xs text-amber-300">
               <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
               <span>{overlapWarning}</span>
             </p>
@@ -426,7 +431,7 @@ export function InterviewScheduleModal({
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end gap-2 border-t border-slate-200 bg-slate-50/80 px-5 py-4 dark:border-slate-700 dark:bg-slate-900/60">
+        <div className="flex justify-end gap-2 border-t border-[var(--ds-border)] px-5 py-4">
           <Button type="button" size="sm" variant="ghost" onClick={onClose} disabled={saving}>
             Cancel
           </Button>
@@ -443,6 +448,7 @@ export function InterviewScheduleModal({
       </motion.div>
     </motion.div>
       ) : null}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }

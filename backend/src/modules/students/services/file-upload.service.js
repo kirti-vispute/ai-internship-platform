@@ -5,6 +5,8 @@ const UPLOAD_DIRECTORIES = Object.freeze({
   RESUMES: "resumes",
   CERTIFICATES: "certificates",
   COMPANY_PROOFS: "company-proofs",
+  COMPANY_LOGOS: "company-logos",
+  PROFILE_PHOTOS: "profile-photos",
   INTERVIEW_RECORDINGS: "interview-recordings",
   SCREENSHOTS: "screenshots"
 });

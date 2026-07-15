@@ -1,10 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { createPortal } from "react-dom";
+import { Sparkles } from "lucide-react";
 import { SkillChips } from "@/components/dashboard/skill-chips";
 import { ExternalLink } from "@/components/ui/external-link";
 import { Button } from "@/components/ui/button";
+import { AiInsightsModal } from "@/components/dashboard/intern/ai-insights-modal";
 import { InternshipListing, applyToInternship, buildAssetUrl } from "@/lib/intern-portal";
 
 type Props = {
@@ -25,6 +28,7 @@ export function InternApplicationModal({ internship, resumePath, onClose, onSucc
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isMounted, setIsMounted] = useState(false);
+  const [showInsights, setShowInsights] = useState(false);
 
   const attachedResumeUrl = useMemo(() => buildAssetUrl(resumePath), [resumePath]);
   const attachedResumeName = useMemo(() => getResumeName(resumePath), [resumePath]);
@@ -67,6 +71,7 @@ export function InternApplicationModal({ internship, resumePath, onClose, onSucc
   if (!isMounted) return null;
 
   return createPortal(
+    <>
     <div className="fixed inset-0 z-[1000] bg-slate-950/50" onClick={onClose}>
       <div className="flex h-full w-full items-start justify-center overflow-hidden px-4 pb-6 pt-6 md:pt-8">
         <div
@@ -137,6 +142,14 @@ export function InternApplicationModal({ internship, resumePath, onClose, onSucc
                 <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Required Skills</p>
                 <div className="mt-2">
                   <SkillChips skills={requiredSkills} />
+                </div>
+                <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1">
+                  <Link href={`/dashboard/intern/skill-gap?internshipId=${internship._id}`} className="text-link text-sm">
+                    Check my skill gap for this role
+                  </Link>
+                  <Link href={`/dashboard/intern/resume/score?internshipId=${internship._id}`} className="text-link text-sm">
+                    Check my ATS score for this role
+                  </Link>
                 </div>
               </section>
 
@@ -212,13 +225,32 @@ export function InternApplicationModal({ internship, resumePath, onClose, onSucc
             <Button type="button" variant="secondary" onClick={onClose} disabled={submitting} className="transition hover:-translate-y-0.5 active:translate-y-0">
               Cancel
             </Button>
-            <Button type="button" onClick={submitApplication} disabled={submitting} className="transition hover:-translate-y-0.5 active:translate-y-0">
-              {submitting ? "Applying..." : "Apply Now"}
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => setShowInsights(true)}
+                className="gap-2 transition hover:-translate-y-0.5 active:translate-y-0"
+              >
+                <Sparkles className="h-4 w-4" />
+                AI Insights
+              </Button>
+              <Button type="button" onClick={submitApplication} disabled={submitting} className="transition hover:-translate-y-0.5 active:translate-y-0">
+                {submitting ? "Applying..." : "Apply Now"}
+              </Button>
+            </div>
           </footer>
         </div>
       </div>
-    </div>,
+    </div>
+    <AiInsightsModal
+      open={showInsights}
+      internshipId={internship._id}
+      role={internship.role}
+      companyName={internship.company?.companyName}
+      onClose={() => setShowInsights(false)}
+    />
+    </>,
     document.body
   );
 }

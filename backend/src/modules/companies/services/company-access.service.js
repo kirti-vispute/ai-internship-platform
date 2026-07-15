@@ -1,5 +1,5 @@
 const { COMPANY_ACCOUNT_TYPES } = require("../../../constants/enums");
-const { PERMISSION_KEYS } = require("../../../constants/roles");
+const { PERMISSION_KEYS } = require("../../../shared/constants/roles");
 const AppError = require("../../../shared/utils/AppError");
 const {
   ALL_SIDEBAR_MODULE_KEYS,
@@ -129,6 +129,43 @@ function hasSidebarModule(user = {}, moduleKey) {
   return resolveEffectiveSidebarModules(user).includes(moduleKey);
 }
 
+/**
+ * Interview feedback is private between its author and the candidate — it
+ * does not inherit the company-wide/recruiter-scope visibility that applies
+ * to applications generally. A viewer only sees an entry they authored
+ * (legacy entries with no authorId fall back to "am I the application's
+ * currently assigned recruiter"), unless explicitly granted
+ * COMPANY_FEEDBACK_VIEW_ALL (nobody has this by default).
+ */
+function sanitizeFeedbackEntries(entries = [], viewerUser = {}, assignedRecruiter = null) {
+  if (!Array.isArray(entries)) return [];
+  if (viewerUser.role === "intern") {
+    return entries.filter((entry) => entry.visibility !== "internal");
+  }
+  if (viewerUser.role === "company") {
+    if (hasPermission(viewerUser, PERMISSION_KEYS.COMPANY_FEEDBACK_VIEW_ALL)) return entries;
+    return entries.filter((entry) => {
+      if (entry.authorId) return String(entry.authorId) === String(viewerUser._id);
+      return Boolean(assignedRecruiter) && String(assignedRecruiter) === String(viewerUser._id);
+    });
+  }
+  return entries;
+}
+
+function sanitizeApplicationFeedback(application, viewerUser) {
+  if (!application) return application;
+  const plain = typeof application.toObject === "function" ? application.toObject() : application;
+  if (!Array.isArray(plain.hrFeedback)) return plain;
+  return {
+    ...plain,
+    hrFeedback: sanitizeFeedbackEntries(plain.hrFeedback, viewerUser, plain.assignedRecruiter)
+  };
+}
+
+function sanitizeApplicationListFeedback(applications, viewerUser) {
+  return (applications || []).map((application) => sanitizeApplicationFeedback(application, viewerUser));
+}
+
 function buildListMeta(user = {}) {
   const tier = getAccessTier(user);
   return {
@@ -160,5 +197,8 @@ module.exports = {
   assertCanUpdateCompanyProfile,
   buildListMeta,
   resolveEffectiveSidebarModules,
-  hasSidebarModule
+  hasSidebarModule,
+  sanitizeFeedbackEntries,
+  sanitizeApplicationFeedback,
+  sanitizeApplicationListFeedback
 };

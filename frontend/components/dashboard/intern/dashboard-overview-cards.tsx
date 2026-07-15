@@ -1,16 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import {
-  AlertTriangle,
-  BarChart3,
-  CheckCircle2,
-  FileText,
-  Sparkles,
-  Target,
-  TrendingUp,
-  Wand2
-} from "lucide-react";
+import { BarChart3, FileText, Target, TrendingUp } from "lucide-react";
 import { ScrollReveal } from "@/components/animations/ScrollReveal";
 import { AppIcon } from "@/components/icons/app-icon";
 import { Button } from "@/components/ui/button";
@@ -229,70 +220,6 @@ export function AtsReadinessCard({
         <Button href="/dashboard/intern/resume/score" type="button" size="sm" variant="secondary" className="mt-4 w-full gap-1.5">
           Improve Resume
           <span aria-hidden>&rarr;</span>
-        </Button>
-      </HoverCard>
-    </ScrollReveal>
-  );
-}
-
-type Insight = { text: string; positive: boolean };
-
-function buildInsights(analysis: ResumeAnalysis | null | undefined): Insight[] {
-  if (!analysis) return [];
-  const positives = (analysis.strengths || []).slice(0, 3).map((text) => ({ text, positive: true }));
-  const negatives = [...(analysis.criticalIssues || []), ...(analysis.improvements || [])]
-    .slice(0, 3)
-    .map((text) => ({ text, positive: false }));
-  return [...positives, ...negatives].slice(0, 6);
-}
-
-export function AiInsightsCard({
-  profile,
-  analysis,
-  loading
-}: {
-  profile: InternProfile | null;
-  analysis: ResumeAnalysis | null | undefined;
-  loading?: boolean;
-}) {
-  if (loading) return <Skeleton className="h-64 w-full rounded-2xl" />;
-
-  const insights = buildInsights(analysis);
-
-  return (
-    <ScrollReveal variant="fade-up" distance={12} delayMs={60}>
-      <HoverCard>
-        <div className="mb-4 flex items-center gap-2">
-          <AppIcon icon={Sparkles} size="sm" className="text-violet-600 dark:text-violet-400" />
-          <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">AI Insights</h3>
-        </div>
-
-        {!profile?.resumeUploaded || insights.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-slate-200 px-4 py-8 text-center dark:border-slate-800">
-            <p className="text-sm text-slate-600 dark:text-slate-300">
-              {profile?.resumeUploaded
-                ? "Analyzing your resume — insights will appear here shortly."
-                : "Upload your resume to get AI-generated insights."}
-            </p>
-          </div>
-        ) : (
-          <ul className="space-y-2.5">
-            {insights.map((insight, idx) => (
-              <li key={idx} className="flex gap-2.5 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
-                <AppIcon
-                  icon={insight.positive ? CheckCircle2 : AlertTriangle}
-                  size="xs"
-                  className={cn("mt-0.5 shrink-0", insight.positive ? "text-emerald-500" : "text-amber-500")}
-                />
-                <span>{insight.text}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-
-        <Button href="/dashboard/intern/resume/score" type="button" size="sm" className="mt-4 w-full gap-2">
-          <AppIcon icon={Wand2} size="xs" className="text-current" />
-          Improve Resume
         </Button>
       </HoverCard>
     </ScrollReveal>

@@ -57,7 +57,16 @@ app.use(
     // This API is called cross-origin by the separately-hosted frontend and
     // serves uploaded files (resumes/certificates/images) for it to embed —
     // helmet's default same-origin CORP would silently block those loads.
-    crossOriginResourcePolicy: { policy: "cross-origin" }
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+    // Explicit (not just relying on helmet defaults) so the production security
+    // posture is visible here and doesn't silently drift if the helmet major
+    // version changes its defaults.
+    hsts: { maxAge: 31536000, includeSubDomains: true },
+    frameguard: { action: "deny" },
+    referrerPolicy: { policy: "no-referrer" },
+    noSniff: true,
+    crossOriginOpenerPolicy: { policy: "same-origin" },
+    dnsPrefetchControl: { allow: false }
   })
 );
 app.use(
@@ -87,7 +96,7 @@ app.use(cookieParser());
 app.use(requestIdMiddleware);
 app.use(
   "/uploads",
-  express.static(path.join(__dirname, "../uploads"), { maxAge: "7d", immutable: true, dotfiles: "deny", index: false })
+  express.static(path.join(__dirname, "modules/uploads"), { maxAge: "7d", immutable: true, dotfiles: "deny", index: false })
 );
 
 if (process.env.NODE_ENV !== "test") {

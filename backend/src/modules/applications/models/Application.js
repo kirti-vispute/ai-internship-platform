@@ -94,6 +94,10 @@ const applicationSchema = new mongoose.Schema(
         category: { type: String, default: "general" },
         visibility: { type: String, enum: ["internal", "candidate"], default: "candidate" },
         authorRole: { type: String, default: "company" },
+        // The specific user who wrote this entry. Null on legacy entries
+        // written before this field existed — those fall back to an
+        // assignedRecruiter-based check (see sanitizeFeedbackEntries).
+        authorId: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
         createdAt: { type: Date, default: Date.now }
       }
     ],
@@ -102,14 +106,41 @@ const applicationSchema = new mongoose.Schema(
         roundType: { type: String, default: "" },
         interviewDate: { type: Date, default: null },
         interviewTime: { type: String, default: "" },
+        durationMinutes: { type: Number, default: 60, min: 5, max: 480 },
+        timezone: { type: String, default: "" },
+        interviewers: [
+          {
+            _id: false,
+            name: { type: String, required: true, trim: true },
+            role: { type: String, default: "" }
+          }
+        ],
         mode: { type: String, enum: ["online", "offline", ""], default: "" },
         meetingLink: { type: String, default: "" },
         location: { type: String, default: "" },
         notes: { type: String, default: "" },
         status: {
           type: String,
-          enum: ["scheduled", "completed", "cleared", "rejected"],
+          enum: ["scheduled", "completed", "cleared", "rejected", "cancelled", "no_show"],
           default: "scheduled"
+        },
+        cancelReason: { type: String, default: "" },
+        rescheduleHistory: [
+          {
+            _id: false,
+            previousDate: { type: Date, default: null },
+            previousTime: { type: String, default: "" },
+            changedAt: { type: Date, default: Date.now },
+            changedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null }
+          }
+        ],
+        rescheduleRequestedByCandidate: {
+          type: {
+            requestedAt: { type: Date, default: Date.now },
+            reason: { type: String, default: "" },
+            acknowledged: { type: Boolean, default: false }
+          },
+          default: null
         },
         updatedAt: { type: Date, default: Date.now }
       }

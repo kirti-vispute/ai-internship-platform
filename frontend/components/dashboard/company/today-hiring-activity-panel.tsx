@@ -6,7 +6,8 @@ import type { CompanyApplication } from "@/lib/company-portal";
 import {
   CompanyDashboardMetricTile,
   CompanyDashboardPanelCard,
-  CompanyDashboardSection
+  CompanyDashboardSection,
+  companyDashboardStyles
 } from "./company-dashboard-layout";
 import { getInterviewStageCandidates, normalizeRawStatus } from "../hiring/hiring-utils";
 import { extractScheduledInterviews } from "@/lib/interview-workflow";
@@ -63,7 +64,7 @@ export function TodayHiringActivityPanel({ applications }: TodayHiringActivityPa
       description="What needs your attention right now?"
     >
       <CompanyDashboardPanelCard className="bg-gradient-to-br from-slate-950/20 via-transparent to-primary-950/20">
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+        <div className={companyDashboardStyles.metricGridFive}>
           <CompanyDashboardMetricTile
             label="Interviews Today"
             value={metrics.interviewsToday}
@@ -91,7 +92,7 @@ export function TodayHiringActivityPanel({ applications }: TodayHiringActivityPa
           />
         </div>
 
-        <div className="mt-4 grid gap-2 text-xs text-[var(--ds-muted)] sm:grid-cols-2 xl:grid-cols-5">
+        <div className="mt-4 grid gap-2 text-xs text-[var(--ds-muted)] sm:grid-cols-2 lg:grid-cols-5">
           <p className="inline-flex items-center gap-1.5">
             <CalendarClock className="h-3.5 w-3.5" />
             Live interview load

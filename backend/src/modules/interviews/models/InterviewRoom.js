@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const INTERVIEW_ROOM_STATUS = ["scheduled", "live", "completed"];
+const INTERVIEW_ROOM_STATUS = ["scheduled", "live", "completed", "cancelled", "no_show"];
 const INTERVIEW_OUTCOMES = ["selected", "rejected", "on_hold", null];
 
 const chatMessageSchema = new mongoose.Schema(
@@ -71,9 +71,26 @@ const interviewRoomSchema = new mongoose.Schema(
     chatMessages: {
       type: [chatMessageSchema],
       default: []
-    }
+    },
+    participants: {
+      type: [
+        {
+          _id: false,
+          userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+          role: { type: String, enum: ["intern", "company"], required: true },
+          name: { type: String, default: "" },
+          joinedAt: { type: Date, default: Date.now },
+          leftAt: { type: Date, default: null }
+        }
+      ],
+      default: []
+    },
+    everJoined: { type: Boolean, default: false },
+    maxParticipants: { type: Number, default: 4 }
   },
   { timestamps: true }
 );
+
+interviewRoomSchema.index({ applicationId: 1, roundId: 1 }, { unique: true });
 
 module.exports = mongoose.model("InterviewRoom", interviewRoomSchema);

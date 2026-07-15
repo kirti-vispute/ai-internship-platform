@@ -157,6 +157,7 @@ export function HiringSection({
           sidebar={
             <QuickActionsPanel
               canPostJob={!isHrScoped}
+              isExecutive={!isHrScoped}
               onViewAllApplications={() => setSheet({ mode: "all" })}
               onScheduleInterviews={() => setSheet({ mode: "interviews" })}
             />

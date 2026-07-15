@@ -69,17 +69,17 @@ function ChatHeader({
       : conversation.internProfile?.email || "Candidate conversation";
 
   return (
-    <header className="flex h-16 shrink-0 items-center gap-2 border-b border-slate-200/70 px-4 dark:border-slate-800/70">
+    <header className="flex h-16 shrink-0 items-center gap-2 border-b border-[var(--ds-border)] px-4">
       {showBackButton ? (
         <Button type="button" size="sm" variant="ghost" onClick={onBack} className="shrink-0 px-2 lg:hidden">
           <AppIcon icon={ArrowLeft} size="sm" />
         </Button>
       ) : null}
       <div className="min-w-0 flex-1">
-        <h3 className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
+        <h3 className="truncate text-sm font-semibold text-[var(--ds-text)]">
           {conversationTitle(conversation, role)}
         </h3>
-        <p className="truncate text-[11px] text-slate-500 dark:text-slate-400">{subtitle}</p>
+        <p className="truncate text-[11px] text-[var(--ds-muted)]">{subtitle}</p>
       </div>
       {onOpenDetails ? (
         <Button type="button" size="sm" variant="secondary" onClick={onOpenDetails} className="shrink-0 gap-1.5">
@@ -112,7 +112,7 @@ function InterviewEventCard({ message }: { message: ChatMessage }) {
   return (
     <div
       className={cn(
-        "flex max-w-md items-start gap-3 rounded-2xl border border-white/[0.08] border-l-[3px] bg-slate-800/70 px-3.5 py-3 shadow-sm transition-[box-shadow,transform] duration-150 hover:-translate-y-px hover:shadow-md",
+        "flex max-w-md items-start gap-3 rounded-2xl border border-white/[0.08] border-l-[3px] bg-[var(--ds-surface-raised)] px-3.5 py-3 shadow-sm transition-[box-shadow,transform] duration-150 hover:-translate-y-px hover:shadow-md",
         border
       )}
     >
@@ -121,23 +121,23 @@ function InterviewEventCard({ message }: { message: ChatMessage }) {
       </span>
 
       <div className="min-w-0 flex-1">
-        <p className="text-[11px] font-medium uppercase tracking-wide text-slate-400">Interview Update</p>
-        <p className="mt-0.5 text-sm font-semibold text-slate-100">{label}</p>
+        <p className="text-[11px] font-medium uppercase tracking-wide text-[var(--ds-muted)]">Interview Update</p>
+        <p className="mt-0.5 text-sm font-semibold text-[var(--ds-text)]">{label}</p>
         {text?.type === "text" ? (
-          <p className="mt-0.5 text-sm leading-snug text-slate-300">{text.value}</p>
+          <p className="mt-0.5 text-sm leading-snug text-[var(--ds-text)]">{text.value}</p>
         ) : null}
 
         <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5">
           {cta?.type === "interview-cta" ? (
             <Link
               href={cta.href}
-              className="inline-flex w-fit shrink-0 items-center gap-1.5 rounded-lg border border-slate-600/70 px-2.5 py-1 text-xs font-semibold text-slate-200 transition-colors hover:border-slate-500 hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50"
+              className="inline-flex w-fit shrink-0 items-center gap-1.5 rounded-lg border border-[var(--ds-border-strong)] px-2.5 py-1 text-xs font-semibold text-[var(--ds-text)] transition-colors hover:border-[var(--ds-accent)] hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50"
             >
               <AppIcon icon={ExternalLink} size="xs" className="text-current" />
               View details
             </Link>
           ) : null}
-          <span className="text-[11px] text-slate-500">{formatChatTime(message.createdAt)}</span>
+          <span className="text-[11px] text-[var(--ds-muted)]">{formatChatTime(message.createdAt)}</span>
         </div>
       </div>
     </div>
@@ -224,7 +224,7 @@ function MessageList({
         <ListSkeleton />
       ) : messages.length === 0 ? (
         <div className="flex flex-1 items-center justify-center py-8">
-          <p className="text-center text-sm text-slate-500 dark:text-slate-400">No messages yet. Say hello to start.</p>
+          <p className="text-center text-sm text-[var(--ds-muted)]">No messages yet. Say hello to start.</p>
         </div>
       ) : (
         <div className="mt-auto w-full space-y-3 pb-1">
@@ -255,19 +255,19 @@ function MessageList({
                           "w-fit rounded-2xl px-3.5 py-2 text-sm shadow-sm",
                           group.mine
                             ? "chat-bubble-mine bg-primary-600 text-white"
-                            : "chat-bubble-theirs border border-slate-200 bg-slate-100 text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100",
+                            : "chat-bubble-theirs border border-[var(--ds-border)] bg-[var(--ds-surface-raised)] text-[var(--ds-text)]",
                           index === 0 ? "" : group.mine ? "rounded-tr-md" : "rounded-tl-md"
                         )}
                       >
                         <ChatMessageBody body={message.body} mine={group.mine} />
                       </div>
                     ))}
-                    <div className="flex items-center gap-1 px-1 text-[10px] text-slate-400 dark:text-slate-500">
+                    <div className="flex items-center gap-1 px-1 text-[10px] text-[var(--ds-muted)]">
                       <span>{formatChatTime(group.messages[group.messages.length - 1].createdAt)}</span>
                       {group.mine ? (
                         <MessageStatusIndicator
                           status={group.messages[group.messages.length - 1].status || "sent"}
-                          className="text-slate-400 dark:text-slate-500"
+                          className="text-[var(--ds-muted)]"
                         />
                       ) : null}
                     </div>
@@ -307,7 +307,7 @@ export function ChatPanel({
 }: Props) {
   if (!conversation) {
     return (
-      <section className={cn("flex h-full min-h-[480px] items-center justify-center rounded-2xl border border-slate-200/70 bg-white dark:border-slate-800/70 dark:bg-slate-900/60", className)}>
+      <section className={cn("flex h-full min-h-[480px] items-center justify-center rounded-2xl border border-[var(--ds-border)] bg-[var(--ds-surface)]", className)}>
         <EmptyState title="Select a conversation" hint="Choose a thread or start a new chat." presetKey="chat" />
       </section>
     );
@@ -316,7 +316,7 @@ export function ChatPanel({
   return (
     <section
       className={cn(
-        "grid h-full min-h-0 grid-rows-[4rem_minmax(0,1fr)_auto] overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-sm dark:border-slate-800/70 dark:bg-slate-900/60",
+        "grid h-full min-h-0 grid-rows-[4rem_minmax(0,1fr)_auto] overflow-hidden rounded-2xl border border-[var(--ds-border)] bg-[var(--ds-surface)] shadow-sm",
         className
       )}
     >
@@ -344,7 +344,7 @@ export function ChatPanel({
         onChange={onDraftChange}
         onSend={onSend}
         sending={sending}
-        className="shrink-0 rounded-b-2xl border-t border-slate-200/80 bg-white shadow-[0_-4px_12px_rgba(15,23,42,0.04)] dark:border-slate-800/80 dark:bg-slate-950/40"
+        className="shrink-0 rounded-b-2xl border-t border-[var(--ds-border)] bg-[var(--ds-deep)] shadow-[0_-4px_12px_rgba(0,0,0,0.2)]"
       />
     </section>
   );

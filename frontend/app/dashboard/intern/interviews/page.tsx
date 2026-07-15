@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { DashboardPageHeader } from "@/components/dashboard/dashboard-page-header";
 import { ScheduledInterviewsPanel } from "@/components/dashboard/intern/scheduled-interviews-panel";
 import {
@@ -14,6 +14,7 @@ import {
   type ScheduledInterviewRecord
 } from "@/lib/interview-workflow";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useChatSocket } from "@/lib/use-chat-socket";
 
 export default function InternInterviewsPage() {
   const [interviewRecords, setInterviewRecords] = useState<ScheduledInterviewRecord[]>([]);
@@ -28,25 +29,46 @@ export default function InternInterviewsPage() {
     }
   }, []);
 
-  useEffect(() => {
-    async function load() {
-      try {
-        setError(null);
-        const interviews: ScheduledInterview[] = await fetchInternInterviews(true);
-        const allRecords = interviews.map(mapApiInterviewToRecord);
-        setInterviewRecords(mapApiInterviewsToRecords(interviews));
-        setPastInterviewRecords(
-          allRecords.filter(
-            (item) => item.interviewStatus === "completed" || item.interviewStatus === "cancelled"
-          )
-        );
-      } catch (err) {
-        setError((err as Error).message || "Failed to load interviews.");
-      } finally {
-        setLoading(false);
-      }
+  const load = useCallback(async (showSpinner: boolean) => {
+    try {
+      setError(null);
+      if (showSpinner) setLoading(true);
+      const interviews: ScheduledInterview[] = await fetchInternInterviews(true);
+      const allRecords = interviews.map(mapApiInterviewToRecord);
+      setInterviewRecords(mapApiInterviewsToRecords(interviews));
+      setPastInterviewRecords(
+        allRecords.filter(
+          (item) => item.interviewStatus === "completed" || item.interviewStatus === "cancelled"
+        )
+      );
+    } catch (err) {
+      setError((err as Error).message || "Failed to load interviews.");
+    } finally {
+      setLoading(false);
     }
-    void load();
+  }, []);
+
+  useEffect(() => {
+    void load(true);
+  }, [load]);
+
+  // HR scheduling/rescheduling/cancelling an interview pushes a socket
+  // notification; refetch so the card list reflects it without a manual
+  // page reload (the notification bell already updates live on its own).
+  const refetchTimerRef = useRef<number | null>(null);
+  useChatSocket({
+    onNotification: (notification) => {
+      const type = String((notification as { type?: string })?.type || "");
+      if (!type.includes("interview")) return;
+      if (refetchTimerRef.current) window.clearTimeout(refetchTimerRef.current);
+      refetchTimerRef.current = window.setTimeout(() => void load(false), 400);
+    }
+  });
+
+  useEffect(() => {
+    return () => {
+      if (refetchTimerRef.current) window.clearTimeout(refetchTimerRef.current);
+    };
   }, []);
 
   const allApiInterviews = useMemo(() => interviewRecords, [interviewRecords]);

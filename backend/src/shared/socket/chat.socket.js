@@ -112,12 +112,11 @@ function initChatSocket(server) {
 
         if (socket.user.role === "intern") {
           await emitUnreadToCompanyUsers(conversation.company, socket.user._id);
-          const companyUsers = await service.findCompanyTeamUsers(conversation.company);
-          for (const companyUser of companyUsers) {
-            if (String(companyUser._id) === String(socket.user._id)) continue;
+          const recruiterId = await service.resolveConversationRecruiterId(conversation);
+          if (recruiterId && String(recruiterId) !== String(socket.user._id)) {
             const delivered = await service.markMessageDelivered(message._id);
             if (delivered) {
-              emitToUser(companyUser._id, "message:status", delivered);
+              emitToUser(recruiterId, "message:status", delivered);
             }
           }
         } else {

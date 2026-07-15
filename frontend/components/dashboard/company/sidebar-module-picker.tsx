@@ -46,11 +46,6 @@ export function SidebarModulePicker({ value, onChange, className }: SidebarModul
     onChange(value.filter((key) => !selectableKeys.includes(key as SidebarModuleKey)));
   }
 
-  function toggleAll() {
-    const allSelected = selectableKeys.every((key) => value.includes(key));
-    onChange(allSelected ? value.filter((key) => !selectableKeys.includes(key as SidebarModuleKey)) : [...new Set([...value, ...selectableKeys])]);
-  }
-
   return (
     <div className={cn("space-y-3", className)}>
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -58,29 +53,34 @@ export function SidebarModulePicker({ value, onChange, className }: SidebarModul
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search permissions..."
-          className="surface-subtle w-full max-w-xs px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-primary-500/60"
+          className="ds-input w-full max-w-xs !h-9 text-xs"
         />
-        <div className="flex items-center gap-2 text-xs">
-          <span className="text-slate-500 dark:text-slate-400">
+        <div className="flex items-center gap-3 text-xs">
+          <span className="ds-caption">
             {enabledCount} of {selectableKeys.length} enabled
           </span>
-          <button type="button" onClick={selectAll} className="font-semibold text-primary-700 hover:underline dark:text-primary-300">
+          <button
+            type="button"
+            onClick={selectAll}
+            className="rounded-[var(--ds-radius-sm)] border border-[var(--ds-border)] px-2.5 py-1 font-semibold text-[var(--ds-accent)] transition-colors duration-150 hover:bg-[var(--ds-surface-raised)] active:opacity-80"
+          >
             Select All
           </button>
-          <button type="button" onClick={clearAll} className="font-semibold text-slate-600 hover:underline dark:text-slate-300">
+          <button
+            type="button"
+            onClick={clearAll}
+            className="rounded-[var(--ds-radius-sm)] border border-[var(--ds-border)] px-2.5 py-1 font-semibold text-[var(--ds-muted)] transition-colors duration-150 hover:bg-[var(--ds-surface-raised)] active:opacity-80"
+          >
             Clear All
-          </button>
-          <button type="button" onClick={toggleAll} className="font-semibold text-slate-600 hover:underline dark:text-slate-300">
-            Toggle All
           </button>
         </div>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
         {groups.map(({ group, entries }) => (
-          <div key={group} className="surface-subtle space-y-2 p-3">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">{group}</p>
-            <div className="space-y-1.5">
+          <div key={group} className="ds-card space-y-2 !p-3">
+            <p className="ds-label">{group}</p>
+            <div className="space-y-1">
               {entries.map((entry) => {
                 const checked = value.includes(entry.key);
                 const disabled = Boolean(entry.executiveOnly);
@@ -89,8 +89,8 @@ export function SidebarModulePicker({ value, onChange, className }: SidebarModul
                     key={entry.key}
                     title={SIDEBAR_MODULE_DESCRIPTIONS[entry.key]}
                     className={cn(
-                      "flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm",
-                      disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800"
+                      "flex items-center gap-2 rounded-[var(--ds-radius-sm)] px-2 py-1.5 text-sm transition-colors duration-150",
+                      disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer hover:bg-[var(--ds-surface-raised)]"
                     )}
                   >
                     <input
@@ -98,10 +98,10 @@ export function SidebarModulePicker({ value, onChange, className }: SidebarModul
                       checked={checked}
                       disabled={disabled}
                       onChange={() => toggle(entry.key)}
-                      className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-slate-600"
+                      className="h-4 w-4 rounded border-[var(--ds-border-strong)] text-[var(--ds-accent)] focus:ring-primary-500"
                     />
-                    <span className="text-slate-700 dark:text-slate-200">{entry.label}</span>
-                    {disabled && <span className="text-[10px] uppercase tracking-wide text-slate-400">CEO only</span>}
+                    <span className="text-[var(--ds-text)]">{entry.label}</span>
+                    {disabled && <span className="text-[10px] uppercase tracking-wide text-[var(--ds-muted)]">CEO only</span>}
                   </label>
                 );
               })}

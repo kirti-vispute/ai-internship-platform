@@ -7,6 +7,7 @@ const { PLATFORM_CONFIG } = require("../../../shared/config/platform.config");
 const { isEnabled } = require("../../../shared/config/feature-flags");
 const AppError = require("../../../shared/utils/AppError");
 const { normalizeSkillList, toDisplaySkillList } = require("../../../shared/utils/skill-normalizer");
+const { resolvePagination } = require("../../../shared/utils/pagination");
 
 function slugify(value) {
   return String(value || "")
@@ -517,9 +518,7 @@ async function attachPortfolioSummaries(applications) {
 }
 
 async function listPortfoliosAdmin({ page = 1, limit = 50, status = "" } = {}) {
-  const safePage = Math.max(1, Number(page));
-  const safeLimit = Math.min(100, Math.max(1, Number(limit)));
-  const skip = (safePage - 1) * safeLimit;
+  const { page: safePage, limit: safeLimit, skip } = resolvePagination({ page, limit }, { defaultLimit: 50, maxLimit: 100 });
   const query = {};
   if (status) query.status = status;
 

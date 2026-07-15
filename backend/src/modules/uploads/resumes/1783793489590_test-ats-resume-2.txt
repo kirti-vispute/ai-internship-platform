@@ -1,0 +1,17 @@
+PRIYA SHARMA
+priya.sharma@outlook.com
++91-9123456780
+linkedin.com/in/priyasharma | github.com/priyasharma
+
+PROFESSIONAL SUMMARY
+Full stack developer with strong foundation in JavaScript and React. Experienced in
+building scalable REST APIs and deploying containerized services on AWS.
+
+TECHNICAL SKILLS
+JavaScript, TypeScript, React, Node.js, Express.js, MongoDB, Docker, AWS, Git
+
+EDUCATION
+B.Tech Computer Science
+Indian Institute of Technology
+2020 - 2024
+CGPA: 8.9

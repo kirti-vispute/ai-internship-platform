@@ -80,14 +80,21 @@ function canonicalSkill(raw: string) {
   return SKILL_CANONICAL_MAP[normalized] || normalized;
 }
 
+function escapeRegExpToken(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 function scanEvidenceText(text: string): string[] {
   const lower = String(text || "").toLowerCase();
   if (!lower.trim()) return [];
 
   const found = new Set<string>();
   for (const skill of KNOWN_SKILL_DICTIONARY) {
-    const token = skill.replace(/\./g, "\\.");
-    const pattern = new RegExp(`\\b${token.replace(/\s+/g, "\\s+")}\\b`, "i");
+    const token = escapeRegExpToken(skill.toLowerCase()).replace(/\s+/g, "\\s+");
+    // Custom lookaround boundaries instead of \b: skill tokens like "c++"/"c#"/".net"
+    // end in non-word characters, so a trailing \b (word<->non-word transition) never
+    // matches there and would silently drop those skills from detection.
+    const pattern = new RegExp(`(?<![a-z0-9])${token}(?![a-z0-9])`, "i");
     if (pattern.test(lower)) {
       found.add(canonicalSkill(skill));
     }

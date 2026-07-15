@@ -51,6 +51,10 @@ export type ResumeAnalysis = {
   };
   compositeScores?: ResumeCompositeScores;
   dimensionBreakdown?: ResumeDimensionScore[];
+  scoreExplanation?: {
+    deductions: Array<{ points: number; dimension: string; reason: string }>;
+    bonuses: Array<{ points: number; dimension: string; reason: string }>;
+  };
   skillIntelligence?: SkillIntelligence | null;
   sectionBreakdown?: ResumeSection[];
   strengths: string[];
@@ -92,6 +96,7 @@ export type InternProfile = {
   certifications: string[];
   experience?: string[];
   achievements?: string[];
+  languages?: string[];
   links?: string[];
   linkedinUrl?: string;
   githubUrl?: string;
@@ -189,11 +194,16 @@ export type Application = {
     roundType?: string;
     interviewDate?: string;
     interviewTime?: string;
+    durationMinutes?: number;
+    timezone?: string;
+    interviewers?: Array<{ name: string; role?: string }>;
     mode?: "online" | "offline" | "";
     meetingLink?: string;
     location?: string;
     notes?: string;
-    status?: "scheduled" | "completed" | "cleared" | "rejected";
+    status?: "scheduled" | "completed" | "cleared" | "rejected" | "cancelled" | "no_show";
+    cancelReason?: string;
+    rescheduleRequestedByCandidate?: { requestedAt: string; reason?: string; acknowledged?: boolean } | null;
     updatedAt?: string;
   }>;
 };
@@ -208,11 +218,17 @@ export type ScheduledInterview = {
   interviewDate: string;
   interviewTime: string;
   interviewType: string;
-  interviewStatus: "scheduled" | "upcoming" | "in_progress" | "completed" | "cancelled";
+  interviewStatus: "scheduled" | "upcoming" | "in_progress" | "completed" | "cancelled" | "no_show";
   meetingLink?: string;
   roomId?: string | null;
   mode?: "online" | "offline" | "";
+  location?: string;
   notes?: string;
+  durationMinutes?: number;
+  interviewers?: Array<{ name: string; role?: string }>;
+  cancelReason?: string;
+  rescheduleRequestedByCandidate?: { requestedAt: string; reason?: string; acknowledged?: boolean } | null;
+  rawRoundStatus?: string;
 };
 
 export type InternshipListing = {
@@ -226,6 +242,10 @@ export type InternshipListing = {
   description?: string;
   mode?: "remote" | "on-site" | "hybrid" | "";
   responsibilities?: string;
+  educationQualification?: string;
+  degreePreferences?: string;
+  minimumCgpa?: string;
+  experienceRequirement?: string;
   company?: {
     _id?: string;
     companyName?: string;
@@ -361,8 +381,19 @@ export function prefetchInternDashboardData() {
   void fetchSavedInternships();
 }
 
+export const PROFILE_UPDATED_EVENT = "internai-profile-updated";
+
 export function invalidateInternCache() {
   cacheStore.clear();
+  if (typeof window !== "undefined") window.dispatchEvent(new Event(PROFILE_UPDATED_EVENT));
+}
+
+// `cacheStore` is a module-level singleton -- it survives logout/login within
+// the same browser tab since nothing else tears it down. Without this, a
+// stale profile (e.g. from a previously logged-in account) can be served to
+// whichever account logs in next, until the 5-minute TTL happens to expire.
+if (typeof window !== "undefined") {
+  window.addEventListener("internai-auth-change", () => cacheStore.clear());
 }
 
 export async function fetchInternProfile(force = false) {
@@ -461,6 +492,16 @@ export async function applyToInternship(
   return response;
 }
 
+export type ApplicationAiInsight = {
+  internshipId: string;
+  bullets: string[];
+  source: string;
+};
+
+export async function fetchApplicationAiInsights(internshipId: string) {
+  return apiRequest<ApplicationAiInsight>(`/api/intern/internships/${internshipId}/ai-insights`);
+}
+
 export async function openApplicationResume(applicationId: string) {
   const session = getAuthSession();
   const token = session.token;
@@ -556,6 +597,21 @@ export type InAppNotification = {
   createdAt: string;
 };
 
+export type PublicOpenPosition = {
+  _id: string;
+  role: string;
+  department?: string;
+  internshipType?: string;
+  location?: string;
+  mode?: string;
+  duration?: string;
+  stipend?: string;
+  openings?: number | null;
+  skillsRequired?: string[];
+  applicationDeadline?: string | null;
+  postedAt?: string;
+};
+
 export type PublicCompanyProfile = {
   _id: string;
   companyName: string;
@@ -566,10 +622,18 @@ export type PublicCompanyProfile = {
   joinedAt?: string;
   verificationStatus?: string;
   isVerified: boolean;
+  logoUrl?: string;
+  industry?: string;
+  companySize?: string;
+  headquarters?: string;
+  foundedYear?: number | null;
+  technologies?: string[];
+  hiringProcessOverview?: string;
   activeOpenings: number;
   totalInternsHired: number;
   hiringSuccessRate: number;
   totalApplications: number;
+  openPositions?: PublicOpenPosition[];
 };
 
 export async function fetchInternNotifications(force = false) {
@@ -615,6 +679,15 @@ export async function fetchInternInterviews(force = false) {
 
 export async function checkInterviewReminders() {
   return apiRequest<{ sent: number }>("/api/intern/interviews/reminders/check", { method: "POST" });
+}
+
+export async function requestInterviewReschedule(applicationId: string, roundId: string, reason?: string) {
+  const response = await apiRequest<{ message: string }>(
+    `/api/intern/interviews/${applicationId}/rounds/${roundId}/request-reschedule`,
+    { method: "POST", body: JSON.stringify({ reason: reason || "" }) }
+  );
+  cacheStore.delete("intern:interviews");
+  return response;
 }
 
 export async function fetchPublicCompanyProfile(companyId: string) {

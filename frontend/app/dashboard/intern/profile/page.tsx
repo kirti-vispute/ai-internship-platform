@@ -49,7 +49,13 @@ export default function InternProfilePage() {
   }, []);
 
   const parsed = profile?.resume?.parsed;
-  const projectList = parsed?.projects || profile?.profileSections?.projects || [];
+  // `profileSections.projects` is the durable, cross-upload synced list;
+  // `resume.parsed.projects` is only this one latest resume's extraction and
+  // can legitimately be an empty array (e.g. a follow-up resume upload with
+  // no Projects section) -- `||` alone would treat that empty array as
+  // "present" and incorrectly hide the synced data, so check length instead.
+  const syncedProjects = profile?.profileSections?.projects || [];
+  const projectList = syncedProjects.length > 0 ? syncedProjects : parsed?.projects || [];
   const educationList =
     (profile?.educationDetails || []).length > 0
       ? (profile?.educationDetails || []).map((item) => ({
@@ -64,13 +70,22 @@ export default function InternProfilePage() {
   const verifiedCertificationCount =
     profile?.verifiedCertificationCount ?? profile?.certificationStats?.verified ?? certificationList.length;
   const courseList = profile?.courseEntries || [];
-  const achievementList = parsed?.achievements || profile?.achievements || [];
-  const languages = parsed?.languages || [];
+  // Same empty-array pitfall as projectList above: profile.achievements is
+  // the synced, cross-upload list and must win over an empty per-resume parse.
+  const syncedAchievements = profile?.achievements || [];
+  const achievementList = syncedAchievements.length > 0 ? syncedAchievements : parsed?.achievements || [];
+  // Same pattern: profile.languages is the synced, cross-upload list.
+  const syncedLanguages = profile?.languages || [];
+  const languages = syncedLanguages.length > 0 ? syncedLanguages : parsed?.languages || [];
   const skillCategories = Array.from(new Set((profile?.skillDetails || []).map((item) => item.category).filter(Boolean) as string[]));
   const technicalSkills = Array.from(new Set((profile?.skills || parsed?.skills || []).map((skill) => String(skill).trim()).filter(Boolean)));
   const skillTags = Array.from(new Set((technicalSkills || []).map((skill) => String(skill).trim()).filter(Boolean))).slice(0, 20);
   const missingSkillHints = useMemo(() => {
-    const listed = new Set((parsed?.skills || profile?.skills || []).map((skill) => String(skill).toLowerCase()));
+    // profile.skills is the accumulated union across every resume ever
+    // uploaded (see profile-sync.service.js), so it must take precedence
+    // over one resume's parsed list or this hint could wrongly flag a skill
+    // as "missing" that the student already has from an earlier upload.
+    const listed = new Set((profile?.skills?.length ? profile.skills : parsed?.skills || []).map((skill) => String(skill).toLowerCase()));
     const commonTargets = ["react", "node.js", "sql", "docker", "communication", "problem solving"];
     return commonTargets.filter((skill) => !listed.has(skill.toLowerCase())).slice(0, 5);
   }, [parsed?.skills, profile?.skills]);
@@ -135,7 +150,7 @@ export default function InternProfilePage() {
                   <div>
                     <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">Professional Summary</p>
                     <p className="surface-subtle break-words px-4 py-3 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
-                      {profile?.summary || parsed?.summary || profile?.bio || "Add a summary to showcase your profile."}
+                      {profile?.summary || "Required: add your Professional Summary in Edit Profile before applying to internships."}
                     </p>
                   </div>
 

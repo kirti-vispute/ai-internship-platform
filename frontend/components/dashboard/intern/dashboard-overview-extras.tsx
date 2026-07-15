@@ -33,6 +33,29 @@ const cardBase =
 
 const OFFER_STATUSES = new Set(["offered", "selected", "hired"]);
 
+type StatusGroup = "applied" | "interviewing" | "offered" | "rejected";
+
+const STATUS_GROUP_META: Record<StatusGroup, { label: string; barClass: string; dotClass: string }> = {
+  applied: { label: "Applied", barClass: "bg-sky-500", dotClass: "bg-sky-500" },
+  interviewing: { label: "Interviewing", barClass: "bg-primary-500", dotClass: "bg-primary-500" },
+  offered: { label: "Offered", barClass: "bg-emerald-500", dotClass: "bg-emerald-500" },
+  rejected: { label: "Rejected/Withdrawn", barClass: "bg-rose-400", dotClass: "bg-rose-400" }
+};
+
+function toStatusGroup(status?: string): StatusGroup {
+  const value = String(status || "").toLowerCase();
+  if (["offered", "selected", "hired"].includes(value)) return "offered";
+  if (["rejected", "withdrawn"].includes(value)) return "rejected";
+  if (
+    ["shortlisted", "interview_scheduled", "interview_completed", "interview", "technical_round", "hr_round"].includes(
+      value
+    )
+  ) {
+    return "interviewing";
+  }
+  return "applied";
+}
+
 function HoverCard({ className, children }: { className?: string; children: React.ReactNode }) {
   return (
     <motion.div whileHover={{ y: -4 }} transition={{ duration: 0.2, ease: "easeOut" }} className={cn(cardBase, "p-6", className)}>
@@ -323,18 +346,37 @@ export function ActivityTimeline({
 
 /* -------------------------------- Charts -------------------------------- */
 
+function ChartLegend({ groups }: { groups: StatusGroup[] }) {
+  return (
+    <div className="mb-3 flex flex-wrap gap-x-4 gap-y-1.5">
+      {groups.map((group) => (
+        <span key={group} className="flex items-center gap-1.5 text-[11px] font-medium text-slate-500 dark:text-slate-400">
+          <span className={cn("h-2 w-2 rounded-full", STATUS_GROUP_META[group].dotClass)} />
+          {STATUS_GROUP_META[group].label}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 function ApplicationsTimelineChart({ applications }: { applications: Application[] }) {
-  const buckets = new Map<string, number>();
+  const buckets = new Map<string, Record<StatusGroup, number>>();
   applications.forEach((app) => {
     if (!app.appliedAt) return;
     const d = new Date(app.appliedAt);
     if (Number.isNaN(d.getTime())) return;
     const key = d.toLocaleDateString(undefined, { month: "short", year: "2-digit" });
-    buckets.set(key, (buckets.get(key) || 0) + 1);
+    const group = toStatusGroup(app.status);
+    const existing = buckets.get(key) || { applied: 0, interviewing: 0, offered: 0, rejected: 0 };
+    existing[group] += 1;
+    buckets.set(key, existing);
   });
 
   const entries = Array.from(buckets.entries()).slice(-6);
-  const max = Math.max(1, ...entries.map(([, count]) => count));
+  const max = Math.max(
+    1,
+    ...entries.map(([, counts]) => counts.applied + counts.interviewing + counts.offered + counts.rejected)
+  );
 
   if (entries.length === 0) {
     return (
@@ -346,20 +388,88 @@ function ApplicationsTimelineChart({ applications }: { applications: Application
     );
   }
 
+  const usedGroups = (["applied", "interviewing", "offered", "rejected"] as StatusGroup[]).filter((group) =>
+    entries.some(([, counts]) => counts[group] > 0)
+  );
+
   return (
-    <div className="flex h-40 items-end gap-3 px-1">
-      {entries.map(([label, count]) => (
-        <div key={label} className="flex flex-1 flex-col items-center gap-2">
-          <div className="flex h-32 w-full items-end overflow-hidden rounded-lg bg-slate-100 dark:bg-slate-800">
-            <div
-              className="w-full rounded-lg bg-gradient-to-t from-primary-600 to-primary-400 transition-all duration-700 ease-out"
-              style={{ height: `${Math.max(6, (count / max) * 100)}%` }}
-            />
-          </div>
-          <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">{label}</span>
-          <span className="text-xs font-semibold tabular-nums text-slate-800 dark:text-slate-100">{count}</span>
-        </div>
-      ))}
+    <div>
+      <ChartLegend groups={usedGroups} />
+      <div className="flex h-40 items-end gap-3 px-1">
+        {entries.map(([label, counts]) => {
+          const total = counts.applied + counts.interviewing + counts.offered + counts.rejected;
+          return (
+            <div key={label} className="flex flex-1 flex-col items-center gap-2">
+              <div
+                className="flex h-32 w-full flex-col-reverse overflow-hidden rounded-lg bg-slate-100 dark:bg-slate-800"
+                title={`${label}: ${total} application${total === 1 ? "" : "s"}`}
+              >
+                {(["applied", "interviewing", "offered", "rejected"] as StatusGroup[]).map((group) =>
+                  counts[group] > 0 ? (
+                    <div
+                      key={group}
+                      className={cn(
+                        "w-full transition-all duration-700 ease-out",
+                        STATUS_GROUP_META[group].barClass
+                      )}
+                      style={{ height: `${Math.max(4, (counts[group] / max) * 100)}%` }}
+                      title={`${STATUS_GROUP_META[group].label}: ${counts[group]}`}
+                    />
+                  ) : null
+                )}
+              </div>
+              <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">{label}</span>
+              <span className="text-xs font-semibold tabular-nums text-slate-800 dark:text-slate-100">{total}</span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function ApplicationStatusBreakdown({ applications }: { applications: Application[] }) {
+  const counts: Record<StatusGroup, number> = { applied: 0, interviewing: 0, offered: 0, rejected: 0 };
+  applications.forEach((app) => {
+    counts[toStatusGroup(app.status)] += 1;
+  });
+
+  const total = counts.applied + counts.interviewing + counts.offered + counts.rejected;
+  const groups = (["applied", "interviewing", "offered", "rejected"] as StatusGroup[]).filter((group) => counts[group] > 0);
+
+  if (total === 0) {
+    return (
+      <EmptyState
+        title="No applications yet"
+        hint="Your pipeline distribution will appear here once you apply."
+        presetKey="applications"
+      />
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex h-4 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+        {groups.map((group) => (
+          <div
+            key={group}
+            className={cn(STATUS_GROUP_META[group].barClass, "h-full transition-all duration-700 ease-out")}
+            style={{ width: `${(counts[group] / total) * 100}%` }}
+            title={`${STATUS_GROUP_META[group].label}: ${counts[group]} (${Math.round((counts[group] / total) * 100)}%)`}
+          />
+        ))}
+      </div>
+      <ul className="grid grid-cols-2 gap-x-4 gap-y-2">
+        {groups.map((group) => (
+          <li key={group} className="flex items-center justify-between gap-2 text-xs">
+            <span className="flex items-center gap-1.5 font-medium text-slate-600 dark:text-slate-300">
+              <span className={cn("h-2 w-2 rounded-full", STATUS_GROUP_META[group].dotClass)} />
+              {STATUS_GROUP_META[group].label}
+            </span>
+            <span className="font-semibold tabular-nums text-slate-900 dark:text-slate-100">{counts[group]}</span>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
@@ -391,7 +501,7 @@ function SkillsDistributionChart({ analysis }: { analysis: ResumeAnalysis | null
             <span className="font-medium text-slate-600 dark:text-slate-300">{category}</span>
             <span className="font-semibold tabular-nums text-slate-900 dark:text-slate-100">{count}</span>
           </div>
-          <div className="h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+          <div className="h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800" title={`${category}: ${count} skill${count === 1 ? "" : "s"}`}>
             <div
               className="h-full rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 transition-all duration-700 ease-out"
               style={{ width: `${Math.max(4, (count / max) * 100)}%` }}
@@ -414,7 +524,8 @@ export function DashboardCharts({
 }) {
   if (loading) {
     return (
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
+        <Skeleton className="h-64 w-full rounded-2xl" />
         <Skeleton className="h-64 w-full rounded-2xl" />
         <Skeleton className="h-64 w-full rounded-2xl" />
       </div>
@@ -422,7 +533,7 @@ export function DashboardCharts({
   }
 
   return (
-    <div className="grid gap-4 lg:grid-cols-2">
+    <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
       <ScrollReveal variant="fade-up" distance={12}>
         <div className={cn(cardBase, "p-6")}>
           <h3 className="mb-4 text-sm font-semibold text-slate-900 dark:text-slate-100">Applications Timeline</h3>
@@ -430,6 +541,12 @@ export function DashboardCharts({
         </div>
       </ScrollReveal>
       <ScrollReveal variant="fade-up" distance={12} delayMs={60}>
+        <div className={cn(cardBase, "p-6")}>
+          <h3 className="mb-4 text-sm font-semibold text-slate-900 dark:text-slate-100">Pipeline Breakdown</h3>
+          <ApplicationStatusBreakdown applications={applications} />
+        </div>
+      </ScrollReveal>
+      <ScrollReveal variant="fade-up" distance={12} delayMs={120}>
         <div className={cn(cardBase, "p-6")}>
           <h3 className="mb-4 text-sm font-semibold text-slate-900 dark:text-slate-100">Skills Distribution</h3>
           <SkillsDistributionChart analysis={analysis} />

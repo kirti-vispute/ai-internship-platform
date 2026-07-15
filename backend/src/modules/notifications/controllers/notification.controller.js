@@ -2,11 +2,10 @@ const Notification = require("../../../models/Notification");
 const asyncHandler = require("../../../shared/utils/asyncHandler");
 const AppError = require("../../../shared/utils/AppError");
 const { sendSuccess } = require("../../../shared/utils/api-response");
+const { resolvePagination } = require("../../../shared/utils/pagination");
 
 async function listNotifications(req, res) {
-  const page = Math.max(1, Number(req.query.page || 1));
-  const limit = Math.min(50, Math.max(1, Number(req.query.limit || 30)));
-  const skip = (page - 1) * limit;
+  const { page, limit, skip } = resolvePagination(req.query, { defaultLimit: 30, maxLimit: 50 });
   const unreadOnly = String(req.query.unreadOnly || "false").toLowerCase() === "true";
 
   const query = { user: req.user._id };

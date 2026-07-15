@@ -5,6 +5,8 @@ import { SectionPanel } from "@/components/dashboard/section-panel";
 import { SkillChips } from "@/components/dashboard/skill-chips";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { useToast } from "@/components/ui/toast";
 import { apiRequest } from "@/lib/api-client";
 import { buildAssetUrl, InternProfile, fetchInternProfile, invalidateInternCache } from "@/lib/intern-portal";
 import { SectionTabButton } from "@/components/icons/section-tab-button";
@@ -25,6 +27,7 @@ const RESUME_SECTIONS: Array<{ key: ResumeSectionKey; label: string }> = [
 
 export function InternResumePanel() {
   const fileRef = useRef<HTMLInputElement | null>(null);
+  const { pushToast } = useToast();
   const [profile, setProfile] = useState<InternProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -32,6 +35,8 @@ export function InternResumePanel() {
   const [message, setMessage] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState<ResumeSectionKey>("skills");
   const [expandedProjects, setExpandedProjects] = useState<Record<number, boolean>>({});
+  const [pendingSummary, setPendingSummary] = useState<string | null>(null);
+  const [applyingSummary, setApplyingSummary] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -59,10 +64,43 @@ export function InternResumePanel() {
       invalidateInternCache();
       setMessage("Resume uploaded successfully.");
       setProfile(response.profile);
+
+      // If the profile already carried a Professional Summary before this
+      // upload, the backend leaves it untouched -- `profile.summary` and the
+      // freshly-parsed `resume.parsed.summary` will then differ. Ask before
+      // replacing rather than silently keeping the old one invisible.
+      const currentSummary = (response.profile.summary || "").trim();
+      const extractedSummary = (response.profile.resume?.parsed?.summary || "").trim();
+      if (currentSummary && extractedSummary && currentSummary.toLowerCase() !== extractedSummary.toLowerCase()) {
+        setPendingSummary(extractedSummary);
+      }
     } catch (err) {
       setError((err as Error).message || "Resume upload failed.");
     } finally {
       setUploading(false);
+    }
+  }
+
+  async function applyPendingSummary() {
+    if (!pendingSummary) return;
+    try {
+      setApplyingSummary(true);
+      const response = await apiRequest<{ profile: InternProfile }>("/api/intern/profile", {
+        method: "PUT",
+        body: JSON.stringify({
+          summary: pendingSummary,
+          bio: pendingSummary,
+          profileSections: { professionalSummary: pendingSummary }
+        })
+      });
+      invalidateInternCache();
+      setProfile(response.profile);
+      pushToast({ variant: "success", title: "Summary updated", message: "Professional Summary replaced with the version from your resume." });
+    } catch (err) {
+      pushToast({ variant: "error", title: "Update failed", message: (err as Error).message || "Could not replace Professional Summary." });
+    } finally {
+      setApplyingSummary(false);
+      setPendingSummary(null);
     }
   }
 
@@ -86,7 +124,21 @@ export function InternResumePanel() {
     ],
     [profile?.resume?.filePath, profile?.updatedAt, profile?.resume?.score, technicalSkills.length, projects.length, education.length]
   );
-  const categorizedSkillOrder = ["programming languages", "web development", "databases", "ai / ml", "tools & platforms"];
+  // Every bucket the backend parser can produce (resume-structured-parser.service.js
+  // SKILL_CATEGORIES) -- must stay in sync so no extracted skill is silently
+  // hidden from the student just because its category isn't in this list.
+  const categorizedSkillOrder = [
+    "programming languages",
+    "web development",
+    "databases",
+    "ai / ml",
+    "mobile",
+    "cloud & devops",
+    "security",
+    "design",
+    "testing",
+    "tools & platforms"
+  ];
 
   function getKeyHighlights(description: string) {
     const text = String(description || "").trim();
@@ -311,6 +363,18 @@ export function InternResumePanel() {
           </>
         )}
       </SectionPanel>
+
+      <ConfirmDialog
+        open={Boolean(pendingSummary)}
+        title="Replace Professional Summary?"
+        description={`Your resume's summary section reads: "${(pendingSummary || "").slice(0, 220)}${(pendingSummary || "").length > 220 ? "…" : ""}" Replace your current Professional Summary with this one?`}
+        confirmLabel="Replace"
+        cancelLabel="Keep current"
+        tone="default"
+        busy={applyingSummary}
+        onConfirm={applyPendingSummary}
+        onCancel={() => setPendingSummary(null)}
+      />
     </div>
   );
 }

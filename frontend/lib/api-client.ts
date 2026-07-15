@@ -77,6 +77,7 @@ async function refreshAccessToken(apiBaseUrl: string, path: string) {
     role?: AuthRole;
     adminRole?: AdminRole | null;
     permissions?: string[];
+    companyAccountType?: string | null;
   };
   const token = payload.accessToken || payload.token;
   if (!token || !payload.role) {
@@ -85,9 +86,10 @@ async function refreshAccessToken(apiBaseUrl: string, path: string) {
   }
   setAuthSession(payload.role, token, {
     refreshToken: payload.refreshToken || storedRefresh,
-    adminRole: payload.adminRole || null,
-    permissions: payload.permissions || [],
-    email: session.email
+    adminRole: payload.adminRole || session.adminRole || null,
+    permissions: payload.permissions || session.permissions || [],
+    email: session.email,
+    companyAccountType: payload.companyAccountType || session.companyAccountType || null
   });
   return token;
 }

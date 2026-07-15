@@ -8,7 +8,8 @@ export type InterviewDisplayStatus =
   | "upcoming"
   | "in_progress"
   | "completed"
-  | "cancelled";
+  | "cancelled"
+  | "no_show";
 
 export type ScheduledInterviewRecord = {
   interviewId: string;
@@ -26,8 +27,13 @@ export type ScheduledInterviewRecord = {
   meetingLink?: string;
   roomId?: string | null;
   mode?: "online" | "offline" | "";
+  location?: string;
   notes?: string;
   rawRoundStatus?: string;
+  durationMinutes?: number;
+  interviewers?: Array<{ name: string; role?: string }>;
+  cancelReason?: string;
+  rescheduleRequestedByCandidate?: { requestedAt: string; reason?: string; acknowledged?: boolean } | null;
 };
 
 export type CountdownParts = {
@@ -49,7 +55,6 @@ export const INTERVIEW_DURATION_OPTIONS = [30, 45, 60, 90] as const;
 const JOIN_WINDOW_MS = 15 * 60 * 1000;
 const LATE_JOIN_MS = 3 * 60 * 60 * 1000;
 const UPCOMING_WINDOW_MS = 24 * 60 * 60 * 1000;
-const INTERVIEW_DURATION_MS = INTERVIEW_DEFAULT_DURATION_MINUTES * 60 * 1000;
 
 /** Normalize API date values to YYYY-MM-DD for stable calendar grouping. */
 export function normalizeInterviewDateInput(interviewDate?: string | Date | null): string {
@@ -72,24 +77,60 @@ export function toLocalDateKey(date: Date) {
   return `${year}-${month}-${day}`;
 }
 
+/** Scheduling always writes 24h "HH:MM" (native <input type="time">), but
+ *  older/seeded rounds can carry 12h "H:MM AM/PM" strings — normalize both
+ *  so a legacy-format round never renders as "Date TBD". */
+function normalizeInterviewTimeInput(raw: string): string {
+  const trimmed = raw.trim();
+  const ampmMatch = trimmed.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+  if (ampmMatch) {
+    let hours = Number(ampmMatch[1]) % 12;
+    if (/pm/i.test(ampmMatch[3])) hours += 12;
+    return `${String(hours).padStart(2, "0")}:${ampmMatch[2]}`;
+  }
+  return trimmed.slice(0, 5);
+}
+
 export function parseInterviewDateTime(interviewDate?: string, interviewTime?: string): Date | null {
   const datePart = normalizeInterviewDateInput(interviewDate);
   if (!datePart) return null;
-  const timePart = (interviewTime || "09:00").slice(0, 5);
+  const timePart = normalizeInterviewTimeInput(interviewTime || "09:00");
   const parsed = new Date(`${datePart}T${timePart}:00`);
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
-export function getInterviewEndDateTime(interviewDate?: string, interviewTime?: string): Date | null {
+/** Resolves the effective interview duration for a record: the real
+ *  `durationMinutes` field when present, falling back to the legacy
+ *  notes-encoded value for rounds scheduled before that field existed. */
+export function resolveRoundDurationMinutes(record?: { durationMinutes?: number; notes?: string }): number {
+  if (record?.durationMinutes && record.durationMinutes > 0) return record.durationMinutes;
+  return decodeInterviewNotes(record?.notes).durationMinutes;
+}
+
+/** Resolves the interviewers list for a record: the real `interviewers`
+ *  field when present, falling back to the single legacy notes-encoded name. */
+export function resolveRoundInterviewers(
+  record?: { interviewers?: Array<{ name: string; role?: string }>; notes?: string }
+): Array<{ name: string; role?: string }> {
+  if (record?.interviewers && record.interviewers.length > 0) return record.interviewers;
+  const { interviewer } = decodeInterviewNotes(record?.notes);
+  return interviewer ? [{ name: interviewer, role: "" }] : [];
+}
+
+export function getInterviewEndDateTime(
+  interviewDate?: string,
+  interviewTime?: string,
+  durationMinutes: number = INTERVIEW_DEFAULT_DURATION_MINUTES
+): Date | null {
   const start = parseInterviewDateTime(interviewDate, interviewTime);
   if (!start) return null;
-  return new Date(start.getTime() + INTERVIEW_DURATION_MS);
+  return new Date(start.getTime() + durationMinutes * 60 * 1000);
 }
 
 export function isActiveCalendarInterview(item: ScheduledInterviewRecord): boolean {
   const raw = String(item.rawRoundStatus || "").toLowerCase();
-  if (raw === "rejected" || raw === "cancelled") return false;
-  if (item.interviewStatus === "cancelled" || item.interviewStatus === "completed") return false;
+  if (raw === "rejected" || raw === "cancelled" || raw === "no_show") return false;
+  if (item.interviewStatus === "cancelled" || item.interviewStatus === "completed" || item.interviewStatus === "no_show") return false;
   return true;
 }
 
@@ -97,17 +138,19 @@ export function resolveInterviewDisplayStatus(
   roundStatus: string | undefined,
   interviewDate?: string,
   interviewTime?: string,
-  now = Date.now()
+  now = Date.now(),
+  durationMinutes: number = INTERVIEW_DEFAULT_DURATION_MINUTES
 ): InterviewDisplayStatus {
   const normalized = String(roundStatus || "scheduled").toLowerCase();
   if (normalized === "rejected" || normalized === "cancelled") return "cancelled";
+  if (normalized === "no_show") return "no_show";
   if (normalized === "completed" || normalized === "cleared") return "completed";
 
   const start = parseInterviewDateTime(interviewDate, interviewTime);
   if (!start) return "scheduled";
 
   const startMs = start.getTime();
-  const endMs = startMs + INTERVIEW_DURATION_MS;
+  const endMs = startMs + durationMinutes * 60 * 1000;
 
   if (now >= startMs && now <= endMs) return "in_progress";
   if (now < startMs && startMs - now <= UPCOMING_WINDOW_MS) return "upcoming";
@@ -140,6 +183,11 @@ export function interviewStatusMeta(status: InterviewDisplayStatus) {
       label: "Cancelled",
       dotClassName: "bg-rose-500 dark:bg-rose-400",
       className: "bg-rose-100 text-rose-800 dark:bg-rose-950/50 dark:text-rose-300"
+    },
+    no_show: {
+      label: "No Show",
+      dotClassName: "bg-slate-500 dark:bg-slate-400",
+      className: "bg-slate-200 text-slate-800 dark:bg-slate-800/60 dark:text-slate-300"
     }
   };
   return map[status];
@@ -241,7 +289,7 @@ export function canJoinInterviewRoom(
   displayStatus?: InterviewDisplayStatus,
   now = Date.now()
 ) {
-  if (displayStatus === "completed" || displayStatus === "cancelled") return false;
+  if (displayStatus === "completed" || displayStatus === "cancelled" || displayStatus === "no_show") return false;
   const start = parseInterviewDateTime(interviewDate, interviewTime);
   if (!start) return false;
   const startMs = start.getTime();
@@ -252,23 +300,24 @@ export function findOverlappingInterviews(
   interviews: ScheduledInterviewRecord[],
   candidateDate: string,
   candidateTime: string,
-  excludeInterviewId?: string
+  excludeInterviewId?: string,
+  candidateDurationMinutes: number = INTERVIEW_DEFAULT_DURATION_MINUTES
 ): ScheduledInterviewRecord[] {
   const candidateStart = parseInterviewDateTime(candidateDate, candidateTime);
   if (!candidateStart) return [];
-  const candidateEnd = new Date(candidateStart.getTime() + INTERVIEW_DURATION_MS);
+  const candidateEnd = new Date(candidateStart.getTime() + candidateDurationMinutes * 60 * 1000);
 
   return interviews.filter((item) => {
     if (excludeInterviewId && item.interviewId === excludeInterviewId) return false;
     if (!isActiveCalendarInterview(item)) return false;
     const start = parseInterviewDateTime(item.interviewDate, item.interviewTime);
     if (!start) return false;
-    const end = new Date(start.getTime() + INTERVIEW_DURATION_MS);
+    const end = new Date(start.getTime() + resolveRoundDurationMinutes(item) * 60 * 1000);
     return candidateStart < end && candidateEnd > start;
   });
 }
 
-function extractAllFromApplication(app: Application | CompanyApplication): ScheduledInterviewRecord[] {
+export function extractAllFromApplication(app: Application | CompanyApplication): ScheduledInterviewRecord[] {
   const rounds = app.interviewRounds || [];
   const internship = app.internship;
   const companyName =
@@ -284,7 +333,8 @@ function extractAllFromApplication(app: Application | CompanyApplication): Sched
   return rounds.map((round, index) => {
     const interviewDate = normalizeInterviewDateInput(round.interviewDate) || String(round.interviewDate || "");
     const interviewTime = round.interviewTime || "";
-    const displayStatus = resolveInterviewDisplayStatus(round.status, interviewDate, interviewTime);
+    const durationMinutes = resolveRoundDurationMinutes(round);
+    const displayStatus = resolveInterviewDisplayStatus(round.status, interviewDate, interviewTime, Date.now(), durationMinutes);
     const meetingLink = round.meetingLink || "";
     return {
       interviewId: round._id || `${app._id}-${index}`,
@@ -302,14 +352,15 @@ function extractAllFromApplication(app: Application | CompanyApplication): Sched
       meetingLink,
       roomId: extractInterviewRoomIdFromLink(meetingLink),
       mode: round.mode,
+      location: round.location || "",
       notes: round.notes,
-      rawRoundStatus: round.status
+      rawRoundStatus: round.status,
+      durationMinutes,
+      interviewers: resolveRoundInterviewers(round),
+      cancelReason: round.cancelReason,
+      rescheduleRequestedByCandidate: round.rescheduleRequestedByCandidate ?? null
     };
   });
-}
-
-function extractFromApplication(app: Application | CompanyApplication): ScheduledInterviewRecord[] {
-  return extractAllFromApplication(app);
 }
 
 export function extractPastInterviews(applications: Application[] | CompanyApplication[]) {
@@ -319,6 +370,7 @@ export function extractPastInterviews(applications: Application[] | CompanyAppli
       (item) =>
         item.interviewStatus === "completed" ||
         item.interviewStatus === "cancelled" ||
+        item.interviewStatus === "no_show" ||
         item.rawRoundStatus === "rejected"
     )
     .sort(
@@ -330,7 +382,7 @@ export function extractPastInterviews(applications: Application[] | CompanyAppli
 
 export function extractScheduledInterviews(applications: Application[] | CompanyApplication[]) {
   return applications
-    .flatMap((app) => extractFromApplication(app))
+    .flatMap((app) => extractAllFromApplication(app))
     .filter(isActiveCalendarInterview)
     .sort(
       (a, b) =>
@@ -385,11 +437,14 @@ export function groupInterviewsByDate(interviews: ScheduledInterviewRecord[]) {
 
 export function mapApiInterviewToRecord(item: ScheduledInterview): ScheduledInterviewRecord {
   const rawRoundStatus =
-    item.interviewStatus === "cancelled"
+    item.rawRoundStatus ||
+    (item.interviewStatus === "cancelled"
       ? "rejected"
-      : item.interviewStatus === "completed"
-        ? "completed"
-        : "scheduled";
+      : item.interviewStatus === "no_show"
+        ? "no_show"
+        : item.interviewStatus === "completed"
+          ? "completed"
+          : "scheduled");
 
   return {
     interviewId: item.interviewId,
@@ -405,8 +460,13 @@ export function mapApiInterviewToRecord(item: ScheduledInterview): ScheduledInte
     meetingLink: item.meetingLink,
     roomId: item.roomId ?? extractInterviewRoomIdFromLink(item.meetingLink),
     mode: item.mode,
+    location: item.location || "",
     notes: item.notes,
-    rawRoundStatus
+    rawRoundStatus,
+    durationMinutes: item.durationMinutes,
+    interviewers: item.interviewers,
+    cancelReason: item.cancelReason,
+    rescheduleRequestedByCandidate: item.rescheduleRequestedByCandidate ?? null
   };
 }
 

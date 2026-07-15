@@ -2,13 +2,12 @@
 const asyncHandler = require("../../../shared/utils/asyncHandler");
 const AppError = require("../../../shared/utils/AppError");
 const { sendSuccess, sendPaginated } = require("../../../shared/utils/api-response");
+const { resolvePagination } = require("../../../shared/utils/pagination");
 const { COMPANY_VERIFICATION_STATUS } = require("../../../constants/enums");
 
 exports.getAllInternships = asyncHandler(async (req, res) => {
   const filter = { isActive: true, isDeleted: false };
-  const page = Math.max(1, Number(req.query.page || 1));
-  const limit = Math.min(100, Math.max(1, Number(req.query.limit || 10)));
-  const skip = (page - 1) * limit;
+  const { page, limit, skip } = resolvePagination(req.query, { defaultLimit: 10, maxLimit: 100 });
 
   if (req.query.location) {
     filter.location = { $regex: req.query.location, $options: "i" };

@@ -30,6 +30,8 @@ import {
   getCalendarEventLabel,
   groupInterviewsByDate,
   isSameCalendarDay,
+  resolveRoundDurationMinutes,
+  resolveRoundInterviewers,
   toLocalDateKey,
   type InterviewDisplayStatus,
   type ScheduledInterviewRecord
@@ -45,6 +47,8 @@ import { SectionPanel } from "@/components/dashboard/section-panel";
 import { Button } from "@/components/ui/button";
 import { InterviewStatusChip } from "@/components/dashboard/interview/interview-status-chip";
 import { InterviewDetailsModal } from "@/components/dashboard/interview/interview-details-modal";
+import { InterviewJoinButton } from "@/components/dashboard/interview/interview-join-button";
+import { getInterviewJoinAvailability } from "@/lib/interview-join";
 import { cn } from "@/lib/utils";
 
 type CalendarView = "month" | "week" | "timeline";
@@ -54,6 +58,7 @@ type InterviewCalendarProps = {
   applications?: Application[] | CompanyApplication[];
   interviewRecords?: ScheduledInterviewRecord[];
   audience?: Audience;
+  onViewProfile?: (applicationId: string) => void;
 };
 
 const calendarSlideVariants = {
@@ -97,6 +102,11 @@ const STATUS_ACCENTS: Record<InterviewDisplayStatus, EventAccent> = {
     dot: "bg-rose-500",
     bar: "bg-rose-500",
     chip: "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-200"
+  },
+  no_show: {
+    dot: "bg-slate-500",
+    bar: "bg-slate-500",
+    chip: "border-slate-300 bg-slate-100 text-slate-700 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-300"
   }
 };
 
@@ -170,38 +180,58 @@ function EventCard({
 }) {
   const Icon = getInterviewIcon(event);
   const accent = getAccent(event);
+  const interviewers = resolveRoundInterviewers(event);
+  const durationMinutes = resolveRoundDurationMinutes(event);
+  const modeLabel = event.mode === "offline" ? "In person" : "Online";
+  const ModeIcon = event.mode === "offline" ? MapPin : Video;
+  const joinAvailability = getInterviewJoinAvailability(event);
+  const showJoinSlot = audience === "company" && Boolean(joinAvailability.joinHref);
+
   return (
-    <button
-      type="button"
-      onClick={() => onSelect(event)}
-      className="group flex w-full items-stretch gap-0 overflow-hidden rounded-xl border border-slate-200 bg-white text-left transition-[transform,box-shadow,border-color] duration-150 hover:-translate-y-px hover:border-primary-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:border-slate-700 dark:bg-slate-900 dark:hover:border-primary-800"
-    >
+    <div className="group flex w-full items-stretch gap-0 overflow-hidden rounded-xl border border-slate-200 bg-white text-left transition-[transform,box-shadow,border-color] duration-150 hover:-translate-y-px hover:border-primary-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-900 dark:hover:border-primary-800">
       <span className={cn("w-1 shrink-0", accent.bar)} aria-hidden />
-      <span className="flex min-w-0 flex-1 items-start gap-3 px-3 py-2.5">
-        <span
-          className={cn(
-            "mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border",
-            accent.chip
-          )}
-        >
-          <Icon className="h-4 w-4" aria-hidden />
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="flex flex-wrap items-center gap-2">
-            <span className="truncate font-semibold text-slate-900 dark:text-slate-100">
-              {getCalendarEventLabel(event, audience)}
+      <button type="button" onClick={() => onSelect(event)} className="min-w-0 flex-1 px-3 py-2.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500">
+        <span className="flex min-w-0 items-start gap-3">
+          <span className={cn("mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border", accent.chip)}>
+            <Icon className="h-4 w-4" aria-hidden />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="flex flex-wrap items-center gap-2">
+              <span className="truncate font-semibold text-slate-900 dark:text-slate-100">{event.interviewType}</span>
+              <InterviewStatusChip status={event.interviewStatus} />
             </span>
-            <InterviewStatusChip status={event.interviewStatus} />
-          </span>
-          <span className="mt-0.5 block truncate text-xs text-slate-600 dark:text-slate-300">
-            {event.role} · {event.interviewType}
-          </span>
-          <span className="mt-0.5 block text-[11px] text-slate-500 dark:text-slate-400">
-            {formatInterviewDateTime(event.interviewDate, event.interviewTime)}
+            <span className="mt-0.5 block truncate text-xs text-slate-600 dark:text-slate-300">
+              {getCalendarEventLabel(event, audience)} · {event.role}
+            </span>
+            <span className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-500 dark:text-slate-400">
+              <span className="whitespace-nowrap">{formatInterviewDateTime(event.interviewDate, event.interviewTime)}</span>
+              <span className="whitespace-nowrap">{durationMinutes} min</span>
+              <span className="inline-flex items-center gap-1 whitespace-nowrap">
+                <ModeIcon className="h-3 w-3" aria-hidden />
+                {modeLabel}
+              </span>
+              {interviewers.length > 0 ? (
+                <span className="inline-flex items-center gap-1 truncate">
+                  <Users className="h-3 w-3 shrink-0" aria-hidden />
+                  <span className="truncate">{interviewers.map((entry) => entry.name).join(", ")}</span>
+                </span>
+              ) : null}
+            </span>
+            {event.notes ? (
+              <span className="mt-1 block truncate text-[11px] italic text-slate-500 dark:text-slate-400">
+                <StickyNote className="mr-1 inline h-3 w-3 shrink-0 align-[-1px]" aria-hidden />
+                {event.notes}
+              </span>
+            ) : null}
           </span>
         </span>
-      </span>
-    </button>
+      </button>
+      {showJoinSlot ? (
+        <span className="flex shrink-0 items-center px-3">
+          <InterviewJoinButton interview={event} size="sm" />
+        </span>
+      ) : null}
+    </div>
   );
 }
 
@@ -336,7 +366,7 @@ function CalendarSkeleton() {
 
 /* ---------- Main component ---------- */
 
-export function InterviewCalendar({ applications = [], interviewRecords, audience = "intern" }: InterviewCalendarProps) {
+export function InterviewCalendar({ applications = [], interviewRecords, audience = "intern", onViewProfile }: InterviewCalendarProps) {
   const [view, setView] = useState<CalendarView>("month");
   const [cursor, setCursor] = useState(() => new Date());
   const [selected, setSelected] = useState<ScheduledInterviewRecord | null>(null);
@@ -754,6 +784,7 @@ const directionRef = useRef<1 | -1>(1);
         open={Boolean(selected)}
         interview={selected}
         audience={audience}
+        onViewProfile={onViewProfile}
         onClose={() => setSelected(null)}
       />
 

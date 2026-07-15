@@ -1,0 +1,126 @@
+"use client";
+
+import { useRef, useState } from "react";
+import Image from "next/image";
+import { Building2, Upload } from "lucide-react";
+import { resolveCompanyLogoUrl } from "@/lib/company-portal";
+import { cn } from "@/lib/utils";
+
+const ACCEPTED_TYPES = ["image/png", "image/jpeg", "image/jpg", "image/webp", "image/svg+xml"];
+const MAX_SIZE_BYTES = 2 * 1024 * 1024;
+const MAX_DIMENSION = 512;
+
+type CompanyLogoUploadFieldProps = {
+  logoUrl?: string | null;
+  companyName?: string;
+  uploading: boolean;
+  error?: string | null;
+  onSelect: (file: File) => void;
+};
+
+function compressImage(file: File): Promise<File> {
+  if (file.type === "image/svg+xml") return Promise.resolve(file);
+
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = document.createElement("img");
+      img.onload = () => {
+        const scale = Math.min(1, MAX_DIMENSION / Math.max(img.width, img.height));
+        const width = Math.round(img.width * scale);
+        const height = Math.round(img.height * scale);
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          resolve(file);
+          return;
+        }
+        ctx.drawImage(img, 0, 0, width, height);
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) {
+              resolve(file);
+              return;
+            }
+            resolve(new File([blob], file.name, { type: blob.type || file.type }));
+          },
+          file.type === "image/png" ? "image/png" : "image/jpeg",
+          0.85
+        );
+      };
+      img.onerror = () => resolve(file);
+      img.src = String(reader.result);
+    };
+    reader.onerror = () => resolve(file);
+    reader.readAsDataURL(file);
+  });
+}
+
+export function CompanyLogoUploadField({ logoUrl, companyName, uploading, error, onSelect }: CompanyLogoUploadFieldProps) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [localError, setLocalError] = useState<string | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
+
+  async function handleFiles(files: FileList | null) {
+    const file = files?.[0];
+    if (!file) return;
+    setLocalError(null);
+
+    if (!ACCEPTED_TYPES.includes(file.type)) {
+      setLocalError("Unsupported file format. Upload PNG, JPG, JPEG, WEBP, or SVG only.");
+      return;
+    }
+    if (file.size > MAX_SIZE_BYTES) {
+      setLocalError("Logo file must be 2MB or smaller.");
+      return;
+    }
+
+    const processed = await compressImage(file);
+    setPreview(URL.createObjectURL(processed));
+    onSelect(processed);
+  }
+
+  const displaySrc = preview || resolveCompanyLogoUrl(logoUrl);
+  const combinedError = localError || error;
+
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center gap-4">
+        <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-[var(--ds-border)] bg-[var(--ds-surface-raised)]">
+          {displaySrc ? (
+            <Image src={displaySrc} alt={`${companyName || "Company"} logo`} width={64} height={64} className="h-full w-full object-cover" unoptimized />
+          ) : (
+            <Building2 className="h-7 w-7 text-[var(--ds-muted)]" />
+          )}
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <button
+            type="button"
+            disabled={uploading}
+            onClick={() => inputRef.current?.click()}
+            className={cn(
+              "inline-flex items-center gap-2 rounded-[var(--ds-radius-sm)] border border-[var(--ds-border)] px-3 py-1.5 text-sm font-semibold text-[var(--ds-text)] transition-colors duration-150 hover:bg-[var(--ds-surface-raised)] active:opacity-80 disabled:cursor-not-allowed disabled:opacity-60"
+            )}
+          >
+            <Upload className="h-3.5 w-3.5" />
+            {uploading ? "Uploading..." : "Upload Logo"}
+          </button>
+          <p className="ds-caption">PNG, JPG, WEBP, or SVG. Max 2MB.</p>
+        </div>
+        <input
+          ref={inputRef}
+          type="file"
+          accept={ACCEPTED_TYPES.join(",")}
+          className="hidden"
+          onChange={(e) => {
+            handleFiles(e.target.files);
+            e.target.value = "";
+          }}
+        />
+      </div>
+      {combinedError ? <p className="text-xs font-medium text-rose-400">{combinedError}</p> : null}
+    </div>
+  );
+}

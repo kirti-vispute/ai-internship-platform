@@ -1,17 +1,23 @@
 "use client";
 
 import { useCallback, useEffect, useLayoutEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { SkillGapAnalysisPanel } from "@/components/dashboard/skill-gap-analysis-panel";
-import { InternProfile, fetchInternProfileWithScore, peekInternProfile } from "@/lib/intern-portal";
+import { InternshipPicker } from "@/components/dashboard/internship-picker";
+import { InternProfile, InternshipListing, fetchInternProfileWithScore, peekInternProfile } from "@/lib/intern-portal";
 import { FEATURE_FLAGS } from "@/constants/featureFlags";
 import { ReportDownloadButton } from "@/components/reports/report-download-button";
 import { apiRequest } from "@/lib/api-client";
 
 export default function InternSkillGapPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [profile, setProfile] = useState<InternProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadingRole, setLoadingRole] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [internshipId, setInternshipId] = useState(searchParams.get("internshipId") || "");
+  const [internship, setInternship] = useState<InternshipListing | null>(null);
 
   useLayoutEffect(() => {
     const cached = peekInternProfile();
@@ -57,6 +63,18 @@ export default function InternSkillGapPage() {
     loadProfile();
   }, [loadProfile]);
 
+  const handleInternshipChange = useCallback(
+    (id: string, selected: InternshipListing | null) => {
+      setInternshipId(id);
+      setInternship(selected);
+      const params = new URLSearchParams(searchParams.toString());
+      if (id) params.set("internshipId", id);
+      else params.delete("internshipId");
+      router.replace(`/dashboard/intern/skill-gap${params.toString() ? `?${params.toString()}` : ""}`);
+    },
+    [router, searchParams]
+  );
+
   return (
     <>
       {loading ? (
@@ -73,7 +91,8 @@ export default function InternSkillGapPage() {
               <div className="surface-subtle px-4 py-3 text-sm text-slate-700 dark:text-slate-300">AI features are currently disabled.</div>
             ) : (
               <>
-                <div className="flex flex-wrap items-center justify-end gap-2">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <InternshipPicker value={internshipId} onChange={handleInternshipChange} />
                   <ReportDownloadButton reportKey="skill-gap" label="Download Skill Gap PDF" disabled={!profile?.resumeUploaded} />
                 </div>
 
@@ -82,6 +101,7 @@ export default function InternSkillGapPage() {
                   analysis={profile?.resume?.analysis}
                   loadingRole={loadingRole}
                   onTargetRoleChange={(roleKey) => loadProfile(roleKey)}
+                  internship={internship}
                 />
               </>
             )}

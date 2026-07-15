@@ -7,21 +7,39 @@ import { getAuthSession } from "@/lib/session";
 import { FEATURE_FLAGS } from "@/constants/featureFlags";
 import type { WebRtcSignal } from "@/lib/use-interview-socket";
 
+export type RosterMember = {
+  userId: string;
+  socketId: string;
+  role: "intern" | "company";
+  name: string;
+};
+
 export type ParticipantUpdate = {
   roomId: string;
   userId?: string;
+  socketId?: string;
   role?: "intern" | "company";
+  name?: string;
   joined?: boolean;
   muted?: boolean;
   cameraOff?: boolean;
+  screenSharing?: boolean;
 };
 
 export type InterviewSocketHandlers = {
-  onJoined?: (payload: { room: InterviewRoom; participantRole: "intern" | "company"; isInitiator: boolean }) => void;
-  onSignal?: (payload: { fromUserId: string; signal: WebRtcSignal }) => void;
+  onJoined?: (payload: {
+    room: InterviewRoom;
+    participantRole: "intern" | "company";
+    selfSocketId: string;
+    participants: RosterMember[];
+  }) => void;
+  onSignal?: (payload: { fromSocketId: string; fromUserId: string; signal: WebRtcSignal }) => void;
   onChat?: (message: InterviewChatMessage) => void;
   onParticipantUpdate?: (payload: ParticipantUpdate) => void;
   onEnd?: (payload: { room: InterviewRoom }) => void;
+  onKicked?: () => void;
+  onHandRaise?: (payload: { roomId: string; userId: string; socketId: string; raised: boolean }) => void;
+  onNotesSync?: (payload: { roomId: string; notes: string; updatedByUserId: string }) => void;
   onReconnect?: () => void;
 };
 
@@ -48,9 +66,12 @@ function attachSocketListeners(sock: Socket) {
   sock.removeAllListeners("interview:chat");
   sock.removeAllListeners("interview:participant:update");
   sock.removeAllListeners("interview:end");
+  sock.removeAllListeners("interview:kicked");
+  sock.removeAllListeners("interview:hand-raise");
+  sock.removeAllListeners("interview:notes:sync");
   sock.removeAllListeners("connect");
 
-  sock.on("interview:signal", (payload: { fromUserId: string; signal: WebRtcSignal }) => {
+  sock.on("interview:signal", (payload: { fromSocketId: string; fromUserId: string; signal: WebRtcSignal }) => {
     dispatch("onSignal", payload);
   });
 
@@ -64,6 +85,18 @@ function attachSocketListeners(sock: Socket) {
 
   sock.on("interview:end", (payload: { room: InterviewRoom }) => {
     dispatch("onEnd", payload);
+  });
+
+  sock.on("interview:kicked", () => {
+    dispatch("onKicked", undefined);
+  });
+
+  sock.on("interview:hand-raise", (payload: { roomId: string; userId: string; socketId: string; raised: boolean }) => {
+    dispatch("onHandRaise", payload);
+  });
+
+  sock.on("interview:notes:sync", (payload: { roomId: string; notes: string; updatedByUserId: string }) => {
+    dispatch("onNotesSync", payload);
   });
 
   sock.on("connect", () => {
@@ -129,7 +162,8 @@ function emitJoinRoom(roomId: string): Promise<{
   ok: boolean;
   room?: InterviewRoom;
   participantRole?: "intern" | "company";
-  isInitiator?: boolean;
+  selfSocketId?: string;
+  participants?: RosterMember[];
   message?: string;
 }> {
   return new Promise((resolve) => {
@@ -144,21 +178,24 @@ function emitJoinRoom(roomId: string): Promise<{
         ok?: boolean;
         room?: InterviewRoom;
         participantRole?: "intern" | "company";
-        isInitiator?: boolean;
+        selfSocketId?: string;
+        participants?: RosterMember[];
         message?: string;
       }) => {
-        if (response?.ok && response.room && response.participantRole) {
+        if (response?.ok && response.room && response.participantRole && response.selfSocketId) {
           joinedRooms.add(String(roomId));
           dispatch("onJoined", {
             room: response.room,
             participantRole: response.participantRole,
-            isInitiator: Boolean(response.isInitiator)
+            selfSocketId: response.selfSocketId,
+            participants: response.participants || []
           });
           resolve({
             ok: true,
             room: response.room,
             participantRole: response.participantRole,
-            isInitiator: response.isInitiator
+            selfSocketId: response.selfSocketId,
+            participants: response.participants || []
           });
           return;
         }
@@ -180,10 +217,14 @@ export function joinInterviewSocketRoom(roomId: string) {
   return emitJoinRoom(roomId);
 }
 
-export function sendInterviewSignal(roomId: string, signal: WebRtcSignal) {
+export function sendInterviewSignal(roomId: string, targetSocketId: string, signal: WebRtcSignal) {
   const sock = ensureSocket();
-  if (!sock?.connected) return;
-  sock.emit("interview:signal", { roomId, signal });
+  if (!sock?.connected || !targetSocketId) return;
+  sock.emit("interview:signal", { roomId, targetSocketId, signal }, (response?: { ok?: boolean; message?: string }) => {
+    if (response && response.ok === false) {
+      console.warn("[interview] signal delivery failed:", response.message);
+    }
+  });
 }
 
 export function sendInterviewChat(
@@ -209,11 +250,30 @@ export function sendInterviewChat(
 
 export function updateInterviewParticipantStatus(
   roomId: string,
-  status: { muted?: boolean; cameraOff?: boolean }
+  status: { muted?: boolean; cameraOff?: boolean; screenSharing?: boolean }
 ) {
   const sock = ensureSocket();
   if (!sock?.connected) return;
   sock.emit("interview:participant:update", { roomId, ...status });
+}
+
+export function sendInterviewHandRaise(roomId: string, raised: boolean) {
+  const sock = ensureSocket();
+  if (!sock?.connected) return;
+  sock.emit("interview:hand-raise", { roomId, raised });
+}
+
+export function sendInterviewNotesUpdate(roomId: string, notes: string): Promise<{ ok: boolean; notes?: string; message?: string }> {
+  return new Promise((resolve) => {
+    const sock = ensureSocket();
+    if (!sock?.connected) {
+      resolve({ ok: false, message: "Socket not connected" });
+      return;
+    }
+    sock.emit("interview:notes:update", { roomId, notes }, (response?: { ok?: boolean; notes?: string; message?: string }) => {
+      resolve({ ok: Boolean(response?.ok), notes: response?.notes, message: response?.message });
+    });
+  });
 }
 
 export function leaveInterviewSocketRoom(roomId: string) {

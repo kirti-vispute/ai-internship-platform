@@ -11,7 +11,9 @@ exports.getPublicCompanyProfile = asyncHandler(async (req, res) => {
     _id: req.params.companyId,
     isDeleted: { $ne: true }
   })
-    .select("companyName companyEmail website address description verificationStatus linkedInUrl createdAt")
+    .select(
+      "companyName website address description verificationStatus linkedInUrl createdAt logoUrl industry companySize headquarters foundedYear technologies hiringProcessOverview"
+    )
     .lean();
 
   if (!company) {
@@ -19,13 +21,18 @@ exports.getPublicCompanyProfile = asyncHandler(async (req, res) => {
   }
 
   const companyId = company._id;
-  const [activeOpenings, totalApplications, totalHires] = await Promise.all([
+  const [activeOpenings, totalApplications, totalHires, openPositions] = await Promise.all([
     Internship.countDocuments({ company: companyId, isActive: true, isDeleted: { $ne: true } }),
     Application.countDocuments({ companyId }),
     Application.countDocuments({
       companyId,
       status: { $in: [APPLICATION_STATUS.SELECTED, APPLICATION_STATUS.OFFERED] }
-    })
+    }),
+    Internship.find({ company: companyId, isActive: true, isDeleted: { $ne: true } })
+      .select("role department internshipType location mode duration stipend openings skillsRequired applicationDeadline createdAt")
+      .sort({ createdAt: -1 })
+      .limit(25)
+      .lean()
   ]);
 
   const hiringSuccessRate = totalApplications > 0 ? Math.round((totalHires / totalApplications) * 100) : 0;
@@ -36,17 +43,38 @@ exports.getPublicCompanyProfile = asyncHandler(async (req, res) => {
       company: {
         _id: company._id,
         companyName: company.companyName,
-        website: company.website,
-        address: company.address,
-        description: company.description,
-        linkedInUrl: company.linkedInUrl,
+        website: company.website || "",
+        address: company.address || "",
+        description: company.description || "",
+        linkedInUrl: company.linkedInUrl || "",
         joinedAt: company.createdAt,
         verificationStatus: company.verificationStatus,
         isVerified: company.verificationStatus === COMPANY_VERIFICATION_STATUS.VERIFIED,
+        logoUrl: company.logoUrl || "",
+        industry: company.industry || "",
+        companySize: company.companySize || "",
+        headquarters: company.headquarters || "",
+        foundedYear: company.foundedYear || null,
+        technologies: Array.isArray(company.technologies) ? company.technologies : [],
+        hiringProcessOverview: company.hiringProcessOverview || "",
         activeOpenings,
         totalInternsHired: totalHires,
         hiringSuccessRate,
-        totalApplications
+        totalApplications,
+        openPositions: openPositions.map((p) => ({
+          _id: p._id,
+          role: p.role,
+          department: p.department || "",
+          internshipType: p.internshipType || "",
+          location: p.location || "",
+          mode: p.mode || "",
+          duration: p.duration || "",
+          stipend: p.stipend || "",
+          openings: p.openings,
+          skillsRequired: p.skillsRequired || [],
+          applicationDeadline: p.applicationDeadline,
+          postedAt: p.createdAt
+        }))
       }
     }
   });

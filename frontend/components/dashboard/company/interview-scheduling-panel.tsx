@@ -7,15 +7,20 @@ import {
   CalendarClock,
   CalendarDays,
   Check,
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
   Clock,
   Copy,
   Hourglass,
   LinkIcon,
   MapPin,
-  Pencil,
+  MessageCircleWarning,
   RotateCcw,
+  Search,
   Timer,
   UserCircle2,
+  UserX,
   Users,
   Video
 } from "lucide-react";
@@ -29,15 +34,18 @@ import {
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
-  decodeInterviewNotes,
-  extractScheduledInterviews,
+  extractAllFromApplication,
   formatInterviewDateTime,
   formatInterviewTimeLabel,
+  isSameCalendarDay,
   normalizeInterviewDateInput,
   parseInterviewDateTime,
+  resolveRoundDurationMinutes,
+  resolveRoundInterviewers,
   type InterviewDisplayStatus,
   type ScheduledInterviewRecord
 } from "@/lib/interview-workflow";
+import { useInterviewCountdown } from "@/lib/use-interview-countdown";
 import { getInterviewJoinAvailability, resolveInterviewJoinHref } from "@/lib/interview-join";
 import { InterviewStatusChip } from "@/components/dashboard/interview/interview-status-chip";
 import { InterviewJoinButton } from "@/components/dashboard/interview/interview-join-button";
@@ -53,6 +61,9 @@ export type InterviewScheduleTarget = {
     roundType?: string;
     interviewDate?: string;
     interviewTime?: string;
+    durationMinutes?: number;
+    timezone?: string;
+    interviewers?: Array<{ name: string; role?: string }>;
     mode?: "online" | "offline" | "";
     meetingLink?: string;
     location?: string;
@@ -60,7 +71,8 @@ export type InterviewScheduleTarget = {
   };
 };
 
-type StatusFilter = "all" | "upcoming" | "scheduled" | "in_progress";
+type StatusFilter = "all" | "today" | "upcoming" | "in_progress" | "completed" | "cancelled" | "no_show";
+type RoundAction = "completed" | "cancelled" | "no_show";
 
 type InterviewSchedulingPanelProps = {
   applications: CompanyApplication[];
@@ -73,14 +85,20 @@ type InterviewSchedulingPanelProps = {
   onViewProfile: (applicationId: string) => void;
   onScheduleInterview: (target: InterviewScheduleTarget) => void;
   onCancelInterview?: (item: ScheduledInterviewRecord) => void | Promise<void>;
+  onUpdateRoundStatus?: (item: ScheduledInterviewRecord, status: RoundAction) => void | Promise<void>;
 };
 
 const FILTERS: Array<{ value: StatusFilter; label: string }> = [
   { value: "all", label: "All" },
+  { value: "today", label: "Today" },
   { value: "upcoming", label: "Upcoming" },
-  { value: "scheduled", label: "Scheduled" },
-  { value: "in_progress", label: "In progress" }
+  { value: "in_progress", label: "In progress" },
+  { value: "completed", label: "Completed" },
+  { value: "cancelled", label: "Cancelled" },
+  { value: "no_show", label: "No Shows" }
 ];
+
+const PAGE_SIZE = 10;
 
 function DetailItem({
   icon: Icon,
@@ -117,7 +135,8 @@ function InterviewCard({
   onViewDetails,
   onViewProfile,
   onReschedule,
-  onCancel
+  onCancel,
+  onUpdateStatus
 }: {
   item: ScheduledInterviewRecord;
   saving: boolean;
@@ -125,13 +144,19 @@ function InterviewCard({
   onViewProfile: (applicationId: string) => void;
   onReschedule: (item: ScheduledInterviewRecord) => void;
   onCancel?: (item: ScheduledInterviewRecord) => void;
+  onUpdateStatus?: (item: ScheduledInterviewRecord, action: RoundAction) => void;
 }) {
   const [copied, setCopied] = useState(false);
   const isOnline = item.mode !== "offline";
   const joinHref = resolveInterviewJoinHref(item);
   const availability = getInterviewJoinAvailability(item);
-  const { interviewer, durationMinutes } = decodeInterviewNotes(item.notes);
-  const isCancellable = item.interviewStatus !== "completed" && item.interviewStatus !== "cancelled";
+  const durationMinutes = resolveRoundDurationMinutes(item);
+  const interviewers = resolveRoundInterviewers(item);
+  const countdown = useInterviewCountdown(item.interviewDate, item.interviewTime);
+  const isOpenRound = !["completed", "cancelled", "no_show"].includes(item.interviewStatus);
+  const isCancellable = isOpenRound;
+  const canComplete = isOpenRound;
+  const canMarkNoShow = isOpenRound;
 
   async function copyLink() {
     if (!joinHref) return;
@@ -176,6 +201,16 @@ function InterviewCard({
         </span>
       </div>
 
+      {item.rescheduleRequestedByCandidate ? (
+        <p className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-200">
+          <MessageCircleWarning className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
+          <span>
+            Candidate requested a reschedule
+            {item.rescheduleRequestedByCandidate.reason ? `: “${item.rescheduleRequestedByCandidate.reason}”` : "."}
+          </span>
+        </p>
+      ) : null}
+
       {/* Detail grid */}
       <div className="grid gap-3 rounded-xl border border-[var(--ds-border)] bg-[var(--ds-surface-raised)] p-3 sm:grid-cols-2">
         <DetailItem icon={CalendarDays} label="Date">
@@ -189,8 +224,10 @@ function InterviewCard({
         <DetailItem icon={Timer} label="Duration">
           {durationMinutes} min
         </DetailItem>
-        <DetailItem icon={UserCircle2} label="Interviewer">
-          <span className="truncate">{interviewer || `${item.companyName} hiring team`}</span>
+        <DetailItem icon={UserCircle2} label="Interviewer(s)">
+          <span className="truncate">
+            {interviewers.length > 0 ? interviewers.map((entry) => entry.name).join(", ") : `${item.companyName} hiring team`}
+          </span>
         </DetailItem>
         <div className="sm:col-span-2">
           <DetailItem icon={isOnline ? LinkIcon : MapPin} label={isOnline ? "Meeting link" : "Location"}>
@@ -203,10 +240,17 @@ function InterviewCard({
                 <span className="text-[var(--ds-muted)]">Link generated at start time</span>
               )
             ) : (
-              <span className="break-words">{item.meetingLink || "Location shared with candidate"}</span>
+              <span className="break-words">{item.location || "Location shared with candidate"}</span>
             )}
           </DetailItem>
         </div>
+        {isOpenRound && countdown ? (
+          <div className="sm:col-span-2">
+            <DetailItem icon={Timer} label="Starts in">
+              {countdown.label}
+            </DetailItem>
+          </div>
+        ) : null}
       </div>
 
       {/* Actions */}
@@ -223,14 +267,38 @@ function InterviewCard({
             {copied ? "Copied" : "Copy Link"}
           </Button>
         ) : null}
-        <Button type="button" size="sm" variant="ghost" disabled={saving} onClick={() => onReschedule(item)}>
-          <Pencil className="h-3.5 w-3.5" aria-hidden />
-          Edit
-        </Button>
-        <Button type="button" size="sm" variant="ghost" disabled={saving} onClick={() => onReschedule(item)}>
-          <RotateCcw className="h-3.5 w-3.5" aria-hidden />
-          Reschedule
-        </Button>
+        {isOpenRound ? (
+          <Button type="button" size="sm" variant="ghost" disabled={saving} onClick={() => onReschedule(item)}>
+            <RotateCcw className="h-3.5 w-3.5" aria-hidden />
+            Reschedule
+          </Button>
+        ) : null}
+        {canComplete && onUpdateStatus ? (
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            disabled={saving}
+            onClick={() => onUpdateStatus(item, "completed")}
+            className="text-emerald-600 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-950/40"
+          >
+            <CheckCircle2 className="h-3.5 w-3.5" aria-hidden />
+            Complete
+          </Button>
+        ) : null}
+        {canMarkNoShow && onUpdateStatus ? (
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            disabled={saving}
+            onClick={() => onUpdateStatus(item, "no_show")}
+            className="text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+          >
+            <UserX className="h-3.5 w-3.5" aria-hidden />
+            No Show
+          </Button>
+        ) : null}
         {isCancellable && onCancel ? (
           <Button
             type="button"
@@ -358,6 +426,26 @@ function SkeletonCard() {
   );
 }
 
+const ACTION_COPY: Record<RoundAction, { title: string; confirmLabel: string; description: (item: ScheduledInterviewRecord) => string }> = {
+  cancelled: {
+    title: "Cancel this interview?",
+    confirmLabel: "Cancel Interview",
+    description: (item) =>
+      `${item.candidateName || item.role} will no longer see this ${item.interviewType || "interview"} on their calendar. This can't be undone.`
+  },
+  completed: {
+    title: "Mark this interview completed?",
+    confirmLabel: "Mark Completed",
+    description: (item) => `${item.candidateName || item.role}'s ${item.interviewType || "interview"} will be marked completed.`
+  },
+  no_show: {
+    title: "Mark candidate as a no-show?",
+    confirmLabel: "Mark No-Show",
+    description: (item) =>
+      `${item.candidateName || item.role} didn't join the ${item.interviewType || "interview"}. This will record it as a no-show.`
+  }
+};
+
 export function InterviewSchedulingPanel({
   applications,
   saving = false,
@@ -366,15 +454,21 @@ export function InterviewSchedulingPanel({
   onRetry,
   onViewProfile,
   onScheduleInterview,
-  onCancelInterview
+  onCancelInterview,
+  onUpdateRoundStatus
 }: InterviewSchedulingPanelProps) {
   const [filter, setFilter] = useState<StatusFilter>("all");
+  const [search, setSearch] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<ScheduledInterviewRecord | null>(null);
-  const [expanded, setExpanded] = useState(false);
-  const [cancelTarget, setCancelTarget] = useState<ScheduledInterviewRecord | null>(null);
-  const [cancelling, setCancelling] = useState(false);
+  const [actionTarget, setActionTarget] = useState<{ item: ScheduledInterviewRecord; action: RoundAction } | null>(null);
+  const [actionBusy, setActionBusy] = useState(false);
 
-  const scheduled = useMemo(() => extractScheduledInterviews(applications), [applications]);
+  // Every round regardless of status — the status filter tabs (including
+  // Completed/Cancelled/No Shows) do the narrowing, not the extraction step.
+  const scheduled = useMemo(() => applications.flatMap((app) => extractAllFromApplication(app)), [applications]);
   const awaiting = useMemo(
     () =>
       getInterviewStageCandidates(applications).filter(
@@ -384,21 +478,74 @@ export function InterviewSchedulingPanel({
   );
 
   const counts = useMemo(() => {
-    const base: Record<StatusFilter, number> = { all: scheduled.length, upcoming: 0, scheduled: 0, in_progress: 0 };
+    const now = new Date();
+    const base: Record<StatusFilter, number> = {
+      all: scheduled.length,
+      today: 0,
+      upcoming: 0,
+      in_progress: 0,
+      completed: 0,
+      cancelled: 0,
+      no_show: 0
+    };
     scheduled.forEach((item) => {
+      const start = parseInterviewDateTime(item.interviewDate, item.interviewTime);
+      if (start && isSameCalendarDay(start, now)) base.today += 1;
       if (item.interviewStatus === "upcoming") base.upcoming += 1;
       else if (item.interviewStatus === "in_progress") base.in_progress += 1;
-      else if (item.interviewStatus === "scheduled") base.scheduled += 1;
+      else if (item.interviewStatus === "completed") base.completed += 1;
+      else if (item.interviewStatus === "cancelled") base.cancelled += 1;
+      else if (item.interviewStatus === "no_show") base.no_show += 1;
     });
     return base;
   }, [scheduled]);
 
   const filtered = useMemo(() => {
-    if (filter === "all") return scheduled;
-    return scheduled.filter((item) => item.interviewStatus === (filter as InterviewDisplayStatus));
-  }, [scheduled, filter]);
+    let list = scheduled;
+    if (filter === "today") {
+      const now = new Date();
+      list = list.filter((item) => {
+        const start = parseInterviewDateTime(item.interviewDate, item.interviewTime);
+        return start ? isSameCalendarDay(start, now) : false;
+      });
+    } else if (filter !== "all") {
+      list = list.filter((item) => item.interviewStatus === (filter as InterviewDisplayStatus));
+    }
 
-  const visible = expanded ? filtered : filtered.slice(0, 4);
+    const query = search.trim().toLowerCase();
+    if (query) {
+      list = list.filter((item) => {
+        const interviewers = resolveRoundInterviewers(item)
+          .map((entry) => entry.name)
+          .join(" ")
+          .toLowerCase();
+        return (
+          (item.candidateName || "").toLowerCase().includes(query) ||
+          item.role.toLowerCase().includes(query) ||
+          (item.interviewType || "").toLowerCase().includes(query) ||
+          interviewers.includes(query)
+        );
+      });
+    }
+
+    if (dateFrom) {
+      list = list.filter((item) => normalizeInterviewDateInput(item.interviewDate) >= dateFrom);
+    }
+    if (dateTo) {
+      list = list.filter((item) => normalizeInterviewDateInput(item.interviewDate) <= dateTo);
+    }
+
+    return list;
+  }, [scheduled, filter, search, dateFrom, dateTo]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const visible = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+
+  function applyFilter(next: StatusFilter) {
+    setFilter(next);
+    setPage(1);
+  }
 
   function handleReschedule(item: ScheduledInterviewRecord) {
     onScheduleInterview({
@@ -409,22 +556,28 @@ export function InterviewSchedulingPanel({
         roundType: item.interviewType,
         interviewDate: normalizeInterviewDateInput(item.interviewDate),
         interviewTime: item.interviewTime,
+        durationMinutes: resolveRoundDurationMinutes(item),
+        interviewers: resolveRoundInterviewers(item),
         mode: item.mode,
-        // Only online meeting links are surfaced on the record; location is entered fresh.
         meetingLink: item.mode === "offline" ? "" : item.meetingLink,
+        location: item.mode === "offline" ? item.location : "",
         notes: item.notes
       }
     });
   }
 
-  async function confirmCancel() {
-    if (!cancelTarget || !onCancelInterview) return;
+  async function confirmAction() {
+    if (!actionTarget) return;
     try {
-      setCancelling(true);
-      await onCancelInterview(cancelTarget);
-      setCancelTarget(null);
+      setActionBusy(true);
+      if (actionTarget.action === "cancelled" && onCancelInterview) {
+        await onCancelInterview(actionTarget.item);
+      } else if (onUpdateRoundStatus) {
+        await onUpdateRoundStatus(actionTarget.item, actionTarget.action);
+      }
+      setActionTarget(null);
     } finally {
-      setCancelling(false);
+      setActionBusy(false);
     }
   }
 
@@ -442,8 +595,8 @@ export function InterviewSchedulingPanel({
         {!loading && !error && totalTracked > 0 ? (
           <div className={cn(companyDashboardStyles.metricGrid, companyDashboardStyles.metricGridFour, "mb-4")}>
             {[
-              { label: "Upcoming", value: counts.upcoming, icon: CalendarClock },
-              { label: "Scheduled", value: counts.scheduled, icon: CalendarDays },
+              { label: "Today", value: counts.today, icon: CalendarClock },
+              { label: "Upcoming", value: counts.upcoming, icon: CalendarDays },
               { label: "In progress", value: counts.in_progress, icon: Clock },
               { label: "Awaiting round", value: awaiting.length, icon: Hourglass }
             ].map(({ label, value, icon: Icon }) => (
@@ -504,10 +657,7 @@ export function InterviewSchedulingPanel({
                       type="button"
                       role="tab"
                       aria-selected={active}
-                      onClick={() => {
-                        setFilter(value);
-                        setExpanded(false);
-                      }}
+                      onClick={() => applyFilter(value)}
                       className={cn(
                         "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500",
                         active
@@ -525,6 +675,46 @@ export function InterviewSchedulingPanel({
               </div>
             ) : null}
 
+            {/* Search + date range */}
+            {scheduled.length > 0 ? (
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="relative min-w-[200px] flex-1">
+                  <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--ds-muted)]" aria-hidden />
+                  <input
+                    type="search"
+                    value={search}
+                    onChange={(event) => {
+                      setSearch(event.target.value);
+                      setPage(1);
+                    }}
+                    placeholder="Search candidate, role, or interviewer…"
+                    className="w-full rounded-lg border border-[var(--ds-border)] bg-[var(--ds-surface)] py-1.5 pl-8 pr-3 text-xs text-[var(--ds-text)] outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/30"
+                  />
+                </div>
+                <input
+                  type="date"
+                  value={dateFrom}
+                  onChange={(event) => {
+                    setDateFrom(event.target.value);
+                    setPage(1);
+                  }}
+                  aria-label="From date"
+                  className="rounded-lg border border-[var(--ds-border)] bg-[var(--ds-surface)] px-2 py-1.5 text-xs text-[var(--ds-text)] outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/30"
+                />
+                <span className="text-xs text-[var(--ds-muted)]">to</span>
+                <input
+                  type="date"
+                  value={dateTo}
+                  onChange={(event) => {
+                    setDateTo(event.target.value);
+                    setPage(1);
+                  }}
+                  aria-label="To date"
+                  className="rounded-lg border border-[var(--ds-border)] bg-[var(--ds-surface)] px-2 py-1.5 text-xs text-[var(--ds-text)] outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/30"
+                />
+              </div>
+            ) : null}
+
             {/* Scheduled interview cards */}
             {filtered.length > 0 ? (
               <div className={companyDashboardStyles.cardGridTwo}>
@@ -536,7 +726,8 @@ export function InterviewSchedulingPanel({
                     onViewDetails={setSelected}
                     onViewProfile={onViewProfile}
                     onReschedule={handleReschedule}
-                    onCancel={onCancelInterview ? setCancelTarget : undefined}
+                    onCancel={onCancelInterview ? (target) => setActionTarget({ item: target, action: "cancelled" }) : undefined}
+                    onUpdateStatus={onUpdateRoundStatus ? (target, action) => setActionTarget({ item: target, action }) : undefined}
                   />
                 ))}
               </div>
@@ -546,10 +737,30 @@ export function InterviewSchedulingPanel({
               </p>
             ) : null}
 
-            {filtered.length > 4 ? (
-              <div className="flex justify-center">
-                <Button type="button" size="sm" variant="ghost" onClick={() => setExpanded((prev) => !prev)}>
-                  {expanded ? "Show fewer" : `Show all ${filtered.length}`}
+            {totalPages > 1 ? (
+              <div className="flex items-center justify-center gap-3">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  disabled={safePage <= 1}
+                  onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+                >
+                  <ChevronLeft className="h-3.5 w-3.5" aria-hidden />
+                  Prev
+                </Button>
+                <span className="ds-caption">
+                  Page {safePage} of {totalPages}
+                </span>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  disabled={safePage >= totalPages}
+                  onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
+                >
+                  Next
+                  <ChevronRight className="h-3.5 w-3.5" aria-hidden />
                 </Button>
               </div>
             ) : null}
@@ -562,7 +773,7 @@ export function InterviewSchedulingPanel({
                   <h3 className="ds-label">Awaiting scheduling ({awaiting.length})</h3>
                 </div>
                 <div className={companyDashboardStyles.listStack}>
-                  {awaiting.slice(0, expanded ? awaiting.length : 3).map((application) => (
+                  {awaiting.slice(0, 5).map((application) => (
                     <AwaitingCandidateCard
                       key={application._id}
                       application={application}
@@ -586,19 +797,15 @@ export function InterviewSchedulingPanel({
       />
 
       <ConfirmDialog
-        open={Boolean(cancelTarget)}
-        title="Cancel this interview?"
-        description={
-          cancelTarget
-            ? `${cancelTarget.candidateName || cancelTarget.role} will no longer see this ${cancelTarget.interviewType || "interview"} on their calendar. This can't be undone.`
-            : undefined
-        }
-        confirmLabel="Cancel Interview"
-        cancelLabel="Keep Interview"
-        tone="danger"
-        busy={cancelling}
-        onConfirm={confirmCancel}
-        onCancel={() => setCancelTarget(null)}
+        open={Boolean(actionTarget)}
+        title={actionTarget ? ACTION_COPY[actionTarget.action].title : ""}
+        description={actionTarget ? ACTION_COPY[actionTarget.action].description(actionTarget.item) : undefined}
+        confirmLabel={actionTarget ? ACTION_COPY[actionTarget.action].confirmLabel : "Confirm"}
+        cancelLabel="Go Back"
+        tone={actionTarget?.action === "completed" ? "default" : "danger"}
+        busy={actionBusy}
+        onConfirm={confirmAction}
+        onCancel={() => setActionTarget(null)}
       />
     </>
   );

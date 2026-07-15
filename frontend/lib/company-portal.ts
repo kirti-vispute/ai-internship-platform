@@ -13,7 +13,19 @@ export type CompanyProfile = {
   website?: string;
   address?: string;
   description?: string;
+  logoUrl?: string;
+  industry?: string;
+  companySize?: string;
+  headquarters?: string;
+  foundedYear?: number | null;
+  technologies?: string[];
+  hiringProcessOverview?: string;
   verificationStatus: "pending" | "verified" | "rejected" | "suspended";
+  verifiedBadgeIssuedAt?: string | null;
+  rejectionReason?: string;
+  verificationDocuments?: string[];
+  hrIdentityProofUrl?: string;
+  businessRegistrationProofUrl?: string;
   createdAt?: string;
   updatedAt?: string;
 };
@@ -210,11 +222,16 @@ export type CompanyApplication = {
     roundType?: string;
     interviewDate?: string;
     interviewTime?: string;
+    durationMinutes?: number;
+    timezone?: string;
+    interviewers?: Array<{ name: string; role?: string }>;
     mode?: "online" | "offline" | "";
     meetingLink?: string;
     location?: string;
     notes?: string;
-    status?: "scheduled" | "completed" | "cleared" | "rejected";
+    status?: "scheduled" | "completed" | "cleared" | "rejected" | "cancelled" | "no_show";
+    cancelReason?: string;
+    rescheduleRequestedByCandidate?: { requestedAt: string; reason?: string; acknowledged?: boolean } | null;
     updatedAt?: string;
   }>;
   createdAt?: string;
@@ -297,6 +314,14 @@ export function invalidateCompanyPortalCache() {
   inFlightStore.clear();
 }
 
+// `cacheStore` is a module-level singleton -- it survives logout/login within
+// the same browser tab since nothing else tears it down. Without this, a
+// stale profile/role (e.g. from a previously logged-in CEO or HR account) can
+// be served to whichever account logs in next, until the 5-minute TTL expires.
+if (typeof window !== "undefined") {
+  window.addEventListener("internai-auth-change", () => invalidateCompanyPortalCache());
+}
+
 export function peekCompanyProfile() {
   return getCache<{ profile: CompanyProfile; currentUser: CompanyCurrentUser }>("company:profile");
 }
@@ -323,7 +348,12 @@ export async function fetchCompanyProfile(force = false) {
   });
 }
 
-export async function updateCompanyProfile(payload: Partial<CompanyProfile>) {
+export type CompanyProfileUpdateInput = Partial<Omit<CompanyProfile, "foundedYear" | "technologies">> & {
+  foundedYear?: string | number;
+  technologies?: string | string[];
+};
+
+export async function updateCompanyProfile(payload: CompanyProfileUpdateInput) {
   const response = await apiRequest<{ profile: CompanyProfile; message: string }>("/api/company/profile", {
     method: "PUT",
     body: JSON.stringify(payload)
@@ -335,6 +365,80 @@ export async function updateCompanyProfile(payload: Partial<CompanyProfile>) {
   });
   return response.profile;
 }
+
+export async function uploadCompanyLogo(file: File) {
+  const formData = new FormData();
+  formData.append("logo", file);
+  const response = await apiRequest<{ profile: CompanyProfile; message: string }>("/api/company/profile/logo", {
+    method: "POST",
+    body: formData
+  });
+  const cached = getCache<{ profile: CompanyProfile; currentUser: CompanyCurrentUser }>("company:profile");
+  setCache("company:profile", {
+    profile: response.profile,
+    currentUser: cached?.currentUser || { _id: "", email: "", companyAccountType: "owner", permissions: [], sidebarModules: [] }
+  });
+  return response.profile;
+}
+
+export type CompanyPersonalProfile = {
+  _id: string;
+  email: string;
+  displayName: string;
+  phone: string;
+  photoUrl: string;
+  designation: string;
+  linkedInUrl: string;
+  personalWebsite: string;
+  bio: string;
+  companyAccountType: "owner" | "hr" | "ceo";
+};
+
+export async function fetchPersonalProfile(force = false) {
+  return withCache("company:personal-profile", force, async () => {
+    const response = await apiRequest<{ personalProfile: CompanyPersonalProfile }>("/api/company/personal-profile");
+    return response.personalProfile;
+  });
+}
+
+export type PersonalProfileUpdateInput = Partial<
+  Pick<CompanyPersonalProfile, "displayName" | "phone" | "designation" | "linkedInUrl" | "personalWebsite" | "bio">
+>;
+
+export async function updatePersonalProfile(payload: PersonalProfileUpdateInput) {
+  const response = await apiRequest<{ personalProfile: CompanyPersonalProfile; message: string }>("/api/company/personal-profile", {
+    method: "PUT",
+    body: JSON.stringify(payload)
+  });
+  setCache("company:personal-profile", response.personalProfile);
+  return response.personalProfile;
+}
+
+export async function uploadPersonalPhoto(file: File) {
+  const formData = new FormData();
+  formData.append("photo", file);
+  const response = await apiRequest<{ personalProfile: CompanyPersonalProfile; message: string }>("/api/company/personal-profile/photo", {
+    method: "POST",
+    body: formData
+  });
+  setCache("company:personal-profile", response.personalProfile);
+  return response.personalProfile;
+}
+
+export function resolveCompanyLogoUrl(logoUrl?: string | null): string | null {
+  if (!logoUrl) return null;
+  if (/^https?:\/\//i.test(logoUrl) || logoUrl.startsWith("blob:") || logoUrl.startsWith("data:")) return logoUrl;
+  return `${API_BASE_URL}${logoUrl.startsWith("/") ? "" : "/"}${logoUrl}`;
+}
+
+export const COMPANY_TECHNOLOGY_SUGGESTIONS = [
+  "JavaScript", "TypeScript", "Python", "Java", "C++", "C#", "Go", "Rust", "PHP", "Ruby",
+  "React", "Next.js", "Vue.js", "Angular", "Node.js", "Express", "Django", "Flask", "FastAPI", "Spring Boot",
+  "MongoDB", "PostgreSQL", "MySQL", "Redis", "GraphQL", "REST API",
+  "AWS", "Azure", "Google Cloud", "Docker", "Kubernetes", "CI/CD", "Terraform",
+  "Git", "Figma", "TailwindCSS", "Machine Learning", "Data Science", "TensorFlow", "PyTorch",
+  "React Native", "Flutter", "Swift", "Kotlin", "Android", "iOS"
+] as const;
 
 export type CompanyHrPerformance = {
   candidatesHandled: number;
@@ -494,7 +598,7 @@ export async function fetchCompanyHiringScoringTemplates(force = false) {
 
 export async function fetchCompanyInternships(force = false) {
   return withCache("company:internships", force, async () => {
-    const response = await apiRequest<{ internships: CompanyInternship[] }>("/api/company/internships");
+    const response = await apiRequest<{ internships: CompanyInternship[] }>("/api/company/internships?limit=100");
     return response.internships || [];
   });
 }
@@ -579,7 +683,18 @@ export async function addApplicationFeedback(
 
 export async function scheduleInterviewRound(
   applicationId: string,
-  payload: { roundType: string; interviewDate: string; interviewTime: string; mode?: "online" | "offline" | ""; meetingLink?: string; location?: string; notes?: string }
+  payload: {
+    roundType: string;
+    interviewDate: string;
+    interviewTime: string;
+    durationMinutes?: number;
+    timezone?: string;
+    interviewers?: Array<{ name: string; role?: string }>;
+    mode?: "online" | "offline" | "";
+    meetingLink?: string;
+    location?: string;
+    notes?: string;
+  }
 ) {
   const response = await apiRequest<{ application: CompanyApplication }>(`/api/company/applications/${applicationId}/interviews`, {
     method: "POST",
@@ -593,10 +708,14 @@ export async function updateInterviewRound(
   applicationId: string,
   roundId: string,
   payload: {
-    status?: "scheduled" | "completed" | "cleared" | "rejected";
+    status?: "scheduled" | "completed" | "cleared" | "rejected" | "cancelled" | "no_show";
     notes?: string;
     interviewDate?: string;
     interviewTime?: string;
+    durationMinutes?: number;
+    timezone?: string;
+    interviewers?: Array<{ name: string; role?: string }>;
+    cancelReason?: string;
     mode?: "online" | "offline" | "";
     meetingLink?: string;
     location?: string;
@@ -611,7 +730,7 @@ export async function updateInterviewRound(
   return response.application;
 }
 
-export async function openCompanyApplicationResume(applicationId: string) {
+export async function fetchCompanyApplicationResume(applicationId: string) {
   const session = getAuthSession();
   const token = session.token;
   if (!token) {
@@ -624,21 +743,15 @@ export async function openCompanyApplicationResume(applicationId: string) {
   });
   if (!response.ok) {
     const data = await response.json().catch(() => ({}));
-    throw new Error((data as { message?: string }).message || "Resume not available");
+    const error = new Error((data as { message?: string }).message || "Resume not available") as Error & { status?: number };
+    error.status = response.status;
+    throw error;
   }
 
   const blob = await response.blob();
-  const objectUrl = window.URL.createObjectURL(blob);
-  const opened = window.open(objectUrl, "_blank", "noopener,noreferrer");
-  if (!opened) {
-    const link = document.createElement("a");
-    link.href = objectUrl;
-    link.download = "resume";
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-  }
-  window.setTimeout(() => window.URL.revokeObjectURL(objectUrl), 120000);
+  const contentType = response.headers.get("content-type") || blob.type || "application/octet-stream";
+  const lastModified = response.headers.get("last-modified") || "";
+  return { blob, contentType, lastModified };
 }
 
 export async function fetchMatchedCandidatesForInternship(internship: CompanyInternship, force = false) {

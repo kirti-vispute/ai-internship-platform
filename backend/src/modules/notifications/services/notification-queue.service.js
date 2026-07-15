@@ -30,8 +30,10 @@ async function flushQueue() {
     try {
       // eslint-disable-next-line no-await-in-loop
       await processJob(job);
-    } catch {
-      // Queue failures should not crash API requests.
+    } catch (err) {
+      // Queue failures should not crash API requests, but a silently dropped
+      // email (e.g. bad SMTP creds) should at least be visible in the logs.
+      console.error(`[notifications] failed to send email to ${job.to} (${job.type}):`, err.message);
     }
   }
   processing = false;

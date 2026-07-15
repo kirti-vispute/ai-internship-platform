@@ -9,6 +9,7 @@ const { seedDatabase } = require("./shared/data/seedDatabase");
 const { bootstrapPlatformServices } = require("./shared/infrastructure/bootstrap");
 const { initChatSocket, getChatIo } = require("./shared/socket/chat.socket");
 const { initInterviewSocket } = require("./shared/socket/interview.socket");
+const interviewScheduler = require("./modules/interviews/services/interview-scheduler.service");
 const logger = require("./shared/logger");
 
 function assertRequiredEnv() {
@@ -72,6 +73,7 @@ async function startServer() {
   server = http.createServer(app);
   initChatSocket(server);
   initInterviewSocket();
+  interviewScheduler.start();
 
   server.listen(port, () => {
     logger.info(`[startup] Server running on port ${port}`);
@@ -97,6 +99,8 @@ async function shutdown(signal) {
   forceExitTimer.unref();
 
   try {
+    interviewScheduler.stop();
+
     const io = getChatIo();
     if (io) io.close();
 

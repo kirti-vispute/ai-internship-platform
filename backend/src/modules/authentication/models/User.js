@@ -89,6 +89,36 @@ const userSchema = new mongoose.Schema(
       default: "",
       trim: true
     },
+    phone: {
+      type: String,
+      default: "",
+      trim: true
+    },
+    photoUrl: {
+      type: String,
+      default: "",
+      trim: true
+    },
+    designation: {
+      type: String,
+      default: "",
+      trim: true
+    },
+    linkedInUrl: {
+      type: String,
+      default: "",
+      trim: true
+    },
+    personalWebsite: {
+      type: String,
+      default: "",
+      trim: true
+    },
+    bio: {
+      type: String,
+      default: "",
+      trim: true
+    },
     hrCustomPermissions: {
       type: [String],
       default: []

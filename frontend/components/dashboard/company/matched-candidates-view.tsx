@@ -13,6 +13,7 @@ type MatchedCandidatesViewProps = {
   saving?: boolean;
   defaultLimit?: number;
   showViewAllLink?: boolean;
+  isHrScoped?: boolean;
   onOpenProfile: (applicationId: string) => void;
   onMessage: (match: CompanyMatchedCandidate, applicationId: string) => void;
   onShortlist: (applicationId: string) => void;
@@ -27,6 +28,7 @@ export function MatchedCandidatesView({
   saving = false,
   defaultLimit = 0,
   showViewAllLink = false,
+  isHrScoped = false,
   onOpenProfile,
   onMessage,
   onShortlist,
@@ -44,6 +46,7 @@ export function MatchedCandidatesView({
         defaultLimit={defaultLimit}
         showViewAllLink={showViewAllLink}
         saving={saving}
+        isHrScoped={isHrScoped}
         onOpenProfile={onOpenProfile}
         onMessage={onMessage}
         onShortlist={onShortlist}

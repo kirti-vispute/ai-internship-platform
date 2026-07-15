@@ -12,8 +12,10 @@ function emitNotificationRealtime(userId, notification) {
       notification,
       unreadDelta: 1
     });
-  } catch {
-    // Socket may be unavailable during tests or startup.
+  } catch (err) {
+    // Socket may be unavailable during tests or startup — log so a real
+    // delivery failure in production doesn't disappear silently.
+    console.error(`[notifications] failed to push realtime notification to user ${userId}:`, err.message);
   }
 }
 

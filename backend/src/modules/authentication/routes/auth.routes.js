@@ -6,6 +6,7 @@ const { otpSendLimiter, otpVerifyLimiter } = require("../middleware/otp-rate-lim
 const {
   requireEmail,
   requireInternSignup,
+  requireCompanySignup,
   requireOtpVerify,
   requirePasswordReset
 } = require("../../../validators/auth.validator");
@@ -17,7 +18,9 @@ router.post("/intern/verify-otp", otpVerifyLimiter, validate(requireOtpVerify), 
 router.post("/intern/signup", validate(requireInternSignup), authController.internSignup);
 router.post("/password/send-otp", otpSendLimiter, validate(requireEmail), authController.sendPasswordResetOtp);
 router.post("/password/reset", otpVerifyLimiter, validate(requirePasswordReset), authController.resetPasswordWithOtp);
-router.post("/company/signup", authController.companySignup);
+router.post("/company/signup", validate(requireCompanySignup), authController.companySignup);
+
+router.get("/demo-credentials/hr", authController.getHrDemoCredentials);
 
 router.post("/intern/login", authController.internLogin);
 router.post("/company/login", authController.companyLogin);

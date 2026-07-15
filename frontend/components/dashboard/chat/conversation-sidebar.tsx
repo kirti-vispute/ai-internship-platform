@@ -107,13 +107,13 @@ export function ConversationSidebar({
   return (
     <aside
       className={cn(
-        "flex h-full min-h-0 flex-col rounded-2xl border border-slate-200/70 bg-white shadow-sm dark:border-slate-800/70 dark:bg-slate-900/60",
+        "flex h-full min-h-0 flex-col rounded-2xl border border-[var(--ds-border)] bg-[var(--ds-surface)] shadow-sm",
         className
       )}
     >
-      <div className="flex items-center justify-between gap-2 border-b border-slate-200/70 px-4 py-3.5 dark:border-slate-800/70">
+      <div className="flex items-center justify-between gap-2 border-b border-[var(--ds-border)] px-4 py-3.5">
         <div className="flex items-center gap-2">
-          <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Conversations</p>
+          <p className="text-sm font-semibold text-[var(--ds-text)]">Conversations</p>
           {unreadTotal > 0 ? (
             <span className="rounded-full bg-primary-600 px-1.5 py-0.5 text-[10px] font-bold text-white">
               {unreadTotal}
@@ -125,12 +125,12 @@ export function ConversationSidebar({
         </Button>
       </div>
 
-      <div className="border-b border-slate-200/70 px-3 py-2.5 dark:border-slate-800/70">
+      <div className="border-b border-[var(--ds-border)] px-3 py-2.5">
         <div className="relative">
           <AppIcon
             icon={Search}
             size="xs"
-            className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+            className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--ds-muted)]"
           />
           <input
             type="text"
@@ -138,15 +138,15 @@ export function ConversationSidebar({
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search conversations…"
             aria-label="Search conversations"
-            className="w-full rounded-lg border border-slate-200 bg-slate-50/70 py-2 pl-8 pr-3 text-sm text-slate-800 placeholder:text-slate-400 focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-100"
+            className="ds-input pl-8"
           />
         </div>
       </div>
 
       {showNewChat ? (
-        <div className="max-h-44 space-y-0.5 overflow-y-auto border-b border-slate-200/70 p-2 dark:border-slate-800/70">
+        <div className="max-h-44 space-y-0.5 overflow-y-auto border-b border-[var(--ds-border)] p-2">
           {contacts.length === 0 ? (
-            <p className="px-2 py-2 text-xs text-slate-500 dark:text-slate-400">
+            <p className="px-2 py-2 text-xs text-[var(--ds-muted)]">
               Apply to an internship to unlock messaging.
             </p>
           ) : null}
@@ -165,7 +165,7 @@ export function ConversationSidebar({
                 key={key}
                 type="button"
                 onClick={() => onStartChat(contact)}
-                className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left transition-colors hover:bg-slate-50 dark:hover:bg-slate-800"
+                className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left transition-colors hover:bg-[var(--ds-surface-raised)]"
               >
                 <span
                   className={cn(
@@ -176,8 +176,8 @@ export function ConversationSidebar({
                   {initialsFor(label)}
                 </span>
                 <span className="min-w-0">
-                  <p className="truncate text-sm font-medium text-slate-800 dark:text-slate-100">{label}</p>
-                  {subtitle ? <p className="truncate text-[11px] text-slate-500 dark:text-slate-400">{subtitle}</p> : null}
+                  <p className="truncate text-sm font-medium text-[var(--ds-text)]">{label}</p>
+                  {subtitle ? <p className="truncate text-[11px] text-[var(--ds-muted)]">{subtitle}</p> : null}
                 </span>
               </button>
             );
@@ -201,7 +201,7 @@ export function ConversationSidebar({
             />
           </li>
         ) : filteredConversations.length === 0 ? (
-          <li className="px-2 py-6 text-center text-sm text-slate-500 dark:text-slate-400">
+          <li className="px-2 py-6 text-center text-sm text-[var(--ds-muted)]">
             No conversations match &quot;{query}&quot;.
           </li>
         ) : (
@@ -232,7 +232,7 @@ export function ConversationSidebar({
                       ? "text-white"
                       : unread > 0
                         ? "bg-primary-50/70 hover:bg-primary-50 dark:bg-primary-950/20 dark:hover:bg-primary-950/30"
-                        : "hover:bg-slate-50 dark:hover:bg-slate-800/60"
+                        : "hover:bg-[var(--ds-surface-raised)]"
                   )}
                 >
                   <span
@@ -249,7 +249,7 @@ export function ConversationSidebar({
                       <span
                         className={cn(
                           "truncate text-sm font-semibold",
-                          active ? "text-white" : "text-slate-900 dark:text-slate-100"
+                          active ? "text-white" : "text-[var(--ds-text)]"
                         )}
                       >
                         {title}
@@ -257,7 +257,7 @@ export function ConversationSidebar({
                       <span
                         className={cn(
                           "shrink-0 text-[10px]",
-                          active ? "text-primary-100/80" : "text-slate-400 dark:text-slate-500"
+                          active ? "text-primary-100/80" : "text-[var(--ds-muted)]"
                         )}
                       >
                         {formatListTime(conversation.lastMessageAt)}
@@ -267,7 +267,7 @@ export function ConversationSidebar({
                       <span
                         className={cn(
                           "block truncate text-[11px]",
-                          active ? "text-primary-100/90" : "text-slate-500 dark:text-slate-400"
+                          active ? "text-primary-100/90" : "text-[var(--ds-muted)]"
                         )}
                       >
                         {roleLabel}
@@ -277,7 +277,7 @@ export function ConversationSidebar({
                       <span
                         className={cn(
                           "line-clamp-1 text-xs",
-                          active ? "text-primary-50/90" : "text-slate-500 dark:text-slate-400"
+                          active ? "text-primary-50/90" : "text-[var(--ds-muted)]"
                         )}
                       >
                         {conversation.lastMessageText || "No messages yet"}

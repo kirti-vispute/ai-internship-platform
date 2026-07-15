@@ -87,7 +87,7 @@ const COMPANY_LOGIN_PRESETS: Record<
     title: "Company HR",
     description: "Manage applicants, interviews, and hiring pipeline for your organization.",
     email: "hr@novatech.example",
-    password: "CompanyHr@123"
+    password: ""
   },
   ceo: {
     title: "Company CEO",
@@ -172,10 +172,24 @@ export function RoleAuthForm({ role }: { role: AuthRole }) {
   const [newPassword, setNewPassword] = useState("");
   const [companyLoginType, setCompanyLoginType] = useState<CompanyLoginType>("hr");
   const [internLoginType, setInternLoginType] = useState<InternLoginType>("intern1");
+  const [hrDemoPassword, setHrDemoPassword] = useState("");
 
   useEffect(() => {
     clearAuthSession();
   }, []);
+
+  useEffect(() => {
+    if (role !== "company") return;
+    let cancelled = false;
+    apiRequest<{ email: string; password: string }>("/api/auth/demo-credentials/hr")
+      .then((current) => {
+        if (!cancelled) setHrDemoPassword(current.password);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [role]);
 
   useEffect(() => {
     setOtp("");
@@ -342,13 +356,17 @@ export function RoleAuthForm({ role }: { role: AuthRole }) {
     setFeedback(null);
   }, []);
 
-  const applyCompanyLoginPreset = useCallback((type: CompanyLoginType) => {
-    const preset = COMPANY_LOGIN_PRESETS[type];
-    setCompanyLoginType(type);
-    setLoginData({ email: preset.email, password: preset.password });
-    setErrors({});
-    setFeedback(null);
-  }, []);
+  const applyCompanyLoginPreset = useCallback(
+    (type: CompanyLoginType) => {
+      const preset = COMPANY_LOGIN_PRESETS[type];
+      const password = type === "hr" ? hrDemoPassword : preset.password;
+      setCompanyLoginType(type);
+      setLoginData({ email: preset.email, password });
+      setErrors({});
+      setFeedback(null);
+    },
+    [hrDemoPassword]
+  );
 
   const applyInternLoginPreset = useCallback((type: InternLoginType) => {
     const preset = INTERN_LOGIN_PRESETS[type];
@@ -629,7 +647,12 @@ export function RoleAuthForm({ role }: { role: AuthRole }) {
                   Email: <span className="font-mono">{COMPANY_LOGIN_PRESETS[companyLoginType].email}</span>
                 </p>
                 <p>
-                  Password: <span className="font-mono">{COMPANY_LOGIN_PRESETS[companyLoginType].password}</span>
+                  Password:{" "}
+                  <span className="font-mono">
+                    {companyLoginType === "hr"
+                      ? hrDemoPassword || "Loading..."
+                      : COMPANY_LOGIN_PRESETS[companyLoginType].password}
+                  </span>
                 </p>
                 <button
                   type="button"

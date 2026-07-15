@@ -38,9 +38,45 @@ export const TARGET_ROLE_PROFILES: Record<string, RoleSkillProfile> = {
   },
   ai_ml_engineer: {
     label: "AI / ML Engineer",
-    coreSkills: ["python", "machine learning", "numpy", "pandas"],
-    secondarySkills: ["deep learning", "tensorflow", "pytorch", "scikit-learn"],
-    optionalSkills: ["natural language processing", "computer vision", "docker", "aws"]
+    // Core = concrete tools a resume actually names. "Machine learning" /
+    // "deep learning" describe the field rather than a literal skill-list
+    // entry, so they sit in secondary/optional rather than core — mirrors
+    // backend constants/resume-intelligence-v2.js.
+    coreSkills: ["python", "numpy", "pandas", "tensorflow"],
+    secondarySkills: ["pytorch", "scikit-learn", "machine learning", "deep learning"],
+    optionalSkills: ["natural language processing", "computer vision", "opencv", "docker", "aws"]
+  },
+  data_analyst: {
+    label: "Data Analyst",
+    coreSkills: ["sql", "excel", "data analysis"],
+    secondarySkills: ["power bi", "tableau", "statistics"],
+    optionalSkills: ["python", "pandas", "data visualization"]
+  },
+  ui_ux_designer: {
+    label: "UI/UX Designer",
+    coreSkills: ["figma", "ui design", "ux research", "wireframing"],
+    secondarySkills: ["prototyping", "user testing", "design systems"],
+    optionalSkills: ["adobe xd", "accessibility", "sketch"]
+  },
+  devops_engineer: {
+    label: "DevOps Engineer",
+    coreSkills: ["docker", "kubernetes", "ci/cd", "linux"],
+    secondarySkills: ["aws", "terraform", "jenkins"],
+    optionalSkills: ["ansible", "github actions", "monitoring"]
+  },
+  cloud_engineer: {
+    label: "Cloud Engineer",
+    coreSkills: ["aws", "azure", "gcp", "cloud architecture"],
+    secondarySkills: ["networking", "terraform", "kubernetes"],
+    optionalSkills: ["docker", "security", "cost optimization"]
+  },
+  cybersecurity_engineer: {
+    label: "Cybersecurity Engineer",
+    // Core = concrete, named tools/skills a student resume actually states —
+    // mirrors backend constants/resume-intelligence-v2.js.
+    coreSkills: ["linux", "networking", "penetration testing"],
+    secondarySkills: ["vulnerability assessment", "wireshark", "network security"],
+    optionalSkills: ["siem", "burp suite", "cryptography", "incident response", "cloud security", "compliance", "python"]
   }
 };
 

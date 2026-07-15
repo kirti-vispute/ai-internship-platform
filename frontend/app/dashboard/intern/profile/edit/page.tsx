@@ -147,6 +147,12 @@ export default function EditInternProfilePage() {
         return;
       }
 
+      if (!summary.trim()) {
+        setError("Professional Summary is required. Write a short summary of your background and goals.");
+        setActiveSection("personal");
+        return;
+      }
+
       const response = await apiRequest<{ profile: InternProfile }>("/api/intern/profile", {
         method: "PUT",
         body: JSON.stringify({
@@ -254,7 +260,15 @@ export default function EditInternProfilePage() {
                     <Input label="Portfolio" value={portfolioUrl} onChange={(e) => setPortfolioUrl(e.target.value)} />
                   </div>
                   <div className="mt-4">
-                    <Textarea label="Professional Summary" value={summary} onChange={(e) => setSummary(e.target.value)} rows={5} />
+                    <Textarea
+                      label="Professional Summary *"
+                      value={summary}
+                      onChange={(e) => setSummary(e.target.value)}
+                      rows={5}
+                      required
+                      placeholder="Write 2-4 sentences in your own words about your background, strengths, and career goals. This is never auto-filled from your resume."
+                      error={!summary.trim() && error?.includes("Professional Summary") ? "Professional Summary is required." : undefined}
+                    />
                   </div>
                 </SectionPanel>
               )}

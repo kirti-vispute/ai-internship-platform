@@ -106,9 +106,9 @@ export default function CompanyNotificationsPage() {
       />
 
       {shouldBlockPageContent(notifications) && loading && (
-        <div className="surface-muted p-4 text-sm text-slate-700 dark:text-slate-300">Loading notifications...</div>
+        <div className="ds-card border-dashed px-4 py-3 text-sm text-[var(--ds-muted)]">Loading notifications...</div>
       )}
-      {error && <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300">{error}</div>}
+      {error && <div className="ds-alert ds-alert--error">{error}</div>}
 
       {!loading && !error && notifications.length === 0 && (
         <BrandedEmptyState preset={BRANDED_EMPTY_STATES.companyNotifications} presetKey="companyNotifications" />

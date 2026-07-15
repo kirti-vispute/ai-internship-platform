@@ -11,7 +11,7 @@ function errorMiddleware(err, req, res, next) {
 
   if (err.name === "MulterError") {
     statusCode = 400;
-    message = err.code === "LIMIT_FILE_SIZE" ? "Certificate file exceeds maximum allowed size." : err.message;
+    message = err.code === "LIMIT_FILE_SIZE" ? "Uploaded file exceeds the maximum allowed size." : err.message;
   } else if (String(message).toLowerCase().includes("unsupported file format")) {
     statusCode = 400;
   }

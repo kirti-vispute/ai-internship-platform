@@ -200,6 +200,9 @@ export type InterviewScheduleSlot = {
   roundType: string;
   interviewDate: string;
   interviewTime: string;
+  durationMinutes?: number;
+  timezone?: string;
+  interviewers?: Array<{ name: string; role?: string }>;
   mode?: "online" | "offline" | "";
   meetingLink?: string;
   location?: string;
