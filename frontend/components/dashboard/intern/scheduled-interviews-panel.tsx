@@ -10,11 +10,18 @@ import {
   type ScheduledInterviewRecord
 } from "@/lib/interview-workflow";
 import { formatInterviewJoinHint } from "@/lib/interview-join";
+import { useInterviewCountdown } from "@/lib/use-interview-countdown";
 import { SectionPanel } from "@/components/dashboard/section-panel";
 import { Button } from "@/components/ui/button";
 import { InterviewStatusChip } from "@/components/dashboard/interview/interview-status-chip";
 import { InterviewDetailsModal } from "@/components/dashboard/interview/interview-details-modal";
 import { InterviewJoinButton } from "@/components/dashboard/interview/interview-join-button";
+
+function InterviewCountdownHint({ item }: { item: ScheduledInterviewRecord }) {
+  const countdown = useInterviewCountdown(item.interviewDate, item.interviewTime);
+  if (!countdown) return null;
+  return <p className="text-xs font-medium text-primary-700 dark:text-primary-300">Starts in {countdown.label}</p>;
+}
 
 type ScheduledInterviewsPanelProps = {
   applications?: Application[];
@@ -79,6 +86,7 @@ export function ScheduledInterviewsPanel({
                       {formatInterviewDateTime(item.interviewDate, item.interviewTime)}
                     </p>
                     {joinHint ? <p className="text-xs text-primary-700 dark:text-primary-300">{joinHint}</p> : null}
+                    <InterviewCountdownHint item={item} />
                   </div>
                   <div className="flex flex-wrap gap-2 sm:justify-end">
                     <Button type="button" size="sm" variant="secondary" onClick={() => setSelected(item)}>

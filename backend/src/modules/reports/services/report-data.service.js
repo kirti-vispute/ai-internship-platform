@@ -8,7 +8,7 @@ const { getSkillGap, recommendInternships } = require("../../../services/ai.serv
 const { computeApplicationRelevance } = require("../../../services/application-relevance.service");
 const { computeResumeScore } = require("../../../services/scorer.service");
 const { buildCompanyAnalytics } = require("../../../services/company-analytics.service");
-const { applicationScopeFilter } = require("../../../services/company-access.service");
+const { applicationScopeFilter, sanitizeFeedbackEntries } = require("../../../services/company-access.service");
 const { USER_ROLES } = require("../../../constants/enums");
 const { BRAND_NAME, PORTAL_NAME } = require("../../../shared/constants/brand");
 
@@ -149,20 +149,21 @@ async function buildApplicationHistoryData(user) {
 
 async function buildCandidateEvaluationData(user, applicationId) {
   const { company } = await getCompanyProfileByUserId(user._id);
-  const application = await Application.findOne({ _id: applicationId, companyId: company._id })
+  const application = await Application.findOne({ _id: applicationId, ...applicationScopeFilter(company._id, user) })
     .populate("intern")
     .populate({ path: "internship", populate: { path: "company" } })
     .lean();
   if (!application) throw new AppError("Application not found", 404);
 
   const intern = application.intern;
-  const technicalFeedback = (application.hrFeedback || []).filter((f) =>
+  const viewableFeedback = sanitizeFeedbackEntries(application.hrFeedback, user, application.assignedRecruiter);
+  const technicalFeedback = viewableFeedback.filter((f) =>
     String(f.category || "").toLowerCase().includes("technical")
   );
-  const hrFeedback = (application.hrFeedback || []).filter((f) =>
+  const hrFeedback = viewableFeedback.filter((f) =>
     !String(f.category || "").toLowerCase().includes("technical")
   );
-  const ratings = (application.hrFeedback || []).map((f) => f.rating).filter((r) => typeof r === "number");
+  const ratings = viewableFeedback.map((f) => f.rating).filter((r) => typeof r === "number");
   const avgRating = ratings.length
     ? Number((ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1))
     : null;
@@ -196,7 +197,7 @@ async function buildCandidateEvaluationData(user, applicationId) {
 
 async function buildInterviewReportData(user, applicationId) {
   const { company } = await getCompanyProfileByUserId(user._id);
-  const application = await Application.findOne({ _id: applicationId, companyId: company._id })
+  const application = await Application.findOne({ _id: applicationId, ...applicationScopeFilter(company._id, user) })
     .populate("intern")
     .populate("internship")
     .lean();

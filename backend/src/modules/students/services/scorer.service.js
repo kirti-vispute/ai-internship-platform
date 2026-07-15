@@ -1,5 +1,4 @@
-const { calculateResumeScore } = require("../../../services/ai.service");
-const { normalizeSkillList } = require("../../../shared/utils/skill-normalizer");
+const { normalizeSkillList, textMentionsSkill } = require("../../../shared/utils/skill-normalizer");
 const { computeResumeIntelligenceV2 } = require("../../../services/resume-intelligence-v2.service");
 
 const SCORER_ENABLED = String(process.env.SCORER_ENABLED || "false").toLowerCase() === "true";
@@ -8,7 +7,10 @@ const SCORER_TIMEOUT_MS = Number(process.env.SCORER_TIMEOUT_MS || 5000);
 const SCORER_MAX_RETRIES = 2;
 
 const ACTION_VERBS = [
-  "built", "developed", "implemented", "optimized", "designed", "led", "created", "improved", "managed", "delivered"
+  "built", "developed", "implemented", "optimized", "designed", "led", "created", "improved", "managed", "delivered",
+  "architected", "automated", "migrated", "mentored", "spearheaded", "streamlined", "engineered", "launched",
+  "scaled", "reduced", "increased", "orchestrated", "refactored", "authored", "collaborated", "negotiated",
+  "presented", "deployed", "integrated", "researched", "analyzed", "coordinated", "trained", "resolved"
 ];
 
 const SECTION_HINTS = ["summary", "experience", "education", "skills", "projects", "certification"];
@@ -59,14 +61,17 @@ function analyzeResumeText(text, targetSkills = []) {
   else if (wordCount >= 150 && wordCount < 250) lengthScore = 50;
   else lengthScore = 30;
 
-  const quantCount = countRegex(clean, /(\d+%|\$\d+|\d+\+|\d+\s?(users|clients|projects|months|years))/gi);
+  const quantCount = countRegex(
+    clean,
+    /(\d+(\.\d+)?\s?-\s?\d+(\.\d+)?%|\d+(\.\d+)?%|\$\d+(?:,\d{3})*(?:\.\d+)?[km]?|\d+\+|\d+x\b|\d+k\b|\d+\s?(users|clients|projects|months|years|hours|days|releases|deployments|engineers|team members|customers|requests|transactions|servers|features|bugs|tickets))/gi
+  );
   const quantScore = Math.min(100, quantCount * 18);
 
   const verbCount = ACTION_VERBS.reduce((acc, verb) => acc + countRegex(clean, new RegExp(`\\b${verb}\\b`, "gi")), 0);
   const verbScore = Math.min(100, verbCount * 15);
 
   const normalizedSkills = normalizeSkillList(Array.isArray(targetSkills) ? targetSkills : []);
-  const matchedSkills = normalizedSkills.filter((skill) => clean.includes(skill));
+  const matchedSkills = normalizedSkills.filter((skill) => textMentionsSkill(clean, skill));
   const skillsScore = normalizedSkills.length > 0 ? toPercent(matchedSkills.length, normalizedSkills.length) : 60;
   const completenessChecks = [hasEmail, hasPhone, hasLinkedIn, hasProjects, hasExperience, hasEducation];
   const completenessPercent = toPercent(completenessChecks.filter(Boolean).length, completenessChecks.length);
@@ -226,6 +231,7 @@ function buildAnalysisPayload(overallScore, analysis, scorerWarnings = [], intel
   if (intelligenceV2) {
     base.compositeScores = intelligenceV2.compositeScores;
     base.dimensionBreakdown = intelligenceV2.dimensionBreakdown;
+    base.scoreExplanation = intelligenceV2.scoreExplanation;
     base.skillIntelligence = intelligenceV2.skillIntelligence;
     base.quality = intelligenceV2.quality;
     base.aiValidation = validateResumeExtraction({
@@ -238,7 +244,16 @@ function buildAnalysisPayload(overallScore, analysis, scorerWarnings = [], intel
   return base;
 }
 
-async function computeResumeScore({ profile, resumeText, targetRoleKey = "full_stack_developer" }) {
+/**
+ * Deterministic ATS score: overallScore is always exactly
+ * resume-intelligence-v2's weighted dimension sum — no blending with any
+ * other estimate, so the same resume + same internship always produce the
+ * same score. The optional external ML scorer (SCORER_ENABLED, off by
+ * default) is attached as a separate supplementary signal only, never mixed
+ * into resumeScore, so enabling/disabling it can't change the deterministic
+ * result.
+ */
+async function computeResumeScore({ profile, resumeText, targetRoleKey = "full_stack_developer", internshipContext = null }) {
   const text = String(resumeText || profile?.resume?.text || "").trim();
 
   if (!text) {
@@ -267,66 +282,51 @@ async function computeResumeScore({ profile, resumeText, targetRoleKey = "full_s
     };
   }
 
-  const analysis = analyzeResumeText(text, profile?.skills || []);
-  const fallbackBaseScore = normalizeScore(calculateResumeScore(profile || { resume: { text } })) || 0;
-  const hasParsed = Boolean(profile?.resume?.parsed?.skills?.length || profile?.resume?.parsed?.projects?.length);
+  // Keyword relevance target: the specific internship's required + preferred
+  // skills when scoring in that context, otherwise the student's own profile
+  // skills (generic ATS view).
+  const keywordTargetSkills = internshipContext?.requiredSkills?.length
+    ? [...internshipContext.requiredSkills, ...(internshipContext.preferredSkills || [])]
+    : profile?.skills || [];
+
+  const analysis = analyzeResumeText(text, keywordTargetSkills);
   const intelligenceV2 = computeResumeIntelligenceV2({
     profile,
     resumeText: text,
     textAnalysis: analysis,
-    targetRoleKey
+    targetRoleKey,
+    internshipContext
   });
 
-  function finalizeScore(baseRuleScore, scorerMeta = {}) {
-    let resumeScore = baseRuleScore;
-    if (hasParsed && intelligenceV2.overallScore > 0) {
-      resumeScore =
-        normalizeScore(intelligenceV2.overallScore * 0.82 + baseRuleScore * 0.18) || intelligenceV2.overallScore;
+  const resumeScore = intelligenceV2.overallScore;
+
+  const result = {
+    resumeScore,
+    predictedCategory: intelligenceV2.skillIntelligence?.targetRole || "",
+    confidence: intelligenceV2.confidence ?? null,
+    scoreSource: "resume_intelligence_v2",
+    analysis: buildAnalysisPayload(resumeScore, analysis, [], intelligenceV2, profile?.resume?.parsed || {})
+  };
+
+  if (SCORER_ENABLED) {
+    try {
+      const scorerResult = await callScorer(text);
+      result.mlScorerSignal = {
+        resumeScore: scorerResult.resumeScore,
+        predictedCategory: scorerResult.predictedCategory,
+        confidence: scorerResult.confidence,
+        scoreSource: scorerResult.scoreSource,
+        note: "Supplementary external model signal, shown for reference only — not blended into resumeScore."
+      };
+    } catch (error) {
+      result.analysis.warnings = [
+        ...(result.analysis.warnings || []),
+        `Optional external model scorer unavailable: ${(error && error.message) || "unknown error"}.`
+      ];
     }
-    return {
-      resumeScore,
-      predictedCategory: scorerMeta.predictedCategory || intelligenceV2.skillIntelligence?.targetRole || "",
-      confidence: scorerMeta.confidence ?? intelligenceV2.confidence ?? null,
-      scoreSource: scorerMeta.scoreSource || "resume_intelligence_v2",
-      analysis: buildAnalysisPayload(
-        resumeScore,
-        analysis,
-        scorerMeta.warnings || [],
-        intelligenceV2,
-        profile?.resume?.parsed || {}
-      )
-    };
   }
 
-  if (!SCORER_ENABLED) {
-    const ruleBlend = normalizeScore(analysis.ruleScore * 0.55 + fallbackBaseScore * 0.15) || 0;
-    return finalizeScore(ruleBlend, {
-      scoreSource: "resume_intelligence_v2",
-      warnings: ["ML scorer disabled. V2 structured ATS analysis is active."]
-    });
-  }
-
-  try {
-    const scorerResult = await callScorer(text);
-    const blended =
-      scorerResult.scoreSource === "sieve_model"
-        ? normalizeScore(scorerResult.resumeScore * 0.25 + analysis.ruleScore * 0.2 + intelligenceV2.overallScore * 0.55)
-        : normalizeScore(analysis.ruleScore * 0.25 + intelligenceV2.overallScore * 0.55 + scorerResult.resumeScore * 0.2);
-
-    const overall = blended || intelligenceV2.overallScore || analysis.ruleScore;
-    return finalizeScore(overall, {
-      predictedCategory: scorerResult.predictedCategory,
-      confidence: scorerResult.confidence,
-      scoreSource: scorerResult.scoreSource === "sieve_model" ? "hybrid_v2_ml" : "resume_intelligence_v2",
-      warnings: scorerResult.scoreSource === "fallback" ? ["Model scorer unavailable. V2 + rule-based scoring used."] : []
-    });
-  } catch (error) {
-    const resumeScore = normalizeScore(intelligenceV2.overallScore * 0.85 + analysis.ruleScore * 0.1 + fallbackBaseScore * 0.05) || intelligenceV2.overallScore;
-    return finalizeScore(resumeScore, {
-      scoreSource: "resume_intelligence_v2",
-      warnings: [`Model scorer unavailable: ${(error && error.message) || "unknown error"}. V2 analysis used.`]
-    });
-  }
+  return result;
 }
 
 module.exports = { computeResumeScore, SCORER_ENABLED };

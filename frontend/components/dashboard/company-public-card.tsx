@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { PublicCompanyProfile, fetchPublicCompanyProfile } from "@/lib/intern-portal";
 import { ExternalLink } from "@/components/ui/external-link";
 
@@ -56,10 +57,15 @@ export function CompanyPublicCard({ companyId }: CompanyPublicCardProps) {
         <span className="font-semibold text-slate-900 dark:text-slate-100">Hiring success rate:</span> {profile.hiringSuccessRate}%
       </p>
       {profile.website && (
-        <p className="sm:col-span-2">
+        <p>
           <ExternalLink href={profile.website}>Company website</ExternalLink>
         </p>
       )}
+      <p>
+        <Link href={`/company/${companyId}`} className="text-link" target="_blank" rel="noreferrer noopener">
+          View full company profile
+        </Link>
+      </p>
     </div>
   );
 }

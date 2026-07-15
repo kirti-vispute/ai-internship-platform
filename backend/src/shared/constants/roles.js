@@ -34,7 +34,12 @@ const PERMISSION_KEYS = Object.freeze({
   COMPANY_ANALYTICS_RECRUITER: "company:analytics:recruiter",
   COMPANY_ANALYTICS_GLOBAL: "company:analytics:global",
   COMPANY_ANALYTICS_SALARY: "company:analytics:salary",
-  COMPANY_REPORTS_GLOBAL: "company:reports:global"
+  COMPANY_REPORTS_GLOBAL: "company:reports:global",
+  // Not granted to any role by default (including CEO/Owner). Interview
+  // feedback is private between its author and the candidate; this permission
+  // exists only so a future explicit business requirement can widen a
+  // specific account's access without a blanket admin bypass.
+  COMPANY_FEEDBACK_VIEW_ALL: "company:feedback:view_all"
 });
 
 const ROLE_PERMISSIONS = Object.freeze({

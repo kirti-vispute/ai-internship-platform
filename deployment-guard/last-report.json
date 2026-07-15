@@ -1,19 +1,21 @@
 {
   "buildStatus": "FAIL",
   "failedChecks": [
-    "ai.hiring-engine: Hiring AI engine exports ranking and rejection modules"
+    "ai.hiring-engine: Hiring AI engine exports ranking and rejection modules",
+    "interview.webrtc-chat: Interview shell wires WebRTC, socket chat, and ACK message append"
   ],
   "warnings": [
-    "ui.chat-loading-states: Chat workspace defines loading and error UI"
+    "ui.chat-loading-states: Chat workspace defines loading and error UI",
+    "ui.interview-responsive: Interview room uses collapsible sidebar and responsive grid"
   ],
   "performanceScore": 100,
   "aiReliabilityScore": 88,
-  "uiStabilityScore": 90,
-  "passedCount": 37,
-  "failedCount": 1,
-  "warningCount": 1,
+  "uiStabilityScore": 80,
+  "passedCount": 35,
+  "failedCount": 2,
+  "warningCount": 2,
   "target": "backend",
-  "durationMs": 2293,
+  "durationMs": 3707,
   "checks": [
     {
       "id": "func.routes",
@@ -179,9 +181,9 @@
       "id": "interview.webrtc-chat",
       "category": "functionality",
       "name": "Interview WebRTC + chat",
-      "status": "PASS",
+      "status": "FAIL",
       "message": "Interview shell wires WebRTC, socket chat, and ACK message append",
-      "blocking": false
+      "blocking": true
     },
     {
       "id": "interview.api-auth",
@@ -251,7 +253,7 @@
       "id": "ui.interview-responsive",
       "category": "ui",
       "name": "Interview responsive layout",
-      "status": "PASS",
+      "status": "WARN",
       "message": "Interview room uses collapsible sidebar and responsive grid",
       "blocking": false
     },

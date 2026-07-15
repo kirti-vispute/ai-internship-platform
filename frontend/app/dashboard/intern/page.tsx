@@ -5,7 +5,7 @@ import { DashboardPageHeader } from "@/components/dashboard/dashboard-page-heade
 import { SectionPanel } from "@/components/dashboard/section-panel";
 import { BrandedEmptyState, EmptyState } from "@/components/dashboard/empty-state";
 import { BRANDED_EMPTY_STATES } from "@/lib/brand";
-import { ClipboardList, Pencil } from "lucide-react";
+import { BarChart3, ClipboardList, LayoutGrid, Pencil, Sparkles } from "lucide-react";
 import { RecentMessagesWidget } from "@/components/dashboard/recent-messages-widget";
 import { Button } from "@/components/ui/button";
 import { AppIcon } from "@/components/icons/app-icon";
@@ -26,15 +26,14 @@ import {
   fetchSavedInternships,
   peekInternApplications,
   peekInternProfile,
-  peekSavedInternships
+  peekSavedInternships,
+  PROFILE_UPDATED_EVENT
 } from "@/lib/intern-portal";
 import { mapApiInterviewsToRecords, type ScheduledInterviewRecord } from "@/lib/interview-workflow";
 import { UpcomingInterviewsWidget } from "@/components/dashboard/intern/upcoming-interviews-widget";
-import { ScheduledInterviewsPanel } from "@/components/dashboard/intern/scheduled-interviews-panel";
 import { WeaknessAnalysisPanel } from "@/components/dashboard/intern/weakness-analysis-panel";
 import { buildWeaknessOptions, analyzeInternshipWeaknesses } from "@/lib/intern-weakness-analysis";
 import {
-  AiInsightsCard,
   AtsReadinessCard,
   DashboardHero,
   PlacementReadinessCard,
@@ -51,14 +50,7 @@ import {
 import { CareerProgressHub } from "@/components/dashboard/intern/career-progress-hub";
 import { WeeklyAiInsights } from "@/components/dashboard/intern/weekly-ai-insights";
 import { ProgressChartsPanel } from "@/components/dashboard/intern/progress-charts-panel";
-
-function DashboardGroupHeading({ children }: { children: React.ReactNode }) {
-  return (
-    <h2 className="pt-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
-      {children}
-    </h2>
-  );
-}
+import { DashboardTabs, type DashboardTabItem } from "@/components/dashboard/dashboard-tabs";
 
 export default function InternDashboardOverviewPage() {
   const [profile, setProfile] = useState<InternProfile | null>(null);
@@ -127,6 +119,23 @@ export default function InternDashboardOverviewPage() {
     loadDashboard();
   }, [loadDashboard]);
 
+  useEffect(() => {
+    // `profile` here is set once by loadDashboard on mount. A resume upload
+    // or profile edit elsewhere invalidates the shared cache but doesn't
+    // touch this component's local state -- without this listener the hero
+    // name/readiness card would keep showing whatever was true at mount
+    // until the user navigates away and back.
+    const syncProfile = () => {
+      fetchInternProfile(true).then(setProfile).catch(() => undefined);
+    };
+    window.addEventListener(PROFILE_UPDATED_EVENT, syncProfile);
+    window.addEventListener("internai-auth-change", syncProfile);
+    return () => {
+      window.removeEventListener(PROFILE_UPDATED_EVENT, syncProfile);
+      window.removeEventListener("internai-auth-change", syncProfile);
+    };
+  }, []);
+
   const interviewCount = useMemo(() => interviewRecords.length, [interviewRecords]);
 
   const weaknessOptions = useMemo(
@@ -170,6 +179,196 @@ export default function InternDashboardOverviewPage() {
     return steps;
   }, [profile, profileCompletion, missingSkills]);
 
+  const tabs = useMemo(() => {
+    const items: DashboardTabItem[] = [
+      {
+        key: "overview",
+        label: "Overview",
+        icon: LayoutGrid,
+        content: (
+          <>
+            <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              <AtsReadinessCard profile={profile} analysis={profile?.resume?.analysis} />
+              <SkillGapCard analysis={profile?.resume?.analysis} />
+              <PlacementReadinessCard readiness={readiness} analysis={profile?.resume?.analysis} />
+            </section>
+
+            <StatisticsCards
+              profile={profile}
+              analysis={profile?.resume?.analysis}
+              profileCompletion={profileCompletion}
+              applications={applications}
+              interviewCount={interviewCount}
+              savedCount={savedInternships.length}
+            />
+
+            <QuickActions />
+          </>
+        )
+      },
+      {
+        key: "progress",
+        label: "Progress & Analytics",
+        icon: BarChart3,
+        content: (
+          <>
+            <CareerProgressHub profile={profile} analysis={profile?.resume?.analysis} readiness={readiness} />
+            <DashboardCharts applications={applications} analysis={profile?.resume?.analysis} />
+            <ProgressChartsPanel applications={applications} interviewRecords={interviewRecords} />
+            <WeaknessAnalysisPanel
+              profile={profile}
+              options={weaknessOptions}
+              loading={recommendationsLoading}
+              error={error}
+              onRetry={loadDashboard}
+            />
+          </>
+        )
+      },
+      {
+        key: "applications",
+        label: "Applications & Interviews",
+        icon: ClipboardList,
+        content: (
+          <>
+            <SectionPanel title="Recent Applications" subtitle="Latest activity across your internship pipeline." titleIcon={ClipboardList}>
+              {recentApplications.length === 0 ? (
+                <EmptyState
+                  title="No applications yet"
+                  hint="Search internships and submit your first application."
+                  presetKey="applications"
+                  action={
+                    <Button href="/dashboard/intern/internships/search" type="button" size="sm">
+                      Search Internships
+                    </Button>
+                  }
+                />
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left">
+                    <thead>
+                      <tr className="border-b border-slate-200 dark:border-slate-800">
+                        <th className="py-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Role</th>
+                        <th className="py-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Company</th>
+                        <th className="py-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Applied On</th>
+                        <th className="py-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {recentApplications.map((app) => (
+                        <tr key={app._id} className="border-b border-slate-100 text-sm dark:border-slate-800/70">
+                          <td className="py-2.5 pr-2 font-medium text-slate-900 dark:text-slate-100">{app.internship?.role || "Internship"}</td>
+                          <td className="py-2.5 pr-2 text-slate-600 dark:text-slate-300">{app.internship?.company?.companyName || "Company"}</td>
+                          <td className="py-2.5 pr-2 text-slate-600 dark:text-slate-300">
+                            {app.appliedAt ? new Date(app.appliedAt).toLocaleDateString() : "—"}
+                          </td>
+                          <td className="py-2.5">
+                            <span className="inline-flex rounded-full bg-primary-100 px-2.5 py-1 text-xs font-semibold capitalize text-primary-700 dark:bg-primary-900/40 dark:text-primary-300">
+                              {(app.status || "pending").replace(/_/g, " ")}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  <div className="pt-3">
+                    <Button href="/dashboard/intern/applications" type="button" size="sm" variant="secondary">
+                      View all applications
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </SectionPanel>
+
+            <UpcomingInterviewsWidget interviewRecords={interviewRecords} applications={applications} />
+          </>
+        )
+      },
+      {
+        key: "insights",
+        label: "Insights & Activity",
+        icon: Sparkles,
+        content: (
+          <>
+            <WeeklyAiInsights analysis={profile?.resume?.analysis} applications={applications} topWeakness={topWeakness} />
+            <RecommendationsCard recommendations={recommendations} loading={recommendationsLoading} />
+
+            <ActivityTimeline
+              applications={applications}
+              interviewRecords={interviewRecords}
+              notifications={notifications}
+            />
+
+            <SectionPanel title="Next Steps" subtitle="Priority actions to improve matching and hiring outcomes.">
+              {nextSteps.length === 0 ? (
+                <p className="surface-subtle px-4 py-3 text-sm text-slate-700 dark:text-slate-300">
+                  Great progress. Keep monitoring applications and interview updates.
+                </p>
+              ) : (
+                <ul className="space-y-2 text-sm text-slate-700 dark:text-slate-300">
+                  {nextSteps.includes("Upload Resume") && (
+                    <li className="surface-subtle px-4 py-3">Upload Resume</li>
+                  )}
+                  {nextSteps.includes("Complete Profile") && (
+                    <li className="surface-subtle px-4 py-3">Complete Profile</li>
+                  )}
+                  {nextSteps.includes("Add Certifications") && (
+                    <li className="surface-subtle px-4 py-3">Add Certifications</li>
+                  )}
+                  {nextSteps.includes("Improve Resume Score") && (
+                    <li className="surface-subtle px-4 py-3">Improve Resume Score</li>
+                  )}
+                  {nextSteps.includes("Missing Skills") && (
+                    <li className="surface-subtle px-4 py-3">
+                      Missing Skills{missingSkills.length > 0 ? `: ${missingSkills.join(", ")}` : ""}
+                    </li>
+                  )}
+                </ul>
+              )}
+            </SectionPanel>
+
+            <RecentMessagesWidget role="intern" chatHref="/dashboard/intern/chat" />
+
+            <SectionPanel title="Recent Notifications" subtitle="Latest updates from applications and recruiters.">
+              {notifications.length === 0 ? (
+                <BrandedEmptyState preset={BRANDED_EMPTY_STATES.notifications} presetKey="notifications" />
+              ) : (
+                <ul className="space-y-2">
+                  {notifications.map((item) => (
+                    <li key={item._id} className="surface-subtle px-4 py-3">
+                      <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{item.title}</p>
+                      {item.message ? <p className="mt-0.5 text-xs text-slate-600 dark:text-slate-300">{item.message}</p> : null}
+                      <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">{new Date(item.createdAt).toLocaleString()}</p>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </SectionPanel>
+          </>
+        )
+      }
+    ];
+    return items;
+  }, [
+    profile,
+    readiness,
+    profileCompletion,
+    applications,
+    interviewCount,
+    savedInternships,
+    interviewRecords,
+    weaknessOptions,
+    recommendationsLoading,
+    error,
+    loadDashboard,
+    recentApplications,
+    topWeakness,
+    recommendations,
+    notifications,
+    nextSteps,
+    missingSkills
+  ]);
+
   return (
     <div className="dashboard-stack">
           <DashboardPageHeader
@@ -200,152 +399,7 @@ export default function InternDashboardOverviewPage() {
             <>
               <DashboardHero profile={profile} analysis={profile?.resume?.analysis} profileCompletion={profileCompletion} readiness={readiness} />
 
-              <DashboardGroupHeading>Snapshot</DashboardGroupHeading>
-              <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                <AtsReadinessCard profile={profile} analysis={profile?.resume?.analysis} />
-                <AiInsightsCard profile={profile} analysis={profile?.resume?.analysis} />
-                <SkillGapCard analysis={profile?.resume?.analysis} />
-                <PlacementReadinessCard readiness={readiness} analysis={profile?.resume?.analysis} />
-              </section>
-
-              <DashboardGroupHeading>Key Metrics</DashboardGroupHeading>
-              <StatisticsCards
-                profile={profile}
-                analysis={profile?.resume?.analysis}
-                profileCompletion={profileCompletion}
-                applications={applications}
-                interviewCount={interviewCount}
-                savedCount={savedInternships.length}
-              />
-
-              <DashboardGroupHeading>Career Progress</DashboardGroupHeading>
-              <CareerProgressHub profile={profile} analysis={profile?.resume?.analysis} readiness={readiness} />
-
-              <DashboardGroupHeading>Analytics</DashboardGroupHeading>
-              <DashboardCharts applications={applications} analysis={profile?.resume?.analysis} />
-              <ProgressChartsPanel applications={applications} interviewRecords={interviewRecords} />
-
-              <DashboardGroupHeading>Weekly AI Insights</DashboardGroupHeading>
-              <WeeklyAiInsights analysis={profile?.resume?.analysis} applications={applications} topWeakness={topWeakness} />
-
-              <DashboardGroupHeading>Opportunities</DashboardGroupHeading>
-              <RecommendationsCard recommendations={recommendations} loading={recommendationsLoading} />
-
-              <QuickActions />
-
-              <DashboardGroupHeading>Activity</DashboardGroupHeading>
-              <ActivityTimeline
-                applications={applications}
-                interviewRecords={interviewRecords}
-                notifications={notifications}
-              />
-
-              <WeaknessAnalysisPanel
-                profile={profile}
-                options={weaknessOptions}
-                loading={recommendationsLoading}
-                error={error}
-                onRetry={loadDashboard}
-              />
-
-              <UpcomingInterviewsWidget interviewRecords={interviewRecords} applications={applications} />
-
-              <ScheduledInterviewsPanel interviewRecords={interviewRecords} applications={applications} compact />
-
-              <SectionPanel title="Recent Applications" subtitle="Latest activity across your internship pipeline." titleIcon={ClipboardList}>
-                {recentApplications.length === 0 ? (
-                  <EmptyState
-                    title="No applications yet"
-                    hint="Search internships and submit your first application."
-                    presetKey="applications"
-                    action={
-                      <Button href="/dashboard/intern/internships/search" type="button" size="sm">
-                        Search Internships
-                      </Button>
-                    }
-                  />
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left">
-                      <thead>
-                        <tr className="border-b border-slate-200 dark:border-slate-800">
-                          <th className="py-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Role</th>
-                          <th className="py-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Company</th>
-                          <th className="py-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Applied On</th>
-                          <th className="py-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Status</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {recentApplications.map((app) => (
-                          <tr key={app._id} className="border-b border-slate-100 text-sm dark:border-slate-800/70">
-                            <td className="py-2.5 pr-2 font-medium text-slate-900 dark:text-slate-100">{app.internship?.role || "Internship"}</td>
-                            <td className="py-2.5 pr-2 text-slate-600 dark:text-slate-300">{app.internship?.company?.companyName || "Company"}</td>
-                            <td className="py-2.5 pr-2 text-slate-600 dark:text-slate-300">
-                              {app.appliedAt ? new Date(app.appliedAt).toLocaleDateString() : "—"}
-                            </td>
-                            <td className="py-2.5">
-                              <span className="inline-flex rounded-full bg-primary-100 px-2.5 py-1 text-xs font-semibold capitalize text-primary-700 dark:bg-primary-900/40 dark:text-primary-300">
-                                {(app.status || "pending").replace(/_/g, " ")}
-                              </span>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                    <div className="pt-3">
-                      <Button href="/dashboard/intern/applications" type="button" size="sm" variant="secondary">
-                        View all applications
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </SectionPanel>
-
-              <SectionPanel title="Next Steps" subtitle="Priority actions to improve matching and hiring outcomes.">
-                {nextSteps.length === 0 ? (
-                  <p className="surface-subtle px-4 py-3 text-sm text-slate-700 dark:text-slate-300">
-                    Great progress. Keep monitoring applications and interview updates.
-                  </p>
-                ) : (
-                  <ul className="space-y-2 text-sm text-slate-700 dark:text-slate-300">
-                    {nextSteps.includes("Upload Resume") && (
-                      <li className="surface-subtle px-4 py-3">Upload Resume</li>
-                    )}
-                    {nextSteps.includes("Complete Profile") && (
-                      <li className="surface-subtle px-4 py-3">Complete Profile</li>
-                    )}
-                    {nextSteps.includes("Add Certifications") && (
-                      <li className="surface-subtle px-4 py-3">Add Certifications</li>
-                    )}
-                    {nextSteps.includes("Improve Resume Score") && (
-                      <li className="surface-subtle px-4 py-3">Improve Resume Score</li>
-                    )}
-                    {nextSteps.includes("Missing Skills") && (
-                      <li className="surface-subtle px-4 py-3">
-                        Missing Skills{missingSkills.length > 0 ? `: ${missingSkills.join(", ")}` : ""}
-                      </li>
-                    )}
-                  </ul>
-                )}
-              </SectionPanel>
-
-              <RecentMessagesWidget role="intern" chatHref="/dashboard/intern/chat" />
-
-              <SectionPanel title="Recent Notifications" subtitle="Latest updates from applications and recruiters.">
-                {notifications.length === 0 ? (
-                  <BrandedEmptyState preset={BRANDED_EMPTY_STATES.notifications} presetKey="notifications" />
-                ) : (
-                  <ul className="space-y-2">
-                    {notifications.map((item) => (
-                      <li key={item._id} className="surface-subtle px-4 py-3">
-                        <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{item.title}</p>
-                        {item.message ? <p className="mt-0.5 text-xs text-slate-600 dark:text-slate-300">{item.message}</p> : null}
-                        <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">{new Date(item.createdAt).toLocaleString()}</p>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </SectionPanel>
+              <DashboardTabs tabs={tabs} />
             </>
           )}
         </div>

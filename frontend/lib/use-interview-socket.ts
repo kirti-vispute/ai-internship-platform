@@ -7,11 +7,14 @@ import {
   joinInterviewSocketRoom,
   leaveInterviewSocketRoom,
   sendInterviewChat,
+  sendInterviewHandRaise,
+  sendInterviewNotesUpdate,
   sendInterviewSignal,
   subscribeInterviewSocket,
   updateInterviewParticipantStatus,
   type InterviewSocketHandlers,
-  type ParticipantUpdate
+  type ParticipantUpdate,
+  type RosterMember
 } from "@/lib/interview-socket-manager";
 
 export type WebRtcSignal = {
@@ -20,7 +23,7 @@ export type WebRtcSignal = {
   candidate?: RTCIceCandidateInit;
 };
 
-export type { ParticipantUpdate };
+export type { ParticipantUpdate, RosterMember };
 
 type InterviewSocketHookHandlers = InterviewSocketHandlers;
 
@@ -36,14 +39,10 @@ export function useInterviewSocket(handlers: InterviewSocketHookHandlers) {
       onChat: (message) => handlersRef.current.onChat?.(message),
       onParticipantUpdate: (payload) => handlersRef.current.onParticipantUpdate?.(payload),
       onEnd: (payload) => handlersRef.current.onEnd?.(payload),
-      onReconnect: () => {
-        const roomId = activeRoomRef.current;
-        if (roomId) {
-          void joinInterviewSocketRoom(roomId).then((joined) => {
-            if (joined.ok) handlersRef.current.onReconnect?.();
-          });
-        }
-      }
+      onKicked: () => handlersRef.current.onKicked?.(),
+      onHandRaise: (payload) => handlersRef.current.onHandRaise?.(payload),
+      onNotesSync: (payload) => handlersRef.current.onNotesSync?.(payload),
+      onReconnect: () => handlersRef.current.onReconnect?.()
     });
   }, []);
 
@@ -52,16 +51,27 @@ export function useInterviewSocket(handlers: InterviewSocketHookHandlers) {
     return joinInterviewSocketRoom(roomId);
   }, []);
 
-  const sendSignal = useCallback((roomId: string, signal: WebRtcSignal) => {
-    sendInterviewSignal(roomId, signal);
+  const sendSignal = useCallback((roomId: string, targetSocketId: string, signal: WebRtcSignal) => {
+    sendInterviewSignal(roomId, targetSocketId, signal);
   }, []);
 
   const sendChat = useCallback((roomId: string, body: string) => {
     return sendInterviewChat(roomId, body);
   }, []);
 
-  const updateParticipantStatus = useCallback((roomId: string, status: { muted?: boolean; cameraOff?: boolean }) => {
-    updateInterviewParticipantStatus(roomId, status);
+  const updateParticipantStatus = useCallback(
+    (roomId: string, status: { muted?: boolean; cameraOff?: boolean; screenSharing?: boolean }) => {
+      updateInterviewParticipantStatus(roomId, status);
+    },
+    []
+  );
+
+  const sendHandRaise = useCallback((roomId: string, raised: boolean) => {
+    sendInterviewHandRaise(roomId, raised);
+  }, []);
+
+  const sendNotesUpdate = useCallback((roomId: string, notes: string) => {
+    return sendInterviewNotesUpdate(roomId, notes);
   }, []);
 
   const endRoom = useCallback((roomId: string) => {
@@ -80,9 +90,11 @@ export function useInterviewSocket(handlers: InterviewSocketHookHandlers) {
       sendSignal,
       sendChat,
       updateParticipantStatus,
+      sendHandRaise,
+      sendNotesUpdate,
       endRoom,
       leaveRoom
     }),
-    [joinRoom, sendSignal, sendChat, updateParticipantStatus, endRoom, leaveRoom]
+    [joinRoom, sendSignal, sendChat, updateParticipantStatus, sendHandRaise, sendNotesUpdate, endRoom, leaveRoom]
   );
 }

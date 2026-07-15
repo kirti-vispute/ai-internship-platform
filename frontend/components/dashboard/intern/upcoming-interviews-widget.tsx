@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { CalendarClock, Timer } from "lucide-react";
 import type { Application } from "@/lib/intern-portal";
 import {
@@ -10,6 +10,7 @@ import {
   getCountdownParts,
   type ScheduledInterviewRecord
 } from "@/lib/interview-workflow";
+import { useTickingNow } from "@/lib/use-interview-countdown";
 import { SectionPanel } from "@/components/dashboard/section-panel";
 import { Button } from "@/components/ui/button";
 import { InterviewJoinButton } from "@/components/dashboard/interview/interview-join-button";
@@ -21,7 +22,7 @@ type UpcomingInterviewsWidgetProps = {
 };
 
 export function UpcomingInterviewsWidget({ applications = [], interviewRecords }: UpcomingInterviewsWidgetProps) {
-  const [now, setNow] = useState<number | null>(null);
+  const now = useTickingNow();
   const upcoming = useMemo(
     () =>
       interviewRecords
@@ -29,12 +30,6 @@ export function UpcomingInterviewsWidget({ applications = [], interviewRecords }
         : extractUpcomingInterviews(applications, 3),
     [applications, interviewRecords]
   );
-
-  useEffect(() => {
-    setNow(Date.now());
-    const timer = window.setInterval(() => setNow(Date.now()), 60_000);
-    return () => window.clearInterval(timer);
-  }, []);
 
   return (
     <SectionPanel

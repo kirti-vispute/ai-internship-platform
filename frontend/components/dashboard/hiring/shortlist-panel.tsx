@@ -11,6 +11,7 @@ import {
   companyDashboardStyles
 } from "@/components/dashboard/company/company-dashboard-layout";
 import { Button } from "@/components/ui/button";
+import { Badge, type BadgeTone } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { getMatchScore, getShortlistedCandidates, getSkillPreview } from "./hiring-utils";
 
@@ -29,12 +30,12 @@ type ShortlistPanelProps = {
   onScheduleInterview: (applicationId: string, candidateName: string) => void;
 };
 
-function recommendationTone(level?: string) {
+function recommendationTone(level?: string): BadgeTone {
   const normalized = String(level || "").toLowerCase();
-  if (normalized.includes("strong")) return "bg-emerald-950/50 text-emerald-300";
-  if (normalized.includes("good")) return "bg-sky-950/50 text-sky-300";
-  if (normalized.includes("moderate")) return "bg-amber-950/50 text-amber-300";
-  return "bg-white/5 text-[var(--ds-muted)]";
+  if (normalized.includes("strong")) return "success";
+  if (normalized.includes("good")) return "info";
+  if (normalized.includes("moderate")) return "warning";
+  return "neutral";
 }
 
 export function ShortlistPanel({
@@ -93,20 +94,9 @@ export function ShortlistPanel({
                     <div className="min-w-0 flex-1 space-y-2">
                       <div className="flex flex-wrap items-center gap-2">
                         <h3 className="ds-h3">{candidateName}</h3>
-                        {matchScore !== null && (
-                          <span className="inline-flex rounded-full bg-primary-950/40 px-2 py-0.5 text-[11px] font-semibold text-primary-300">
-                            {matchScore}% match
-                          </span>
-                        )}
+                        {matchScore !== null && <Badge tone="accent">{matchScore}% match</Badge>}
                         {evaluation?.recommendationLevel ? (
-                          <span
-                            className={cn(
-                              "inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold",
-                              recommendationTone(evaluation.recommendationLevel)
-                            )}
-                          >
-                            {evaluation.recommendationLevel}
-                          </span>
+                          <Badge tone={recommendationTone(evaluation.recommendationLevel)}>{evaluation.recommendationLevel}</Badge>
                         ) : null}
                       </div>
                       <p className="ds-caption">{application.internship?.role || "Role"}</p>

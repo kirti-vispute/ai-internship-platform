@@ -2,7 +2,8 @@ import type { InternProfile, ResumeAnalysis } from "@/lib/intern-portal";
 import {
   calculateSkillGap,
   type SkillAssessment,
-  type SkillGapResult
+  type SkillGapResult,
+  type SkillGapTarget
 } from "@/lib/skill-gap-engine";
 import type { ValidatedAIOutput } from "@/lib/ai-platform/types";
 import {
@@ -39,16 +40,16 @@ function computeVerifiedMatchPercent(assessments: SkillAssessment[]): number {
 
 export function runSkillGapPipeline(
   profile: InternProfile | null,
-  roleKey: string,
+  target: SkillGapTarget,
   backendAnalysis?: ResumeAnalysis | null | undefined
 ): ValidatedSkillGapResult {
   const grounding = augmentWithUserHistory(
-    groundSkillGap(profile, roleKey),
+    groundSkillGap(profile, target),
     getLearningMemory().skillGapsSeen.length > 0
   );
 
   if (!grounding.sufficient) {
-    const primary = calculateSkillGap(profile, roleKey);
+    const primary = calculateSkillGap(profile, target);
     const aiValidation = finalizeValidatedOutput({
       result: primary,
       validations: [],
@@ -58,7 +59,7 @@ export function runSkillGapPipeline(
     return { ...primary, aiValidation, insufficientData: true };
   }
 
-  const primary = calculateSkillGap(profile, roleKey);
+  const primary = calculateSkillGap(profile, target);
   const assessments = [...primary.present, ...primary.partial, ...primary.missing];
   const exactMatch = computeExactMatchPercent(assessments);
   const verifiedMatch = computeVerifiedMatchPercent(assessments);

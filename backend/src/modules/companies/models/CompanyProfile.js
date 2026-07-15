@@ -17,6 +17,13 @@ const companyProfileSchema = new mongoose.Schema(
     website: { type: String, trim: true },
     address: { type: String, required: true, trim: true },
     description: { type: String, required: true, trim: true },
+    logoUrl: { type: String, default: "", trim: true },
+    industry: { type: String, default: "", trim: true },
+    companySize: { type: String, default: "", trim: true },
+    headquarters: { type: String, default: "", trim: true },
+    foundedYear: { type: Number, default: null },
+    technologies: [{ type: String, trim: true }],
+    hiringProcessOverview: { type: String, default: "", trim: true },
     verificationStatus: {
       type: String,
       enum: Object.values(COMPANY_VERIFICATION_STATUS),

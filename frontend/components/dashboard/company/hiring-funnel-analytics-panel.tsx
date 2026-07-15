@@ -14,11 +14,15 @@ import {
 
 type HiringFunnelAnalyticsPanelProps = {
   applications: CompanyApplication[];
+  visibleStageKeys?: string[];
 };
 
-function HiringFunnelAnalyticsPanelInner({ applications }: HiringFunnelAnalyticsPanelProps) {
+function HiringFunnelAnalyticsPanelInner({ applications, visibleStageKeys }: HiringFunnelAnalyticsPanelProps) {
   const analytics = useMemo(() => hiringAIEngine.computeFunnelAnalytics(applications), [applications]);
-  const maxCount = Math.max(...analytics.stages.map((stage) => stage.count), 1);
+  const visibleStages = visibleStageKeys
+    ? analytics.stages.filter((stage) => visibleStageKeys.includes(stage.key))
+    : analytics.stages;
+  const maxCount = Math.max(...visibleStages.map((stage) => stage.count), 1);
 
   const sectionActions = (
     <div className="company-dashboard-metric-tile min-w-[7.5rem] text-right">
@@ -37,10 +41,12 @@ function HiringFunnelAnalyticsPanelInner({ applications }: HiringFunnelAnalytics
     >
       {!analytics.sufficient ? (
         <CompanyDashboardEmptyState title="Funnel analytics appear once applications are received." />
+      ) : visibleStages.length === 0 ? (
+        <CompanyDashboardEmptyState title="No matching candidates in this view yet." />
       ) : (
         <CompanyDashboardPanelCard>
           <div className="mb-5 space-y-2">
-            {analytics.stages.map((stage) => (
+            {visibleStages.map((stage) => (
               <div key={stage.key} className="grid grid-cols-[5.5rem_1fr_4rem] items-center gap-3">
                 <span className="ds-caption font-medium">{stage.label}</span>
                 <div className="h-2 overflow-hidden rounded-full bg-white/5">
@@ -55,7 +61,7 @@ function HiringFunnelAnalyticsPanelInner({ applications }: HiringFunnelAnalytics
           </div>
 
           <div className={companyDashboardStyles.metricGridFive}>
-            {analytics.stages.map((stage) => (
+            {visibleStages.map((stage) => (
               <CompanyDashboardMetricTile
                 key={`${stage.key}-summary`}
                 label={stage.label}

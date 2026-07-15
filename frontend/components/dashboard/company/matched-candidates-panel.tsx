@@ -12,8 +12,11 @@ import {
   companyDashboardStyles
 } from "./company-dashboard-layout";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { AiMatchInsightPanel } from "./ai-match-insight-panel";
+import { Badge } from "@/components/ui/badge";
+import { cn, isRejectionLanguage } from "@/lib/utils";
+import { AiMatchInsightModal } from "./ai-match-insight-modal";
+import { HrCandidateMatchCard } from "./hr-candidate-match-card";
+import { ResumePreviewModal } from "./resume-preview-modal";
 
 const DEFAULT_TOP_LIMIT = 10;
 
@@ -24,6 +27,7 @@ type MatchedCandidatesPanelProps = {
   defaultLimit?: number;
   showViewAllLink?: boolean;
   saving?: boolean;
+  isHrScoped?: boolean;
   onOpenProfile: (applicationId: string) => void;
   onMessage: (match: CompanyMatchedCandidate, applicationId: string) => void;
   onShortlist: (applicationId: string) => void;
@@ -38,6 +42,7 @@ export function MatchedCandidatesPanel({
   defaultLimit = DEFAULT_TOP_LIMIT,
   showViewAllLink = false,
   saving = false,
+  isHrScoped = false,
   onOpenProfile,
   onMessage,
   onShortlist,
@@ -46,6 +51,13 @@ export function MatchedCandidatesPanel({
 }: MatchedCandidatesPanelProps) {
   const [expanded, setExpanded] = useState(false);
   const [openInsightKey, setOpenInsightKey] = useState<string | null>(null);
+  const [resumePreview, setResumePreview] = useState<{
+    applicationId: string;
+    candidateName: string;
+    atsScore?: number | null;
+    resumeScore?: number | null;
+    matchScore?: number | null;
+  } | null>(null);
 
   const input = useMemo(() => ({ matches, applications, internships }), [matches, applications, internships]);
   const rankedCandidates = useMemo(() => hiringAIEngine.rankAllCandidates(input), [input]);
@@ -84,42 +96,88 @@ export function MatchedCandidatesPanel({
   );
 
   return (
-    <CompanyDashboardSection
-      id="dashboard-matched-candidates"
-      icon={Sparkles}
-      title="AI Matched Candidates"
-      description={`Top ${defaultLimit} AI-ranked shortlist with explainable match and scheduling intelligence.`}
-      actions={sectionActions}
-    >
-      {visibleCandidates.length === 0 ? (
-        <CompanyDashboardEmptyState title="No matched candidates available yet." />
-      ) : (
-        <div className={companyDashboardStyles.cardGridThree}>
-          {visibleCandidates.map((ranked) => {
-            const recommended = recommendedByRole.get(ranked.internshipId);
-            const isRecommended = recommended?.candidateId === cardKey(ranked);
-            return (
-              <CandidateCard
-                key={`${ranked.internshipId}-${ranked.internProfileId || ranked.match.internProfile?._id || ranked.rankingPosition}`}
-                ranked={ranked}
-                internships={internships}
-                isRecommended={isRecommended}
-                saving={saving}
-                insightOpen={openInsightKey === cardKey(ranked)}
-                onToggleInsight={() =>
-                  setOpenInsightKey((current) => (current === cardKey(ranked) ? null : cardKey(ranked)))
-                }
-                onOpenProfile={onOpenProfile}
-                onMessage={onMessage}
-                onShortlist={onShortlist}
-                onViewResume={onViewResume}
-                onScheduleInterview={onScheduleInterview}
-              />
-            );
-          })}
-        </div>
-      )}
-    </CompanyDashboardSection>
+    <>
+      <CompanyDashboardSection
+        id="dashboard-matched-candidates"
+        icon={Sparkles}
+        title="AI Matched Candidates"
+        description={`Top ${defaultLimit} AI-ranked shortlist with explainable match and scheduling intelligence.`}
+        actions={sectionActions}
+      >
+        {visibleCandidates.length === 0 ? (
+          <CompanyDashboardEmptyState title="No matched candidates available yet." />
+        ) : isHrScoped ? (
+          <div className="flex flex-col gap-3">
+            {visibleCandidates.map((ranked) => {
+              const recommended = recommendedByRole.get(ranked.internshipId);
+              const isRecommended = recommended?.candidateId === cardKey(ranked);
+              return (
+                <HrCandidateMatchCard
+                  key={`${ranked.internshipId}-${ranked.internProfileId || ranked.match.internProfile?._id || ranked.rankingPosition}`}
+                  ranked={ranked}
+                  internships={internships}
+                  isRecommended={isRecommended}
+                  saving={saving}
+                  insightOpen={openInsightKey === cardKey(ranked)}
+                  onToggleInsight={() =>
+                    setOpenInsightKey((current) => (current === cardKey(ranked) ? null : cardKey(ranked)))
+                  }
+                  onOpenProfile={onOpenProfile}
+                  onMessage={onMessage}
+                  onViewResume={(applicationId, candidateName) =>
+                    setResumePreview({
+                      applicationId,
+                      candidateName,
+                      atsScore: ranked.application?.intern?.resume?.analysis?.categoryScores?.ats,
+                      resumeScore: ranked.match.internProfile?.resume?.score ?? ranked.application?.intern?.resume?.score,
+                      matchScore: ranked.evaluation.overallScore
+                    })
+                  }
+                  onScheduleInterview={onScheduleInterview}
+                />
+              );
+            })}
+          </div>
+        ) : (
+          <div className={companyDashboardStyles.cardGridThree}>
+            {visibleCandidates.map((ranked) => {
+              const recommended = recommendedByRole.get(ranked.internshipId);
+              const isRecommended = recommended?.candidateId === cardKey(ranked);
+              return (
+                <CandidateCard
+                  key={`${ranked.internshipId}-${ranked.internProfileId || ranked.match.internProfile?._id || ranked.rankingPosition}`}
+                  ranked={ranked}
+                  internships={internships}
+                  isRecommended={isRecommended}
+                  saving={saving}
+                  insightOpen={openInsightKey === cardKey(ranked)}
+                  onToggleInsight={() =>
+                    setOpenInsightKey((current) => (current === cardKey(ranked) ? null : cardKey(ranked)))
+                  }
+                  onOpenProfile={onOpenProfile}
+                  onMessage={onMessage}
+                  onShortlist={onShortlist}
+                  onViewResume={onViewResume}
+                  onScheduleInterview={onScheduleInterview}
+                />
+              );
+            })}
+          </div>
+        )}
+      </CompanyDashboardSection>
+
+      {isHrScoped ? (
+        <ResumePreviewModal
+          open={Boolean(resumePreview)}
+          applicationId={resumePreview?.applicationId ?? null}
+          candidateName={resumePreview?.candidateName}
+          atsScore={resumePreview?.atsScore}
+          resumeScore={resumePreview?.resumeScore}
+          matchScore={resumePreview?.matchScore}
+          onClose={() => setResumePreview(null)}
+        />
+      ) : null}
+    </>
   );
 }
 
@@ -172,24 +230,23 @@ function CandidateCard({
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex rounded-md bg-white/5 px-1.5 py-0.5 text-[10px] font-semibold text-[var(--ds-muted)]">
+              <Badge tone="neutral" className="!px-1.5 !py-0.5 !text-[10px]">
                 #{ranked.rankingPosition}
-              </span>
+              </Badge>
               {isRecommended ? (
-                <span className="inline-flex rounded-md bg-emerald-950/50 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-300">
+                <Badge tone="success" className="!px-1.5 !py-0.5 !text-[10px]">
                   Recommended Hire
-                </span>
+                </Badge>
               ) : null}
               <h3 className="ds-h3 truncate">{candidateName}</h3>
             </div>
             <p className="ds-caption mt-0.5 truncate">{match.internshipRole}</p>
           </div>
           <div className="text-right">
-            <span className="inline-flex rounded-full bg-primary-950/40 px-2.5 py-1 text-xs font-semibold text-primary-300">
-              {ranked.evaluation.overallScore}%
-            </span>
+            <Badge tone="accent">{ranked.evaluation.overallScore}%</Badge>
             <p className="mt-1 text-[10px] text-[var(--ds-muted)]">
-              Conf. {ranked.evaluation.confidenceScore}% · {ranked.evaluation.recommendationLevel}
+              Conf. {ranked.evaluation.confidenceScore}%
+              {!isRejectionLanguage(ranked.evaluation.recommendationLevel) ? ` · ${ranked.evaluation.recommendationLevel}` : ""}
             </p>
           </div>
         </div>
@@ -212,11 +269,14 @@ function CandidateCard({
         ) : null}
       </button>
 
-      {insightOpen ? (
-        <div className="px-5 pb-3">
-          <AiMatchInsightPanel explanation={explanation} evaluation={ranked.evaluation} />
-        </div>
-      ) : null}
+      <AiMatchInsightModal
+        open={insightOpen}
+        candidateName={candidateName}
+        role={match.internshipRole}
+        explanation={explanation}
+        evaluation={ranked.evaluation}
+        onClose={onToggleInsight}
+      />
 
       <div className={cn(companyDashboardStyles.actionsFooter, "px-5 pb-3")}>
         <Button

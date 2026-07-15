@@ -379,6 +379,9 @@ const hiringAIEngineCore = {
       roundType: string;
       interviewDate: string;
       interviewTime: string;
+      durationMinutes?: number;
+      timezone?: string;
+      interviewers?: Array<{ name: string; role?: string }>;
       mode: "online" | "offline" | "";
       meetingLink?: string;
       location?: string;
@@ -395,6 +398,9 @@ const hiringAIEngineCore = {
     if (meetingLink) payload.meetingLink = meetingLink;
     if (location) payload.location = location;
     if (notes) payload.notes = notes;
+    if (slot.durationMinutes) payload.durationMinutes = slot.durationMinutes;
+    if (slot.timezone) payload.timezone = slot.timezone;
+    if (slot.interviewers && slot.interviewers.length > 0) payload.interviewers = slot.interviewers;
     return payload;
   },
 

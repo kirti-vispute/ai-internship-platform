@@ -17,6 +17,7 @@ const internProfileSchema = new mongoose.Schema(
     certifications: [{ type: String, trim: true }],
     experience: [{ type: String, trim: true }],
     achievements: [{ type: String, trim: true }],
+    languages: [{ type: String, trim: true }],
     links: [{ type: String, trim: true }],
     linkedinUrl: { type: String, default: "", trim: true },
     githubUrl: { type: String, default: "", trim: true },

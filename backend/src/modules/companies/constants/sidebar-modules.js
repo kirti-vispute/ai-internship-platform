@@ -65,9 +65,18 @@ const HR_DEFAULT_SIDEBAR_MODULES = [
   SIDEBAR_MODULE_KEYS.VERIFICATION_STATUS
 ];
 
+const EXECUTIVE_ONLY_MODULE_KEYS = SIDEBAR_MODULE_REGISTRY.filter((entry) => entry.executiveOnly).map(
+  (entry) => entry.key
+);
+
+/** HR accounts can never be granted executiveOnly modules, even via a direct API call. */
 function normalizeSidebarModules(requested = []) {
   const list = Array.isArray(requested) ? requested.map(String) : [];
-  return [...new Set(list.filter((key) => ALL_SIDEBAR_MODULE_KEYS.includes(key)))];
+  return [
+    ...new Set(
+      list.filter((key) => ALL_SIDEBAR_MODULE_KEYS.includes(key) && !EXECUTIVE_ONLY_MODULE_KEYS.includes(key))
+    )
+  ];
 }
 
 module.exports = {

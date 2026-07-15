@@ -92,6 +92,10 @@ async function assertApplicationLink(internProfileId, companyId) {
   return application;
 }
 
+// A conversation's "company side" is one specific individual, not the whole
+// company — the assigned recruiter on the linked application. This applies
+// uniformly to HR and CEO/Owner alike (no admin bypass): a company user only
+// sees a conversation where they are the actual participant.
 async function canAccessConversation(user, conversation) {
   if (!conversation) return false;
   if (user.role === "intern") {
@@ -99,9 +103,20 @@ async function canAccessConversation(user, conversation) {
   }
   if (user.role === "company") {
     const company = await resolveCompanyForUser(user);
-    return company && String(conversation.company) === String(company._id);
+    if (!company || String(conversation.company) !== String(company._id)) return false;
+    if (!conversation.application) return false;
+    const application = await Application.findById(conversation.application).select("assignedRecruiter").lean();
+    return Boolean(application?.assignedRecruiter) && String(application.assignedRecruiter) === String(user._id);
   }
   return false;
+}
+
+// Resolves the set of Application ids a company-role user is an actual
+// participant of (their assigned recruiter slot), for scoping conversation
+// listings/aggregates. Same rule for HR and CEO/Owner — no company-wide access.
+async function resolveOwnApplicationIds(user, companyId) {
+  const applications = await Application.find({ companyId, assignedRecruiter: user._id }).select("_id").lean();
+  return applications.map((app) => app._id);
 }
 
 function chatLinkForRole(role, conversationId) {
@@ -155,8 +170,10 @@ async function getUnreadTotalForUser(user) {
   if (user.role === "company") {
     const company = await resolveCompanyForUser(user);
     if (!company) return 0;
+    const applicationIds = await resolveOwnApplicationIds(user, company._id);
+    if (!applicationIds.length) return 0;
     const result = await ChatConversation.aggregate([
-      { $match: { company: company._id } },
+      { $match: { company: company._id, application: { $in: applicationIds } } },
       { $group: { _id: null, total: { $sum: "$unreadCompany" } } }
     ]);
     return result[0]?.total || 0;
@@ -172,7 +189,9 @@ async function listConversations(user) {
   } else if (user.role === "company") {
     const company = await resolveCompanyForUser(user);
     if (!company) return [];
-    query = { company: company._id };
+    const applicationIds = await resolveOwnApplicationIds(user, company._id);
+    if (!applicationIds.length) return [];
+    query = { company: company._id, application: { $in: applicationIds } };
   } else {
     throw new AppError("Chat is only available for interns and company users", 403);
   }
@@ -208,6 +227,10 @@ async function findOrCreateConversation(user, payload) {
   }
 
   const application = await assertApplicationLink(internProfile._id, company._id);
+
+  if (user.role === "company" && String(application.assignedRecruiter || "") !== String(user._id)) {
+    throw new AppError("You must be assigned to this candidate before starting a conversation.", 403);
+  }
 
   let conversation = await ChatConversation.findOne({
     internProfile: internProfile._id,
@@ -257,6 +280,15 @@ async function getConversationMessages(user, conversationId, options = {}) {
   };
 }
 
+// The single company-side user for a conversation — its assigned recruiter.
+// Notifications and live socket pushes must target only this user, never the
+// whole company team, or the conversation's privacy guarantee is void.
+async function resolveConversationRecruiterId(conversation) {
+  if (!conversation?.application) return null;
+  const application = await Application.findById(conversation.application).select("assignedRecruiter").lean();
+  return application?.assignedRecruiter || null;
+}
+
 async function notifyChatRecipient(conversation, senderRole, preview, senderUserId) {
   const populated = await ChatConversation.findById(conversation._id)
     .populate("company", "companyName")
@@ -277,24 +309,19 @@ async function notifyChatRecipient(conversation, senderRole, preview, senderUser
   const notifications = [];
 
   if (senderRole === "intern") {
-    const companyUsers = await findCompanyTeamUsers(conversation.company);
-
-    const created = await Promise.all(
-      companyUsers
-        .filter((companyUser) => String(companyUser._id) !== String(senderUserId))
-        .map(async (companyUser) => {
-          const doc = await createInAppNotification({
-            userId: companyUser._id,
-            type: NOTIFICATION_TYPES.CHAT_MESSAGE,
-            title: titleForCompany,
-            message: preview,
-            link: chatLinkForRole("company", conversation._id),
-            metadata: { conversationId: conversation._id, alertType, senderRole }
-          });
-          return doc ? { userId: companyUser._id, notification: doc } : null;
-        })
-    );
-    return created.filter(Boolean);
+    const recruiterId = await resolveConversationRecruiterId(conversation);
+    if (!recruiterId || String(recruiterId) === String(senderUserId)) {
+      return notifications;
+    }
+    const doc = await createInAppNotification({
+      userId: recruiterId,
+      type: NOTIFICATION_TYPES.CHAT_MESSAGE,
+      title: titleForCompany,
+      message: preview,
+      link: chatLinkForRole("company", conversation._id),
+      metadata: { conversationId: conversation._id, alertType, senderRole }
+    });
+    return doc ? [{ userId: recruiterId, notification: doc }] : [];
   }
 
   if (String(conversation.internUser) === String(senderUserId)) {
@@ -365,10 +392,10 @@ async function sendMessage(user, conversationId, body) {
   socketEmitters().emitToConversation(conversation._id, "conversation:updated", serializedConversation);
 
   if (senderRole === "intern") {
-    const companyUsers = await findCompanyTeamUsers(conversation.company);
-    for (const companyUser of companyUsers) {
-      socketEmitters().emitToUser(companyUser._id, "message:new", payload);
-      socketEmitters().emitToUser(companyUser._id, "conversation:updated", serializedConversation);
+    const recruiterId = await resolveConversationRecruiterId(conversation);
+    if (recruiterId) {
+      socketEmitters().emitToUser(recruiterId, "message:new", payload);
+      socketEmitters().emitToUser(recruiterId, "conversation:updated", serializedConversation);
     }
   } else {
     socketEmitters().emitToUser(conversation.internUser, "message:new", payload);
@@ -459,7 +486,8 @@ async function listEligibleContacts(user) {
     const company = await resolveCompanyForUser(user);
     if (!company) return [];
     const applications = await Application.find({
-      $or: [{ companyId: company._id }, { company: company._id }]
+      $or: [{ companyId: company._id }, { company: company._id }],
+      assignedRecruiter: user._id
     })
       .populate("intern", "fullName email")
       .populate("internship", "role")
@@ -485,6 +513,7 @@ module.exports = {
   assertChatEnabled,
   resolveCompanyForUser,
   findCompanyTeamUsers,
+  resolveConversationRecruiterId,
   canAccessConversation,
   listConversations,
   listRecentConversations,

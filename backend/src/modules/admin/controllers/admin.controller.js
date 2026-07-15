@@ -7,6 +7,7 @@ const Application = require("../../../models/Application");
 const asyncHandler = require("../../../shared/utils/asyncHandler");
 const AppError = require("../../../shared/utils/AppError");
 const { sendSuccess, sendPaginated } = require("../../../shared/utils/api-response");
+const { resolvePagination } = require("../../../shared/utils/pagination");
 const { COMPANY_VERIFICATION_STATUS, REPORTED_COMPANY_STATUS, ADMIN_ROLES, USER_ROLES } = require("../../../constants/enums");
 const { logActivity } = require("../../../services/activity-log.service");
 const { ROLE_PERMISSIONS } = require("../../../constants/roles");
@@ -83,9 +84,7 @@ exports.getDashboardMetrics = asyncHandler(async (req, res) => {
 });
 
 exports.getAllUsers = asyncHandler(async (req, res) => {
-  const page = Math.max(1, Number(req.query.page || 1));
-  const limit = Math.min(100, Math.max(1, Number(req.query.limit || 20)));
-  const skip = (page - 1) * limit;
+  const { page, limit, skip } = resolvePagination(req.query, { defaultLimit: 20, maxLimit: 100 });
   const filter = buildUserFilter(req.query || {});
   const [users, total] = await Promise.all([
     User.find(filter)
@@ -341,9 +340,7 @@ exports.resolveReport = asyncHandler(async (req, res) => {
 });
 
 exports.getActivityLogs = asyncHandler(async (req, res) => {
-  const page = Math.max(1, Number(req.query.page || 1));
-  const limit = Math.min(100, Math.max(1, Number(req.query.limit || 10)));
-  const skip = (page - 1) * limit;
+  const { page, limit, skip } = resolvePagination(req.query, { defaultLimit: 10, maxLimit: 100 });
   const query = {};
   if (req.query.entityType) query.entityType = req.query.entityType;
   if (req.query.action) query.action = req.query.action;

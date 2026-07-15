@@ -1,0 +1,233 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { Download, ExternalLink, FileText, FileX2, Loader2, X } from "lucide-react";
+import { fetchCompanyApplicationResume } from "@/lib/company-portal";
+import { cn } from "@/lib/utils";
+
+type ResumePreviewModalProps = {
+  open: boolean;
+  applicationId: string | null;
+  candidateName?: string;
+  role?: string;
+  atsScore?: number | null;
+  resumeScore?: number | null;
+  matchScore?: number | null;
+  onClose: () => void;
+};
+
+type Status = "loading" | "ready" | "empty" | "error";
+
+function formatUploadDate(value: string) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+}
+
+function ScoreStat({ label, value }: { label: string; value?: number | null }) {
+  const hasValue = typeof value === "number" && !Number.isNaN(value);
+  return (
+    <div className="flex min-w-[86px] flex-col items-start rounded-lg border border-[var(--ds-border)] bg-[var(--ds-surface-raised)] px-3 py-1.5">
+      <span className="ds-label text-[10px]">{label}</span>
+      <span className="ds-h3 text-base leading-tight">{hasValue ? `${Math.round(value as number)}%` : "—"}</span>
+    </div>
+  );
+}
+
+export function ResumePreviewModal({
+  open,
+  applicationId,
+  candidateName,
+  role,
+  atsScore,
+  resumeScore,
+  matchScore,
+  onClose
+}: ResumePreviewModalProps) {
+  const [status, setStatus] = useState<Status>("loading");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [objectUrl, setObjectUrl] = useState("");
+  const [contentType, setContentType] = useState("");
+  const [uploadedAt, setUploadedAt] = useState("");
+  const objectUrlRef = useRef("");
+
+  useEffect(() => {
+    if (!open || !applicationId) return;
+
+    let cancelled = false;
+    setStatus("loading");
+    setErrorMessage("");
+
+    fetchCompanyApplicationResume(applicationId)
+      .then(({ blob, contentType: type, lastModified }) => {
+        if (cancelled) return;
+        const url = URL.createObjectURL(blob);
+        objectUrlRef.current = url;
+        setObjectUrl(url);
+        setContentType(type);
+        setUploadedAt(lastModified);
+        setStatus("ready");
+      })
+      .catch((e) => {
+        if (cancelled) return;
+        const error = e as Error & { status?: number };
+        if (error.status === 404) {
+          setStatus("empty");
+        } else {
+          setErrorMessage(error.message || "Resume not available.");
+          setStatus("error");
+        }
+      });
+
+    return () => {
+      cancelled = true;
+      if (objectUrlRef.current) {
+        URL.revokeObjectURL(objectUrlRef.current);
+        objectUrlRef.current = "";
+      }
+      setObjectUrl("");
+      setUploadedAt("");
+    };
+  }, [open, applicationId]);
+
+  const isPdf = contentType.includes("pdf");
+  const uploadedLabel = formatUploadDate(uploadedAt);
+
+  return (
+    <AnimatePresence>
+      {open ? (
+        <motion.div
+          className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
+          <button
+            type="button"
+            className="absolute inset-0 bg-slate-950/65 backdrop-blur-sm"
+            onClick={onClose}
+            aria-label="Close resume preview"
+          />
+          <motion.div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="resume-preview-title"
+            className="ds-card relative z-10 flex h-[92vh] w-full max-w-4xl flex-col overflow-hidden !p-0 shadow-2xl sm:h-[88vh] rounded-t-2xl sm:rounded-2xl"
+            initial={{ opacity: 0, scale: 0.96, y: 12 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96, y: 12 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+          >
+            <div className="flex flex-col gap-3 border-b border-[var(--ds-border)] bg-gradient-to-r from-white/[0.03] via-transparent to-transparent px-5 py-4 sm:flex-row sm:items-start sm:justify-between">
+              <div className="flex items-start gap-3">
+                <span className="ds-stat-icon shrink-0">
+                  <FileText className="h-5 w-5" />
+                </span>
+                <div className="min-w-0">
+                  <h2 id="resume-preview-title" className="ds-h3">
+                    Resume Preview
+                  </h2>
+                  <p className="ds-caption mt-0.5 truncate">
+                    {candidateName || "Candidate"}
+                    {role ? ` · ${role}` : ""}
+                  </p>
+                  {uploadedLabel ? <p className="ds-caption mt-0.5 text-[11px]">Uploaded {uploadedLabel}</p> : null}
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <ScoreStat label="ATS" value={atsScore} />
+                <ScoreStat label="Resume" value={resumeScore} />
+                <ScoreStat label="AI Match" value={matchScore} />
+              </div>
+
+              <div className="flex shrink-0 items-start gap-1.5">
+                {status === "ready" && objectUrl ? (
+                  <>
+                    <a
+                      href={objectUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="ds-icon-btn"
+                      aria-label="Open resume in new tab"
+                      title="Open in new tab"
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                    </a>
+                    <a
+                      href={objectUrl}
+                      download={candidateName ? `${candidateName.replace(/\s+/g, "-")}-resume` : "resume"}
+                      className="ds-icon-btn"
+                      aria-label="Download resume"
+                      title="Download"
+                    >
+                      <Download className="h-4 w-4" />
+                    </a>
+                  </>
+                ) : null}
+                <button type="button" onClick={onClose} className="ds-icon-btn" aria-label="Close">
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+
+            <div className={cn("min-h-0 flex-1 bg-[var(--ds-deep)]")}>
+              {status === "loading" ? (
+                <div className="flex h-full flex-col items-center justify-center gap-2 text-[var(--ds-muted)]">
+                  <Loader2 className="h-6 w-6 animate-spin" />
+                  <p className="text-sm">Loading resume…</p>
+                </div>
+              ) : null}
+
+              {status === "empty" ? (
+                <div className="flex h-full flex-col items-center justify-center gap-2 px-6 text-center">
+                  <span className="flex h-12 w-12 items-center justify-center rounded-full border border-[var(--ds-border)] bg-[var(--ds-surface-raised)] text-[var(--ds-muted)]">
+                    <FileX2 className="h-6 w-6" />
+                  </span>
+                  <p className="ds-h3">No resume on file</p>
+                  <p className="ds-caption max-w-sm">
+                    {candidateName || "This candidate"} hasn&apos;t uploaded a resume yet. Check back once they do.
+                  </p>
+                </div>
+              ) : null}
+
+              {status === "error" ? (
+                <div className="flex h-full flex-col items-center justify-center gap-2 px-6 text-center">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-full border border-amber-400/25 bg-amber-400/10 text-amber-300">
+                    <FileX2 className="h-5 w-5" />
+                  </span>
+                  <p className="ds-h3">Resume unavailable</p>
+                  <p className="ds-caption max-w-sm">{errorMessage}</p>
+                </div>
+              ) : null}
+
+              {status === "ready" && objectUrl ? (
+                isPdf ? (
+                  <iframe src={objectUrl} title="Resume preview" className="h-full w-full border-0" />
+                ) : (
+                  <div className="flex h-full flex-col items-center justify-center gap-3 px-6 text-center">
+                    <span className="ds-stat-icon">
+                      <FileText className="h-5 w-5" />
+                    </span>
+                    <p className="ds-h3">Preview isn&apos;t available for this file type.</p>
+                    <a
+                      href={objectUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-primary-600 to-violet-600 px-3.5 py-2 text-sm font-medium text-white transition hover:from-primary-500 hover:to-violet-500"
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                      Open in new tab
+                    </a>
+                  </div>
+                )
+              ) : null}
+            </div>
+          </motion.div>
+        </motion.div>
+      ) : null}
+    </AnimatePresence>
+  );
+}

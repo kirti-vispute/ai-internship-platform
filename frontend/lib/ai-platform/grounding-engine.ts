@@ -1,6 +1,6 @@
 import type { InternProfile, ResumeAnalysis } from "@/lib/intern-portal";
 import type { AptitudeTestSet } from "@/lib/data/aptitude-tests";
-import { getTargetRoleSkills } from "@/lib/skill-gap-engine";
+import { resolveSkillGapTarget, type SkillGapTarget } from "@/lib/skill-gap-engine";
 import type { GroundingContext, GroundingSource } from "@/lib/ai-platform/types";
 
 const INSUFFICIENT = "insufficient data";
@@ -19,13 +19,13 @@ function ctx(
 /** Step 1–2: retrieve resume + role requirement signals only */
 export function groundSkillGap(
   profile: InternProfile | null,
-  roleKey: string
+  target: SkillGapTarget
 ): GroundingContext {
   const sources: GroundingSource[] = ["role_requirements"];
   const missingFields: string[] = [];
   let signalCount = 0;
 
-  const { tiers } = getTargetRoleSkills(roleKey);
+  const { tiers } = resolveSkillGapTarget(target);
   signalCount += tiers.length;
 
   if (!profile?.resumeUploaded) {

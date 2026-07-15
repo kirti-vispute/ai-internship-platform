@@ -1,0 +1,37 @@
+SUNITA RAO
+Senior Backend Engineer
+sunita.rao.dev@gmail.com
++91-9012345678
+linkedin.com/in/sunitarao
+
+SUMMARY
+Backend engineer with 6+ years building high-throughput distributed systems in
+Java and Go. Led migration of monolith to microservices at scale.
+
+EXPERIENCE
+Senior Backend Engineer - CloudNine Systems
+2021 - Present
+Designed microservices architecture handling 10M+ requests/day using Go and Kubernetes.
+
+Backend Developer - DataForge Labs
+2018 - 2021
+Built REST APIs and internal tools using Java Spring Boot and PostgreSQL.
+
+EDUCATION
+M.Tech Computer Science
+National Institute of Technology
+2016 - 2018
+
+B.E Information Technology
+Pune University
+2012 - 2016
+CGPA: 8.4
+
+SKILLS
+Java, Go, Spring Boot, PostgreSQL, Kubernetes, Docker, AWS, Microservices, System Design
+
+CERTIFICATIONS
+Certified Kubernetes Administrator - CNCF - 2022
+AWS Certified Solutions Architect - Amazon - 2021
+
+LANGUAGES: English, Telugu

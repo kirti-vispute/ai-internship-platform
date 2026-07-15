@@ -59,7 +59,6 @@ export type InterviewRoomPayload = {
   room: InterviewRoom;
   application: InterviewApplicationContext | null;
   participantRole: "intern" | "company";
-  isInitiator?: boolean;
 };
 
 type ApiEnvelope<T> = {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Briefcase, ChevronLeft, ChevronRight } from "lucide-react";
+import { Briefcase } from "lucide-react";
 import type { CompanyApplication, CompanyInternship } from "@/lib/company-portal";
 import {
   CompanyDashboardEmptyState,
@@ -10,6 +10,9 @@ import {
   companyDashboardStyles
 } from "@/components/dashboard/company/company-dashboard-layout";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Select } from "@/components/ui/select";
+import { Pagination } from "@/components/ui/pagination";
 import { countApplicationsForJob, getActiveInternships } from "./hiring-utils";
 
 const PAGE_SIZE = 6;
@@ -82,9 +85,9 @@ export function ActiveJobsPanel({
                   <div className="min-w-0 flex-1 space-y-2">
                     <div className="flex flex-wrap items-center gap-2">
                       <h3 className="ds-h3">{job.role}</h3>
-                      <span className="inline-flex rounded-full bg-emerald-950/40 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-300">
+                      <Badge tone="success" dot>
                         Active
-                      </span>
+                      </Badge>
                     </div>
                     <p className="ds-caption">
                       {applicantCount} application{applicantCount === 1 ? "" : "s"}
@@ -103,8 +106,9 @@ export function ActiveJobsPanel({
                   <div className={companyDashboardStyles.actionsRow}>
                     {canAssign && recruiters.length > 0 && onRecruiterChange && onAssignRecruiter ? (
                       <>
-                        <select
-                          className="surface-subtle min-w-[10rem] rounded-lg border border-[var(--ds-border)] px-2 py-1.5 text-sm"
+                        <Select
+                          wrapperClassName="min-w-[10rem]"
+                          className="h-9 text-sm"
                           value={selectedRecruiterByInternship[job._id] || ""}
                           onChange={(event) => onRecruiterChange(job._id, event.target.value)}
                         >
@@ -114,7 +118,7 @@ export function ActiveJobsPanel({
                               {recruiter.email} ({recruiter.companyAccountType})
                             </option>
                           ))}
-                        </select>
+                        </Select>
                         <Button
                           type="button"
                           size="sm"
@@ -145,28 +149,7 @@ export function ActiveJobsPanel({
               <p className="ds-caption">
                 Showing {safePage * PAGE_SIZE + 1}–{Math.min((safePage + 1) * PAGE_SIZE, activeJobs.length)} of {activeJobs.length}
               </p>
-              <div className={companyDashboardStyles.actionsRow}>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="ghost"
-                  disabled={safePage === 0}
-                  onClick={() => setPage((current) => Math.max(0, current - 1))}
-                  aria-label="Previous jobs page"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="ghost"
-                  disabled={safePage >= totalPages - 1}
-                  onClick={() => setPage((current) => Math.min(totalPages - 1, current + 1))}
-                  aria-label="Next jobs page"
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
+              <Pagination page={safePage + 1} totalPages={totalPages} onChange={(next) => setPage(next - 1)} />
             </div>
           )}
         </div>

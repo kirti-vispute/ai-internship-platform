@@ -945,8 +945,12 @@ function AdminDashboardInner({ view }: { view: AdminDashboardView }) {
                             size="sm"
                             variant="secondary"
                             onClick={async () => {
-                              await moderateAdminInternship(internship._id, { isActive: !internship.isActive });
-                              await loadData(true);
+                              try {
+                                await moderateAdminInternship(internship._id, { isActive: !internship.isActive });
+                                await loadData(true);
+                              } catch (err) {
+                                setError((err as Error).message || "Failed to update internship");
+                              }
                             }}
                           >
                             {internship.isActive === false ? "Activate" : "Deactivate"}

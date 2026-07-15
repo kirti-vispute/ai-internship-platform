@@ -8,11 +8,10 @@ const {
   isHrScopedUser,
   buildListMeta
 } = require("../../../services/company-access.service");
+const { resolvePagination } = require("../../../shared/utils/pagination");
 
 async function findInternships(companyId, user, { page = 1, limit = 10, sort = { createdAt: -1 } } = {}) {
-  const safePage = Math.max(1, Number(page));
-  const safeLimit = Math.min(100, Math.max(1, Number(limit)));
-  const skip = (safePage - 1) * safeLimit;
+  const { page: safePage, limit: safeLimit, skip } = resolvePagination({ page, limit }, { defaultLimit: 10, maxLimit: 100 });
   const query = internshipScopeFilter(companyId, user);
 
   const [internships, total] = await Promise.all([
@@ -82,9 +81,7 @@ async function findApplicantsForInternship(companyId, internshipId, user, { page
   const query = applicantsQueryForInternship(internshipId, companyId, user);
   if (status) query.status = status;
 
-  const safePage = Math.max(1, Number(page));
-  const safeLimit = Math.min(100, Math.max(1, Number(limit)));
-  const skip = (safePage - 1) * safeLimit;
+  const { page: safePage, limit: safeLimit, skip } = resolvePagination({ page, limit }, { defaultLimit: 10, maxLimit: 100 });
 
   const [applications, total] = await Promise.all([
     Application.find(query)
@@ -112,9 +109,7 @@ async function countScopedApplications(companyId, user, queryExtras = {}) {
 }
 
 async function findAllApplications(companyId, user, { page = 1, limit = 100, status = "" } = {}) {
-  const safePage = Math.max(1, Number(page));
-  const safeLimit = Math.min(100, Math.max(1, Number(limit)));
-  const skip = (safePage - 1) * safeLimit;
+  const { page: safePage, limit: safeLimit, skip } = resolvePagination({ page, limit }, { defaultLimit: 100, maxLimit: 100 });
   const query = applicationScopeFilter(companyId, user);
   if (status) query.status = status;
 

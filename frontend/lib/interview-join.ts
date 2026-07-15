@@ -24,6 +24,10 @@ export function isExternalMeetingLink(href: string): boolean {
 }
 
 export function resolveInterviewJoinHref(interview: ScheduledInterviewRecord): string {
+  // Offline (in-person) rounds never expose a join link, even if a stale
+  // meetingLink lingers from a prior online round — showing "Join Meeting"
+  // for an in-person interview would send participants to the wrong place.
+  if (interview.mode === "offline") return "";
   if (interview.roomId) return `/interview/${interview.roomId}`;
   return interview.meetingLink || "";
 }

@@ -17,6 +17,7 @@ export const EMPTY_STATE_ICONS: Record<string, LucideIcon> = {
   interviews: Calendar,
   savedInternships: Briefcase,
   notifications: Bell,
+  companyNotifications: Bell,
   applicants: Building2,
   reports: Flag,
   users: Users,

@@ -1,3 +1,6 @@
+const PHONE_PATTERN = /^[6-9]\d{9}$/;
+const GST_PATTERN = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
+
 function requireEmail(req) {
   const email = String(req.body?.email || "").trim();
   const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -6,8 +9,27 @@ function requireEmail(req) {
 
 function requireInternSignup(req) {
   const { fullName, email, mobile, password } = req.body || {};
-  const valid = Boolean(fullName && email && mobile && password);
-  return { valid, message: valid ? "" : "fullName, email, mobile and password are required" };
+  if (!fullName || !email || !mobile || !password) {
+    return { valid: false, message: "fullName, email, mobile and password are required" };
+  }
+  if (!PHONE_PATTERN.test(String(mobile).trim())) {
+    return { valid: false, message: "Enter a valid 10-digit mobile number" };
+  }
+  return { valid: true, message: "" };
+}
+
+function requireCompanySignup(req) {
+  const { companyName, gst, contactName, phone, address, description, password } = req.body || {};
+  if (!companyName || !gst || !contactName || !phone || !address || !description || !password) {
+    return { valid: false, message: "All required company fields must be provided" };
+  }
+  if (!PHONE_PATTERN.test(String(phone).trim())) {
+    return { valid: false, message: "Enter a valid 10-digit mobile number" };
+  }
+  if (!GST_PATTERN.test(String(gst).trim().toUpperCase())) {
+    return { valid: false, message: "Enter a valid GSTIN" };
+  }
+  return { valid: true, message: "" };
 }
 
 function requireOtpVerify(req) {
@@ -40,4 +62,4 @@ function requirePasswordReset(req) {
   };
 }
 
-module.exports = { requireEmail, requireInternSignup, requireOtpVerify, requirePasswordReset };
+module.exports = { requireEmail, requireInternSignup, requireCompanySignup, requireOtpVerify, requirePasswordReset };

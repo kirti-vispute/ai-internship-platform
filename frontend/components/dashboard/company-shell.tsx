@@ -6,6 +6,8 @@ import {
   Bell,
   Bookmark,
   Building2,
+  CalendarClock,
+  CalendarDays,
   ClipboardList,
   Download,
   FilePlus2,
@@ -17,6 +19,7 @@ import {
   Search,
   ShieldCheck,
   Sparkles,
+  UserCircle,
   Users
 } from "lucide-react";
 import { AnimatedBackground } from "@/components/dashboard/AnimatedBackground";
@@ -56,6 +59,7 @@ function buildSections({
   const canViewSalary =
     (permissions || []).includes("company:analytics:salary") || companyAccountType === "owner" || companyAccountType === "ceo";
   const canCreateInternships = companyAccountType !== "hr";
+  const isCeoOrOwner = companyAccountType === "owner" || companyAccountType === "ceo";
   const has = (moduleKey: SidebarModuleKey) => hasSidebarModule({ companyAccountType, sidebarModules }, moduleKey);
   const base = getCompanyDashboardPath(companyAccountType);
 
@@ -74,13 +78,27 @@ function buildSections({
         ? [
             { label: "Company Profile", href: `${base}/profile`, icon: <AppIcon icon={Landmark} /> },
             { label: "Edit Company Profile", href: `${base}/profile/edit`, icon: <AppIcon icon={Pencil} /> },
+            ...(isCeoOrOwner
+              ? [
+                  { label: "Personal Information", href: `${base}/profile/personal`, icon: <AppIcon icon={UserCircle} /> },
+                  { label: "Edit Personal Information", href: `${base}/profile/personal/edit`, icon: <AppIcon icon={Pencil} /> }
+                ]
+              : []),
             ...(has(SIDEBAR_MODULE_KEYS.VERIFICATION_STATUS)
               ? [{ label: "Verification Status", href: `${base}/profile/verification`, icon: <AppIcon icon={ShieldCheck} /> }]
               : [])
           ]
-        : has(SIDEBAR_MODULE_KEYS.VERIFICATION_STATUS)
-          ? [{ label: "Verification Status", href: `${base}/profile/verification`, icon: <AppIcon icon={ShieldCheck} /> }]
-          : []
+        : [
+            ...(isCeoOrOwner
+              ? [
+                  { label: "Personal Information", href: `${base}/profile/personal`, icon: <AppIcon icon={UserCircle} /> },
+                  { label: "Edit Personal Information", href: `${base}/profile/personal/edit`, icon: <AppIcon icon={Pencil} /> }
+                ]
+              : []),
+            ...(has(SIDEBAR_MODULE_KEYS.VERIFICATION_STATUS)
+              ? [{ label: "Verification Status", href: `${base}/profile/verification`, icon: <AppIcon icon={ShieldCheck} /> }]
+              : [])
+          ]
     },
     {
       title: "Hiring",
@@ -97,6 +115,12 @@ function buildSections({
               { label: "Shortlisted", href: `${base}/hiring/shortlisted`, icon: <AppIcon icon={Users} /> },
               { label: "Hiring Pipeline", href: `${base}/hiring/pipeline`, icon: <AppIcon icon={GitBranch} /> }
             ]
+          : []),
+        ...(has(SIDEBAR_MODULE_KEYS.INTERVIEW_SCHEDULING) || has(SIDEBAR_MODULE_KEYS.INTERVIEW_CALENDAR)
+          ? [{ label: "Interviews", href: `${base}/hiring/interviews`, icon: <AppIcon icon={CalendarClock} /> }]
+          : []),
+        ...(has(SIDEBAR_MODULE_KEYS.INTERVIEW_CALENDAR)
+          ? [{ label: "Calendar", href: `${base}/hiring/calendar`, icon: <AppIcon icon={CalendarDays} /> }]
           : []),
         ...(FEATURE_FLAGS.ENABLE_CHAT && has(SIDEBAR_MODULE_KEYS.MESSAGES)
           ? [

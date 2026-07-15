@@ -1,4 +1,4 @@
-import type { InternProfile } from "@/lib/intern-portal";
+import type { InternProfile, InternshipListing } from "@/lib/intern-portal";
 import {
   TARGET_ROLE_PROFILES,
   TIER_WEIGHT,
@@ -31,6 +31,8 @@ export type SkillEvidence = {
   pass: 1 | 2 | 3;
 };
 
+export type SelfReportedLevel = "beginner" | "intermediate" | "advanced" | "expert";
+
 export type SkillAssessment = {
   skill: string;
   displayName: string;
@@ -44,6 +46,8 @@ export type SkillAssessment = {
   verified: boolean;
   explanation: string;
   evidence: SkillEvidence[];
+  /** Only set when the student explicitly self-reported this level in their profile — never estimated. */
+  selfReportedLevel: SelfReportedLevel | null;
 };
 
 export type SkillVisualStatus = "missing" | "partial" | "strong";
@@ -65,6 +69,7 @@ export type ProgressBarItem = {
   confidence: number;
   verified: boolean;
   tooltip: string;
+  selfReportedLevel: SelfReportedLevel | null;
 };
 
 /** Unified row produced by STEP 2 before chart aggregation */
@@ -79,6 +84,7 @@ export type StructuredSkillRow = {
   confidence: number;
   verified: boolean;
   explanation: string;
+  selfReportedLevel: SelfReportedLevel | null;
 };
 
 export type ChartValidationResult<T> = {
@@ -96,12 +102,42 @@ export type QuickWinItem = {
   effort: QuickWinEffort;
   impact: QuickWinImpact;
   action: string;
+  /** Live search on a real course platform for this skill — not a fabricated course catalog entry. */
+  courseSearchUrl: string;
+};
+
+/** A skill-gap analysis can target either a generic role preset (roleKey string) or a real internship posting. */
+export type SkillGapTarget = string | InternshipListing;
+
+export type SkillPriority = "High" | "Medium" | "Low";
+
+export type RecommendedSkillItem = {
+  skill: string;
+  displayName: string;
+  priority: SkillPriority;
+  reason: string;
+  courseSearchUrl: string;
+};
+
+/** Result of comparing one requirement (education/experience) against the student's profile — only populated in internship mode, since generic role presets carry no such requirements. */
+export type RequirementCheck = {
+  status: "match" | "mismatch" | "not_stated" | "unknown";
+  score: number;
+  explanation: string;
+};
+
+export type CertificationCheckResult = {
+  relevantCertifications: string[];
+  score: number;
+  explanation: string;
 };
 
 export type SkillGapResult = {
   roleKey: string;
   roleLabel: string;
   roleMappingReliable: boolean;
+  /** True when compared against a real internship posting rather than a generic role preset. */
+  scoredAgainstInternship: boolean;
   matchPercent: number;
   matchPercentLow: number;
   matchPercentHigh: number;
@@ -115,6 +151,17 @@ export type SkillGapResult = {
   criticalMissing: SkillAssessment[];
   optionalMissing: SkillAssessment[];
   strongSkills: SkillAssessment[];
+  /** Required-skill assessments only — populated in internship mode. */
+  requiredSkillAssessments: SkillAssessment[];
+  /** Preferred-skill assessments only — populated in internship mode. */
+  preferredSkillAssessments: SkillAssessment[];
+  /** Skills the student has evidence for that aren't required or preferred for this role. */
+  additionalValuableSkills: string[];
+  educationCheck: RequirementCheck | null;
+  experienceCheck: RequirementCheck | null;
+  certificationCheck: CertificationCheckResult | null;
+  /** Priority-ordered (High/Medium/Low) skill recommendations with reasons — internship mode. */
+  recommendedSkills: RecommendedSkillItem[];
   priorityRoadmap: SkillAssessment[];
   quickWins: QuickWinItem[];
   structuredSkills: StructuredSkillRow[];
@@ -135,10 +182,14 @@ export type ExtractedResumeSkills = {
   verified: Set<string>;
   all: Set<string>;
   evidence: Map<string, SkillEvidence[]>;
+  /** Skill -> level, only populated from the student's own explicit input (profile.skillDetails). */
+  selfReportedLevels: Map<string, SelfReportedLevel>;
   projectCount: number;
   experienceCount: number;
   extractionQuality: number;
 };
+
+const VALID_SELF_REPORTED_LEVELS: ReadonlySet<string> = new Set(["beginner", "intermediate", "advanced", "expert"]);
 
 function clamp(n: number, min = 0, max = 100): number {
   return Math.max(min, Math.min(max, Math.round(n)));
@@ -221,6 +272,7 @@ export function extractSkillsFromResume(profile: InternProfile | null): Extracte
   const pass3 = new Set<string>();
   const verified = new Set<string>();
   const evidence = new Map<string, SkillEvidence[]>();
+  const selfReportedLevels = new Map<string, SelfReportedLevel>();
 
   const addPass1 = (skills: unknown, label = "Resume skills section") => {
     for (const s of normalizeSkillList(skills)) {
@@ -232,6 +284,14 @@ export function extractSkillsFromResume(profile: InternProfile | null): Extracte
   addPass1(parsed?.technicalSkills);
   addPass1(profile?.skills);
   addPass1((profile?.skillDetails || []).map((d) => d.name).filter(Boolean));
+
+  for (const detail of profile?.skillDetails || []) {
+    if (!detail?.name) continue;
+    const level = String(detail.level || "").toLowerCase().trim();
+    if (!VALID_SELF_REPORTED_LEVELS.has(level)) continue;
+    const c = canonicalForGap(detail.name);
+    if (c) selfReportedLevels.set(c, level as SelfReportedLevel);
+  }
 
   for (const s of normalizeSkillList(profile?.softSkills)) {
     const c = canonicalForGap(s);
@@ -293,6 +353,7 @@ export function extractSkillsFromResume(profile: InternProfile | null): Extracte
     verified,
     all,
     evidence,
+    selfReportedLevels,
     projectCount: projects.length,
     experienceCount: experience.length,
     extractionQuality
@@ -327,6 +388,44 @@ export function getTargetRoleSkills(roleKey: string): {
     tiers,
     mappingReliable
   };
+}
+
+function isInternshipTarget(target: SkillGapTarget): target is InternshipListing {
+  return typeof target === "object" && target !== null;
+}
+
+type ResolvedSkillGapTarget = {
+  roleKey: string;
+  roleLabel: string;
+  tiers: Array<{ skill: string; tier: SkillTier }>;
+  mappingReliable: boolean;
+  internshipMode: boolean;
+  internship: InternshipListing | null;
+};
+
+/** Single entry point for resolving either a generic role preset or a real internship into a comparable skill set. */
+export function resolveSkillGapTarget(target: SkillGapTarget): ResolvedSkillGapTarget {
+  if (isInternshipTarget(target)) {
+    const required = target.skillsRequired?.map(canonicalForGap).filter(Boolean) || [];
+    const preferred = (target.prioritySkills || [])
+      .map(canonicalForGap)
+      .filter((skill) => Boolean(skill) && !required.includes(skill));
+    const tiers: Array<{ skill: string; tier: SkillTier }> = [
+      ...required.map((skill) => ({ skill, tier: "core" as SkillTier })),
+      ...preferred.map((skill) => ({ skill, tier: "secondary" as SkillTier }))
+    ];
+    return {
+      roleKey: target._id,
+      roleLabel: target.role || "Selected internship",
+      tiers,
+      mappingReliable: true,
+      internshipMode: true,
+      internship: target
+    };
+  }
+
+  const { roleKey, profile, tiers, mappingReliable } = getTargetRoleSkills(target);
+  return { roleKey, roleLabel: profile.label, tiers, mappingReliable, internshipMode: false, internship: null };
 }
 
 function userHasExact(skill: string, extracted: ExtractedResumeSkills): boolean {
@@ -446,7 +545,8 @@ function assessOneSkill(
     matchLayer,
     verified,
     explanation: buildExplanation(normalized, displayName, status, matchLayer, uniqueEvidence),
-    evidence: uniqueEvidence
+    evidence: uniqueEvidence,
+    selfReportedLevel: extracted.selfReportedLevels.get(normalized) || null
   };
 }
 
@@ -489,9 +589,218 @@ function computeAnalysisConfidence(
   return clamp(score * 100);
 }
 
-export function calculateSkillGap(profile: InternProfile | null, roleKey: string): SkillGapResult {
+/**
+ * Weighted match for a real internship: required skills 60%, preferred 15%,
+ * projects proving those skills 10%, relevant certifications 5%, education
+ * match 5%, experience match 5% — sums to 100%. Every sub-score is derived
+ * directly from evidence already extracted from the resume/profile, never
+ * from an estimated proficiency.
+ */
+function scoreAssessmentGroup(assessments: SkillAssessment[]): number {
+  if (!assessments.length) return 100;
+  let credit = 0;
+  for (const a of assessments) {
+    if (a.status === "present") credit += 1;
+    else if (a.status === "partial") credit += 0.5;
+  }
+  return clamp((credit / assessments.length) * 100);
+}
+
+function computeProjectsProvingScore(relevantAssessments: SkillAssessment[]): number {
+  const proven = relevantAssessments.filter((a) => a.status === "present" || a.status === "partial");
+  if (!proven.length) return 0;
+  const withProjectEvidence = proven.filter((a) => a.evidence.some((e) => e.source === "project"));
+  return clamp((withProjectEvidence.length / proven.length) * 100);
+}
+
+function computeCertificationCheck(profile: InternProfile | null, targetSkillsCanonical: string[]): CertificationCheckResult {
+  const entries = [...(profile?.certificationEntries || []), ...(profile?.verifiedCertificationEntries || [])];
+  const seen = new Set<string>();
+  const uniqueCerts = entries.filter((c) => {
+    const key = String(c?.name || "").toLowerCase().trim();
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
+  if (uniqueCerts.length === 0) {
+    return { relevantCertifications: [], score: 0, explanation: "No certifications on your profile — this is a bonus dimension, not a requirement." };
+  }
+
+  if (targetSkillsCanonical.length === 0) {
+    return {
+      relevantCertifications: uniqueCerts.map((c) => c.name || "").filter(Boolean),
+      score: 60,
+      explanation: `${uniqueCerts.length} certification(s) on file.`
+    };
+  }
+
+  const relevant = uniqueCerts.filter((c) => {
+    const blob = `${c.name || ""} ${c.issuer || ""}`.toLowerCase();
+    return targetSkillsCanonical.some((skill) => blob.includes(skill));
+  });
+
+  return {
+    relevantCertifications: relevant.map((c) => c.name || "").filter(Boolean),
+    score: relevant.length ? clamp(50 + Math.min(50, relevant.length * 20)) : 10,
+    explanation:
+      relevant.length > 0
+        ? `${relevant.length} of ${uniqueCerts.length} certification(s) are relevant to this role's required skills.`
+        : `${uniqueCerts.length} certification(s) on file, but none appear relevant to this role's required skills.`
+  };
+}
+
+const DEGREE_SYNONYM_GROUPS: string[][] = [
+  ["b.tech", "btech", "bachelor of technology", "b.e", "be"],
+  ["m.tech", "mtech", "master of technology", "m.e", "me"],
+  ["bca", "bachelor of computer applications"],
+  ["mca", "master of computer applications"],
+  ["b.sc", "bsc", "bachelor of science"],
+  ["m.sc", "msc", "master of science"],
+  ["mba"],
+  ["bba"],
+  ["diploma"],
+  ["phd", "ph.d", "doctorate"]
+];
+
+function normalizeForDegreeMatch(text?: string): string {
+  return String(text || "").toLowerCase().replace(/[.]+/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function textsReferToSameDegree(a?: string, b?: string): boolean {
+  const na = normalizeForDegreeMatch(a);
+  const nb = normalizeForDegreeMatch(b);
+  if (!na || !nb) return false;
+  if (na.includes(nb) || nb.includes(na)) return true;
+  return DEGREE_SYNONYM_GROUPS.some((group) => group.some((g) => na.includes(g)) && group.some((g) => nb.includes(g)));
+}
+
+/** Mirrors the backend ATS engine's education comparison so both surfaces agree — see resume-intelligence-v2.service.js scoreEducation. */
+function computeEducationCheck(profile: InternProfile | null, internship: InternshipListing): RequirementCheck {
+  const hasRequirement = Boolean(internship.educationQualification || internship.degreePreferences || internship.minimumCgpa);
+  const candidateEntries = (profile?.educationDetails || []).filter((e) => e.degree || e.branch || e.cgpa);
+
+  if (!hasRequirement) {
+    return { status: "not_stated", score: 100, explanation: "This internship doesn't list specific education requirements." };
+  }
+  if (candidateEntries.length === 0) {
+    return {
+      status: "unknown",
+      score: 40,
+      explanation: "This internship lists education requirements, but no education details were found on your profile."
+    };
+  }
+
+  const primary = candidateEntries[0];
+  let score = 100;
+  const reasons: string[] = [];
+
+  if (internship.educationQualification) {
+    const matches = candidateEntries.some((e) => textsReferToSameDegree(e.degree, internship.educationQualification));
+    if (!matches) {
+      score -= 40;
+      reasons.push(
+        `Degree requirement (${internship.educationQualification}) doesn't clearly match your listed degree (${primary.degree || "not specified"}).`
+      );
+    }
+  }
+  if (internship.degreePreferences) {
+    const prefNormalized = normalizeForDegreeMatch(internship.degreePreferences);
+    const matches = candidateEntries.some((e) => e.branch && prefNormalized.includes(normalizeForDegreeMatch(e.branch)));
+    if (!matches) {
+      score -= 30;
+      reasons.push(
+        `Preferred branch (${internship.degreePreferences}) doesn't clearly match your listed branch (${primary.branch || "not specified"}).`
+      );
+    }
+  }
+  if (internship.minimumCgpa) {
+    const minCgpa = parseFloat(internship.minimumCgpa);
+    const candidateCgpa = parseFloat(primary.cgpa || "");
+    if (!Number.isNaN(minCgpa)) {
+      if (Number.isNaN(candidateCgpa)) {
+        score -= 10;
+        reasons.push(`Minimum CGPA of ${minCgpa} is required, but no CGPA was found on your profile.`);
+      } else if (candidateCgpa < minCgpa) {
+        score -= 20;
+        reasons.push(`Your CGPA (${candidateCgpa}) is below the required minimum (${minCgpa}).`);
+      }
+    }
+  }
+
+  score = clamp(score);
+  return {
+    status: reasons.length ? "mismatch" : "match",
+    score,
+    explanation: reasons.length ? reasons.join(" ") : "Your education matches this internship's stated requirements."
+  };
+}
+
+function parseExperienceRequirementMonths(text?: string): { requiredMonths: number; stated: boolean } {
+  const t = String(text || "").toLowerCase().trim();
+  if (!t) return { requiredMonths: 0, stated: false };
+  if (/fresher|no\s*experience|not\s*required|entry[-\s]?level|no\s*prior|0\s*(year|month)/i.test(t)) {
+    return { requiredMonths: 0, stated: true };
+  }
+  const match = t.match(/(\d+(?:\.\d+)?)\s*\+?\s*(year|yr|month|mo)/i);
+  if (!match) return { requiredMonths: 0, stated: true };
+  const n = parseFloat(match[1]);
+  const months = match[2].toLowerCase().startsWith("y") ? Math.round(n * 12) : Math.round(n);
+  return { requiredMonths: months, stated: true };
+}
+
+/** Mirrors the backend ATS engine's experience comparison — see resume-intelligence-v2.service.js scoreExperience. */
+function computeExperienceCheck(profile: InternProfile | null, internship: InternshipListing, extracted: ExtractedResumeSkills): RequirementCheck {
+  const { requiredMonths, stated } = parseExperienceRequirementMonths(internship.experienceRequirement);
+  const hasAnyExperience = extracted.experienceCount > 0 || (profile?.experience || []).length > 0;
+
+  if (!stated || requiredMonths === 0) {
+    return { status: "not_stated", score: 100, explanation: "No specific experience requirement for this internship." };
+  }
+  if (hasAnyExperience) {
+    return {
+      status: "match",
+      score: 100,
+      explanation: `This internship prefers ~${requiredMonths} month(s) of experience, and relevant experience/internship entries were found on your resume.`
+    };
+  }
+  return {
+    status: "mismatch",
+    score: 40,
+    explanation: `This internship prefers ~${requiredMonths} month(s) of experience, but no experience/internship entries were found on your resume.`
+  };
+}
+
+function recommendedSkillReason(a: SkillAssessment, priority: SkillPriority, roleLabel: string): string {
+  if (priority === "High") return `Required by ${roleLabel} — not yet found in your resume or profile.`;
+  if (priority === "Medium") return `Preferred skill for ${roleLabel} — having it strengthens your application.`;
+  return `You have some evidence of this skill (via ${a.evidence[0]?.source || "resume context"}) — strengthen it with a dedicated project or list it explicitly.`;
+}
+
+/** Priority-ordered, evidence-based recommendations — never invents a skill not present in the role's actual requirements. */
+function buildRecommendedSkills(assessments: SkillAssessment[], roleLabel: string): RecommendedSkillItem[] {
+  const items: RecommendedSkillItem[] = [];
+  for (const a of assessments) {
+    let priority: SkillPriority | null = null;
+    if (a.tier === "core" && a.status === "missing") priority = "High";
+    else if (a.tier === "secondary" && a.status === "missing") priority = "Medium";
+    else if (a.status === "partial") priority = "Low";
+    if (!priority) continue;
+    items.push({
+      skill: a.normalized,
+      displayName: a.displayName,
+      priority,
+      reason: recommendedSkillReason(a, priority, roleLabel),
+      courseSearchUrl: courseSearchUrl(a.displayName)
+    });
+  }
+  const rank: Record<SkillPriority, number> = { High: 0, Medium: 1, Low: 2 };
+  return items.sort((x, y) => rank[x.priority] - rank[y.priority]);
+}
+
+export function calculateSkillGap(profile: InternProfile | null, target: SkillGapTarget): SkillGapResult {
   const extracted = extractSkillsFromResume(profile);
-  const { roleKey: resolvedKey, profile: roleProfile, tiers, mappingReliable } = getTargetRoleSkills(roleKey);
+  const { roleKey: resolvedKey, roleLabel, tiers, mappingReliable, internshipMode, internship } = resolveSkillGapTarget(target);
 
   const hasResumeData =
     Boolean(profile?.resumeUploaded) &&
@@ -509,7 +818,46 @@ export function calculateSkillGap(profile: InternProfile | null, roleKey: string
   const optionalMissing = missing.filter((a) => a.tier === "optional");
   const strongSkills = present.filter((a) => a.confidence >= 0.8);
 
-  const matchPercent = computeWeightedMatch(assessments);
+  let matchPercent: number;
+  let educationCheck: RequirementCheck | null = null;
+  let experienceCheck: RequirementCheck | null = null;
+  let certificationCheck: CertificationCheckResult | null = null;
+  let additionalValuableSkills: string[] = [];
+  let recommendedSkills: RecommendedSkillItem[] = [];
+  const requiredSkillAssessments = assessments.filter((a) => a.tier === "core");
+  const preferredSkillAssessments = assessments.filter((a) => a.tier === "secondary");
+
+  if (internshipMode && internship) {
+    const requiredPercent = scoreAssessmentGroup(requiredSkillAssessments);
+    const preferredPercent = preferredSkillAssessments.length ? scoreAssessmentGroup(preferredSkillAssessments) : null;
+    const projectsScore = computeProjectsProvingScore([...requiredSkillAssessments, ...preferredSkillAssessments]);
+    const targetCanonical = tiers.map((t) => t.skill);
+
+    certificationCheck = computeCertificationCheck(profile, targetCanonical);
+    educationCheck = computeEducationCheck(profile, internship);
+    experienceCheck = computeExperienceCheck(profile, internship, extracted);
+
+    matchPercent = clamp(
+      requiredPercent * 0.6 +
+        (preferredPercent ?? requiredPercent) * 0.15 +
+        projectsScore * 0.1 +
+        certificationCheck.score * 0.05 +
+        educationCheck.score * 0.05 +
+        experienceCheck.score * 0.05
+    );
+
+    const targetSet = new Set(targetCanonical);
+    additionalValuableSkills = [...extracted.all]
+      .filter((s) => !targetSet.has(s) && isValidTechnicalSkill(s))
+      .map((s) => toDisplaySkill(s))
+      .filter(Boolean)
+      .slice(0, 10);
+
+    recommendedSkills = buildRecommendedSkills(assessments, roleLabel);
+  } else {
+    matchPercent = computeWeightedMatch(assessments);
+  }
+
   const analysisConfidence = computeAnalysisConfidence(extracted, profile, mappingReliable);
   const lowConfidenceAnalysis = analysisConfidence < 70 || !hasResumeData;
 
@@ -526,8 +874,9 @@ export function calculateSkillGap(profile: InternProfile | null, roleKey: string
 
   return {
     roleKey: resolvedKey,
-    roleLabel: roleProfile.label,
+    roleLabel,
     roleMappingReliable: mappingReliable,
+    scoredAgainstInternship: internshipMode,
     matchPercent,
     matchPercentLow,
     matchPercentHigh,
@@ -541,8 +890,15 @@ export function calculateSkillGap(profile: InternProfile | null, roleKey: string
     criticalMissing,
     optionalMissing,
     strongSkills,
+    requiredSkillAssessments,
+    preferredSkillAssessments,
+    additionalValuableSkills,
+    educationCheck,
+    experienceCheck,
+    certificationCheck,
+    recommendedSkills,
     priorityRoadmap,
-    quickWins: buildQuickWins(assessments, roleProfile.label),
+    quickWins: buildQuickWins(assessments, roleLabel),
     structuredSkills: chartDatasets.structured,
     categorySummary: chartDatasets.categorySummary,
     categorySummaryValid: chartDatasets.categorySummaryValid,
@@ -591,6 +947,11 @@ function quickWinAction(skill: string, displayName: string, tier: SkillTier): st
   return `Try a short ${displayName} tutorial`;
 }
 
+/** Real live search on a course platform — never a fabricated specific course title. */
+function courseSearchUrl(displayName: string): string {
+  return `https://www.coursera.org/search?query=${encodeURIComponent(displayName)}`;
+}
+
 /** Missing or weak skills ranked for Quick Wins (impact → effort) */
 export function buildQuickWins(assessments: SkillAssessment[], roleLabel: string): QuickWinItem[] {
   const weak = assessments.filter(
@@ -609,7 +970,8 @@ export function buildQuickWins(assessments: SkillAssessment[], roleLabel: string
       why: quickWinWhy(a, roleLabel),
       effort: quickWinEffort(a.normalized, a.tier),
       impact: quickWinImpact(a.tier),
-      action: quickWinAction(a.normalized, a.displayName, a.tier)
+      action: quickWinAction(a.normalized, a.displayName, a.tier),
+      courseSearchUrl: courseSearchUrl(a.displayName)
     });
   }
 
@@ -683,7 +1045,8 @@ export function structureSkillData(assessments: SkillAssessment[]): StructuredSk
       status: chartStatus,
       confidence: a.confidence,
       verified: a.verified && a.confidence >= 0.7,
-      explanation: a.explanation
+      explanation: a.explanation,
+      selfReportedLevel: a.selfReportedLevel
     };
   });
 }
@@ -749,7 +1112,8 @@ export function aggregateProgressBarDataset(rows: StructuredSkillRow[], limit = 
         tier: r.category,
         confidence: r.confidence,
         verified: r.verified,
-        tooltip: r.explanation
+        tooltip: r.explanation,
+        selfReportedLevel: r.selfReportedLevel
       };
     })
     .sort((a, b) => {
@@ -825,7 +1189,10 @@ export function validateProgressBarChartData(
         : "secondary") as SkillTier,
       confidence: safeChartNumber(bar?.confidence, 0),
       verified: Boolean(bar?.verified),
-      tooltip: String(bar?.tooltip ?? "")
+      tooltip: String(bar?.tooltip ?? ""),
+      selfReportedLevel: VALID_SELF_REPORTED_LEVELS.has(String((bar as { selfReportedLevel?: string })?.selfReportedLevel))
+        ? ((bar as { selfReportedLevel?: string }).selfReportedLevel as SelfReportedLevel)
+        : null
     }))
     .filter((bar) => {
       if (!bar.skill.length || !bar.displayName.length || seen.has(bar.skill)) return false;
@@ -861,7 +1228,10 @@ function buildChartDatasets(
   cleanRawExtractedSkills(extracted);
   const structured = structureSkillData(assessments);
   const rawSummary = aggregateCategorySummary(structured);
-  const rawBars = aggregateProgressBarDataset(structured, 10);
+  // Cap generous enough to cover every role's total tiered-skill count (max
+  // 17, full_stack_developer) so no skill that contributes to matchPercent's
+  // denominator is ever silently excluded from the dataset the UI renders.
+  const rawBars = aggregateProgressBarDataset(structured, 20);
   const summaryValidation = validateCategorySummaryData(rawSummary);
   const barsValidation = validateProgressBarChartData(rawBars);
 

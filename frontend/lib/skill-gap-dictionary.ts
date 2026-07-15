@@ -5,11 +5,21 @@ export const KNOWN_SKILL_DICTIONARY = new Set([
   "python", "java", "c++", "c#", "go", "rust", "kotlin", "swift", "sql", "mysql",
   "postgresql", "mongodb", "firebase", "redis", "docker", "kubernetes", "git", "github",
   "aws", "gcp", "azure", "machine learning", "deep learning", "artificial intelligence",
-  "natural language processing", "computer vision", "tensorflow", "pytorch", "scikit-learn",
-  "pandas", "numpy", "data analysis", "statistics", "tableau", "power bi", "excel",
+  "natural language processing", "computer vision", "opencv", "tensorflow", "pytorch", "scikit-learn",
+  "pandas", "numpy", "data analysis", "data visualization", "statistics", "tableau", "power bi", "excel",
   "figma", "postman", "jenkins", "terraform", "github actions", "ci/cd", "testing",
   "api design", "authentication", "microservices", "system design", "deployment",
-  "accessibility", "graphql", "rest api"
+  "accessibility", "graphql", "rest api",
+  // Cybersecurity — previously entirely absent, so the cybersecurity_engineer
+  // role could never show a present skill regardless of resume content.
+  "linux", "networking", "network security", "penetration testing", "vulnerability assessment",
+  "siem", "cryptography", "incident response", "cloud security", "compliance", "wireshark",
+  "burp suite", "nmap", "metasploit",
+  // UI/UX — previously only "figma" was recognized.
+  "ui design", "ux research", "wireframing", "prototyping", "user testing", "design systems",
+  "adobe xd", "sketch",
+  // DevOps / Cloud gaps.
+  "cloud architecture", "cost optimization", "monitoring", "ansible", "vs code"
 ]);
 
 /** Soft / non-technical terms — never treated as technical skills */
@@ -79,7 +89,12 @@ export const SKILL_CANONICAL_MAP: Record<string, string> = {
   "data analytics": "data analysis",
   html5: "html",
   css3: "css",
-  cv: "computer vision"
+  cv: "computer vision",
+  // Git and GitHub are used interchangeably on resumes for the same
+  // version-control skill.
+  git: "github",
+  github: "github",
+  opencv: "opencv"
 };
 
 /** Semantic equivalents — required skill → acceptable user tokens */
@@ -96,7 +111,8 @@ export const SEMANTIC_EQUIVALENTS: Record<string, string[]> = {
   mongodb: ["mongodb", "mongo"],
   postgresql: ["postgresql", "postgres"],
   "scikit-learn": ["scikit-learn", "sklearn", "machine learning"],
-  "api design": ["api design", "rest api", "rest apis", "graphql"]
+  "api design": ["api design", "rest api", "rest apis", "graphql"],
+  "computer vision": ["computer vision", "opencv", "cv"]
 };
 
 /** Skill area keys for category aggregation (never raw skill names in charts) */
@@ -212,7 +228,36 @@ export const SKILL_CATEGORY_MAP: Record<string, SkillCategoryKey> = {
   "api design": "problem_solving",
   authentication: "problem_solving",
   microservices: "problem_solving",
-  "system design": "problem_solving"
+  "system design": "problem_solving",
+  opencv: "data_ml",
+  linux: "tools",
+  networking: "tools",
+  "network security": "tools",
+  "penetration testing": "tools",
+  "vulnerability assessment": "tools",
+  siem: "tools",
+  cryptography: "tools",
+  "incident response": "tools",
+  "cloud security": "tools",
+  compliance: "tools",
+  wireshark: "tools",
+  "burp suite": "tools",
+  nmap: "tools",
+  metasploit: "tools",
+  "ui design": "tools",
+  "ux research": "tools",
+  wireframing: "tools",
+  prototyping: "tools",
+  "user testing": "tools",
+  "design systems": "tools",
+  "adobe xd": "tools",
+  sketch: "tools",
+  "cloud architecture": "tools",
+  "cost optimization": "tools",
+  monitoring: "tools",
+  ansible: "tools",
+  "vs code": "tools",
+  "data visualization": "data_ml"
 };
 
 /** Practice suggestions for Quick Wins (canonical skill → short action) */

@@ -8,9 +8,12 @@ const AppError = require("../../../shared/utils/AppError");
 const { APPLICATION_STATUS } = require("../../../constants/enums");
 const companyQuery = require("../../../services/company-query.service");
 const { isHrScopedUser } = require("../../../services/company-access.service");
+const { canTransition } = require("../../../services/pipeline.service");
+const { withVersionRetry } = require("../../../shared/utils/with-version-retry");
 
 const EARLY_JOIN_MINUTES = 15;
 const LATE_JOIN_HOURS = 3;
+const ROLE_CAPS = { intern: 1, company: 3 };
 
 function combineScheduledTime(interviewDate, interviewTime) {
   const dateKey =
@@ -66,7 +69,7 @@ async function getInternProfileByUserId(userId) {
   return profile;
 }
 
-async function assertRoomParticipant(user, room) {
+async function assertRoomParticipant(user, room, { enforceRecruiterScope = true } = {}) {
   if (user.role === "intern") {
     const profile = await getInternProfileByUserId(user._id);
     if (String(profile._id) !== String(room.candidateId)) {
@@ -88,7 +91,12 @@ async function assertRoomParticipant(user, room) {
     if (String(application.companyId || application.company) !== String(room.companyId)) {
       throw new AppError("Not allowed for this interview", 403);
     }
+    // Interviewers are freeform names, not linked accounts (no per-interviewer
+    // identity system) — so join/view/chat only require membership in the
+    // company that owns this room. Recruiter-scoping stays enforced for the
+    // administrative actions (notes/outcome/end) that carry decision authority.
     if (
+      enforceRecruiterScope &&
       isHrScopedUser(user) &&
       application.assignedRecruiter &&
       String(application.assignedRecruiter) !== String(user._id)
@@ -139,33 +147,32 @@ async function findRoomByRoomId(roomId) {
 
 async function createRoomForRound({ application, round, roundType }) {
   const scheduledTime = combineScheduledTime(round.interviewDate, round.interviewTime);
+  const roundTypeValue = String(roundType || round.roundType || "").trim();
 
-  const existing = await InterviewRoom.findOne({
-    applicationId: application._id,
-    roundId: round._id,
-    status: { $ne: "completed" }
-  });
-  if (existing) {
-    existing.scheduledTime = scheduledTime;
-    existing.roundType = String(roundType || round.roundType || "").trim();
-    await existing.save();
-    return existing;
+  // Atomic upsert against the {applicationId, roundId} unique index closes the
+  // TOCTOU window a find-then-create pattern would otherwise leave open
+  // (two concurrent schedule requests racing to create the room for one round).
+  try {
+    return await InterviewRoom.findOneAndUpdate(
+      { applicationId: application._id, roundId: round._id },
+      {
+        $set: { scheduledTime, roundType: roundTypeValue },
+        $setOnInsert: {
+          roomId: crypto.randomUUID(),
+          candidateId: application.internId || application.intern,
+          companyId: application.companyId || application.company,
+          status: "scheduled"
+        }
+      },
+      { new: true, upsert: true, setDefaultsOnInsert: true }
+    );
+  } catch (err) {
+    if (err.code === 11000) {
+      const existing = await InterviewRoom.findOne({ applicationId: application._id, roundId: round._id });
+      if (existing) return existing;
+    }
+    throw err;
   }
-
-  const roomId = crypto.randomUUID();
-
-  const room = await InterviewRoom.create({
-    roomId,
-    applicationId: application._id,
-    roundId: round._id,
-    candidateId: application.internId || application.intern,
-    companyId: application.companyId || application.company,
-    scheduledTime,
-    status: "scheduled",
-    roundType: String(roundType || round.roundType || "").trim()
-  });
-
-  return room;
 }
 
 async function syncRoomScheduleForRound(roundId, interviewDate, interviewTime) {
@@ -188,7 +195,7 @@ function resolveClientInterviewUrl(roomId) {
 
 async function getRoomDetails(user, roomId) {
   const room = await findRoomByRoomId(roomId);
-  const participant = await assertRoomParticipant(user, room);
+  const participant = await assertRoomParticipant(user, room, { enforceRecruiterScope: false });
   await assertRoundJoinable(room);
 
   if (!isWithinAccessWindow(room)) {
@@ -212,6 +219,7 @@ async function getRoomDetails(user, roomId) {
 }
 
 function serializeRoom(room, viewerRole) {
+  const activeParticipants = (room.participants || []).filter((p) => !p.leftAt);
   const payload = {
     roomId: room.roomId,
     applicationId: room.applicationId,
@@ -224,7 +232,9 @@ function serializeRoom(room, viewerRole) {
     startedAt: room.startedAt,
     endedAt: room.endedAt,
     outcome: room.outcome || null,
-    chatMessages: room.chatMessages || []
+    chatMessages: room.chatMessages || [],
+    participantCount: activeParticipants.length,
+    maxParticipants: room.maxParticipants || 4
   };
 
   if (viewerRole === "company") {
@@ -234,9 +244,16 @@ function serializeRoom(room, viewerRole) {
   return payload;
 }
 
+function resolveParticipantName(participant, user) {
+  if (participant.role === "intern") {
+    return participant.profile?.fullName || user.email || "Candidate";
+  }
+  return user.displayName || user.email || participant.company?.companyName || "Interviewer";
+}
+
 async function joinRoom(user, roomId) {
   const room = await findRoomByRoomId(roomId);
-  const participant = await assertRoomParticipant(user, room);
+  const participant = await assertRoomParticipant(user, room, { enforceRecruiterScope: false });
   await assertRoundJoinable(room);
 
   if (!isWithinAccessWindow(room)) {
@@ -250,11 +267,35 @@ async function joinRoom(user, roomId) {
     throw new AppError("Interview room access window has expired", 403);
   }
 
+  const activeParticipants = (room.participants || []).filter((p) => !p.leftAt);
+  const alreadyActive = activeParticipants.find((p) => String(p.userId) === String(user._id));
+
+  if (!alreadyActive) {
+    const activeOfRole = activeParticipants.filter((p) => p.role === participant.role).length;
+    const cap = ROLE_CAPS[participant.role] ?? 1;
+    if (activeOfRole >= cap) {
+      throw new AppError("This interview room is full.", 403, null, { code: "ROOM_FULL" });
+    }
+  }
+
   if (room.status === "scheduled") {
     room.status = "live";
     room.startedAt = new Date();
-    await room.save();
   }
+  room.everJoined = true;
+
+  if (alreadyActive) {
+    alreadyActive.joinedAt = new Date();
+  } else {
+    room.participants.push({
+      userId: user._id,
+      role: participant.role,
+      name: resolveParticipantName(participant, user),
+      joinedAt: new Date(),
+      leftAt: null
+    });
+  }
+  await room.save();
 
   const application = await loadInterviewApplication(room);
 
@@ -262,8 +303,20 @@ async function joinRoom(user, roomId) {
     room: serializeRoom(room, participant.role),
     application: application || null,
     participantRole: participant.role,
-    isInitiator: participant.role === "company"
+    isFirstJoinForUser: !alreadyActive
   };
+}
+
+async function recordParticipantLeft(roomId, userId) {
+  const room = await InterviewRoom.findOne({ roomId: String(roomId || "").trim() });
+  if (!room) return null;
+  const entry = (room.participants || [])
+    .filter((p) => String(p.userId) === String(userId) && !p.leftAt)
+    .pop();
+  if (!entry) return null;
+  entry.leftAt = new Date();
+  await room.save();
+  return room;
 }
 
 async function updateHrNotes(user, roomId, notes) {
@@ -315,35 +368,29 @@ async function endInterview(user, roomId) {
   room.endedAt = new Date();
   await room.save();
 
-  const application = await companyQuery.findApplicationById(
-    room.companyId,
-    room.applicationId,
-    user,
-    "internship"
-  );
+  const outcomeTarget = {
+    selected: { status: APPLICATION_STATUS.SELECTED, note: "Selected after interview" },
+    rejected: { status: APPLICATION_STATUS.REJECTED, note: "Rejected after interview" },
+    on_hold: { status: APPLICATION_STATUS.ON_HOLD, note: "Candidate placed on hold after interview" }
+  }[room.outcome] || { status: APPLICATION_STATUS.INTERVIEW_COMPLETED, note: "Interview round completed" };
 
-  const round = (application.interviewRounds || []).id(room.roundId);
-  if (round) {
-    round.status = "completed";
-    round.updatedAt = new Date();
-  }
+  let application;
+  await withVersionRetry(async () => {
+    application = await companyQuery.findApplicationById(room.companyId, room.applicationId, user, "internship");
 
-  if (room.outcome === "selected") {
-    application.status = APPLICATION_STATUS.SELECTED;
-    application.stageHistory.push({ stage: APPLICATION_STATUS.SELECTED, note: "Selected after interview" });
-  } else if (room.outcome === "rejected") {
-    application.status = APPLICATION_STATUS.REJECTED;
-    application.stageHistory.push({ stage: APPLICATION_STATUS.REJECTED, note: "Rejected after interview" });
-    if (round) round.status = "rejected";
-  } else if (room.outcome === "on_hold") {
-    application.status = APPLICATION_STATUS.ON_HOLD;
-    application.stageHistory.push({ stage: APPLICATION_STATUS.ON_HOLD, note: "Candidate placed on hold after interview" });
-  } else {
-    application.status = APPLICATION_STATUS.INTERVIEW_COMPLETED;
-    application.stageHistory.push({ stage: APPLICATION_STATUS.INTERVIEW_COMPLETED, note: "Interview round completed" });
-  }
+    const round = (application.interviewRounds || []).id(room.roundId);
+    if (round) {
+      round.status = room.outcome === "rejected" ? "rejected" : "completed";
+      round.updatedAt = new Date();
+    }
 
-  await application.save();
+    if (canTransition(application.status, outcomeTarget.status)) {
+      application.status = outcomeTarget.status;
+      application.stageHistory.push({ stage: outcomeTarget.status, note: outcomeTarget.note });
+    }
+
+    await application.save();
+  });
 
   return {
     room: serializeRoom(room, "company"),
@@ -353,7 +400,7 @@ async function endInterview(user, roomId) {
 
 async function appendChatMessage(user, roomId, body) {
   const room = await findRoomByRoomId(roomId);
-  const participant = await assertRoomParticipant(user, room);
+  const participant = await assertRoomParticipant(user, room, { enforceRecruiterScope: false });
 
   if (!isWithinAccessWindow(room) || room.status === "completed") {
     throw new AppError("Interview chat is closed", 403);
@@ -393,12 +440,12 @@ async function appendChatMessage(user, roomId, body) {
 
 async function verifySocketRoomAccess(user, roomId) {
   const room = await findRoomByRoomId(roomId);
-  const participant = await assertRoomParticipant(user, room);
+  const participant = await assertRoomParticipant(user, room, { enforceRecruiterScope: false });
   await assertRoundJoinable(room);
   if (!isWithinAccessWindow(room) || room.status === "completed") {
     throw new AppError("Interview room is not active", 403);
   }
-  return { room, participantRole: participant.role, isInitiator: participant.role === "company" };
+  return { room, participantRole: participant.role };
 }
 
 module.exports = {
@@ -408,11 +455,14 @@ module.exports = {
   resolveClientInterviewUrl,
   getRoomDetails,
   joinRoom,
+  recordParticipantLeft,
   updateHrNotes,
   setOutcome,
   endInterview,
   appendChatMessage,
   verifySocketRoomAccess,
   serializeRoom,
-  findRoomByRoomId
+  findRoomByRoomId,
+  ROLE_CAPS,
+  LATE_JOIN_HOURS
 };

@@ -45,7 +45,7 @@ export function MessageComposer({
           type="button"
           disabled
           title="Attachments coming soon"
-          className="hidden shrink-0 rounded-lg p-2 text-slate-400 sm:inline-flex"
+          className="hidden shrink-0 rounded-lg p-2 text-[var(--ds-muted)] sm:inline-flex"
           aria-label="Attach file"
         >
           <AppIcon icon={Paperclip} size="sm" />
@@ -58,9 +58,8 @@ export function MessageComposer({
           rows={1}
           disabled={disabled || sending}
           className={cn(
-            "max-h-40 min-h-[44px] flex-1 resize-none rounded-xl border border-slate-200/80 bg-slate-50/50 px-3 py-2.5 text-sm leading-5",
-            "text-slate-900 placeholder:text-slate-400 focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20",
-            "dark:border-slate-700 dark:bg-slate-900/50 dark:text-slate-100"
+            "max-h-40 min-h-[44px] flex-1 resize-none rounded-xl border border-[var(--ds-border)] bg-[var(--ds-surface-raised)] px-3 py-2.5 text-sm leading-5",
+            "text-[var(--ds-text)] placeholder:text-[var(--ds-muted)] focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
           )}
           onKeyDown={(event) => {
             if (event.key === "Enter" && !event.shiftKey) {
@@ -80,7 +79,7 @@ export function MessageComposer({
           <AppIcon icon={SendHorizontal} size="sm" />
         </Button>
       </div>
-      <p className="mt-1.5 hidden text-[11px] text-slate-400 sm:block">Enter to send · Shift+Enter for new line</p>
+      <p className="mt-1.5 hidden text-[11px] text-[var(--ds-muted)] sm:block">Enter to send · Shift+Enter for new line</p>
     </div>
   );
 }

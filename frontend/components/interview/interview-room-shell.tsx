@@ -7,12 +7,17 @@ import {
   CameraOff,
   ChevronLeft,
   ChevronRight,
+  Hand,
+  Maximize,
+  Minimize,
   MessageSquare,
   Mic,
   MicOff,
+  MonitorUp,
   PhoneOff,
   StickyNote,
-  User
+  User,
+  Users
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
@@ -28,9 +33,11 @@ import {
   type InterviewRoomPayload
 } from "@/lib/interview-portal";
 import { useInterviewSocket, type WebRtcSignal } from "@/lib/use-interview-socket";
-import { useWebRtc } from "@/lib/use-webrtc";
+import { useInterviewMesh, type ConnectionQuality, type MeshPeer } from "@/lib/use-webrtc";
+import { applySinkId } from "@/lib/interview-audio-utils";
 import { FEATURE_FLAGS } from "@/constants/featureFlags";
 import { InterviewAudioControls } from "@/components/interview/interview-audio-controls";
+import { InterviewLobby } from "@/components/interview/interview-lobby";
 import { getInterviewJoinErrorMessage } from "@/lib/interview-join";
 
 type InterviewRoomShellProps = {
@@ -51,8 +58,11 @@ export function InterviewRoomShell({ roomId }: InterviewRoomShellProps) {
   const router = useRouter();
   const { pushToast } = useToast();
   const session = getAuthSession();
-  const sendSignalRef = useRef<(signal: WebRtcSignal) => void>(() => {});
-  const handleRemoteSignalRef = useRef<(payload: { fromUserId: string; signal: WebRtcSignal }) => void>(() => {});
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const sendSignalRef = useRef<(targetSocketId: string, signal: WebRtcSignal) => void>(() => {});
+  const handleRemoteSignalRef = useRef<(payload: { fromSocketId: string; fromUserId: string; signal: WebRtcSignal }) => void>(
+    () => {}
+  );
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -61,21 +71,32 @@ export function InterviewRoomShell({ roomId }: InterviewRoomShellProps) {
   const [chatInput, setChatInput] = useState("");
   const [notes, setNotes] = useState("");
   const [notesSaving, setNotesSaving] = useState(false);
+  const [notesSyncState, setNotesSyncState] = useState<"idle" | "pending" | "synced" | "offline">("idle");
+  const notesFocusedRef = useRef(false);
+  const notesDebounceRef = useRef<number | null>(null);
   const [outcome, setOutcome] = useState<InterviewOutcome>(null);
   const [ending, setEnding] = useState(false);
   const [sessionEnded, setSessionEnded] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [activePanel, setActivePanel] = useState<"chat" | "profile" | "notes">("chat");
+  const [activePanel, setActivePanel] = useState<"chat" | "profile" | "notes" | "people">("chat");
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [fullscreenSupported] = useState(
+    () => typeof document !== "undefined" && Boolean(document.documentElement.requestFullscreen)
+  );
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
-  const [remoteCameraOff, setRemoteCameraOff] = useState(false);
-  const [remoteMuted, setRemoteMuted] = useState(false);
-  const [remoteJoined, setRemoteJoined] = useState(false);
+  const [lobbyDone, setLobbyDone] = useState(false);
   const [socketReady, setSocketReady] = useState(false);
-  const [isInitiator, setIsInitiator] = useState(false);
+  const [handRaised, setHandRaised] = useState(false);
   const [bootstrapAttempt, setBootstrapAttempt] = useState(0);
-  const renegotiateRef = useRef<() => Promise<void>>(async () => {});
 
   const interviewSocket = useInterviewSocket({
+    onJoined: ({ room, participants }) => {
+      setPayload((prev) =>
+        prev ? { ...prev, room: { ...prev.room, startedAt: room.startedAt || prev.room.startedAt, status: room.status } } : prev
+      );
+      webrtc.syncRoster(participants);
+      setSocketReady(true);
+    },
     onSignal: (signalPayload) => handleRemoteSignalRef.current(signalPayload),
     onChat: (message) => {
       setChatMessages((prev) => {
@@ -84,35 +105,56 @@ export function InterviewRoomShell({ roomId }: InterviewRoomShellProps) {
       });
     },
     onParticipantUpdate: (update) => {
-      if (update.joined === true) setRemoteJoined(true);
-      if (update.joined === false) {
-        setRemoteJoined(false);
-        setRemoteCameraOff(false);
-        setRemoteMuted(false);
+      if (!update.socketId) return;
+      if (update.joined === true && update.role) {
+        webrtc.addParticipant({ socketId: update.socketId, userId: update.userId || "", role: update.role, name: update.name || "Participant" });
+        return;
       }
-      if (update.cameraOff !== undefined) setRemoteCameraOff(Boolean(update.cameraOff));
-      if (update.muted !== undefined) setRemoteMuted(Boolean(update.muted));
+      if (update.joined === false) {
+        webrtc.removeParticipant(update.socketId);
+        return;
+      }
+      const patch: Partial<MeshPeer> = {};
+      if (update.muted !== undefined) patch.muted = update.muted;
+      if (update.cameraOff !== undefined) patch.cameraOff = update.cameraOff;
+      if (update.screenSharing !== undefined) patch.screenSharing = update.screenSharing;
+      if (Object.keys(patch).length) webrtc.patchPeer(update.socketId, patch);
+    },
+    onHandRaise: (payload) => {
+      webrtc.patchPeer(payload.socketId, { handRaised: payload.raised });
+    },
+    onNotesSync: (syncPayload) => {
+      // Another HR viewer saved notes. Skip while this user is actively
+      // typing so their in-progress edit isn't clobbered mid-keystroke;
+      // it will pick up the latest value next time they focus the field.
+      if (notesFocusedRef.current) return;
+      setNotes(syncPayload.notes);
+      if (typeof window !== "undefined") {
+        window.localStorage.removeItem(`interview-notes-draft-${roomId}`);
+      }
     },
     onEnd: () => {
       setSessionEnded(true);
       pushToast({ title: "Interview ended", message: "The session has been closed.", variant: "success" });
     },
+    onKicked: () => {
+      pushToast({ title: "Disconnected", message: "This room was opened in another tab or window.", variant: "error" });
+      router.push(session.role ? getDashboardPathForRole(session.role) : "/");
+    },
     onReconnect: () => {
-      void renegotiateRef.current();
+      pushToast({ title: "Reconnected", variant: "success" });
     }
   });
 
-  const webrtc = useWebRtc({
-    enabled: socketReady && !sessionEnded && Boolean(payload),
-    isInitiator,
-    onSignal: (signal) => sendSignalRef.current(signal)
+  const webrtc = useInterviewMesh({
+    enabled: Boolean(payload) && !sessionEnded,
+    onSignal: (targetSocketId, signal) => sendSignalRef.current(targetSocketId, signal)
   });
 
   useEffect(() => {
-    sendSignalRef.current = (signal) => interviewSocket.sendSignal(roomId, signal);
+    sendSignalRef.current = (targetSocketId, signal) => interviewSocket.sendSignal(roomId, targetSocketId, signal);
     handleRemoteSignalRef.current = webrtc.handleRemoteSignal;
-    renegotiateRef.current = webrtc.renegotiate;
-  }, [interviewSocket, roomId, webrtc.handleRemoteSignal, webrtc.renegotiate]);
+  }, [interviewSocket, roomId, webrtc.handleRemoteSignal]);
 
   const isHr = payload?.participantRole === "company";
   const candidate = payload?.application?.intern;
@@ -138,34 +180,13 @@ export function InterviewRoomShell({ roomId }: InterviewRoomShellProps) {
         setPayload({
           room: joinedRest.room,
           application: joinedRest.application,
-          participantRole: joinedRest.participantRole,
-          isInitiator: Boolean(joinedRest.isInitiator)
+          participantRole: joinedRest.participantRole
         });
         setChatMessages(joinedRest.room.chatMessages || []);
-        setNotes(joinedRest.room.hrNotes || "");
+        const serverNotes = joinedRest.room.hrNotes || "";
+        const draft = typeof window !== "undefined" ? window.localStorage.getItem(`interview-notes-draft-${roomId}`) : null;
+        setNotes(draft !== null && draft !== serverNotes ? draft : serverNotes);
         setOutcome(joinedRest.room.outcome || null);
-        setIsInitiator(Boolean(joinedRest.isInitiator));
-
-        const joined = await interviewSocket.joinRoom(roomId);
-        if (cancelled) return;
-        if (!joined.ok) {
-          throw new Error(joined.message || "Unable to connect to interview room");
-        }
-
-        setIsInitiator(Boolean(joined.isInitiator ?? joinedRest.isInitiator));
-        setPayload((prev) =>
-          prev
-            ? {
-                ...prev,
-                room: {
-                  ...prev.room,
-                  startedAt: joined.room?.startedAt || prev.room.startedAt,
-                  status: joined.room?.status || prev.room.status
-                }
-              }
-            : prev
-        );
-        setSocketReady(true);
       } catch (err) {
         if (!cancelled) {
           setError((err as Error).message || "Unable to load interview room.");
@@ -179,10 +200,33 @@ export function InterviewRoomShell({ roomId }: InterviewRoomShellProps) {
 
     return () => {
       cancelled = true;
+    };
+  }, [roomId, bootstrapAttempt]);
+
+  useEffect(() => {
+    if (!lobbyDone) return;
+    let cancelled = false;
+
+    async function connectSocket() {
+      const joined = await interviewSocket.joinRoom(roomId);
+      if (cancelled) return;
+      if (!joined.ok) {
+        setError(joined.message || "Unable to connect to interview room");
+      }
+    }
+
+    void connectSocket();
+
+    return () => {
+      cancelled = true;
       interviewSocket.leaveRoom(roomId);
       setSocketReady(false);
     };
-  }, [roomId, interviewSocket, bootstrapAttempt]);
+    // payload is intentionally excluded: onJoined's setPayload() must not
+    // re-trigger this effect, or every join response would immediately
+    // leave + rejoin the socket room in a loop.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lobbyDone, roomId, interviewSocket]);
 
   useEffect(() => {
     if (!payload?.room.startedAt || sessionEnded) return undefined;
@@ -194,6 +238,27 @@ export function InterviewRoomShell({ roomId }: InterviewRoomShellProps) {
     const timer = window.setInterval(tick, 1000);
     return () => window.clearInterval(timer);
   }, [payload?.room.startedAt, sessionEnded]);
+
+  useEffect(() => {
+    function handleFullscreenChange() {
+      setIsFullscreen(Boolean(document.fullscreenElement));
+    }
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, []);
+
+  async function handleToggleFullscreen() {
+    if (!fullscreenSupported) return;
+    try {
+      if (document.fullscreenElement) {
+        await document.exitFullscreen();
+      } else {
+        await rootRef.current?.requestFullscreen();
+      }
+    } catch {
+      pushToast({ title: "Fullscreen unavailable", message: "Your browser blocked fullscreen mode.", variant: "error" });
+    }
+  }
 
   async function handleSendChat() {
     const body = chatInput.trim();
@@ -218,6 +283,8 @@ export function InterviewRoomShell({ roomId }: InterviewRoomShellProps) {
       setNotesSaving(true);
       const result = await saveInterviewNotes(roomId, notes);
       setPayload((prev) => (prev ? { ...prev, room: result.room } : prev));
+      if (typeof window !== "undefined") window.localStorage.removeItem(`interview-notes-draft-${roomId}`);
+      setNotesSyncState("synced");
       pushToast({ title: "Notes saved", variant: "success" });
     } catch (err) {
       pushToast({ title: "Save failed", message: (err as Error).message, variant: "error" });
@@ -225,6 +292,38 @@ export function InterviewRoomShell({ roomId }: InterviewRoomShellProps) {
       setNotesSaving(false);
     }
   }
+
+  function handleNotesChange(value: string) {
+    if (!isHr) return;
+    setNotes(value);
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(`interview-notes-draft-${roomId}`, value);
+    }
+    setNotesSyncState("pending");
+
+    if (notesDebounceRef.current) window.clearTimeout(notesDebounceRef.current);
+    notesDebounceRef.current = window.setTimeout(() => {
+      void (async () => {
+        if (!socketReady) {
+          setNotesSyncState("offline");
+          return;
+        }
+        const result = await interviewSocket.sendNotesUpdate(roomId, value);
+        if (result.ok) {
+          if (typeof window !== "undefined") window.localStorage.removeItem(`interview-notes-draft-${roomId}`);
+          setNotesSyncState("synced");
+        } else {
+          setNotesSyncState("offline");
+        }
+      })();
+    }, 800);
+  }
+
+  useEffect(() => {
+    return () => {
+      if (notesDebounceRef.current) window.clearTimeout(notesDebounceRef.current);
+    };
+  }, []);
 
   async function handleOutcome(next: "selected" | "rejected" | "on_hold") {
     if (!isHr) return;
@@ -255,18 +354,32 @@ export function InterviewRoomShell({ roomId }: InterviewRoomShellProps) {
   function handleToggleMute() {
     if (!webrtc.micReady) return;
     const next = webrtc.toggleMute();
-    interviewSocket.updateParticipantStatus(roomId, { muted: next });
+    if (socketReady) interviewSocket.updateParticipantStatus(roomId, { muted: next });
   }
 
   function handleToggleCamera() {
     const next = webrtc.toggleCamera();
-    interviewSocket.updateParticipantStatus(roomId, { cameraOff: next });
+    if (socketReady) interviewSocket.updateParticipantStatus(roomId, { cameraOff: next });
+  }
+
+  async function handleToggleScreenShare() {
+    const sharing = await webrtc.toggleScreenShare();
+    if (socketReady) interviewSocket.updateParticipantStatus(roomId, { screenSharing: sharing });
+  }
+
+  function handleToggleHandRaise() {
+    const next = !handRaised;
+    setHandRaised(next);
+    if (socketReady) interviewSocket.sendHandRaise(roomId, next);
   }
 
   const headerSubtitle = useMemo(() => {
     if (!payload?.room.scheduledTime) return companyName;
     return `${companyName} · ${new Date(payload.room.scheduledTime).toLocaleString()}`;
   }, [companyName, payload?.room.scheduledTime]);
+
+  const connectedPeerCount = webrtc.peers.filter((peer) => peer.connectionState === "connected").length;
+  const totalParticipants = webrtc.peers.length + 1;
 
   if (loading) {
     return (
@@ -302,22 +415,58 @@ export function InterviewRoomShell({ roomId }: InterviewRoomShellProps) {
     );
   }
 
+  if (!lobbyDone) {
+    return (
+      <InterviewLobby
+        title={jobTitle}
+        subtitle={`${payload.room.roundType || "Interview"} · ${companyName}`}
+        localVideoRef={webrtc.localVideoRef}
+        muted={webrtc.muted}
+        cameraOff={webrtc.cameraOff}
+        mediaError={webrtc.mediaError}
+        mediaMode={webrtc.mediaMode}
+        micReady={webrtc.micReady}
+        audioInputDevices={webrtc.audioInputDevices}
+        videoInputDevices={webrtc.videoInputDevices}
+        selectedAudioDeviceId={webrtc.selectedAudioDeviceId}
+        selectedVideoDeviceId={webrtc.selectedVideoDeviceId}
+        onToggleMute={handleToggleMute}
+        onToggleCamera={handleToggleCamera}
+        onSelectAudioDevice={(deviceId) => void webrtc.switchAudioInput(deviceId)}
+        onSelectVideoDevice={(deviceId) => void webrtc.switchVideoInput(deviceId)}
+        onRetryMedia={() => void webrtc.retryMediaAccess()}
+        onJoin={() => setLobbyDone(true)}
+      />
+    );
+  }
+
   return (
-    <div className="flex min-h-screen flex-col bg-slate-950 text-slate-100">
-      <header className="flex items-center justify-between border-b border-slate-800 px-4 py-3">
+    <div ref={rootRef} className="flex min-h-screen flex-col bg-slate-950 text-slate-100">
+      <header className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 px-4 py-3">
         <div>
           <p className="text-xs uppercase tracking-[0.16em] text-slate-400">{payload.room.roundType || "Interview"}</p>
           <h1 className="text-lg font-semibold text-white">{jobTitle}</h1>
           <p className="text-xs text-slate-400">{headerSubtitle}</p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="hidden text-xs text-slate-400 sm:block">
-            {webrtc.connected ? "Connected" : remoteJoined ? "Participant joined" : "Waiting to connect"}
-            {remoteMuted ? " · Muted" : ""}
+          <div className="hidden items-center gap-1 text-xs text-slate-400 sm:flex">
+            <Users className="h-3.5 w-3.5" />
+            {connectedPeerCount + 1}/{totalParticipants} connected
           </div>
           <div className="rounded-full border border-slate-700 px-3 py-1 font-mono text-sm text-emerald-300">
             {formatDuration(elapsedSeconds)}
           </div>
+          {fullscreenSupported ? (
+            <button
+              type="button"
+              className="rounded-full border border-slate-700 p-2 text-slate-300 hover:bg-slate-800"
+              onClick={() => void handleToggleFullscreen()}
+              aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+              title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+            >
+              {isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
+            </button>
+          ) : null}
           {isHr ? (
             <Button
               type="button"
@@ -336,29 +485,23 @@ export function InterviewRoomShell({ roomId }: InterviewRoomShellProps) {
       <div className="flex min-h-0 flex-1">
         <main className="flex min-w-0 flex-1 flex-col">
           <div className="relative flex-1 p-4">
-            <div className="grid h-full min-h-[420px] grid-cols-1 gap-3 lg:grid-cols-2">
+            <div
+              className="grid h-full min-h-[420px] gap-3"
+              style={{ gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))" }}
+            >
+              {webrtc.peers.length === 0 ? (
+                <div className="flex min-h-[240px] items-center justify-center rounded-2xl border border-slate-800 bg-slate-900">
+                  <p className="text-sm text-slate-400">Waiting for other participants to join...</p>
+                </div>
+              ) : (
+                webrtc.peers.map((peer) => (
+                  <RemoteVideoTile key={peer.socketId} peer={peer} speakerDeviceId={webrtc.selectedSpeakerDeviceId} />
+                ))
+              )}
               <VideoTile
-                label={isHr ? candidate?.fullName || "Candidate" : companyName}
-                videoRef={webrtc.remoteVideoRef}
-                showPlaceholder={!webrtc.connected || remoteCameraOff}
-                placeholder={
-                  remoteCameraOff
-                    ? webrtc.connected
-                      ? "Camera off · Audio connected"
-                      : remoteJoined
-                        ? "Connecting audio..."
-                        : "Waiting for participant..."
-                    : remoteJoined
-                      ? "Connecting video..."
-                      : "Waiting for participant..."
-                }
-                participantMuted={remoteMuted}
-                primary
-              />
-              <VideoTile
-                label="You"
+                label={webrtc.screenSharing ? "You · Presenting" : "You"}
                 videoRef={webrtc.localVideoRef}
-                showPlaceholder={webrtc.cameraOff || (Boolean(webrtc.mediaError) && !webrtc.micReady)}
+                showPlaceholder={webrtc.cameraOff && !webrtc.screenSharing}
                 placeholder={
                   webrtc.mediaMode === "audio-only"
                     ? "Voice-only mode"
@@ -367,22 +510,29 @@ export function InterviewRoomShell({ roomId }: InterviewRoomShellProps) {
                       : "Starting camera..."
                 }
                 participantMuted={webrtc.muted}
+                handRaised={handRaised}
                 muted
               />
             </div>
-            <audio ref={webrtc.remoteAudioRef} autoPlay playsInline className="hidden" aria-hidden="true" />
             <InterviewAudioControls
               muted={webrtc.muted}
               mediaError={webrtc.mediaError}
               mediaMode={webrtc.mediaMode}
               audioInputDevices={webrtc.audioInputDevices}
+              videoInputDevices={webrtc.videoInputDevices}
+              audioOutputDevices={webrtc.audioOutputDevices}
               selectedAudioDeviceId={webrtc.selectedAudioDeviceId}
+              selectedVideoDeviceId={webrtc.selectedVideoDeviceId}
+              selectedSpeakerDeviceId={webrtc.selectedSpeakerDeviceId}
+              speakerSupported={webrtc.speakerSupported}
               micReady={webrtc.micReady}
               onRetryMedia={() => void webrtc.retryMediaAccess()}
               onSelectAudioDevice={(deviceId) => void webrtc.switchAudioInput(deviceId)}
+              onSelectVideoDevice={(deviceId) => void webrtc.switchVideoInput(deviceId)}
+              onSelectSpeakerDevice={(deviceId) => webrtc.switchSpeaker(deviceId)}
             />
-            {webrtc.mediaError && webrtc.micReady ? (
-              <p className="mt-2 text-center text-xs text-amber-300">{webrtc.mediaError}</p>
+            {webrtc.screenShareError ? (
+              <p className="mt-2 text-center text-xs text-amber-300">{webrtc.screenShareError}</p>
             ) : null}
             {sessionEnded ? (
               <div className="absolute inset-0 flex items-center justify-center bg-slate-950/80">
@@ -406,7 +556,7 @@ export function InterviewRoomShell({ roomId }: InterviewRoomShellProps) {
           </div>
 
           <div className="border-t border-slate-800 px-4 py-3">
-            <div className="mx-auto flex max-w-xl items-center justify-center gap-3">
+            <div className="mx-auto flex max-w-2xl flex-wrap items-center justify-center gap-3">
               <ControlButton
                 active={webrtc.muted || !webrtc.micReady}
                 label={webrtc.muted ? "Unmute" : "Mute"}
@@ -419,6 +569,21 @@ export function InterviewRoomShell({ roomId }: InterviewRoomShellProps) {
                 label={webrtc.cameraOff ? "Start video" : "Stop video"}
                 icon={webrtc.cameraOff ? CameraOff : Camera}
                 onClick={handleToggleCamera}
+                disabled={sessionEnded}
+              />
+              <ControlButton
+                active={webrtc.screenSharing}
+                label={webrtc.screenSharing ? "Stop sharing" : "Share screen"}
+                icon={MonitorUp}
+                onClick={() => void handleToggleScreenShare()}
+                disabled={sessionEnded}
+              />
+              <ControlButton
+                active={handRaised}
+                label={handRaised ? "Lower hand" : "Raise hand"}
+                icon={Hand}
+                onClick={handleToggleHandRaise}
+                disabled={sessionEnded}
               />
               <button
                 type="button"
@@ -448,6 +613,7 @@ export function InterviewRoomShell({ roomId }: InterviewRoomShellProps) {
               {sidebarOpen ? (
                 <div className="flex gap-1">
                   <PanelTab active={activePanel === "chat"} icon={MessageSquare} label="Chat" onClick={() => setActivePanel("chat")} />
+                  <PanelTab active={activePanel === "people"} icon={Users} label="People" onClick={() => setActivePanel("people")} />
                   <PanelTab active={activePanel === "profile"} icon={User} label="Profile" onClick={() => setActivePanel("profile")} />
                   {isHr ? (
                     <PanelTab active={activePanel === "notes"} icon={StickyNote} label="Notes" onClick={() => setActivePanel("notes")} />
@@ -509,6 +675,31 @@ export function InterviewRoomShell({ roomId }: InterviewRoomShellProps) {
                   </>
                 ) : null}
 
+                {activePanel === "people" ? (
+                  <div className="space-y-2 overflow-y-auto p-3">
+                    <ParticipantRow
+                      name="You"
+                      role={payload.participantRole}
+                      muted={webrtc.muted || !webrtc.micReady}
+                      cameraOff={webrtc.cameraOff}
+                      handRaised={handRaised}
+                      quality="good"
+                      isSelf
+                    />
+                    {webrtc.peers.map((peer) => (
+                      <ParticipantRow
+                        key={peer.socketId}
+                        name={peer.name}
+                        role={peer.role}
+                        muted={peer.muted}
+                        cameraOff={peer.cameraOff}
+                        handRaised={peer.handRaised}
+                        quality={peer.quality}
+                      />
+                    ))}
+                  </div>
+                ) : null}
+
                 {activePanel === "profile" ? (
                   <div className="space-y-3 overflow-y-auto p-4 text-sm">
                     <div>
@@ -549,11 +740,38 @@ export function InterviewRoomShell({ roomId }: InterviewRoomShellProps) {
 
                 {activePanel === "notes" && isHr ? (
                   <div className="flex min-h-0 flex-1 flex-col p-3">
-                    <p className="mb-2 text-xs uppercase tracking-[0.14em] text-slate-500">Private HR notes</p>
+                    <div className="mb-2 flex items-center justify-between">
+                      <p className="text-xs uppercase tracking-[0.14em] text-slate-500">Private HR notes</p>
+                      <span
+                        className={`text-[10px] uppercase tracking-[0.1em] ${
+                          notesSyncState === "synced"
+                            ? "text-emerald-400"
+                            : notesSyncState === "pending"
+                              ? "text-amber-400"
+                              : notesSyncState === "offline"
+                                ? "text-rose-400"
+                                : "text-slate-600"
+                        }`}
+                      >
+                        {notesSyncState === "synced"
+                          ? "Synced"
+                          : notesSyncState === "pending"
+                            ? "Saving..."
+                            : notesSyncState === "offline"
+                              ? "Saved locally, will retry"
+                              : ""}
+                      </span>
+                    </div>
                     <textarea
                       value={notes}
-                      onChange={(event) => setNotes(event.target.value)}
-                      placeholder="Capture observations, strengths, and concerns..."
+                      onChange={(event) => handleNotesChange(event.target.value)}
+                      onFocus={() => {
+                        notesFocusedRef.current = true;
+                      }}
+                      onBlur={() => {
+                        notesFocusedRef.current = false;
+                      }}
+                      placeholder="Capture observations, strengths, and concerns... Synced live with other interviewers."
                       className="min-h-[220px] flex-1 rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-indigo-500"
                       disabled={sessionEnded}
                     />
@@ -564,7 +782,7 @@ export function InterviewRoomShell({ roomId }: InterviewRoomShellProps) {
                       disabled={notesSaving || sessionEnded}
                       onClick={() => void handleSaveNotes()}
                     >
-                      {notesSaving ? "Saving..." : "Save notes"}
+                      {notesSaving ? "Saving..." : "Save now"}
                     </Button>
                   </div>
                 ) : null}
@@ -577,6 +795,87 @@ export function InterviewRoomShell({ roomId }: InterviewRoomShellProps) {
   );
 }
 
+const QUALITY_COLORS: Record<ConnectionQuality, string> = {
+  good: "bg-emerald-400",
+  fair: "bg-amber-400",
+  poor: "bg-rose-500",
+  unknown: "bg-slate-500"
+};
+
+const QUALITY_LABELS: Record<ConnectionQuality, string> = {
+  good: "Good connection",
+  fair: "Fair connection",
+  poor: "Poor connection",
+  unknown: "Connecting..."
+};
+
+function QualityDot({ quality }: { quality: ConnectionQuality }) {
+  return (
+    <span
+      className={`inline-block h-2 w-2 rounded-full ${QUALITY_COLORS[quality]}`}
+      title={QUALITY_LABELS[quality]}
+      aria-label={QUALITY_LABELS[quality]}
+    />
+  );
+}
+
+function RemoteVideoTile({ peer, speakerDeviceId }: { peer: MeshPeer; speakerDeviceId?: string }) {
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    if (videoRef.current) videoRef.current.srcObject = peer.stream;
+    if (audioRef.current) {
+      audioRef.current.srcObject = peer.stream;
+      void audioRef.current.play().catch(() => undefined);
+    }
+  }, [peer.stream]);
+
+  useEffect(() => {
+    if (speakerDeviceId) void applySinkId(audioRef.current, speakerDeviceId);
+  }, [speakerDeviceId, peer.stream]);
+
+  const connecting = peer.connectionState !== "connected";
+  const showPlaceholder = connecting || (peer.cameraOff && !peer.screenSharing);
+
+  return (
+    <div className="relative min-h-[240px] overflow-hidden rounded-2xl border border-indigo-500/40 bg-slate-900">
+      <video ref={videoRef} autoPlay playsInline muted className="h-full min-h-[240px] w-full object-cover" />
+      <audio ref={audioRef} autoPlay playsInline className="hidden" aria-hidden="true" />
+      {showPlaceholder ? (
+        <div className="absolute inset-0 flex items-center justify-center bg-slate-900/80">
+          <p className="px-4 text-center text-sm text-slate-300">
+            {connecting
+              ? peer.connectionState === "connecting" || peer.connectionState === "new"
+                ? "Connecting..."
+                : "Reconnecting..."
+              : peer.screenSharing
+                ? "Presenting"
+                : "Camera off"}
+          </p>
+        </div>
+      ) : null}
+      <div className="absolute bottom-3 left-3 flex items-center gap-2">
+        <div className="flex items-center gap-1.5 rounded-lg bg-slate-950/70 px-2 py-1 text-xs text-white">
+          <QualityDot quality={peer.quality} />
+          {peer.name}
+          {peer.screenSharing ? " · Presenting" : ""}
+        </div>
+        {peer.muted ? (
+          <div className="rounded-lg bg-rose-950/80 px-2 py-1 text-[10px] text-rose-200">
+            <MicOff className="inline h-3 w-3" />
+          </div>
+        ) : null}
+        {peer.handRaised ? (
+          <div className="rounded-lg bg-amber-950/80 px-2 py-1 text-[10px] text-amber-200">
+            <Hand className="inline h-3 w-3" />
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 function VideoTile({
   label,
   videoRef,
@@ -584,7 +883,7 @@ function VideoTile({
   showPlaceholder,
   muted,
   participantMuted,
-  primary = false
+  handRaised
 }: {
   label: string;
   videoRef: React.RefObject<HTMLVideoElement | null>;
@@ -592,10 +891,10 @@ function VideoTile({
   showPlaceholder?: boolean;
   muted?: boolean;
   participantMuted?: boolean;
-  primary?: boolean;
+  handRaised?: boolean;
 }) {
   return (
-    <div className={`relative overflow-hidden rounded-2xl border ${primary ? "border-indigo-500/40" : "border-slate-800"} bg-slate-900`}>
+    <div className="relative min-h-[240px] overflow-hidden rounded-2xl border border-slate-800 bg-slate-900">
       <video ref={videoRef} autoPlay playsInline muted={muted} className="h-full min-h-[240px] w-full object-cover" />
       {showPlaceholder ? (
         <div className="absolute inset-0 flex items-center justify-center bg-slate-900/80">
@@ -609,6 +908,49 @@ function VideoTile({
             <MicOff className="inline h-3 w-3" />
           </div>
         ) : null}
+        {handRaised ? (
+          <div className="rounded-lg bg-amber-950/80 px-2 py-1 text-[10px] text-amber-200">
+            <Hand className="inline h-3 w-3" />
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function ParticipantRow({
+  name,
+  role,
+  muted,
+  cameraOff,
+  handRaised,
+  quality,
+  isSelf
+}: {
+  name: string;
+  role: "intern" | "company";
+  muted: boolean;
+  cameraOff: boolean;
+  handRaised: boolean;
+  quality: ConnectionQuality;
+  isSelf?: boolean;
+}) {
+  return (
+    <div className="flex items-center justify-between rounded-xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm">
+      <div className="flex items-center gap-2">
+        <QualityDot quality={quality} />
+        <div>
+          <p className="text-slate-100">
+            {name}
+            {isSelf ? " (You)" : ""}
+          </p>
+          <p className="text-[10px] uppercase tracking-[0.1em] text-slate-500">{role === "intern" ? "Candidate" : "Interviewer"}</p>
+        </div>
+      </div>
+      <div className="flex items-center gap-1.5 text-slate-400">
+        {handRaised ? <Hand className="h-3.5 w-3.5 text-amber-300" /> : null}
+        {muted ? <MicOff className="h-3.5 w-3.5 text-rose-300" /> : <Mic className="h-3.5 w-3.5" />}
+        {cameraOff ? <CameraOff className="h-3.5 w-3.5 text-rose-300" /> : <Camera className="h-3.5 w-3.5" />}
       </div>
     </div>
   );

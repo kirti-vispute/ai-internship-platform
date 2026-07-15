@@ -5,6 +5,7 @@ const crypto = require("crypto");
 const { USER_ROLES, COMPANY_VERIFICATION_STATUS, ADMIN_ROLES } = require("../../../constants/enums");
 const asyncHandler = require("../../../shared/utils/asyncHandler");
 const AppError = require("../../../shared/utils/AppError");
+const { sendSuccess } = require("../../../shared/utils/api-response");
 const { hashPassword, comparePassword } = require("../../../shared/utils/password");
 const {
   signAccessToken,
@@ -97,14 +98,13 @@ function validateEmail(email) {
 }
 
 function buildOtpSendResponse(res, { message, result, delivery }) {
-  const payload = {
-    message,
+  const data = {
     retryAfterSeconds: otpVerification.RESEND_COOLDOWN_SECONDS
   };
   if (process.env.NODE_ENV !== "production" && delivery?.devMode && result?.otp) {
-    payload.devOtp = result.otp;
+    data.devOtp = result.otp;
   }
-  return res.json(payload);
+  return sendSuccess(res, { message, data });
 }
 
 exports.sendInternOtp = asyncHandler(async (req, res) => {
@@ -123,10 +123,9 @@ exports.verifyInternOtp = asyncHandler(async (req, res) => {
     otp: req.body.otp,
     purpose: "intern_signup"
   });
-  res.json({
+  sendSuccess(res, {
     message: alreadyVerified ? "Email already verified" : "OTP verified successfully",
-    verified: true,
-    expiresAt: record.expiresAt
+    data: { verified: true, expiresAt: record.expiresAt }
   });
 });
 
@@ -172,7 +171,7 @@ exports.internSignup = asyncHandler(async (req, res) => {
   await otpVerification.consumeOtpAfterSignup(normalizedEmail, "intern_signup");
 
   const session = await issueSession({ user, req, res });
-  res.status(201).json({ message: "Intern signup successful", ...session });
+  sendSuccess(res, { statusCode: 201, message: "Intern signup successful", data: session });
 });
 
 exports.companySignup = asyncHandler(async (req, res) => {
@@ -224,10 +223,10 @@ exports.companySignup = asyncHandler(async (req, res) => {
 
   const session = await issueSession({ user, req, res });
 
-  res.status(201).json({
+  sendSuccess(res, {
+    statusCode: 201,
     message: "Company signup successful. Verification pending.",
-    ...session,
-    verificationStatus: COMPANY_VERIFICATION_STATUS.PENDING
+    data: { ...session, verificationStatus: COMPANY_VERIFICATION_STATUS.PENDING }
   });
 });
 
@@ -251,11 +250,20 @@ async function loginByRole({ email, password, expectedRole }) {
   return { user };
 }
 
+exports.getHrDemoCredentials = asyncHandler(async (req, res) => {
+  const seedData = require("../../../shared/data/seedData");
+  const hrSeed = seedData.users.find((u) => u.email === "hr@novatech.example");
+  if (!hrSeed) {
+    throw new AppError("HR demo account is not configured", 404);
+  }
+  sendSuccess(res, { data: { email: hrSeed.email, password: hrSeed.password } });
+});
+
 exports.internLogin = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
   const { user } = await loginByRole({ email, password, expectedRole: USER_ROLES.INTERN });
   const session = await issueSession({ user, req, res });
-  res.json({ message: "Intern login successful", ...session });
+  sendSuccess(res, { message: "Intern login successful", data: session });
 });
 
 exports.companyLogin = asyncHandler(async (req, res) => {
@@ -271,11 +279,13 @@ exports.companyLogin = asyncHandler(async (req, res) => {
   }
   const session = await issueSession({ user, req, res });
 
-  res.json({
+  sendSuccess(res, {
     message: "Company login successful",
-    ...session,
-    companyAccountType: user.companyAccountType || "owner",
-    verificationStatus: profile?.verificationStatus || COMPANY_VERIFICATION_STATUS.PENDING
+    data: {
+      ...session,
+      companyAccountType: user.companyAccountType || "owner",
+      verificationStatus: profile?.verificationStatus || COMPANY_VERIFICATION_STATUS.PENDING
+    }
   });
 });
 
@@ -290,15 +300,19 @@ exports.adminLogin = asyncHandler(async (req, res) => {
   }
 
   const session = await issueSession({ user, req, res });
-  res.json({ message: "Admin login successful", ...session });
+  sendSuccess(res, { message: "Admin login successful", data: session });
 });
 
 exports.getMe = asyncHandler(async (req, res) => {
-  res.json({ user: req.user });
+  sendSuccess(res, { data: { user: req.user } });
 });
 
 exports.refreshSession = asyncHandler(async (req, res) => {
-  const refreshToken = req.cookies?.[REFRESH_COOKIE_KEY] || req.body?.refreshToken;
+  // Body-only, deliberately -- see the comment in auth.middleware.js. Accepting
+  // the refreshToken cookie here would let a forged cross-site request mint a
+  // fresh session for the victim using nothing but an ambient cookie. The SPA
+  // client already sends the refresh token explicitly in the request body.
+  const refreshToken = req.body?.refreshToken;
   if (!refreshToken) {
     throw new AppError("Refresh token missing", 401);
   }
@@ -318,11 +332,15 @@ exports.refreshSession = asyncHandler(async (req, res) => {
   }
 
   const session = await issueSession({ user, req, res });
-  res.json({ message: "Session refreshed", ...session });
+  const responseData =
+    user.role === USER_ROLES.COMPANY
+      ? { ...session, companyAccountType: user.companyAccountType || "owner" }
+      : session;
+  sendSuccess(res, { message: "Session refreshed", data: responseData });
 });
 
 exports.logout = asyncHandler(async (req, res) => {
-  const refreshToken = req.cookies?.[REFRESH_COOKIE_KEY] || req.body?.refreshToken;
+  const refreshToken = req.body?.refreshToken;
   if (refreshToken) {
     try {
       const payload = verifyRefreshToken(refreshToken);
@@ -338,7 +356,7 @@ exports.logout = asyncHandler(async (req, res) => {
   }
 
   clearAuthCookies(res);
-  res.json({ message: "Logged out successfully" });
+  sendSuccess(res, { message: "Logged out successfully" });
 });
 
 exports.sendPasswordResetOtp = asyncHandler(async (req, res) => {
@@ -347,7 +365,10 @@ exports.sendPasswordResetOtp = asyncHandler(async (req, res) => {
 
   const user = await User.findOne({ email: normalizedEmail });
   if (!user) {
-    return res.json({ message: "If an account exists for this email, an OTP has been sent.", retryAfterSeconds: otpVerification.RESEND_COOLDOWN_SECONDS });
+    return sendSuccess(res, {
+      message: "If an account exists for this email, an OTP has been sent.",
+      data: { retryAfterSeconds: otpVerification.RESEND_COOLDOWN_SECONDS }
+    });
   }
 
   const result = await otpVerification.sendOtpForPurpose({
@@ -373,5 +394,5 @@ exports.resetPasswordWithOtp = asyncHandler(async (req, res) => {
   user.refreshTokenExpiresAt = null;
   await user.save();
   await otpVerification.consumeOtpAfterSignup(normalizedEmail, "password_reset");
-  res.json({ message: "Password reset successful" });
+  sendSuccess(res, { message: "Password reset successful" });
 });

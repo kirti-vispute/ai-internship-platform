@@ -101,6 +101,21 @@ function requireSidebarModule(moduleKey) {
   };
 }
 
+/**
+ * Same as requireSidebarModule, but only enforced for company-role requests.
+ * Use this on routes shared with other roles (e.g. intern/company chat, or
+ * intern/company interview rooms) so the module gate never affects non-company users.
+ */
+function requireSidebarModuleForCompanyUsers(moduleKey) {
+  return (req, res, next) => {
+    if (req.user?.role !== "company") return next();
+    if (!hasSidebarModule(req.user, moduleKey)) {
+      return sendError(res, { statusCode: 403, message: "Access denied: module not enabled for this account" });
+    }
+    return next();
+  };
+}
+
 /** Read-only team roster access: full recruiter managers, or an HR granted the team_members/hr_management module. */
 function requireViewRecruiters() {
   return (req, res, next) => {
@@ -119,5 +134,6 @@ module.exports = {
   requireAssignRecruiters,
   requireGlobalAnalytics,
   requireSidebarModule,
+  requireSidebarModuleForCompanyUsers,
   requireViewRecruiters
 };

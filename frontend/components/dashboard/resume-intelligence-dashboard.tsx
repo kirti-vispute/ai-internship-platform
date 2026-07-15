@@ -13,7 +13,7 @@ import { ScrollReveal } from "@/components/animations/ScrollReveal";
 import { AiConfidenceBadge } from "@/components/dashboard/ai-confidence-badge";
 import { SkillGapAnalysisPanel } from "@/components/dashboard/skill-gap-analysis-panel";
 import { AppIcon } from "@/components/icons/app-icon";
-import type { InternProfile, ResumeAnalysis } from "@/lib/intern-portal";
+import type { InternProfile, InternshipListing, ResumeAnalysis } from "@/lib/intern-portal";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -21,6 +21,7 @@ type Props = {
   analysis: ResumeAnalysis | null | undefined;
   onTargetRoleChange?: (roleKey: string) => void;
   loadingRole?: boolean;
+  internship?: InternshipListing | null;
 };
 
 const cardBase =
@@ -148,7 +149,7 @@ function InsightCard({
   );
 }
 
-export function ResumeIntelligenceDashboard({ profile, analysis, onTargetRoleChange, loadingRole }: Props) {
+export function ResumeIntelligenceDashboard({ profile, analysis, onTargetRoleChange, loadingRole, internship }: Props) {
   const [targetRole, setTargetRole] = useState(
     analysis?.skillIntelligence?.targetRoleKey || "full_stack_developer"
   );
@@ -251,6 +252,33 @@ export function ResumeIntelligenceDashboard({ profile, analysis, onTargetRoleCha
         </ScrollReveal>
       )}
 
+      {/* Explainable score trace — every deduction/bonus is a direct result of a dimension's weight * score, never an invented number */}
+      {analysis?.scoreExplanation && (analysis.scoreExplanation.deductions.length > 0 || analysis.scoreExplanation.bonuses.length > 0) && (
+        <ScrollReveal variant="fade-up" distance={14}>
+          <div className={cn(cardBase, cardHover, "p-6")}>
+            <h3 className="mb-4 text-sm font-semibold text-slate-900 dark:text-slate-100">Why this score?</h3>
+            <ul className="space-y-2.5">
+              {analysis.scoreExplanation.bonuses.map((b, idx) => (
+                <li key={`bonus-${idx}`} className="flex gap-2.5 text-sm leading-relaxed text-emerald-700 dark:text-emerald-300">
+                  <span className="mt-0.5 shrink-0 font-mono font-semibold tabular-nums">+{b.points}</span>
+                  <span>
+                    <span className="font-medium">{b.dimension}:</span> {b.reason}
+                  </span>
+                </li>
+              ))}
+              {analysis.scoreExplanation.deductions.map((d, idx) => (
+                <li key={`deduction-${idx}`} className="flex gap-2.5 text-sm leading-relaxed text-rose-700 dark:text-rose-300">
+                  <span className="mt-0.5 shrink-0 font-mono font-semibold tabular-nums">{d.points}</span>
+                  <span>
+                    <span className="font-medium">{d.dimension}:</span> {d.reason}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </ScrollReveal>
+      )}
+
       {/* Skill Gap Analysis */}
       <ScrollReveal variant="fade-up" distance={14}>
         <SkillGapAnalysisPanel
@@ -259,6 +287,7 @@ export function ResumeIntelligenceDashboard({ profile, analysis, onTargetRoleCha
           targetRoleKey={targetRole}
           loadingRole={loadingRole}
           showRoleSelector={false}
+          internship={internship}
           onTargetRoleChange={(roleKey) => {
             setTargetRole(roleKey);
             onTargetRoleChange?.(roleKey);

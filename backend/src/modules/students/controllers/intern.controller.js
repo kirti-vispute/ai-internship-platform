@@ -11,20 +11,25 @@ const { sendSuccess } = require("../../../shared/utils/api-response");
 const { getSkillGap, recommendInternships } = require("../../../services/ai.service");
 const { computeApplicationRelevance } = require("../../../services/application-relevance.service");
 const { computeResumeScore } = require("../../../services/scorer.service");
+const { buildApplicationInsight } = require("../services/application-insight.service");
 const { parseResumeFile } = require("../../../services/resume-parser.service");
 const { structuredResumeParse } = require("../../../services/resume-structured-parser.service");
+const { mergeParsedResumeIntoProfile } = require("../services/profile-sync.service");
 const { normalizeSkillList, toDisplaySkillList } = require("../../../shared/utils/skill-normalizer");
 const { storeUploadedFile } = require("../../../shared/infrastructure/storage/storage.adapter");
 const { logActivity } = require("../../../services/activity-log.service");
+const { resolvePagination } = require("../../../shared/utils/pagination");
 const { sendNotificationEmail } = require("../../../services/notification.service");
 const { createInAppNotification, notifyInternByProfileId, notifyCompanyApplicationStakeholders } = require("../../../services/in-app-notification.service");
-const Notification = require("../../../models/Notification");
 const { NOTIFICATION_TYPES } = require("../../../constants/notification-types");
 const { APPLICATION_STATUS } = require("../../../constants/enums");
 const {
   listInternInterviews,
-  processInterviewRemindersForIntern
+  processInterviewRemindersForIntern,
+  notifyRescheduleRequested
 } = require("../../../services/interview-workflow.service");
+const { withVersionRetry } = require("../../../shared/utils/with-version-retry");
+const { sanitizeApplicationFeedback } = require("../../companies/services/company-access.service");
 const {
   cacheOrFetch,
   invalidateKey,
@@ -41,7 +46,7 @@ async function invalidateStudentProfileScope(userId) {
   const id = String(userId);
   await Promise.all([
     invalidateKey(CacheKeys.studentProfile(id)),
-    invalidateKey(CacheKeys.studentResume(id)),
+    invalidatePattern(`${CacheKeys.studentResumePrefix(id)}*`),
     invalidateKey(CacheKeys.studentATS(id)),
     invalidateKey(CacheKeys.studentRecommendation(id)),
     invalidatePattern(`${CacheKeys.studentSkillGapPrefix(id)}:*`),
@@ -59,11 +64,19 @@ async function invalidateStudentApplicationsScope(userId) {
 function toProfilePayload(profileDoc) {
   const profile = profileDoc.toObject ? profileDoc.toObject() : profileDoc;
   const resumeUploaded = Boolean(profile?.resume?.filePath || profile?.resume?.text);
-  const parsedSkills = normalizeSkillList(Array.isArray(profile?.resume?.parsed?.skills) ? profile.resume.parsed.skills : []);
+  // `profile.skills` is already the fully-synced, authoritative value --
+  // profile-sync.service.js writes it on every resume upload, and
+  // updateProfile writes it on every manual edit. Re-unioning it with
+  // `resume.parsed.skills` here would silently resurrect a resume's skills
+  // after the student manually removed one via Edit Profile (parsed.skills
+  // isn't touched by manual edits, so it can go stale relative to
+  // profile.skills) -- exactly the "old data reappearing" bug this profile
+  // must never have.
   const savedSkills = normalizeSkillList(Array.isArray(profile?.skills) ? profile.skills : []);
-  const mergedSkills = toDisplaySkillList(normalizeSkillList([...savedSkills, ...parsedSkills]));
-  return { ...profile, skills: mergedSkills, resumeUploaded };
+  return { ...profile, skills: toDisplaySkillList(savedSkills), resumeUploaded };
 }
+
+const DEFAULT_TARGET_ROLE = "full_stack_developer";
 
 async function getInternProfileByUserId(userId) {
   const profile = await InternProfile.findOne({ user: userId });
@@ -160,6 +173,7 @@ exports.updateProfile = asyncHandler(async (req, res) => {
     "courseEntries",
     "experience",
     "achievements",
+    "languages",
     "links",
     "summary",
     "bio",
@@ -192,7 +206,15 @@ exports.updateProfile = asyncHandler(async (req, res) => {
         }
         profile.portfolioUrl = String(req.body.portfolioUrl || "").trim();
       } else if (field === "profileSections" && req.body.profileSections && typeof req.body.profileSections === "object") {
-        profile.profileSections = { ...(profile.profileSections || {}), ...req.body.profileSections };
+        // `profile.profileSections` is a Mongoose single-nested subdocument,
+        // not a plain object -- spreading it directly (`{...profile.profileSections}`)
+        // does not reliably copy its nested fields (e.g. personalInformation),
+        // which can leave them explicitly `undefined` and fail Mongoose's cast
+        // on save. Convert to a plain object first so a partial update (e.g.
+        // just `{ professionalSummary }`) safely merges over the existing data
+        // instead of corrupting sibling nested fields.
+        const currentSections = profile.profileSections?.toObject ? profile.profileSections.toObject() : profile.profileSections || {};
+        profile.profileSections = { ...currentSections, ...req.body.profileSections };
       } else {
         profile[field] = req.body[field];
       }
@@ -255,39 +277,11 @@ exports.uploadResume = asyncHandler(async (req, res) => {
 
   profile.resume.text = resumeText;
   profile.resume.parsed = parsed;
-  profile.skills = toDisplaySkillList(
-    normalizeSkillList([...(profile.skills || []), ...(parsed.skills || [])])
-  );
-  profile.education = [...new Set([...(profile.education || []), ...((parsed.education || []).map((item) => item.raw || "").filter(Boolean))])];
-  profile.projects = [...new Set([...(profile.projects || []), ...((parsed.projects || []).map((item) => item.title || item.description || "").filter(Boolean))])];
-  profile.certifications = [...new Set([...(profile.certifications || []), ...((parsed.certifications || []).map((item) => item.name || item.raw || "").filter(Boolean))])];
-  profile.experience = [...new Set([...(profile.experience || []), ...((parsed.experience || []).map((item) => item.description || item.role || "").filter(Boolean))])];
-  profile.achievements = [...new Set([...(profile.achievements || []), ...(parsed.achievements || [])])];
-  profile.links = [...new Set([...(profile.links || []), ...(parsed.links || [])])];
-  if (!profile.summary && parsed.summary) profile.summary = parsed.summary;
-  if (!profile.bio && parsed.summary) profile.bio = parsed.summary;
-  if (!profile.address && parsed.location) profile.address = parsed.location;
-
-  if ((!profile.educationDetails || profile.educationDetails.length === 0) && Array.isArray(parsed.education) && parsed.education.length > 0) {
-    const firstEdu = parsed.education[0] || {};
-    profile.educationDetails = [
-      {
-        college: firstEdu.institution || "",
-        degree: firstEdu.degree || "",
-        branch: firstEdu.branch || "",
-        cgpa: firstEdu.grade || "",
-        passingYear: firstEdu.graduationYear || firstEdu.endYear || ""
-      }
-    ];
-  }
-
-  if ((!profile.softSkills || profile.softSkills.length === 0) && Array.isArray(parsed.softSkills) && parsed.softSkills.length > 0) {
-    profile.softSkills = toDisplaySkillList(normalizeSkillList(parsed.softSkills));
-  }
-  if (!profile.linkedinUrl) {
-    const linkedIn = (parsed.links || []).find((link) => String(link).toLowerCase().includes("linkedin.com"));
-    if (linkedIn) profile.linkedinUrl = linkedIn;
-  }
+  // Professional Summary is auto-filled only when the student has never
+  // written one; once set, it is only ever replaced via an explicit student
+  // confirmation on the frontend (comparing against `parsed.summary` below).
+  // See profile-sync.service.js for the full merge policy.
+  mergeParsedResumeIntoProfile(profile, parsed);
 
   await refreshProfileScore(profile, resumeText);
   await profile.save();
@@ -318,30 +312,86 @@ exports.uploadResume = asyncHandler(async (req, res) => {
 
 exports.getResumeScore = asyncHandler(async (req, res) => {
   const id = String(req.user._id);
-  const targetRole = String(req.query.targetRole || "full_stack_developer");
+  const targetRole = String(req.query.targetRole || DEFAULT_TARGET_ROLE);
   const forceRefresh = String(req.query.refresh || "").toLowerCase() === "true";
+  const internshipId = String(req.query.internshipId || "").trim();
 
   // On an explicit recalculation, drop the cached score/ATS view so the
   // cacheOrFetch below misses and recomputes, then re-populates the cache.
   if (forceRefresh) {
-    await invalidateKey(CacheKeys.studentResume(id));
+    await invalidateKey(CacheKeys.studentResume(id, internshipId, targetRole));
     await invalidateKey(CacheKeys.studentATS(id));
   }
 
   const payload = await cacheOrFetch(
-    CacheKeys.studentResume(id),
+    CacheKeys.studentResume(id, internshipId, targetRole),
     async () => {
       const profile = await getInternProfileByUserId(req.user._id);
-      if (forceRefresh || profile.resume?.score == null) {
-        await refreshProfileScore(profile, "", targetRole);
-        await profile.save();
+
+      if (internshipId) {
+        // Scored against a specific posting's actual required/preferred
+        // skills (keyword relevance + required-skills-matched), instead of
+        // the generic static role preset. Not persisted onto profile.resume
+        // since that field holds the student's one generic/default score.
+        const internship = await Internship.findById(internshipId)
+          .select("role skillsRequired prioritySkills educationQualification degreePreferences minimumCgpa experienceRequirement")
+          .lean();
+        if (!internship) {
+          throw new AppError("Internship not found", 404);
+        }
+        const internshipContext = {
+          requiredSkills: internship.skillsRequired || [],
+          preferredSkills: internship.prioritySkills || [],
+          roleLabel: internship.role || "Selected internship",
+          educationQualification: internship.educationQualification || "",
+          degreePreferences: internship.degreePreferences || "",
+          minimumCgpa: internship.minimumCgpa || "",
+          experienceRequirement: internship.experienceRequirement || ""
+        };
+        const result = await computeResumeScore({ profile, resumeText: profile.resume?.text || "", targetRoleKey: targetRole, internshipContext });
+        return {
+          score: result.resumeScore,
+          scoreSource: result.scoreSource,
+          predictedCategory: result.predictedCategory,
+          confidence: result.confidence,
+          analysis: result.analysis,
+          parsed: profile.resume.parsed || null
+        };
       }
+
+      // "full_stack_developer" is the platform default role: its score is the
+      // one persisted onto profile.resume and reused by recruiter-facing
+      // views (candidate listing, reports) that have no role context of
+      // their own. Any other targetRole is a per-role, role-scoped
+      // calculation for this dashboard only — it must never overwrite that
+      // shared default, or switching roles on the dashboard would corrupt
+      // the generic score recruiters see.
+      if (targetRole === DEFAULT_TARGET_ROLE) {
+        if (forceRefresh || profile.resume?.score == null) {
+          await refreshProfileScore(profile, "", targetRole);
+          await profile.save();
+        }
+        return {
+          score: profile.resume.score,
+          scoreSource: profile.resume.scoreSource,
+          predictedCategory: profile.resume.predictedCategory,
+          confidence: profile.resume.confidence,
+          analysis: profile.resume.analysis,
+          parsed: profile.resume.parsed || null
+        };
+      }
+
+      const result = await computeResumeScore({
+        profile,
+        resumeText: profile.resume?.text || "",
+        targetRoleKey: targetRole
+      });
       return {
-        score: profile.resume.score,
-        scoreSource: profile.resume.scoreSource,
-        predictedCategory: profile.resume.predictedCategory,
-        confidence: profile.resume.confidence,
-        analysis: profile.resume.analysis,
+        score: result.resumeScore,
+        scoreSource: result.scoreSource,
+        predictedCategory: result.predictedCategory,
+        confidence: result.confidence,
+        analysis: result.analysis,
         parsed: profile.resume.parsed || null
       };
     },
@@ -374,6 +424,28 @@ exports.getSkillGap = asyncHandler(async (req, res) => {
   return sendSuccess(res, { data: payload });
 });
 
+exports.getApplicationAiInsights = asyncHandler(async (req, res) => {
+  const { internshipId } = req.params;
+  if (!internshipId) {
+    throw new AppError("internshipId is required", 400);
+  }
+
+  const payload = await cacheOrFetch(
+    CacheKeys.studentApplicationInsight(String(req.user._id), internshipId),
+    async () => {
+      const profile = await getInternProfileByUserId(req.user._id);
+      const internship = await Internship.findById(internshipId).lean();
+      if (!internship) {
+        throw new AppError("Internship not found", 404);
+      }
+      const result = await buildApplicationInsight({ profile, internship, userId: String(req.user._id) });
+      return { internshipId, ...result };
+    },
+    CacheTTL.applicationInsight
+  );
+  return sendSuccess(res, { data: payload });
+});
+
 exports.getCareerRoadmap = asyncHandler(async (req, res) => {
   const profile = await getInternProfileByUserId(req.user._id);
   const targetRole = String(req.body?.targetRole || "full_stack_developer");
@@ -386,9 +458,7 @@ exports.getCareerRoadmap = asyncHandler(async (req, res) => {
 
 exports.getActiveInternships = asyncHandler(async (req, res) => {
   const profile = await getInternProfileByUserId(req.user._id);
-  const page = Math.max(1, Number(req.query.page || 1));
-  const limit = Math.min(100, Math.max(1, Number(req.query.limit || 50)));
-  const skip = (page - 1) * limit;
+  const { page, limit, skip } = resolvePagination(req.query, { defaultLimit: 50, maxLimit: 100 });
   const location = String(req.query.location || "").trim();
   const mode = String(req.query.mode || "").trim();
   const role = String(req.query.role || "").trim();
@@ -497,6 +567,10 @@ exports.applyToInternship = asyncHandler(async (req, res) => {
   const resumePath = normalizeResumePublicPath(profile?.resume?.filePath || "");
   if (!resumePath) {
     throw new AppError("Please upload your resume in profile before applying.", 400);
+  }
+
+  if (!String(profile?.summary || "").trim()) {
+    throw new AppError("Please add your Professional Summary in profile before applying.", 400);
   }
 
   if (!["yes", "no"].includes(String(availabilityStatus || "").toLowerCase())) {
@@ -613,15 +687,13 @@ exports.applyToInternship = asyncHandler(async (req, res) => {
 });
 
 exports.getMyApplications = asyncHandler(async (req, res) => {
-  const page = Math.max(1, Number(req.query.page || 1));
-  const limit = Math.min(100, Math.max(1, Number(req.query.limit || 10)));
+  const { page, limit, skip } = resolvePagination(req.query, { defaultLimit: 10, maxLimit: 100 });
 
   const payload = await cacheOrFetch(
     CacheKeys.studentApplications(String(req.user._id), page, limit),
     async () => {
       const profile = await getInternProfileByUserId(req.user._id);
 
-      const skip = (page - 1) * limit;
       const query = { $or: [{ internId: profile._id }, { intern: profile._id }] };
       const [applications, total] = await Promise.all([
         Application.find(query)
@@ -792,45 +864,10 @@ exports.withdrawApplication = asyncHandler(async (req, res) => {
     }
   });
 
-  return sendSuccess(res, { message: "Application withdrawn", data: { application } });
-});
-
-exports.getNotifications = asyncHandler(async (req, res) => {
-  const page = Math.max(1, Number(req.query.page || 1));
-  const limit = Math.min(50, Math.max(1, Number(req.query.limit || 20)));
-  const skip = (page - 1) * limit;
-  const unreadOnly = String(req.query.unreadOnly || "false").toLowerCase() === "true";
-
-  const query = { user: req.user._id };
-  if (unreadOnly) query.isRead = false;
-
-  const [notifications, total, unreadCount] = await Promise.all([
-    Notification.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
-    Notification.countDocuments(query),
-    Notification.countDocuments({ user: req.user._id, isRead: false })
-  ]);
-
   return sendSuccess(res, {
-    data: { notifications, page, limit, total, unreadCount },
-    meta: { pagination: { page, limit, total, totalPages: limit > 0 ? Math.ceil(total / limit) : 0 } }
+    message: "Application withdrawn",
+    data: { application: sanitizeApplicationFeedback(application, req.user) }
   });
-});
-
-exports.markNotificationRead = asyncHandler(async (req, res) => {
-  const notification = await Notification.findOneAndUpdate(
-    { _id: req.params.notificationId, user: req.user._id },
-    { isRead: true },
-    { new: true }
-  );
-  if (!notification) {
-    throw new AppError("Notification not found", 404);
-  }
-  return sendSuccess(res, { message: "Notification marked as read", data: { notification } });
-});
-
-exports.markAllNotificationsRead = asyncHandler(async (req, res) => {
-  await Notification.updateMany({ user: req.user._id, isRead: false }, { isRead: true });
-  return sendSuccess(res, { message: "All notifications marked as read" });
 });
 
 exports.reportCompany = asyncHandler(async (req, res) => {
@@ -874,4 +911,42 @@ exports.checkInterviewReminders = asyncHandler(async (req, res) => {
   const profile = await getInternProfileByUserId(req.user._id);
   const result = await processInterviewRemindersForIntern(profile._id);
   return sendSuccess(res, { data: result });
+});
+
+exports.requestInterviewReschedule = asyncHandler(async (req, res) => {
+  const profile = await getInternProfileByUserId(req.user._id);
+  const reason = String(req.body?.reason || "").trim().slice(0, 500);
+
+  let application;
+  let round;
+  await withVersionRetry(async () => {
+    application = await Application.findOne({
+      _id: req.params.applicationId,
+      $or: [{ internId: profile._id }, { intern: profile._id }]
+    });
+    if (!application) {
+      throw new AppError("Application not found", 404);
+    }
+
+    round = (application.interviewRounds || []).id(req.params.roundId);
+    if (!round) {
+      throw new AppError("Interview round not found", 404);
+    }
+    if (round.status !== "scheduled") {
+      throw new AppError("Only a scheduled interview can have a reschedule requested", 400);
+    }
+
+    round.rescheduleRequestedByCandidate = { requestedAt: new Date(), reason, acknowledged: false };
+    round.updatedAt = new Date();
+    await application.save();
+  });
+
+  await notifyRescheduleRequested({ application, round }).catch((err) => {
+    console.error(`[interviews] failed to notify reschedule-request for round ${round._id}:`, err.message);
+  });
+
+  return sendSuccess(res, {
+    message: "Reschedule request sent",
+    data: { application: sanitizeApplicationFeedback(application, req.user) }
+  });
 });

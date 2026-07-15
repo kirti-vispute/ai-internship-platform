@@ -26,12 +26,18 @@ export function DashboardOverviewStats({
       description="Premium snapshot of active roles, pipeline momentum, and interview progress."
       className="company-dashboard-hero-accent"
     >
-      <div className="stat-grid sm:grid-cols-2 xl:grid-cols-5">
-        <SummaryStatCard title="Active Jobs" value={activeJobs} hint="Live internship postings." icon={Briefcase} />
-        <SummaryStatCard title="Applicants" value={applicants} hint="Total candidates in your pipeline." icon={Users} />
-        <SummaryStatCard title="Shortlisted" value={shortlisted} hint="Ready for interview scheduling." icon={UserCheck} />
-        <SummaryStatCard title="Interviews Scheduled" value={interviews} hint="Candidates in interview stages." icon={CalendarClock} />
-        <SummaryStatCard title="Offers Sent" value={offersSent} hint="Selected or offered candidates." icon={Gift} />
+      <div className="stat-grid">
+        <SummaryStatCard title="Active Jobs" value={activeJobs} hint="Live internship postings." icon={Briefcase} tone="blue" />
+        <SummaryStatCard title="Applicants" value={applicants} hint="Total candidates in your pipeline." icon={Users} tone="violet" />
+        <SummaryStatCard title="Shortlisted" value={shortlisted} hint="Ready for interview scheduling." icon={UserCheck} tone="emerald" />
+        <SummaryStatCard
+          title="Interviews Scheduled"
+          value={interviews}
+          hint="Candidates in interview stages."
+          icon={CalendarClock}
+          tone="amber"
+        />
+        <SummaryStatCard title="Offers Sent" value={offersSent} hint="Selected or offered candidates." icon={Gift} tone="rose" />
       </div>
     </CompanyDashboardSection>
   );

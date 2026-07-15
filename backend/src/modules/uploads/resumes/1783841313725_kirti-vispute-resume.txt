@@ -1,0 +1,30 @@
+Kirti Vispute
+Email: kirti.vispute.test@example.com
+Mobile: 9876543210
+LinkedIn: linkedin.com/in/kirtivispute
+GitHub: github.com/kirtivispute
+
+PROFESSIONAL SUMMARY
+Aspiring software engineer with hands-on project experience in full-stack web development.
+
+SKILLS
+JavaScript, React, Node.js, MongoDB, Express, TailwindCSS
+
+EDUCATION
+Bachelor of Engineering in Computer Science, Pune University, 2024, CGPA 8.5
+
+PROJECTS
+InternAI Platform - Built a full-stack internship matching platform using React and Node.js.
+Portfolio Website - Personal portfolio built with Next.js and TailwindCSS.
+
+EXPERIENCE
+Frontend Intern at TechCorp - Built reusable UI components using React, June 2025 to Aug 2025.
+
+CERTIFICATIONS
+Meta Front-End Developer Certificate, Coursera, 2024
+
+ACHIEVEMENTS
+Winner, Inter-college Hackathon 2024
+
+LANGUAGES
+English, Hindi, Marathi

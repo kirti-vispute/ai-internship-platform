@@ -9,10 +9,17 @@ type InterviewAudioControlsProps = {
   mediaError: string | null;
   mediaMode: MediaAccessMode;
   audioInputDevices: AudioInputDevice[];
+  videoInputDevices?: AudioInputDevice[];
+  audioOutputDevices?: AudioInputDevice[];
   selectedAudioDeviceId: string;
+  selectedVideoDeviceId?: string;
+  selectedSpeakerDeviceId?: string;
+  speakerSupported?: boolean;
   micReady: boolean;
   onRetryMedia: () => void;
   onSelectAudioDevice: (deviceId: string) => void;
+  onSelectVideoDevice?: (deviceId: string) => void;
+  onSelectSpeakerDevice?: (deviceId: string) => void;
 };
 
 export function InterviewAudioControls({
@@ -20,10 +27,17 @@ export function InterviewAudioControls({
   mediaError,
   mediaMode,
   audioInputDevices,
+  videoInputDevices = [],
+  audioOutputDevices = [],
   selectedAudioDeviceId,
+  selectedVideoDeviceId = "",
+  selectedSpeakerDeviceId = "",
+  speakerSupported = false,
   micReady,
   onRetryMedia,
-  onSelectAudioDevice
+  onSelectAudioDevice,
+  onSelectVideoDevice,
+  onSelectSpeakerDevice
 }: InterviewAudioControlsProps) {
   return (
     <div className="mx-auto mt-3 max-w-2xl space-y-2 px-4">
@@ -45,25 +59,67 @@ export function InterviewAudioControls({
         ) : null}
       </div>
 
-      {audioInputDevices.length > 0 ? (
-        <label className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-center sm:gap-2">
-          <span className="text-center text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
-            Microphone
-          </span>
-          <select
-            className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs text-slate-200"
-            value={selectedAudioDeviceId}
-            onChange={(event) => onSelectAudioDevice(event.target.value)}
-            disabled={!micReady}
-          >
-            {audioInputDevices.map((device) => (
-              <option key={device.deviceId} value={device.deviceId}>
-                {device.label}
-              </option>
-            ))}
-          </select>
-        </label>
-      ) : null}
+      <div className="flex flex-wrap items-center justify-center gap-3">
+        {audioInputDevices.length > 0 ? (
+          <label className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
+            <span className="text-center text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+              Microphone
+            </span>
+            <select
+              className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs text-slate-200"
+              value={selectedAudioDeviceId}
+              onChange={(event) => onSelectAudioDevice(event.target.value)}
+              disabled={!micReady}
+            >
+              {audioInputDevices.map((device) => (
+                <option key={device.deviceId} value={device.deviceId}>
+                  {device.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
+
+        {videoInputDevices.length > 0 && onSelectVideoDevice ? (
+          <label className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
+            <span className="text-center text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+              Camera
+            </span>
+            <select
+              className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs text-slate-200"
+              value={selectedVideoDeviceId}
+              onChange={(event) => onSelectVideoDevice(event.target.value)}
+            >
+              {videoInputDevices.map((device) => (
+                <option key={device.deviceId} value={device.deviceId}>
+                  {device.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
+
+        {speakerSupported && audioOutputDevices.length > 0 && onSelectSpeakerDevice ? (
+          <label className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
+            <span className="text-center text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+              Speaker
+            </span>
+            <select
+              className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs text-slate-200"
+              value={selectedSpeakerDeviceId}
+              onChange={(event) => onSelectSpeakerDevice(event.target.value)}
+            >
+              {audioOutputDevices.map((device) => (
+                <option key={device.deviceId} value={device.deviceId}>
+                  {device.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : !speakerSupported ? (
+          <span className="text-[11px] text-slate-600">Speaker selection not supported in this browser</span>
+        ) : null}
+      </div>
 
       {mediaError ? (
         <div className="flex flex-col items-center gap-2 rounded-xl border border-amber-900/50 bg-amber-950/20 px-3 py-2 text-center">

@@ -43,19 +43,16 @@ const endInterview = asyncHandler(async (req, res) => {
   if (payload.application && payload.room?.roundId) {
     const round = (payload.application.interviewRounds || []).id(payload.room.roundId);
     if (round) {
-      const changeType =
-        payload.room.outcome === "rejected"
-          ? "cancelled"
-          : payload.room.outcome === "selected"
-            ? "completed"
-            : "completed";
+      const changeType = payload.room.outcome === "rejected" ? "rejected" : "completed";
       await notifyInterviewUpdated({
         application: payload.application,
         round,
         companyUserId: req.user._id,
         changeType,
         interviewRoomLink: null
-      }).catch(() => undefined);
+      }).catch((err) => {
+        console.error(`[interviews] failed to notify interview-end for room ${req.params.roomId}:`, err.message);
+      });
     }
   }
 
