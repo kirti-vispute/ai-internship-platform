@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, RefreshCcw, ShieldCheck, Target, TrendingUp } from "lucide-react";
-import { SectionPanel } from "@/components/dashboard/section-panel";
+import { SectionPanel } from "@/components/dashboard/shared/section-panel";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AppIcon } from "@/components/icons/app-icon";
@@ -24,27 +24,27 @@ type Props = {
 };
 
 const PRIORITY_BADGE: Record<WeaknessPriority, string> = {
-  High: "border-rose-200/80 bg-rose-50/90 text-rose-700 dark:border-rose-800/50 dark:bg-rose-950/40 dark:text-rose-300",
-  Medium: "border-amber-200/80 bg-amber-50/90 text-amber-700 dark:border-amber-800/50 dark:bg-amber-950/40 dark:text-amber-300",
-  Low: "border-sky-200/70 bg-sky-50/80 text-sky-700 dark:border-sky-800/40 dark:bg-sky-950/30 dark:text-sky-300"
+  High: "border-[var(--ds-danger)]/30 bg-[var(--ds-danger-bg)] text-[var(--ds-danger)]",
+  Medium: "border-[var(--ds-warning)]/30 bg-[var(--ds-warning-bg)] text-[var(--ds-warning)]",
+  Low: "border-[var(--ds-info)]/30 bg-[var(--ds-info-bg)] text-[var(--ds-info)]"
 };
 
 const PRIORITY_BAR: Record<WeaknessPriority, string> = {
-  High: "bg-rose-500",
-  Medium: "bg-amber-500",
-  Low: "bg-sky-500"
+  High: "bg-[var(--ds-danger)]",
+  Medium: "bg-[var(--ds-warning)]",
+  Low: "bg-[var(--ds-info)]"
 };
 
 const PRIORITY_DOT: Record<WeaknessPriority, string> = {
-  High: "bg-rose-500",
-  Medium: "bg-amber-500",
-  Low: "bg-sky-500"
+  High: "bg-[var(--ds-danger)]",
+  Medium: "bg-[var(--ds-warning)]",
+  Low: "bg-[var(--ds-info)]"
 };
 
 function readinessTone(score: number): string {
-  if (score >= 75) return "from-emerald-400 to-emerald-600";
-  if (score >= 50) return "from-amber-400 to-amber-600";
-  return "from-rose-400 to-rose-600";
+  if (score >= 75) return "from-[var(--ds-success)] to-[var(--ds-success)]";
+  if (score >= 50) return "from-[var(--ds-warning)] to-[var(--ds-warning)]";
+  return "from-[var(--ds-danger)] to-[var(--ds-danger)]";
 }
 
 function MetricTile({
@@ -60,11 +60,11 @@ function MetricTile({
 }) {
   return (
     <div className="surface-subtle flex items-start gap-3 px-4 py-3">
-      <AppIcon icon={icon} className="mt-0.5 text-primary-600 dark:text-primary-400" />
+      <AppIcon icon={icon} className="mt-0.5 text-[var(--ds-primary)]" />
       <div className="min-w-0">
-        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">{label}</p>
-        <p className="mt-1 text-base font-semibold text-slate-900 dark:text-slate-100">{value}</p>
-        {hint ? <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">{hint}</p> : null}
+        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--ds-muted)]">{label}</p>
+        <p className="mt-1 text-base font-semibold text-[var(--ds-text)]">{value}</p>
+        {hint ? <p className="mt-0.5 text-[11px] text-[var(--ds-muted)]">{hint}</p> : null}
       </div>
     </div>
   );
@@ -72,9 +72,9 @@ function MetricTile({
 
 function WeaknessCard({ weakness }: { weakness: Weakness }) {
   return (
-    <article className="group flex flex-col rounded-2xl border border-slate-200/70 bg-white/90 p-5 shadow-[0_2px_12px_-4px_rgba(15,23,42,0.08)] transition-all duration-300 hover:-translate-y-0.5 hover:border-slate-300/70 hover:shadow-[0_8px_24px_-8px_rgba(15,23,42,0.12)] dark:border-slate-800/60 dark:bg-slate-900/50 dark:hover:border-slate-700/60">
+    <article className="group flex flex-col rounded-2xl border border-[var(--ds-border)] bg-[var(--ds-card)] p-5 shadow-[0_2px_12px_-4px_var(--ds-shadow)] transition-all duration-300 hover:-translate-y-0.5 hover:border-[var(--ds-border-strong)] hover:shadow-[0_8px_24px_-8px_var(--ds-shadow)]">
       <div className="flex items-start justify-between gap-3">
-        <span className="inline-flex items-center gap-1.5 rounded-md bg-slate-100/90 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:bg-slate-800/70 dark:text-slate-300">
+        <span className="inline-flex items-center gap-1.5 rounded-md bg-[var(--ds-surface-raised)] px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-[var(--ds-text-secondary)]">
           <span className={cn("h-1.5 w-1.5 rounded-full", PRIORITY_DOT[weakness.priority])} />
           {weakness.category}
         </span>
@@ -88,32 +88,32 @@ function WeaknessCard({ weakness }: { weakness: Weakness }) {
         </span>
       </div>
 
-      <h4 className="mt-3 flex items-start gap-1.5 text-base font-semibold leading-snug text-slate-800 dark:text-slate-100">
-        <span aria-hidden className="mt-0.5 shrink-0 text-rose-500">
+      <h4 className="mt-3 flex items-start gap-1.5 text-base font-semibold leading-snug text-[var(--ds-text)]">
+        <span aria-hidden className="mt-0.5 shrink-0 text-[var(--ds-danger)]">
           ✕
         </span>
         <span className="min-w-0">{weakness.title}</span>
       </h4>
 
-      <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">{weakness.explanation}</p>
+      <p className="mt-2 text-sm leading-relaxed text-[var(--ds-text-secondary)]">{weakness.explanation}</p>
 
       <dl className="mt-3 space-y-2 text-sm">
         <div>
-          <dt className="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">Why it matters</dt>
-          <dd className="mt-0.5 text-slate-600 dark:text-slate-300">{weakness.whyItMatters}</dd>
+          <dt className="text-xs font-semibold uppercase tracking-wide text-[var(--ds-muted)]">Why it matters</dt>
+          <dd className="mt-0.5 text-[var(--ds-text-secondary)]">{weakness.whyItMatters}</dd>
         </div>
         <div>
-          <dt className="text-xs font-semibold uppercase tracking-wide text-emerald-600 dark:text-emerald-400">Suggestion</dt>
-          <dd className="mt-0.5 font-medium text-slate-700 dark:text-slate-200">{weakness.suggestion}</dd>
+          <dt className="text-xs font-semibold uppercase tracking-wide text-[var(--ds-success)]">Suggestion</dt>
+          <dd className="mt-0.5 font-medium text-[var(--ds-text)]">{weakness.suggestion}</dd>
         </div>
       </dl>
 
       <div className="mt-4 space-y-1.5">
-        <div className="flex items-center justify-between text-[11px] font-medium text-slate-400 dark:text-slate-500">
+        <div className="flex items-center justify-between text-[11px] font-medium text-[var(--ds-muted)]">
           <span>Severity</span>
           <span className="tabular-nums">{weakness.severity}%</span>
         </div>
-        <div className="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+        <div className="h-2 overflow-hidden rounded-full bg-[var(--ds-surface-raised)]">
           <div
             className={cn("h-full rounded-full transition-all duration-700 ease-out", PRIORITY_BAR[weakness.priority])}
             style={{ width: `${weakness.severity}%` }}
@@ -197,12 +197,12 @@ export function WeaknessAnalysisPanel({ profile, options, loading = false, error
         {loading ? (
           <PanelSkeleton />
         ) : error ? (
-          <div className="rounded-2xl border border-rose-200/70 bg-rose-50/70 px-6 py-10 text-center dark:border-rose-900/50 dark:bg-rose-950/30">
-            <AppIcon icon={AlertTriangle} size="md" className="mx-auto text-rose-500" />
-            <p className="mt-4 text-base font-semibold text-slate-800 dark:text-slate-100">
+          <div className="rounded-2xl border border-[var(--ds-danger)]/30 bg-[var(--ds-danger-bg)] px-6 py-10 text-center">
+            <AppIcon icon={AlertTriangle} size="md" className="mx-auto text-[var(--ds-danger)]" />
+            <p className="mt-4 text-base font-semibold text-[var(--ds-text)]">
               Couldn&apos;t load weakness analysis
             </p>
-            <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{error}</p>
+            <p className="mt-1 text-sm text-[var(--ds-text-secondary)]">{error}</p>
             {onRetry ? (
               <Button type="button" size="sm" variant="secondary" className="mt-4 gap-2" onClick={onRetry}>
                 <AppIcon icon={RefreshCcw} size="xs" className="text-current" />
@@ -211,10 +211,10 @@ export function WeaknessAnalysisPanel({ profile, options, loading = false, error
             ) : null}
           </div>
         ) : options.length === 0 || !analysis ? (
-          <div className="rounded-2xl border border-slate-200/70 bg-slate-50/70 px-6 py-12 text-center dark:border-slate-800/60 dark:bg-slate-900/40">
-            <AppIcon icon={Target} size="md" className="mx-auto text-primary-500" />
-            <p className="mt-4 text-base font-semibold text-slate-800 dark:text-slate-100">No internship selected yet</p>
-            <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+          <div className="rounded-2xl border border-[var(--ds-border)] bg-[var(--ds-surface-raised)] px-6 py-12 text-center">
+            <AppIcon icon={Target} size="md" className="mx-auto text-[var(--ds-primary)]" />
+            <p className="mt-4 text-base font-semibold text-[var(--ds-text)]">No internship selected yet</p>
+            <p className="mt-1 text-sm text-[var(--ds-text-secondary)]">
               Apply to internships or explore recommendations to see role-specific weaknesses.
             </p>
             <Button href="/dashboard/intern/internships/search" type="button" size="sm" variant="secondary" className="mt-4">
@@ -252,14 +252,14 @@ export function WeaknessAnalysisPanel({ profile, options, loading = false, error
             </div>
 
             {/* Readiness progress bar */}
-            <div className="rounded-2xl border border-slate-200/70 bg-white/80 px-5 py-4 dark:border-slate-800/60 dark:bg-slate-900/50">
+            <div className="rounded-2xl border border-[var(--ds-border)] bg-[var(--ds-card)] px-5 py-4">
               <div className="flex items-center justify-between text-sm">
-                <span className="font-semibold text-slate-700 dark:text-slate-200">Readiness for this role</span>
-                <span className="font-semibold tabular-nums text-slate-900 dark:text-slate-100">
+                <span className="font-semibold text-[var(--ds-text)]">Readiness for this role</span>
+                <span className="font-semibold tabular-nums text-[var(--ds-text)]">
                   {analysis.readinessScore}%
                 </span>
               </div>
-              <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+              <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-[var(--ds-surface-raised)]">
                 <div
                   className={cn(
                     "h-full rounded-full bg-gradient-to-r transition-all duration-700 ease-out",
@@ -272,12 +272,12 @@ export function WeaknessAnalysisPanel({ profile, options, loading = false, error
 
             {/* Weakness cards */}
             {analysis.weaknesses.length === 0 ? (
-              <div className="rounded-2xl border border-emerald-200/70 bg-emerald-50/60 px-6 py-12 text-center dark:border-emerald-900/40 dark:bg-emerald-950/20">
-                <AppIcon icon={ShieldCheck} size="md" className="mx-auto text-emerald-500" />
-                <p className="mt-4 text-base font-semibold text-slate-800 dark:text-slate-100">
+              <div className="rounded-2xl border border-[var(--ds-success)] bg-[var(--ds-success-bg)] px-6 py-12 text-center">
+                <AppIcon icon={ShieldCheck} size="md" className="mx-auto text-[var(--ds-success)]" />
+                <p className="mt-4 text-base font-semibold text-[var(--ds-text)]">
                   You&apos;re strongly aligned with this role
                 </p>
-                <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+                <p className="mt-1 text-sm text-[var(--ds-text-secondary)]">
                   No significant weaknesses detected. Keep your profile and projects up to date.
                 </p>
               </div>

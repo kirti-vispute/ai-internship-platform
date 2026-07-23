@@ -6,10 +6,8 @@ import type { CompanyApplication } from "@/lib/company-portal";
 import { hiringAIEngine } from "@/lib/ai-hiring";
 import {
   CompanyDashboardEmptyState,
-  CompanyDashboardMetricTile,
   CompanyDashboardPanelCard,
-  CompanyDashboardSection,
-  companyDashboardStyles
+  CompanyDashboardSection
 } from "./company-dashboard-layout";
 
 type HiringFunnelAnalyticsPanelProps = {
@@ -27,7 +25,7 @@ function HiringFunnelAnalyticsPanelInner({ applications, visibleStageKeys }: Hir
   const sectionActions = (
     <div className="company-dashboard-metric-tile min-w-[7.5rem] text-right">
       <p className="ds-label">Efficiency Score</p>
-      <p className="ds-stat-value mt-1 text-primary-300">{analytics.efficiencyScore}</p>
+      <p className="ds-stat-value mt-1 text-[var(--ds-primary)]">{analytics.efficiencyScore}</p>
     </div>
   );
 
@@ -40,40 +38,36 @@ function HiringFunnelAnalyticsPanelInner({ applications, visibleStageKeys }: Hir
       actions={sectionActions}
     >
       {!analytics.sufficient ? (
-        <CompanyDashboardEmptyState title="Funnel analytics appear once applications are received." />
+        <CompanyDashboardEmptyState title="Funnel analytics appear once applications are received." icon={BarChart3} />
       ) : visibleStages.length === 0 ? (
-        <CompanyDashboardEmptyState title="No matching candidates in this view yet." />
+        <CompanyDashboardEmptyState title="No matching candidates in this view yet." icon={BarChart3} />
       ) : (
         <CompanyDashboardPanelCard>
-          <div className="mb-5 space-y-2">
+          <div className="space-y-4">
             {visibleStages.map((stage) => (
-              <div key={stage.key} className="grid grid-cols-[5.5rem_1fr_4rem] items-center gap-3">
-                <span className="ds-caption font-medium">{stage.label}</span>
-                <div className="h-2 overflow-hidden rounded-full bg-white/5">
-                  <div
-                    className="h-full rounded-full bg-primary-400 transition-all"
-                    style={{ width: `${Math.max(4, (stage.count / maxCount) * 100)}%` }}
-                  />
+              <div key={stage.key}>
+                <div className="grid grid-cols-[5.5rem_1fr_3rem] items-center gap-3">
+                  <span className="ds-caption font-medium">{stage.label}</span>
+                  <div className="h-2 overflow-hidden rounded-full bg-[var(--ds-surface-raised)]">
+                    <div
+                      className="h-full rounded-full bg-[var(--ds-primary)] transition-all"
+                      style={{ width: `${Math.max(4, (stage.count / maxCount) * 100)}%` }}
+                    />
+                  </div>
+                  <span className="text-right text-sm font-semibold tabular-nums">{stage.count}</span>
                 </div>
-                <span className="text-right text-sm font-semibold tabular-nums">{stage.count}</span>
+                {stage.avgDaysInStage !== null || stage.conversionFromPrevious !== null || stage.dropOffFromPrevious !== null ? (
+                  <div className="mt-1 flex flex-wrap items-center gap-x-3 pl-[5.5rem] text-[11px] text-[var(--ds-muted)]">
+                    {stage.avgDaysInStage !== null ? <span>Avg time: {stage.avgDaysInStage}d</span> : null}
+                    {stage.conversionFromPrevious !== null ? (
+                      <span className="text-[var(--ds-success)]">Conv. {stage.conversionFromPrevious}%</span>
+                    ) : null}
+                    {stage.dropOffFromPrevious !== null ? (
+                      <span className="text-[var(--ds-danger)]">Drop-off {stage.dropOffFromPrevious}%</span>
+                    ) : null}
+                  </div>
+                ) : null}
               </div>
-            ))}
-          </div>
-
-          <div className={companyDashboardStyles.metricGridFive}>
-            {visibleStages.map((stage) => (
-              <CompanyDashboardMetricTile
-                key={`${stage.key}-summary`}
-                label={stage.label}
-                value={stage.count}
-                hint={
-                  <>
-                    <p>Avg time: {stage.avgDaysInStage === null ? "—" : `${stage.avgDaysInStage}d`}</p>
-                    {stage.conversionFromPrevious !== null ? <p className="text-emerald-300">Conv. {stage.conversionFromPrevious}%</p> : null}
-                    {stage.dropOffFromPrevious !== null ? <p className="text-rose-400">Drop-off {stage.dropOffFromPrevious}%</p> : null}
-                  </>
-                }
-              />
             ))}
           </div>
         </CompanyDashboardPanelCard>

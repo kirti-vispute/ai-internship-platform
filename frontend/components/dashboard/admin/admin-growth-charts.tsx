@@ -4,7 +4,7 @@ import { memo, useMemo } from "react";
 import { Building2, GraduationCap, LineChart } from "lucide-react";
 import { ScrollReveal } from "@/components/animations/ScrollReveal";
 import { AppIcon } from "@/components/icons/app-icon";
-import { EmptyState } from "@/components/dashboard/empty-state";
+import { EmptyState } from "@/components/dashboard/shared/empty-state";
 import { TrendAreaChart, type TrendPoint } from "@/components/dashboard/charts/analytics-charts";
 import { cn } from "@/lib/utils";
 import type { AdminUser, AdminCompany, AdminInternship } from "@/lib/admin-portal";
@@ -108,7 +108,7 @@ function AdminGrowthChartsInner({
         <ScrollReveal key={slot.key} variant="fade-up" distance={12} delayMs={index * 60}>
           <div className={cardBase}>
             <div className="mb-4 flex items-center gap-2">
-              <AppIcon icon={slot.icon} size="sm" className="text-primary-600 dark:text-primary-400" />
+              <AppIcon icon={slot.icon} size="sm" className="text-[var(--ds-primary)]" />
               <h3 className="ds-h3">{slot.title}</h3>
             </div>
             <TrendAreaChart data={slot.data} valueLabel={slot.valueLabel} />

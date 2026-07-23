@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { Search, UserRound } from "lucide-react";
+import { AppIcon } from "@/components/icons/app-icon";
 import { cn } from "@/lib/utils";
 
 type InterviewerComboboxProps = {
@@ -77,7 +78,7 @@ export function InterviewerCombobox({
   return (
     <div ref={rootRef} className={cn("relative", className)}>
       <div className="relative">
-        <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" aria-hidden />
+        <AppIcon icon={Search} size="xs" className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2" />
         <input
           type="text"
           role="combobox"
@@ -94,7 +95,7 @@ export function InterviewerCombobox({
           }}
           onKeyDown={onKeyDown}
           className={cn(
-            "w-full rounded-lg border border-slate-300 bg-white py-2 pl-8 pr-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/30 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100",
+            "w-full rounded-lg border border-[var(--ds-border)] bg-[var(--ds-input)] py-2 pl-8 pr-3 text-sm text-[var(--ds-text)] shadow-sm outline-none transition focus:border-[var(--ds-primary)] focus:ring-2 focus:ring-[var(--ds-focus-ring)]",
             fieldClassName
           )}
         />
@@ -103,7 +104,7 @@ export function InterviewerCombobox({
         <ul
           id={listboxId}
           role="listbox"
-          className="absolute z-20 mt-1 max-h-48 w-full overflow-auto rounded-lg border border-slate-200 bg-white py-1 shadow-lg dark:border-slate-700 dark:bg-slate-900"
+          className="absolute z-20 mt-1 max-h-48 w-full overflow-auto rounded-lg border border-[var(--ds-border)] bg-[var(--ds-card)] py-1 shadow-lg"
         >
           {filtered.map((name, index) => (
             <li
@@ -117,11 +118,11 @@ export function InterviewerCombobox({
               }}
               onMouseEnter={() => setHighlighted(index)}
               className={cn(
-                "flex cursor-pointer items-center gap-2 px-3 py-1.5 text-sm text-slate-700 dark:text-slate-200",
-                index === highlighted && "bg-primary-50 text-primary-700 dark:bg-primary-950/40 dark:text-primary-200"
+                "flex cursor-pointer items-center gap-2 px-3 py-1.5 text-sm text-[var(--ds-text-secondary)]",
+                index === highlighted && "bg-[var(--ds-info-bg)] text-[var(--ds-primary)]"
               )}
             >
-              <UserRound className="h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden />
+              <AppIcon icon={UserRound} size="xs" />
               <span className="truncate">{name}</span>
             </li>
           ))}

@@ -15,18 +15,13 @@ import type { CompanyInternship, CompanyMatchedCandidate } from "@/lib/company-p
 import { hiringAIEngine, type RankedCandidate } from "@/lib/ai-hiring";
 import { Button } from "@/components/ui/button";
 import { Badge, type BadgeTone } from "@/components/ui/badge";
+import { AppIcon } from "@/components/icons/app-icon";
 import { cn, isRejectionLanguage } from "@/lib/utils";
-import { normalizeToFlowStage } from "@/components/dashboard/hiring/hiring-utils";
+import { normalizeToFlowStage, PIPELINE_STAGE_TONE } from "@/components/dashboard/hiring/hiring-utils";
 import { AiMatchInsightModal } from "./ai-match-insight-modal";
 import { CompanyDashboardItemCard } from "./company-dashboard-layout";
-
-const STATUS_TONE: Record<string, BadgeTone> = {
-  applied: "warning",
-  shortlisted: "info",
-  interview: "info",
-  selected: "success",
-  rejected: "danger"
-};
+import { CandidateCompareToggle } from "./candidate-compare-toggle";
+import { initialsFirstLast as initialsFor, gradientForName as gradientFor } from "@/components/dashboard/shared/avatar-initials";
 
 const STATUS_LABEL: Record<string, string> = {
   applied: "Applied",
@@ -42,28 +37,6 @@ const RECOMMENDATION_TONE: Record<string, BadgeTone> = {
   Consider: "info",
   "Potential Fit": "warning"
 };
-
-const AVATAR_GRADIENTS = [
-  "from-primary-500 to-blue-500",
-  "from-violet-500 to-fuchsia-500",
-  "from-emerald-500 to-teal-500",
-  "from-amber-500 to-orange-500",
-  "from-sky-500 to-cyan-500",
-  "from-rose-500 to-pink-500"
-];
-
-function initialsFor(name: string) {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return "?";
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
-}
-
-function gradientFor(name: string) {
-  let hash = 0;
-  for (let i = 0; i < name.length; i += 1) hash = (hash * 31 + name.charCodeAt(i)) >>> 0;
-  return AVATAR_GRADIENTS[hash % AVATAR_GRADIENTS.length];
-}
 
 function parseEducation(entry?: string) {
   if (!entry) return { degree: "", college: "" };
@@ -144,7 +117,7 @@ export function HrCandidateMatchCard({
         >
           <span
             className={cn(
-              "flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-base font-bold text-white shadow-soft",
+              "flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-sm font-bold text-[var(--ds-on-primary)] shadow-soft",
               gradient
             )}
           >
@@ -167,7 +140,7 @@ export function HrCandidateMatchCard({
             <div className="mt-1.5 flex flex-col gap-1 text-xs text-[var(--ds-muted)]">
               {college ? (
                 <span className="flex items-center gap-1.5 truncate">
-                  <GraduationCap className="h-3.5 w-3.5 shrink-0" />
+                  <AppIcon icon={GraduationCap} size="xs" />
                   <span className="truncate">{college}</span>
                 </span>
               ) : null}
@@ -176,24 +149,24 @@ export function HrCandidateMatchCard({
               ) : null}
               {experienceEntries.length > 0 ? (
                 <span className="flex items-center gap-1.5 truncate">
-                  <Briefcase className="h-3.5 w-3.5 shrink-0" />
+                  <AppIcon icon={Briefcase} size="xs" />
                   <span className="truncate">{experienceEntries[0]}</span>
                 </span>
               ) : null}
             </div>
 
             <div className="mt-2 flex flex-wrap items-center gap-1.5">
-              <span className="ds-caption inline-flex items-center gap-1 truncate rounded-md bg-white/5 px-2 py-0.5 !text-[10px]">
+              <span className="ds-caption inline-flex items-center gap-1 truncate rounded-md bg-[var(--ds-surface-hover)] px-2 py-0.5 !text-[10px]">
                 {match.internshipRole}
               </span>
               {roleLocation ? (
-                <span className="ds-caption inline-flex items-center gap-1 truncate rounded-md bg-white/5 px-2 py-0.5 !text-[10px]">
-                  <MapPin className="h-3 w-3 shrink-0" />
+                <span className="ds-caption inline-flex items-center gap-1.5 truncate rounded-md bg-[var(--ds-surface-hover)] px-2 py-0.5 !text-[10px]">
+                  <AppIcon icon={MapPin} size="xs" />
                   {roleLocation}
                 </span>
               ) : null}
               {roleMode ? (
-                <span className="ds-caption inline-flex items-center gap-1 rounded-md bg-white/5 px-2 py-0.5 !text-[10px]">
+                <span className="ds-caption inline-flex items-center gap-1 rounded-md bg-[var(--ds-surface-hover)] px-2 py-0.5 !text-[10px]">
                   {roleMode}
                 </span>
               ) : null}
@@ -208,13 +181,13 @@ export function HrCandidateMatchCard({
               {skills.map((skill) => (
                 <span
                   key={`${match.internshipId}-${skill}`}
-                  className="rounded-md bg-white/5 px-2 py-0.5 text-xs font-medium text-[var(--ds-muted)]"
+                  className="rounded-md bg-[var(--ds-surface-hover)] px-2 py-0.5 text-xs font-medium text-[var(--ds-muted)]"
                 >
                   {skill}
                 </span>
               ))}
               {totalSkills > skills.length ? (
-                <span className="rounded-md bg-white/5 px-2 py-0.5 text-xs font-medium text-[var(--ds-muted)]">
+                <span className="rounded-md bg-[var(--ds-surface-hover)] px-2 py-0.5 text-xs font-medium text-[var(--ds-muted)]">
                   +{totalSkills - skills.length}
                 </span>
               ) : null}
@@ -224,12 +197,12 @@ export function HrCandidateMatchCard({
           )}
 
           <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-[var(--ds-muted)]">
-            <span className="flex items-center gap-1">
-              <Award className="h-3.5 w-3.5 shrink-0" />
+            <span className="flex items-center gap-1.5">
+              <AppIcon icon={Award} size="xs" />
               {certificationsCount} certification{certificationsCount === 1 ? "" : "s"}
             </span>
-            <span className="flex items-center gap-1">
-              <FolderGit2 className="h-3.5 w-3.5 shrink-0" />
+            <span className="flex items-center gap-1.5">
+              <AppIcon icon={FolderGit2} size="xs" />
               {projectsCount} project{projectsCount === 1 ? "" : "s"}
             </span>
           </div>
@@ -261,7 +234,7 @@ export function HrCandidateMatchCard({
               </Badge>
             ) : null}
             {statusStage ? (
-              <Badge tone={STATUS_TONE[statusStage] || "neutral"} className="!px-1.5 !py-0.5 !text-[10px]">
+              <Badge tone={PIPELINE_STAGE_TONE[statusStage] || "neutral"} className="!px-1.5 !py-0.5 !text-[10px]">
                 {STATUS_LABEL[statusStage] || statusStage}
               </Badge>
             ) : null}
@@ -279,6 +252,7 @@ export function HrCandidateMatchCard({
       />
 
       <div className="flex flex-wrap items-center gap-2 border-t border-[var(--ds-border)] px-4 py-3 sm:px-5">
+        <CandidateCompareToggle applicationId={applicationId} />
         <Button
           type="button"
           size="sm"
@@ -289,7 +263,7 @@ export function HrCandidateMatchCard({
             onToggleInsight();
           }}
         >
-          <Brain className="h-3.5 w-3.5" />
+          <AppIcon icon={Brain} size="xs" />
           AI Insight
         </Button>
         <Button
@@ -302,7 +276,7 @@ export function HrCandidateMatchCard({
             if (applicationId) onOpenProfile(applicationId);
           }}
         >
-          <UserRound className="h-3.5 w-3.5" />
+          <AppIcon icon={UserRound} size="xs" />
           View Profile
         </Button>
         <Button
@@ -327,14 +301,14 @@ export function HrCandidateMatchCard({
             if (applicationId) onViewResume(applicationId, candidateName);
           }}
         >
-          <ScrollText className="h-3.5 w-3.5" />
+          <AppIcon icon={ScrollText} size="xs" />
           Resume Preview
         </Button>
         <Button
           type="button"
           size="sm"
           disabled={!applicationId || saving}
-          className="bg-gradient-to-r from-primary-600 to-violet-600 text-white hover:from-primary-500 hover:to-violet-500"
+          className="bg-gradient-to-r from-[var(--ds-gradient-from)] to-[var(--ds-gradient-to)] text-[var(--ds-on-primary)] hover:opacity-90"
           onClick={(event) => {
             event.stopPropagation();
             if (applicationId) onScheduleInterview(applicationId, candidateName);

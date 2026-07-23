@@ -10,7 +10,7 @@ import type { InternProfile, ResumeAnalysis } from "@/lib/intern-portal";
 import type { Readiness } from "@/components/dashboard/intern/dashboard-overview-cards";
 
 const cardBase =
-  "rounded-2xl border border-slate-200/70 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-slate-900/60";
+  "rounded-2xl border border-[var(--ds-border)] bg-[var(--ds-card)] shadow-[0_1px_2px_var(--ds-shadow)]";
 
 type Milestone = {
   key: string;
@@ -47,19 +47,19 @@ function MilestoneChip({ milestone, index }: { milestone: Milestone; index: numb
       className={cn(
         "flex items-center gap-2.5 rounded-xl border px-3.5 py-3",
         milestone.done
-          ? "border-emerald-200/80 bg-emerald-50/70 dark:border-emerald-800/50 dark:bg-emerald-950/30"
-          : "border-slate-200/70 bg-slate-50/60 dark:border-slate-800 dark:bg-slate-900/50"
+          ? "border-[var(--ds-success)]/30 bg-[var(--ds-success-bg)]"
+          : "border-[var(--ds-border)] bg-[var(--ds-surface-raised)]"
       )}
     >
       <AppIcon
         icon={milestone.done ? CheckCircle2 : Circle}
         size="sm"
-        className={cn("shrink-0", milestone.done ? "text-emerald-500" : "text-slate-300 dark:text-slate-600")}
+        className={cn("shrink-0", milestone.done ? "text-[var(--ds-success)]" : "text-[var(--ds-muted)]")}
       />
       <span
         className={cn(
           "text-sm font-medium",
-          milestone.done ? "text-emerald-800 dark:text-emerald-200" : "text-slate-500 dark:text-slate-400"
+          milestone.done ? "text-[var(--ds-success)]" : "text-[var(--ds-muted)]"
         )}
       >
         {milestone.label}
@@ -86,17 +86,17 @@ function CareerProgressHubInner({
       <div className={cn(cardBase, "p-6")}>
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <AppIcon icon={Rocket} size="sm" className="text-primary-600 dark:text-primary-400" />
-            <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Career Progress</h3>
+            <AppIcon icon={Rocket} size="sm" className="text-[var(--ds-primary)]" />
+            <h3 className="text-sm font-semibold text-[var(--ds-text)]">Career Progress</h3>
           </div>
-          <span className="text-xs font-semibold tabular-nums text-slate-500 dark:text-slate-400">
+          <span className="text-xs font-semibold tabular-nums text-[var(--ds-muted)]">
             {completedCount}/{milestones.length} milestones &middot; {percent}%
           </span>
         </div>
 
-        <div className="mb-5 h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+        <div className="mb-5 h-1.5 overflow-hidden rounded-full bg-[var(--ds-surface-raised)]">
           <div
-            className="h-full rounded-full bg-gradient-to-r from-primary-500 to-emerald-500 transition-all duration-700 ease-out"
+            className="h-full rounded-full bg-gradient-to-r from-[var(--ds-primary)] to-[var(--ds-success)] transition-all duration-700 ease-out"
             style={{ width: `${Math.max(2, percent)}%` }}
           />
         </div>

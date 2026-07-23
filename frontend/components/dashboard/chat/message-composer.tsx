@@ -59,7 +59,7 @@ export function MessageComposer({
           disabled={disabled || sending}
           className={cn(
             "max-h-40 min-h-[44px] flex-1 resize-none rounded-xl border border-[var(--ds-border)] bg-[var(--ds-surface-raised)] px-3 py-2.5 text-sm leading-5",
-            "text-[var(--ds-text)] placeholder:text-[var(--ds-muted)] focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+            "text-[var(--ds-text)] placeholder:text-[var(--ds-muted)] focus:border-[var(--ds-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--ds-focus-ring)]"
           )}
           onKeyDown={(event) => {
             if (event.key === "Enter" && !event.shiftKey) {

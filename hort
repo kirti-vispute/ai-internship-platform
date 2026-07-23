@@ -1,0 +1,30 @@
+*   [33m5325586[m[33m ([m[1;31morigin/Changed_1-updates[m[33m)[m Merge pull request #3 from kirti-vispute/changed_3
+[31m|[m[32m\[m  
+[31m|[m * [33me3db37e[m[33m ([m[1;31morigin/changed_3[m[33m)[m Add changed_3 platform updates: AI hiring, interview workflow, and dashboard enhancements.
+[31m|[m[31m/[m  
+* [33m147c35c[m Add role-based navigation, homepage redesign, and dashboard wiring.
+*   [33m8626816[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mChanged-4[m[33m, [m[1;31morigin/Changed-4[m[33m)[m Merge pull request #2 from kirti-vispute/Changed-9
+[33m|[m[34m\[m  
+[33m|[m * [33m6934f03[m[33m ([m[1;31morigin/Changed-9[m[33m)[m new changes-9
+* [34m|[m [33mad8b562[m Merge pull request #1 from kirti-vispute/Changed-5
+[35m|[m[34m\[m[34m|[m 
+[35m|[m * [33me5a7249[m[33m ([m[1;31morigin/Changed-6[m[33m, [m[1;31morigin/Changed-5[m[33m, [m[1;32mChanged-9[m[33m, [m[1;32mChanged-5[m[33m)[m Improved Version
+[35m|[m * [33mbc0741e[m Improve company dashboard UI and interview scheduling
+[35m|[m * [33m379e0cf[m Changed-5
+[35m|[m[35m/[m  
+* [33mbd221c2[m Add InternAI platform with 3D portfolio builder, chat, calendar, and hiring workflow.
+* [33md548c54[m[33m ([m[1;31morigin/Changed_2[m[33m)[m Remove unrelated SmartDeviceAI submodule from Changed_2.
+* [33mbe93fd1[m Remove dev-only scripts and unused assets from Changed_2.
+* [33m62462db[m Sync Major Project into Changed_2 with standard repo layout.
+* [33m320bbfb[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Clean applicant details UI and replace resume file section with parsed resume
+* [33m96b8754[m Use View Details label on applicant cards
+* [33m9b0618e[m Refactor applicants UI and add full applicant details view
+* [33m903fc93[m Fix saved internship apply flow, application details, resume access, and score consistency
+* [33mbe0508e[m Improve intern/company dashboards, saved internships, resume access, and posting workflow
+* [33m0091289[m Fix resume viewing and improve hiring dashboard UI
+* [33m78c0a46[m Improve hiring pipeline, resume routing, applicant UI, and interview workflow
+* [33m1ef8187[m Improve internship apply flow, applicant pipeline, and dashboard tracking
+* [33md9701dd[m Fix internship apply modal layout and improve UI
+* [33m55fb4dd[m Refine the internship apply modal with a cleaner, fully centered layout. Improve section structure, professional copy, and availability UX while preserving existing apply behavior.
+* [33m7224a7e[m Added Apply flow for internships (UI, backend, resume auto-attach, availability, company dashboard sync)
+* [33md2cf4ca[m Harden backend startup logs and Mongo connection init

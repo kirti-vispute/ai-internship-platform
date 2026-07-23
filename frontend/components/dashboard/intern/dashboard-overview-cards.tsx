@@ -1,16 +1,17 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { BarChart3, FileText, Target, TrendingUp } from "lucide-react";
+import { BarChart3, Target, TrendingUp } from "lucide-react";
 import { ScrollReveal } from "@/components/animations/ScrollReveal";
 import { AppIcon } from "@/components/icons/app-icon";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/dashboard/shared/empty-state";
 import { cn } from "@/lib/utils";
 import type { InternProfile, ResumeAnalysis } from "@/lib/intern-portal";
 
 const cardBase =
-  "rounded-2xl border border-slate-200/70 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-slate-900/60";
+  "rounded-2xl border border-[var(--ds-border)] bg-[var(--ds-card)] shadow-[0_1px_2px_var(--ds-shadow)]";
 
 export type ReadinessTone = "green" | "amber" | "red";
 
@@ -22,22 +23,22 @@ export type Readiness = {
 
 const READINESS_STYLES: Record<ReadinessTone, string> = {
   green:
-    "border-emerald-200/80 bg-emerald-50/90 text-emerald-700 dark:border-emerald-800/50 dark:bg-emerald-950/40 dark:text-emerald-300",
+    "border-[var(--ds-success)]/30 bg-[var(--ds-success-bg)] text-[var(--ds-success)]",
   amber:
-    "border-amber-200/80 bg-amber-50/90 text-amber-700 dark:border-amber-800/50 dark:bg-amber-950/40 dark:text-amber-300",
-  red: "border-rose-200/80 bg-rose-50/90 text-rose-700 dark:border-rose-800/50 dark:bg-rose-950/40 dark:text-rose-300"
+    "border-[var(--ds-warning)]/30 bg-[var(--ds-warning-bg)] text-[var(--ds-warning)]",
+  red: "border-[var(--ds-danger)]/30 bg-[var(--ds-danger-bg)] text-[var(--ds-danger)]"
 };
 
 const READINESS_DOT: Record<ReadinessTone, string> = {
-  green: "bg-emerald-500 dark:bg-emerald-400",
-  amber: "bg-amber-500 dark:bg-amber-400",
-  red: "bg-rose-500 dark:bg-rose-400"
+  green: "bg-[var(--ds-success)]",
+  amber: "bg-[var(--ds-warning)]",
+  red: "bg-[var(--ds-danger)]"
 };
 
 const READINESS_BAR: Record<ReadinessTone, string> = {
-  green: "from-emerald-400 to-emerald-600",
-  amber: "from-amber-400 to-amber-600",
-  red: "from-rose-400 to-rose-600"
+  green: "from-[var(--ds-success)] to-[var(--ds-success)]",
+  amber: "from-[var(--ds-warning)] to-[var(--ds-warning)]",
+  red: "from-[var(--ds-danger)] to-[var(--ds-danger)]"
 };
 
 /** Reuses the backend-computed recruiterReadiness composite score (already ATS/skill/project-weighted) as the single source of truth for readiness across Hero + Placement Readiness card. */
@@ -85,7 +86,7 @@ function InitialsAvatar({ name }: { name: string }) {
       .join("") || "IN";
 
   return (
-    <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-500 to-violet-500 text-lg font-bold text-white shadow-sm">
+    <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[var(--ds-primary)] to-[var(--ds-accent)] text-lg font-bold text-white shadow-sm">
       {initials}
     </span>
   );
@@ -117,22 +118,22 @@ export function DashboardHero({
       <motion.div
         whileHover={{ y: -2 }}
         transition={{ duration: 0.2, ease: "easeOut" }}
-        className="rounded-2xl border border-primary-200/60 bg-gradient-to-br from-primary-50/90 via-white to-violet-50/70 p-6 shadow-[0_1px_2px_rgba(0,0,0,0.16),0_10px_28px_-14px_rgba(0,0,0,0.4)] dark:border-primary-900/40 dark:from-primary-950/30 dark:via-slate-900 dark:to-violet-950/20"
+        className="rounded-2xl border border-[var(--ds-primary)]/30 bg-gradient-to-br from-[var(--ds-primary)]/10 via-[var(--ds-card)] to-[var(--ds-accent)]/10 p-6 shadow-[0_1px_2px_var(--ds-shadow),0_10px_28px_-14px_var(--ds-shadow)]"
       >
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-4">
             <InitialsAvatar name={fullName} />
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary-700 dark:text-primary-300">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--ds-primary)]">
                 Welcome back
               </p>
-              <h2 className="mt-1 text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">{firstName}</h2>
+              <h2 className="mt-1 text-2xl font-bold tracking-tight text-[var(--ds-text)]">{firstName}</h2>
               {careerTarget ? (
-                <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-                  Targeting <span className="font-semibold text-primary-700 dark:text-primary-300">{careerTarget}</span> roles
+                <p className="mt-1 text-sm text-[var(--ds-text-secondary)]">
+                  Targeting <span className="font-semibold text-[var(--ds-primary)]">{careerTarget}</span> roles
                 </p>
               ) : (
-                <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+                <p className="mt-1 text-sm text-[var(--ds-text-secondary)]">
                   Here&apos;s your placement readiness snapshot for today.
                 </p>
               )}
@@ -142,13 +143,13 @@ export function DashboardHero({
         </div>
 
         <div className="mt-5 max-w-sm">
-          <div className="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
+          <div className="flex items-center justify-between text-xs font-medium text-[var(--ds-muted)]">
             <span>Profile Completion</span>
-            <span className="font-semibold tabular-nums text-slate-900 dark:text-slate-100">{profileCompletion}%</span>
+            <span className="font-semibold tabular-nums text-[var(--ds-text)]">{profileCompletion}%</span>
           </div>
-          <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-white/70 dark:bg-slate-800">
+          <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-[var(--ds-surface-raised)]">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-primary-500 to-violet-500 transition-all duration-700 ease-out"
+              className="h-full rounded-full bg-gradient-to-r from-[var(--ds-primary)] to-[var(--ds-accent)] transition-all duration-700 ease-out"
               style={{ width: `${profileCompletion}%` }}
             />
           </div>
@@ -159,11 +160,11 @@ export function DashboardHero({
 }
 
 function resumeHealthBand(score: number): { label: string; className: string } {
-  if (score >= 85) return { label: "Excellent", className: "text-emerald-600 dark:text-emerald-400" };
-  if (score >= 70) return { label: "Strong", className: "text-emerald-600 dark:text-emerald-400" };
-  if (score >= 55) return { label: "Good", className: "text-amber-600 dark:text-amber-400" };
-  if (score >= 40) return { label: "Developing", className: "text-amber-600 dark:text-amber-400" };
-  return { label: "Needs Work", className: "text-rose-600 dark:text-rose-400" };
+  if (score >= 85) return { label: "Excellent", className: "text-[var(--ds-success)]" };
+  if (score >= 70) return { label: "Strong", className: "text-[var(--ds-success)]" };
+  if (score >= 55) return { label: "Good", className: "text-[var(--ds-warning)]" };
+  if (score >= 40) return { label: "Developing", className: "text-[var(--ds-warning)]" };
+  return { label: "Needs Work", className: "text-[var(--ds-danger)]" };
 }
 
 export function AtsReadinessCard({
@@ -179,16 +180,24 @@ export function AtsReadinessCard({
 
   if (!profile?.resumeUploaded) {
     return (
-      <HoverCard className="text-center">
-        <AppIcon icon={FileText} size="md" className="mx-auto text-slate-400" />
-        <p className="mt-3 text-sm font-semibold text-slate-800 dark:text-slate-100">No resume yet</p>
-        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-          Upload your resume to unlock score, ATS analysis, and AI insights.
-        </p>
-        <Button href="/dashboard/intern/resume" type="button" size="sm" className="mt-4">
-          Upload Resume
-        </Button>
-      </HoverCard>
+      <EmptyState
+        presetKey="resume"
+        title="No Resume Yet"
+        description="Upload your resume to unlock score, ATS analysis, and AI-powered insights."
+        action={
+          <div className="flex flex-wrap items-center justify-center gap-2.5">
+            <Button href="/dashboard/intern/resume" size="sm" variant="primary">
+              Upload Resume
+            </Button>
+            <Button href="/dashboard/intern/resume/score" size="sm" variant="secondary">
+              Improve ATS Score
+            </Button>
+            <Button href="/dashboard/intern/internships/search" size="sm" variant="ghost">
+              Discover Internships
+            </Button>
+          </div>
+        }
+      />
     );
   }
 
@@ -200,21 +209,21 @@ export function AtsReadinessCard({
     <ScrollReveal variant="fade-up" distance={12}>
       <HoverCard>
         <div className="mb-4 flex items-center gap-2">
-          <AppIcon icon={BarChart3} size="sm" className="text-primary-600 dark:text-primary-400" />
-          <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">ATS Readiness</h3>
+          <AppIcon icon={BarChart3} size="sm" className="text-[var(--ds-primary)]" />
+          <h3 className="text-sm font-semibold text-[var(--ds-text)]">ATS Readiness</h3>
         </div>
         <div className="grid grid-cols-2 gap-3">
-          <div className="rounded-xl border border-slate-200/70 bg-slate-50/60 px-3 py-2.5 dark:border-slate-800 dark:bg-slate-900/50">
-            <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Resume Score</p>
-            <p className="mt-0.5 text-xl font-bold tabular-nums text-slate-900 dark:text-slate-100">{resumeScore}<span className="text-xs font-medium text-slate-400">/100</span></p>
+          <div className="rounded-xl border border-[var(--ds-border)] bg-[var(--ds-surface-raised)] px-3 py-2.5">
+            <p className="text-[11px] font-medium uppercase tracking-wide text-[var(--ds-muted)]">Resume Score</p>
+            <p className="mt-0.5 text-xl font-bold tabular-nums text-[var(--ds-text)]">{resumeScore}<span className="text-xs font-medium text-[var(--ds-muted)]">/100</span></p>
           </div>
-          <div className="rounded-xl border border-slate-200/70 bg-slate-50/60 px-3 py-2.5 dark:border-slate-800 dark:bg-slate-900/50">
-            <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">ATS Score</p>
-            <p className="mt-0.5 text-xl font-bold tabular-nums text-slate-900 dark:text-slate-100">{atsScore}<span className="text-xs font-medium text-slate-400">/100</span></p>
+          <div className="rounded-xl border border-[var(--ds-border)] bg-[var(--ds-surface-raised)] px-3 py-2.5">
+            <p className="text-[11px] font-medium uppercase tracking-wide text-[var(--ds-muted)]">ATS Score</p>
+            <p className="mt-0.5 text-xl font-bold tabular-nums text-[var(--ds-text)]">{atsScore}<span className="text-xs font-medium text-[var(--ds-muted)]">/100</span></p>
           </div>
         </div>
-        <div className="mt-3 flex items-center justify-between rounded-xl border border-slate-200/70 bg-slate-50/60 px-3 py-2.5 dark:border-slate-800 dark:bg-slate-900/50">
-          <span className="text-[11px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Overall Resume Health</span>
+        <div className="mt-3 flex items-center justify-between rounded-xl border border-[var(--ds-border)] bg-[var(--ds-surface-raised)] px-3 py-2.5">
+          <span className="text-[11px] font-medium uppercase tracking-wide text-[var(--ds-muted)]">Overall Resume Health</span>
           <span className={cn("text-sm font-bold", health.className)}>{health.label}</span>
         </div>
         <Button href="/dashboard/intern/resume/score" type="button" size="sm" variant="secondary" className="mt-4 w-full gap-1.5">
@@ -243,26 +252,26 @@ export function SkillGapCard({
     <ScrollReveal variant="fade-up" distance={12} delayMs={120}>
       <HoverCard>
         <div className="mb-4 flex items-center gap-2">
-          <AppIcon icon={Target} size="sm" className="text-sky-600 dark:text-sky-400" />
-          <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Skill Gap</h3>
+          <AppIcon icon={Target} size="sm" className="text-[var(--ds-info)]" />
+          <h3 className="text-sm font-semibold text-[var(--ds-text)]">Skill Gap</h3>
         </div>
 
         {missing.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-slate-200 px-4 py-8 text-center dark:border-slate-800">
-            <p className="text-sm text-slate-600 dark:text-slate-300">
+          <div className="rounded-xl border border-dashed border-[var(--ds-border)] px-4 py-8 text-center">
+            <p className="text-sm text-[var(--ds-text-secondary)]">
               No major skill gaps detected yet. Upload a resume to see role-matched skill gaps.
             </p>
           </div>
         ) : (
           <>
             <div className="mb-3">
-              <div className="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
+              <div className="flex items-center justify-between text-xs font-medium text-[var(--ds-muted)]">
                 <span>Role Match</span>
-                <span className="font-semibold tabular-nums text-slate-900 dark:text-slate-100">{Math.round(matchPercent)}%</span>
+                <span className="font-semibold tabular-nums text-[var(--ds-text)]">{Math.round(matchPercent)}%</span>
               </div>
-              <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+              <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-[var(--ds-surface-raised)]">
                 <div
-                  className="h-full rounded-full bg-gradient-to-r from-sky-500 to-cyan-500 transition-all duration-700 ease-out"
+                  className="h-full rounded-full bg-gradient-to-r from-[var(--ds-info)] to-[var(--ds-info)] transition-all duration-700 ease-out"
                   style={{ width: `${Math.max(2, Math.round(matchPercent))}%` }}
                 />
               </div>
@@ -270,14 +279,14 @@ export function SkillGapCard({
             <ul className="space-y-2">
               {missing.map((skill, idx) => {
                 const priority = idx < 2 ? "High" : idx < 4 ? "Medium" : "Low";
-                const dot = priority === "High" ? "bg-rose-500" : priority === "Medium" ? "bg-amber-500" : "bg-sky-500";
+                const dot = priority === "High" ? "bg-[var(--ds-danger)]" : priority === "Medium" ? "bg-[var(--ds-warning)]" : "bg-[var(--ds-info)]";
                 return (
-                  <li key={skill} className="flex items-center justify-between gap-2 rounded-lg bg-slate-50/70 px-3 py-2 text-sm dark:bg-slate-900/50">
-                    <span className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
+                  <li key={skill} className="flex items-center justify-between gap-2 rounded-lg bg-[var(--ds-surface-raised)] px-3 py-2 text-sm">
+                    <span className="flex items-center gap-2 text-[var(--ds-text-secondary)]">
                       <span className={cn("h-2 w-2 shrink-0 rounded-full", dot)} />
                       {skill}
                     </span>
-                    <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                    <span className="text-[11px] font-semibold uppercase tracking-wide text-[var(--ds-muted)]">
                       {priority}
                     </span>
                   </li>
@@ -336,13 +345,13 @@ export function PlacementReadinessCard({
     <ScrollReveal variant="fade-up" distance={12} delayMs={180}>
       <HoverCard className="flex flex-col items-center text-center">
         <div className="mb-4 flex items-center gap-2 self-start">
-          <AppIcon icon={TrendingUp} size="sm" className="text-emerald-600 dark:text-emerald-400" />
-          <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Placement Readiness</h3>
+          <AppIcon icon={TrendingUp} size="sm" className="text-[var(--ds-success)]" />
+          <h3 className="text-sm font-semibold text-[var(--ds-text)]">Placement Readiness</h3>
         </div>
 
         <div className="relative flex h-28 w-28 items-center justify-center">
           <svg width={112} height={112} className="-rotate-90" aria-hidden>
-            <circle cx={56} cy={56} r={48} fill="none" strokeWidth={10} className="stroke-slate-100 dark:stroke-slate-800" />
+            <circle cx={56} cy={56} r={48} fill="none" strokeWidth={10} className="stroke-[var(--ds-surface-raised)]" />
             <circle
               cx={56}
               cy={56}
@@ -351,14 +360,14 @@ export function PlacementReadinessCard({
               strokeWidth={10}
               strokeLinecap="round"
               className={cn(
-                readiness.tone === "green" ? "stroke-emerald-500" : readiness.tone === "amber" ? "stroke-amber-500" : "stroke-rose-500"
+                readiness.tone === "green" ? "stroke-[var(--ds-success)]" : readiness.tone === "amber" ? "stroke-[var(--ds-warning)]" : "stroke-[var(--ds-danger)]"
               )}
               strokeDasharray={2 * Math.PI * 48}
               strokeDashoffset={2 * Math.PI * 48 - (Math.min(100, Math.max(0, readiness.score)) / 100) * (2 * Math.PI * 48)}
               style={{ transition: "stroke-dashoffset 900ms cubic-bezier(0.22,1,0.36,1)" }}
             />
           </svg>
-          <span className="absolute text-2xl font-black tabular-nums text-slate-900 dark:text-slate-50">{readiness.score}</span>
+          <span className="absolute text-2xl font-black tabular-nums text-[var(--ds-text)]">{readiness.score}</span>
         </div>
 
         <ReadinessBadge readiness={readiness} className="mt-4" />
@@ -366,14 +375,14 @@ export function PlacementReadinessCard({
         {reasons.length > 0 ? (
           <ul className="mt-4 w-full space-y-1.5 text-left">
             {reasons.map((reason, idx) => (
-              <li key={idx} className="flex items-start gap-2 text-xs text-slate-600 dark:text-slate-300">
-                <span className="mt-1 h-1 w-1 shrink-0 rounded-full bg-slate-400 dark:bg-slate-500" />
+              <li key={idx} className="flex items-start gap-2 text-xs text-[var(--ds-text-secondary)]">
+                <span className="mt-1 h-1 w-1 shrink-0 rounded-full bg-[var(--ds-muted)]" />
                 {reason}
               </li>
             ))}
           </ul>
         ) : (
-          <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+          <p className="mt-2 text-xs text-[var(--ds-muted)]">
             Based on resume quality, ATS fit, project strength, and skill alignment.
           </p>
         )}

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useLayoutEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { InternShell } from "@/components/dashboard/intern-shell";
+import { InternShell } from "@/components/dashboard/intern/intern-shell";
 import { RoleDashboardGuard } from "@/components/ui/role-dashboard-guard";
 import { scheduleInitialInternPrefetch } from "@/lib/intern-route-prefetch-scheduler";
 import {

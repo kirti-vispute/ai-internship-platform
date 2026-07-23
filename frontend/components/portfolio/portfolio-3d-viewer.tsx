@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { safeUrl } from "@/lib/safe-url";
 import Link from "next/link";
 import {
   Award,
@@ -163,7 +164,7 @@ export function Portfolio3DViewer({ content, theme = "midnight", slug, showResum
                       {content.socialLinks.map((link) => (
                         <a
                           key={link.url}
-                          href={link.url}
+                          href={safeUrl(link.url)}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="portfolio-chip rounded-xl px-3.5 py-2.5 text-sm font-medium"
@@ -257,13 +258,13 @@ export function Portfolio3DViewer({ content, theme = "midnight", slug, showResum
                         ) : null}
                         <div className="ml-auto flex flex-wrap gap-2">
                           {project.demoLink ? (
-                            <a href={project.demoLink} target="_blank" rel="noopener noreferrer" className="portfolio-cta">
+                            <a href={safeUrl(project.demoLink)} target="_blank" rel="noopener noreferrer" className="portfolio-cta">
                               <ExternalLink className="h-3 w-3" />
                               Live Demo
                             </a>
                           ) : null}
                           {project.githubLink ? (
-                            <a href={project.githubLink} target="_blank" rel="noopener noreferrer" className="portfolio-cta">
+                            <a href={safeUrl(project.githubLink)} target="_blank" rel="noopener noreferrer" className="portfolio-cta">
                               <Code2 className="h-3 w-3" />
                               Source
                             </a>
@@ -393,7 +394,7 @@ export function Portfolio3DViewer({ content, theme = "midnight", slug, showResum
             {content.socialLinks.map((link) => (
               <a
                 key={link.url}
-                href={link.url}
+                href={safeUrl(link.url)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="portfolio-chip rounded-xl px-4 py-2.5 text-sm font-medium"

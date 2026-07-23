@@ -43,7 +43,7 @@ export function Navbar({ theme = "light" }: NavbarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [activeHash, setActiveHash] = useState("#hero");
   const { loggedIn, role } = useAuthSession();
-  const isDark = theme === "dark";
+  void theme;
   const isHome = pathname === "/";
   const isAuthPage = pathname.startsWith("/auth");
 
@@ -60,24 +60,16 @@ export function Navbar({ theme = "light" }: NavbarProps) {
     cn(
       "rounded-full px-3 py-1.5 text-sm font-semibold transition duration-200",
       active
-        ? isDark
-          ? "bg-internai-blue/15 text-internai-blue"
-          : "bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300"
-        : isDark
-          ? "text-internai-muted hover:bg-white/[0.04] hover:text-internai-text"
-          : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+        ? "bg-[var(--ds-surface-raised)] text-[var(--ds-accent)]"
+        : "text-[var(--ds-muted)] hover:bg-[var(--ds-hover)] hover:text-[var(--ds-text)]"
     );
 
   const mobileLinkClass = (active: boolean) =>
     cn(
       "block rounded-xl px-3 py-2.5 text-sm font-semibold transition",
       active
-        ? isDark
-          ? "bg-internai-blue/15 text-internai-blue"
-          : "bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300"
-        : isDark
-          ? "text-internai-muted hover:bg-white/[0.04] hover:text-internai-text"
-          : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+        ? "bg-[var(--ds-surface-raised)] text-[var(--ds-accent)]"
+        : "text-[var(--ds-muted)] hover:bg-[var(--ds-hover)] hover:text-[var(--ds-text)]"
     );
 
   const scrollHashOnLoad = useCallback(() => {
@@ -118,14 +110,7 @@ export function Navbar({ theme = "light" }: NavbarProps) {
     isHome && (activeHash === `#${hash}` || (hash === "hero" && activeHash === "#hero"));
 
   return (
-    <header
-      className={cn(
-        "sticky top-0 z-40 border-b backdrop-blur-xl",
-        isDark
-          ? "border-[rgba(59,130,246,0.08)] bg-[rgba(10,19,36,0.48)]"
-          : "border-slate-200/70 bg-white/80 dark:border-slate-800 dark:bg-slate-950/80"
-      )}
-    >
+    <header className="sticky top-0 z-40 border-b border-[var(--ds-border)] bg-[var(--ds-navbar)] backdrop-blur-xl transition-colors duration-300">
       <nav className="container-shell flex h-16 items-center justify-between gap-3">
         {isAuthPage ? (
           <span className="inline-block h-[34px] w-[34px] shrink-0" aria-hidden />
@@ -196,12 +181,7 @@ export function Navbar({ theme = "light" }: NavbarProps) {
             <button
               type="button"
               onClick={handleLogout}
-              className={cn(
-                "hidden rounded-full border px-3 py-1.5 text-sm font-semibold transition lg:inline-flex lg:items-center lg:gap-1.5",
-                isDark
-                  ? "border-white/10 bg-internai-elevated/60 text-internai-text hover:bg-internai-elevated"
-                  : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
-              )}
+              className="hidden rounded-full border border-[var(--ds-border)] bg-[var(--ds-surface)] px-3 py-1.5 text-sm font-semibold text-[var(--ds-text)] transition hover:bg-[var(--ds-surface-raised)] lg:inline-flex lg:items-center lg:gap-1.5"
             >
               <AppIcon icon={LogOut} size="xs" />
               Logout
@@ -210,12 +190,7 @@ export function Navbar({ theme = "light" }: NavbarProps) {
             <button
               type="button"
               onClick={handleLogout}
-              className={cn(
-                "hidden rounded-full border px-3 py-1.5 text-sm font-semibold transition lg:inline-flex lg:items-center lg:gap-1.5",
-                isDark
-                  ? "border-white/10 bg-internai-elevated/60 text-internai-text hover:bg-internai-elevated"
-                  : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
-              )}
+              className="hidden rounded-full border border-[var(--ds-border)] bg-[var(--ds-surface)] px-3 py-1.5 text-sm font-semibold text-[var(--ds-text)] transition hover:bg-[var(--ds-surface-raised)] lg:inline-flex lg:items-center lg:gap-1.5"
             >
               <AppIcon icon={LogOut} size="xs" />
               Logout
@@ -224,12 +199,7 @@ export function Navbar({ theme = "light" }: NavbarProps) {
           <button
             type="button"
             onClick={() => setMobileOpen((open) => !open)}
-            className={cn(
-              "rounded-lg border px-2 py-1 transition md:hidden",
-              isDark
-                ? "border-white/10 bg-internai-elevated/60 text-internai-text hover:bg-internai-elevated"
-                : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
-            )}
+            className="rounded-lg border border-[var(--ds-border)] bg-[var(--ds-surface)] px-2 py-1 text-[var(--ds-muted)] transition hover:bg-[var(--ds-surface-raised)] md:hidden"
             aria-label={mobileOpen ? "Close navigation menu" : "Open navigation menu"}
             aria-expanded={mobileOpen}
           >
@@ -239,12 +209,7 @@ export function Navbar({ theme = "light" }: NavbarProps) {
       </nav>
 
       {mobileOpen && (
-        <div
-          className={cn(
-            "border-t px-4 py-3 md:hidden",
-            isDark ? "border-[rgba(59,130,246,0.08)] bg-[rgba(10,19,36,0.82)]" : "border-slate-200/70 bg-white/95 dark:border-slate-800 dark:bg-slate-950/95"
-          )}
-        >
+        <div className="border-t border-[var(--ds-border)] bg-[var(--ds-navbar)] px-4 py-3 md:hidden">
           <ul className="space-y-1">
             {isHome ? (
               <>

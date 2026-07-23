@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { SectionPanel } from "@/components/dashboard/section-panel";
-import { DashboardPageHeader } from "@/components/dashboard/dashboard-page-header";
+import { SectionPanel } from "@/components/dashboard/shared/section-panel";
+import { DashboardPageHeader } from "@/components/dashboard/shared/dashboard-page-header";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -57,9 +57,9 @@ export default function SupportPage() {
           <Input label="Company ID" value={companyId} onChange={(e) => setCompanyId(e.target.value)} placeholder="MongoDB company _id" />
           <Input label="Internship ID (optional)" value={internshipId} onChange={(e) => setInternshipId(e.target.value)} />
           <label className="block w-full sm:col-span-2">
-            <span className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">Report Type</span>
+            <span className="mb-2 block text-sm font-medium text-[var(--ds-text)]">Report Type</span>
             <select
-              className="h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+              className="h-11 w-full rounded-xl border border-[var(--ds-border)] bg-[var(--ds-card)] px-3 text-sm text-[var(--ds-text)]"
               value={reportType}
               onChange={(e) => setReportType(e.target.value)}
             >
@@ -91,7 +91,7 @@ export default function SupportPage() {
       </SectionPanel>
 
       <SectionPanel title="Help Resources" subtitle="Quick guidance for common issues.">
-        <ul className="space-y-2 text-sm text-slate-700 dark:text-slate-300">
+        <ul className="space-y-2 text-sm text-[var(--ds-text-secondary)]">
           <li className="surface-subtle px-3 py-2">Upload your latest resume before applying or requesting recommendations.</li>
           <li className="surface-subtle px-3 py-2">Check notifications for interview schedules and recruiter feedback.</li>
           <li className="surface-subtle px-3 py-2">Use Track Progress to monitor your application pipeline stages.</li>

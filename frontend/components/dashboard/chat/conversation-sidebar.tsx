@@ -2,13 +2,14 @@
 
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Search } from "lucide-react";
+import { SearchX } from "lucide-react";
 import type { ChatCompanyContact, ChatConversation, ChatInternContact } from "@/lib/chat-portal";
 import { Button } from "@/components/ui/button";
+import { SearchInput } from "@/components/ui/search-input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { EmptyState } from "@/components/dashboard/empty-state";
-import { AppIcon } from "@/components/icons/app-icon";
+import { EmptyState } from "@/components/dashboard/shared/empty-state";
 import { conversationTitle, formatListTime, type ChatRole } from "@/components/dashboard/chat/chat-utils";
+import { initialsFromWords as initialsFor } from "@/components/dashboard/shared/avatar-initials";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -26,29 +27,18 @@ type Props = {
 };
 
 const AVATAR_TONES = [
-  "bg-primary-500",
-  "bg-violet-500",
-  "bg-emerald-500",
-  "bg-amber-500",
-  "bg-rose-500",
-  "bg-sky-500"
+  "bg-[var(--ds-chart-1)]",
+  "bg-[var(--ds-chart-2)]",
+  "bg-[var(--ds-chart-3)]",
+  "bg-[var(--ds-chart-4)]",
+  "bg-[var(--ds-chart-5)]",
+  "bg-[var(--ds-chart-6)]"
 ];
 
 function toneForName(name: string) {
   let hash = 0;
   for (let i = 0; i < name.length; i += 1) hash = (hash * 31 + name.charCodeAt(i)) >>> 0;
   return AVATAR_TONES[hash % AVATAR_TONES.length];
-}
-
-function initialsFor(name: string) {
-  return (
-    name
-      .split(/\s+/)
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((part) => part[0]?.toUpperCase() || "")
-      .join("") || "?"
-  );
 }
 
 function contactForConversation(
@@ -115,7 +105,7 @@ export function ConversationSidebar({
         <div className="flex items-center gap-2">
           <p className="text-sm font-semibold text-[var(--ds-text)]">Conversations</p>
           {unreadTotal > 0 ? (
-            <span className="rounded-full bg-primary-600 px-1.5 py-0.5 text-[10px] font-bold text-white">
+            <span className="rounded-full bg-[var(--ds-primary)] px-1.5 py-0.5 text-[10px] font-bold text-[var(--ds-on-primary)]">
               {unreadTotal}
             </span>
           ) : null}
@@ -126,21 +116,13 @@ export function ConversationSidebar({
       </div>
 
       <div className="border-b border-[var(--ds-border)] px-3 py-2.5">
-        <div className="relative">
-          <AppIcon
-            icon={Search}
-            size="xs"
-            className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--ds-muted)]"
-          />
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search conversations…"
-            aria-label="Search conversations"
-            className="ds-input pl-8"
-          />
-        </div>
+        <SearchInput
+          value={query}
+          onValueChange={setQuery}
+          placeholder="Search conversations…"
+          aria-label="Search conversations"
+          className="pl-8"
+        />
       </div>
 
       {showNewChat ? (
@@ -201,8 +183,16 @@ export function ConversationSidebar({
             />
           </li>
         ) : filteredConversations.length === 0 ? (
-          <li className="px-2 py-6 text-center text-sm text-[var(--ds-muted)]">
-            No conversations match &quot;{query}&quot;.
+          <li>
+            <EmptyState
+              icon={SearchX}
+              title="No matching conversations"
+              description={`Nothing matches "${query}". Try a different name or role.`}
+              ctaLabel="Clear Search"
+              onCtaClick={() => setQuery("")}
+              size="sm"
+              className="border-0"
+            />
           </li>
         ) : (
           filteredConversations.map((conversation) => {
@@ -217,7 +207,7 @@ export function ConversationSidebar({
                 {active ? (
                   <motion.div
                     layoutId="chat-active-pill"
-                    className="absolute inset-0 rounded-xl bg-primary-600"
+                    className="absolute inset-0 rounded-xl bg-[var(--ds-primary)]"
                     transition={{ type: "spring", stiffness: 420, damping: 34 }}
                   />
                 ) : null}
@@ -229,9 +219,9 @@ export function ConversationSidebar({
                   className={cn(
                     "relative flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors",
                     active
-                      ? "text-white"
+                      ? "text-[var(--ds-on-primary)]"
                       : unread > 0
-                        ? "bg-primary-50/70 hover:bg-primary-50 dark:bg-primary-950/20 dark:hover:bg-primary-950/30"
+                        ? "bg-[var(--ds-surface-raised)] hover:bg-[var(--ds-hover)]"
                         : "hover:bg-[var(--ds-surface-raised)]"
                   )}
                 >
@@ -249,7 +239,7 @@ export function ConversationSidebar({
                       <span
                         className={cn(
                           "truncate text-sm font-semibold",
-                          active ? "text-white" : "text-[var(--ds-text)]"
+                          active ? "text-[var(--ds-on-primary)]" : "text-[var(--ds-text)]"
                         )}
                       >
                         {title}
@@ -257,7 +247,7 @@ export function ConversationSidebar({
                       <span
                         className={cn(
                           "shrink-0 text-[10px]",
-                          active ? "text-primary-100/80" : "text-[var(--ds-muted)]"
+                          active ? "text-[var(--ds-on-primary)] opacity-80" : "text-[var(--ds-muted)]"
                         )}
                       >
                         {formatListTime(conversation.lastMessageAt)}
@@ -267,7 +257,7 @@ export function ConversationSidebar({
                       <span
                         className={cn(
                           "block truncate text-[11px]",
-                          active ? "text-primary-100/90" : "text-[var(--ds-muted)]"
+                          active ? "text-[var(--ds-on-primary)] opacity-90" : "text-[var(--ds-muted)]"
                         )}
                       >
                         {roleLabel}
@@ -277,7 +267,7 @@ export function ConversationSidebar({
                       <span
                         className={cn(
                           "line-clamp-1 text-xs",
-                          active ? "text-primary-50/90" : "text-[var(--ds-muted)]"
+                          active ? "text-[var(--ds-on-primary)] opacity-90" : "text-[var(--ds-muted)]"
                         )}
                       >
                         {conversation.lastMessageText || "No messages yet"}
@@ -286,7 +276,7 @@ export function ConversationSidebar({
                         <span
                           className={cn(
                             "shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-bold",
-                            active ? "bg-white/25 text-white" : "bg-primary-600 text-white"
+                            active ? "bg-white/25 text-[var(--ds-on-primary)]" : "bg-[var(--ds-primary)] text-[var(--ds-on-primary)]"
                           )}
                         >
                           {unread > 9 ? "9+" : unread}

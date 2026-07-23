@@ -1,7 +1,7 @@
 "use client";
 
-import { SectionPanel } from "@/components/dashboard/section-panel";
-import { CertificationsModule } from "@/components/dashboard/certifications-module";
+import { SectionPanel } from "@/components/dashboard/shared/section-panel";
+import { CertificationsModule } from "@/components/dashboard/intern/certifications-module";
 
 export default function LearningCertificationsPage() {
   return (

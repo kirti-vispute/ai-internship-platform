@@ -1,8 +1,9 @@
 "use client";
 
-import { BarChart3, CalendarClock, FilePlus2, UsersRound, Users } from "lucide-react";
+import { BarChart3, Calendar, CalendarClock, FilePlus2, MessageSquare, UsersRound, Users } from "lucide-react";
 import { CompanyDashboardPanelCard, CompanyDashboardSection } from "@/components/dashboard/company/company-dashboard-layout";
 import { Button } from "@/components/ui/button";
+import { AppIcon } from "@/components/icons/app-icon";
 
 type QuickActionsPanelProps = {
   canPostJob: boolean;
@@ -22,26 +23,34 @@ export function QuickActionsPanel({ canPostJob, isExecutive, onViewAllApplicatio
         <div className="flex flex-col gap-2">
           {canPostJob ? (
             <Button href="/dashboard/company/hiring/post" size="sm" className="w-full justify-start">
-              <FilePlus2 className="h-4 w-4" />
-              Post New Job
+              <AppIcon icon={FilePlus2} size="sm" />
+              Create Internship
             </Button>
           ) : null}
-          <Button type="button" size="sm" variant="secondary" className="w-full justify-start" onClick={onViewAllApplications}>
-            <Users className="h-4 w-4" />
-            View All Applications
-          </Button>
           <Button type="button" size="sm" variant="secondary" className="w-full justify-start" onClick={onScheduleInterviews}>
-            <CalendarClock className="h-4 w-4" />
-            Schedule Interviews
+            <AppIcon icon={CalendarClock} size="sm" />
+            Schedule Interview
+          </Button>
+          <Button type="button" size="sm" variant="secondary" className="w-full justify-start" onClick={onViewAllApplications}>
+            <AppIcon icon={Users} size="sm" />
+            Review Candidates
+          </Button>
+          <Button href="/dashboard/company/chat" size="sm" variant="secondary" className="w-full justify-start">
+            <AppIcon icon={MessageSquare} size="sm" />
+            Messages
+          </Button>
+          <Button href="/dashboard/company/hiring/calendar" size="sm" variant="secondary" className="w-full justify-start">
+            <AppIcon icon={Calendar} size="sm" />
+            Calendar
           </Button>
           {isExecutive ? (
             <>
               <Button href="/dashboard/company/analytics/company" size="sm" variant="secondary" className="w-full justify-start">
-                <BarChart3 className="h-4 w-4" />
+                <AppIcon icon={BarChart3} size="sm" />
                 View Company Analytics
               </Button>
               <Button href="/dashboard/company/team/recruiters" size="sm" variant="secondary" className="w-full justify-start">
-                <UsersRound className="h-4 w-4" />
+                <AppIcon icon={UsersRound} size="sm" />
                 Manage HR Team
               </Button>
             </>

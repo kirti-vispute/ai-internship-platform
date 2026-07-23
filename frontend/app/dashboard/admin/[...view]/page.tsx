@@ -1,6 +1,6 @@
-import { AdminDashboardPage } from "@/components/dashboard/admin-dashboard-page";
+import { AdminDashboardPage } from "@/components/dashboard/admin/admin-dashboard-page";
 import { notFound } from "next/navigation";
-import type { AdminDashboardView } from "@/components/dashboard/admin-dashboard-page";
+import type { AdminDashboardView } from "@/components/dashboard/admin/admin-dashboard-page";
 
 const VIEW_MAP: Record<string, AdminDashboardView> = {
   users: "users",

@@ -1,8 +1,9 @@
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
-import { MessagePage } from "@/components/dashboard/message-page";
-import { AccessDenied } from "@/components/dashboard/access-denied";
+import { MessagePage } from "@/components/dashboard/chat/message-page";
+import { AccessDenied } from "@/components/dashboard/shared/access-denied";
+import { SkeletonChat } from "@/components/ui/skeleton";
 import {
   fetchCompanyProfile,
   peekCompanyProfile,
@@ -31,7 +32,7 @@ export default function CompanyChatPage() {
   }
 
   return (
-    <Suspense fallback={<div className="surface-muted p-4 text-sm text-slate-700 dark:text-slate-300">Loading chat...</div>}>
+    <Suspense fallback={<div className="surface-muted p-4"><SkeletonChat rows={6} /></div>}>
       <MessagePage role="company" />
     </Suspense>
   );

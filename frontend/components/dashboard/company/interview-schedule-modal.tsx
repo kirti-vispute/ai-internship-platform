@@ -21,6 +21,7 @@ import {
   X
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { AppIcon } from "@/components/icons/app-icon";
 import { cn } from "@/lib/utils";
 import type { InterviewScheduleSlot } from "@/lib/ai-hiring";
 import {
@@ -70,7 +71,7 @@ type InterviewScheduleModalProps = {
 };
 
 const fieldClass =
-  "w-full rounded-[var(--ds-radius-sm)] border border-[var(--ds-border)] bg-[var(--ds-surface)] px-3 py-2 text-sm text-[var(--ds-text)] outline-none transition focus:border-[var(--ds-border-strong)] focus:ring-2 focus:ring-primary-500/30";
+  "w-full rounded-[var(--ds-radius-sm)] border border-[var(--ds-border)] bg-[var(--ds-surface)] px-3 py-2 text-sm text-[var(--ds-text)] outline-none transition focus:border-[var(--ds-border-strong)] focus:ring-2 focus:ring-[var(--ds-primary)]/30";
 
 const TOGGLE_PILL_INACTIVE =
   "border-[var(--ds-border)] bg-transparent text-[var(--ds-muted)] hover:border-[var(--ds-border-strong)] hover:text-[var(--ds-text)]";
@@ -203,10 +204,10 @@ export function InterviewScheduleModal({
         transition={{ duration: 0.2, ease: "easeOut" }}
       >
         {/* Header */}
-        <div className="flex items-start justify-between gap-3 border-b border-[var(--ds-border)] bg-gradient-to-r from-white/[0.03] via-transparent to-transparent px-5 py-4">
+        <div className="flex items-start justify-between gap-3 border-b border-[var(--ds-border)] bg-gradient-to-r from-[var(--ds-glass)] via-transparent to-transparent px-5 py-4">
           <div className="flex items-start gap-3">
             <span className="ds-stat-icon shrink-0">
-              <CalendarDays className="h-5 w-5" />
+              <AppIcon icon={CalendarDays} size="md" />
             </span>
             <div className="min-w-0">
               <h2 id="schedule-interview-title" className="ds-h3">
@@ -218,7 +219,7 @@ export function InterviewScheduleModal({
             </div>
           </div>
           <button type="button" onClick={onClose} className="ds-icon-btn" aria-label="Close">
-            <X className="h-4 w-4" />
+            <AppIcon icon={X} size="sm" />
           </button>
         </div>
 
@@ -237,13 +238,13 @@ export function InterviewScheduleModal({
                     aria-pressed={active}
                     onClick={() => setRoundType(type)}
                     className={cn(
-                      "flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500",
+                      "flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ds-focus-ring)]",
                       active
                         ? TOGGLE_PILL_ACTIVE
                         : TOGGLE_PILL_INACTIVE
                     )}
                   >
-                    <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                    <AppIcon icon={Icon} size="xs" className={active ? "text-[var(--ds-accent)]" : ""} />
                     <span className="truncate">{type.replace(" Round", "")}</span>
                   </button>
                 );
@@ -255,13 +256,13 @@ export function InterviewScheduleModal({
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label htmlFor="interview-date" className="mb-1 flex items-center gap-1.5 text-xs font-semibold text-[var(--ds-muted)]">
-                <CalendarDays className="h-3.5 w-3.5" aria-hidden /> Date
+                <AppIcon icon={CalendarDays} size="xs" /> Date
               </label>
               <input
                 id="interview-date"
                 type="date"
                 min={today}
-                className={cn(fieldClass, touched && errors.date && "border-rose-400 focus:border-rose-400 focus:ring-rose-400/30")}
+                className={cn(fieldClass, touched && errors.date && "border-[var(--ds-danger)] focus:border-[var(--ds-danger)] focus:ring-[var(--ds-danger)]/30")}
                 value={interviewDate}
                 aria-invalid={Boolean(touched && errors.date)}
                 onChange={(event) => setInterviewDate(event.target.value)}
@@ -270,12 +271,12 @@ export function InterviewScheduleModal({
             </div>
             <div>
               <label htmlFor="interview-time" className="mb-1 flex items-center gap-1.5 text-xs font-semibold text-[var(--ds-muted)]">
-                <Clock className="h-3.5 w-3.5" aria-hidden /> Start time
+                <AppIcon icon={Clock} size="xs" /> Start time
               </label>
               <input
                 id="interview-time"
                 type="time"
-                className={cn(fieldClass, touched && errors.time && "border-rose-400 focus:border-rose-400 focus:ring-rose-400/30")}
+                className={cn(fieldClass, touched && errors.time && "border-[var(--ds-danger)] focus:border-[var(--ds-danger)] focus:ring-[var(--ds-danger)]/30")}
                 value={interviewTime}
                 aria-invalid={Boolean(touched && errors.time)}
                 onChange={(event) => setInterviewTime(event.target.value)}
@@ -287,7 +288,7 @@ export function InterviewScheduleModal({
           {/* Duration */}
           <div>
             <label className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold text-[var(--ds-muted)]">
-              <Timer className="h-3.5 w-3.5" aria-hidden /> Duration
+              <AppIcon icon={Timer} size="xs" /> Duration
             </label>
             <div className="grid grid-cols-4 gap-2" role="group" aria-label="Interview duration">
               {INTERVIEW_DURATION_OPTIONS.map((minutes) => {
@@ -299,7 +300,7 @@ export function InterviewScheduleModal({
                     aria-pressed={active}
                     onClick={() => setDurationMinutes(minutes)}
                     className={cn(
-                      "rounded-lg border px-2 py-2 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500",
+                      "rounded-lg border px-2 py-2 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ds-focus-ring)]",
                       active
                         ? TOGGLE_PILL_ACTIVE
                         : TOGGLE_PILL_INACTIVE
@@ -318,7 +319,7 @@ export function InterviewScheduleModal({
           {/* Interviewer */}
           <div>
             <label htmlFor="interview-interviewer" className="mb-1 flex items-center gap-1.5 text-xs font-semibold text-[var(--ds-muted)]">
-              <UserSearch className="h-3.5 w-3.5" aria-hidden /> Interviewer <span className="font-normal text-[var(--ds-muted)]">(optional)</span>
+              <AppIcon icon={UserSearch} size="xs" /> Interviewer <span className="font-normal text-[var(--ds-muted)]">(optional)</span>
             </label>
             <InterviewerCombobox
               value={interviewer}
@@ -345,13 +346,13 @@ export function InterviewScheduleModal({
                       setInterviewMode(value === "offline" ? "offline" : "online");
                     }}
                     className={cn(
-                      "flex items-center justify-center gap-1.5 rounded-lg border px-2 py-2 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500",
+                      "flex items-center justify-center gap-1.5 rounded-lg border px-2 py-2 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ds-focus-ring)]",
                       active
                         ? TOGGLE_PILL_ACTIVE
                         : TOGGLE_PILL_INACTIVE
                     )}
                   >
-                    <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                    <AppIcon icon={Icon} size="xs" className={active ? "text-[var(--ds-accent)]" : ""} />
                     <span className="truncate">{label}</span>
                   </button>
                 );
@@ -361,7 +362,7 @@ export function InterviewScheduleModal({
 
           {/* Timezone (informational — times are stored as entered) */}
           <div className="flex items-center gap-2 text-xs text-[var(--ds-muted)]">
-            <Globe className="h-3.5 w-3.5 shrink-0" aria-hidden />
+            <AppIcon icon={Globe} size="xs" />
             <span>
               Timezone: {typeof Intl !== "undefined" ? Intl.DateTimeFormat().resolvedOptions().timeZone : "local"}
             </span>
@@ -371,14 +372,14 @@ export function InterviewScheduleModal({
           {interviewMode === "online" ? (
             <div>
               <label htmlFor="interview-link" className="mb-1 flex items-center gap-1.5 text-xs font-semibold text-[var(--ds-muted)]">
-                <Link2 className="h-3.5 w-3.5" aria-hidden /> Meeting link <span className="font-normal text-[var(--ds-muted)]">(optional)</span>
+                <AppIcon icon={Link2} size="xs" /> Meeting link <span className="font-normal text-[var(--ds-muted)]">(optional)</span>
               </label>
               <input
                 id="interview-link"
                 type="url"
                 inputMode="url"
                 placeholder={PLATFORMS.find((item) => item.value === platform)?.placeholder || "https://meet.example.com/room"}
-                className={cn(fieldClass, touched && errors.link && "border-rose-400 focus:border-rose-400 focus:ring-rose-400/30")}
+                className={cn(fieldClass, touched && errors.link && "border-[var(--ds-danger)] focus:border-[var(--ds-danger)] focus:ring-[var(--ds-danger)]/30")}
                 value={meetingLink}
                 aria-invalid={Boolean(touched && errors.link)}
                 onChange={(event) => setMeetingLink(event.target.value)}
@@ -392,13 +393,13 @@ export function InterviewScheduleModal({
           ) : (
             <div>
               <label htmlFor="interview-location" className="mb-1 flex items-center gap-1.5 text-xs font-semibold text-[var(--ds-muted)]">
-                <MapPin className="h-3.5 w-3.5" aria-hidden /> Location
+                <AppIcon icon={MapPin} size="xs" /> Location
               </label>
               <input
                 id="interview-location"
                 type="text"
                 placeholder="Office address, building, room…"
-                className={cn(fieldClass, touched && errors.location && "border-rose-400 focus:border-rose-400 focus:ring-rose-400/30")}
+                className={cn(fieldClass, touched && errors.location && "border-[var(--ds-danger)] focus:border-[var(--ds-danger)] focus:ring-[var(--ds-danger)]/30")}
                 value={location}
                 aria-invalid={Boolean(touched && errors.location)}
                 onChange={(event) => setLocation(event.target.value)}
@@ -410,7 +411,7 @@ export function InterviewScheduleModal({
           {/* Notes */}
           <div>
             <label htmlFor="interview-notes" className="mb-1 flex items-center gap-1.5 text-xs font-semibold text-[var(--ds-muted)]">
-              <StickyNote className="h-3.5 w-3.5" aria-hidden /> Notes <span className="font-normal text-[var(--ds-muted)]">(optional)</span>
+              <AppIcon icon={StickyNote} size="xs" /> Notes <span className="font-normal text-[var(--ds-muted)]">(optional)</span>
             </label>
             <textarea
               id="interview-notes"
@@ -423,8 +424,8 @@ export function InterviewScheduleModal({
           </div>
 
           {overlapWarning ? (
-            <p className="flex items-start gap-2 rounded-[var(--ds-radius-sm)] border border-amber-400/25 bg-amber-400/10 px-3 py-2 text-xs text-amber-300">
-              <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
+            <p className="flex items-start gap-2 rounded-[var(--ds-radius-sm)] border border-[var(--ds-warning)]/25 bg-[var(--ds-warning)]/10 px-3 py-2 text-xs text-[var(--ds-warning)]">
+              <AppIcon icon={AlertTriangle} size="xs" className="mt-0.5 text-[var(--ds-warning)]" />
               <span>{overlapWarning}</span>
             </p>
           ) : null}
@@ -439,7 +440,7 @@ export function InterviewScheduleModal({
             type="button"
             size="sm"
             disabled={saving || (touched && !isValid)}
-            className="bg-gradient-to-r from-primary-600 to-violet-600 text-white hover:from-primary-500 hover:to-violet-500"
+            className="bg-gradient-to-r from-[var(--ds-gradient-from)] to-[var(--ds-gradient-to)] text-[var(--ds-on-primary)] hover:opacity-90"
             onClick={handleConfirm}
           >
             {saving ? (isReschedule ? "Updating…" : "Scheduling…") : isReschedule ? "Confirm Reschedule" : "Schedule Interview"}

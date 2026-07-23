@@ -1,6 +1,6 @@
 "use client";
 
-import { DashboardPageHeader } from "@/components/dashboard/dashboard-page-header";
+import { DashboardPageHeader } from "@/components/dashboard/shared/dashboard-page-header";
 import { InterviewCalendar } from "@/components/dashboard/intern/interview-calendar";
 
 export default function InternCalendarPage() {

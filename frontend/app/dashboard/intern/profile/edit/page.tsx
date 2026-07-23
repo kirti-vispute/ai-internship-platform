@@ -2,18 +2,19 @@
 
 import { useEffect, useLayoutEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { SectionPanel } from "@/components/dashboard/section-panel";
+import { SectionPanel } from "@/components/dashboard/shared/section-panel";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { DashboardPageHeader } from "@/components/dashboard/dashboard-page-header";
+import { DashboardPageHeader } from "@/components/dashboard/shared/dashboard-page-header";
 import { useToast } from "@/components/ui/toast";
 import { apiRequest } from "@/lib/api-client";
 import { InternProfile, fetchInternProfile, invalidateInternCache, peekInternProfile } from "@/lib/intern-portal";
-import { SkillSelector } from "@/components/dashboard/skill-selector";
+import { SkillSelector } from "@/components/dashboard/shared/skill-selector";
 import { SectionTabButton } from "@/components/icons/section-tab-button";
 import { EDIT_TAB_ICONS } from "@/components/icons/section-tab-icons";
 import { validateLinkedInUrl } from "@/lib/validation";
+import { SkeletonPage } from "@/components/ui/skeleton";
 
 type EditSectionKey = "personal" | "education" | "learning" | "skills";
 
@@ -219,13 +220,11 @@ export default function EditInternProfilePage() {
             eyebrow="My Profile"
             title="Edit Profile"
             subtitle="Manage your profile with structured sections for better clarity and recruiter readiness."
-            actions={<span className="rounded-full bg-primary-100 px-3 py-1 text-xs font-semibold text-primary-700 dark:bg-primary-900/35 dark:text-primary-300">{completionHint}% complete</span>}
+            actions={<span className="rounded-full bg-[var(--ds-info-bg)] px-3 py-1 text-xs font-semibold text-[var(--ds-primary)]">{completionHint}% complete</span>}
           />
 
           {loading ? (
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
-              Loading profile form...
-            </div>
+            <SkeletonPage />
           ) : (
             <>
               <div className="surface-subtle rounded-2xl p-2">
@@ -243,7 +242,7 @@ export default function EditInternProfilePage() {
               </div>
 
               {error ? (
-                <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300">
+                <div className="rounded-lg border border-[var(--ds-danger)]/40 bg-[var(--ds-danger-bg)] px-3 py-2 text-sm text-[var(--ds-danger)]">
                   {error}
                 </div>
               ) : null}
@@ -289,7 +288,7 @@ export default function EditInternProfilePage() {
                 <SectionPanel title="Courses & Certifications" subtitle="Learning records, certificate details, and verification links.">
                   <div className="grid gap-4 lg:grid-cols-2">
                     <div className="space-y-3">
-                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">Courses</p>
+                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--ds-muted)]">Courses</p>
                       <Input label="Course Name" value={courseName} onChange={(e) => setCourseName(e.target.value)} />
                       <Input label="Platform" value={coursePlatform} onChange={(e) => setCoursePlatform(e.target.value)} />
                       <Input label="Completion Date" value={courseCompletionDate} onChange={(e) => setCourseCompletionDate(e.target.value)} />
@@ -298,7 +297,7 @@ export default function EditInternProfilePage() {
                     </div>
 
                     <div className="space-y-3">
-                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">Certifications</p>
+                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--ds-muted)]">Certifications</p>
                       <Input label="Certification Name" value={certName} onChange={(e) => setCertName(e.target.value)} />
                       <Input label="Issuer" value={certIssuer} onChange={(e) => setCertIssuer(e.target.value)} />
                       <Input label="Year" value={certYear} onChange={(e) => setCertYear(e.target.value)} />
@@ -311,10 +310,10 @@ export default function EditInternProfilePage() {
 
               {activeSection === "skills" && (
                 <SectionPanel title="Skills" subtitle="Manage technical and soft skills separately.">
-                  <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">Technical Skills</p>
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--ds-muted)]">Technical Skills</p>
                   <SkillSelector selected={skills} onChange={setSkills} />
                   <div className="mt-4">
-                    <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">Soft Skills</p>
+                    <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--ds-muted)]">Soft Skills</p>
                     <SkillSelector selected={softSkills} onChange={setSoftSkills} />
                   </div>
                 </SectionPanel>

@@ -210,12 +210,12 @@ export function CustomCursor() {
     <>
       <div
         ref={ringRef}
-        className="pointer-events-none fixed left-0 top-0 z-[140] hidden h-9 w-9 -translate-x-1/2 -translate-y-1/2 rounded-full border border-cyan-300/70 bg-cyan-300/10 shadow-[0_0_28px_rgba(56,189,248,0.35)] backdrop-blur sm:block"
+        className="pointer-events-none fixed left-0 top-0 z-[140] hidden h-9 w-9 -translate-x-1/2 -translate-y-1/2 rounded-full border border-[var(--ds-primary)]/70 bg-[var(--ds-primary)]/10 shadow-[0_0_28px_color-mix(in_srgb,var(--ds-primary)_35%,transparent)] backdrop-blur sm:block"
         aria-hidden="true"
       />
       <div
         ref={dotRef}
-        className="pointer-events-none fixed left-0 top-0 z-[141] hidden h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan-200 shadow-[0_0_18px_rgba(34,211,238,0.92)] sm:block"
+        className="pointer-events-none fixed left-0 top-0 z-[141] hidden h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[var(--ds-accent)] shadow-[0_0_18px_color-mix(in_srgb,var(--ds-accent)_92%,transparent)] sm:block"
         aria-hidden="true"
       />
       {trailIndexes.map((index) => (
@@ -224,7 +224,7 @@ export function CustomCursor() {
           ref={(el) => {
             trailRefs.current[index] = el;
           }}
-          className="pointer-events-none fixed left-0 top-0 z-[139] hidden h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan-300/70 blur-[1px] sm:block"
+          className="pointer-events-none fixed left-0 top-0 z-[139] hidden h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[var(--ds-primary)]/70 blur-[1px] sm:block"
           aria-hidden="true"
         />
       ))}

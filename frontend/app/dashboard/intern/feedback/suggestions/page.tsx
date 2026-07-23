@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useMemo, useState } from "react";
-import { SectionPanel } from "@/components/dashboard/section-panel";
+import { SectionPanel } from "@/components/dashboard/shared/section-panel";
 import {
   Application,
   InternProfile,
@@ -12,6 +12,7 @@ import {
   peekInternProfile
 } from "@/lib/intern-portal";
 import { toDisplaySkillList } from "@/lib/skill-normalizer";
+import { SkeletonText } from "@/components/ui/skeleton";
 
 export default function SuggestionsPage() {
   const [profile, setProfile] = useState<InternProfile | null>(null);
@@ -77,12 +78,14 @@ export default function SuggestionsPage() {
   return (
     <>
       {loading ? (
-          <div className="surface-muted p-5 text-sm text-slate-700 dark:text-slate-300">Loading suggestions...</div>
+          <div className="ds-card">
+            <SkeletonText lines={4} />
+          </div>
         ) : (
           <SectionPanel title="Suggestions" subtitle="Generated from your resume data, recommendation results, and applications.">
-            {error && <p className="text-sm text-rose-700 dark:text-rose-300">{error}</p>}
+            {error && <p className="text-sm text-[var(--ds-danger)]">{error}</p>}
             {!error && (
-              <ul className="space-y-2 text-sm text-slate-700 dark:text-slate-300">
+              <ul className="space-y-2 text-sm text-[var(--ds-text-secondary)]">
                 {actionableSuggestions.map((item, idx) => (
                   <li key={`suggestion-${idx}`} className="surface-subtle px-3 py-2">
                     {item}

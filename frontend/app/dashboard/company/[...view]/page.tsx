@@ -1,6 +1,6 @@
-import { CompanyDashboardPage } from "@/components/dashboard/company-dashboard-page";
+import { CompanyDashboardPage } from "@/components/dashboard/company/company-dashboard-page";
 import { notFound } from "next/navigation";
-import type { CompanyDashboardView } from "@/components/dashboard/company-dashboard-page";
+import type { CompanyDashboardView } from "@/components/dashboard/company/company-dashboard-page";
 
 const VIEW_MAP: Record<string, CompanyDashboardView> = {
   profile: "profile",

@@ -92,14 +92,14 @@ export function AdminAuthForm() {
       <div className="mb-6 flex flex-wrap gap-x-4 gap-y-1 text-xs">
         <Link
           href="/auth/intern"
-          className="font-semibold text-primary-600 hover:text-primary-700 dark:text-primary-300 dark:hover:text-primary-200"
+          className="font-semibold text-[var(--ds-primary)] hover:text-[var(--ds-primary-hover)]"
           data-cursor="link"
         >
           Intern login
         </Link>
         <Link
           href="/auth/company"
-          className="font-semibold text-primary-600 hover:text-primary-700 dark:text-primary-300 dark:hover:text-primary-200"
+          className="font-semibold text-[var(--ds-primary)] hover:text-[var(--ds-primary-hover)]"
           data-cursor="link"
         >
           Company login
@@ -129,7 +129,7 @@ export function AdminAuthForm() {
           <button
             type="button"
             data-cursor="button"
-            className="font-medium text-primary-600 hover:text-primary-700"
+            className="font-medium text-[var(--ds-primary)] hover:text-[var(--ds-primary-hover)]"
             onClick={() => setShowPassword((prev) => !prev)}
           >
             {showPassword ? "Hide Password" : "Show Password"}

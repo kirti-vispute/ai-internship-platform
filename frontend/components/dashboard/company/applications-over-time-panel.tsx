@@ -60,6 +60,7 @@ function ApplicationsOverTimePanelInner({ applications }: { applications: Compan
         <CompanyDashboardEmptyState
           title="Application trends appear once you start receiving applications."
           description="Post an internship and this chart will fill in automatically."
+          icon={TrendingUp}
         />
       ) : (
         <CompanyDashboardPanelCard>

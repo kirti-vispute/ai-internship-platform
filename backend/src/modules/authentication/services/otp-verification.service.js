@@ -124,6 +124,17 @@ async function verifyOtpForPurpose({ email, otp, purpose }) {
   record.verified = true;
   record.attemptCount = 0;
   record.lastVerifiedAt = new Date();
+  // Once verified for signup, the record is a verification *proof*, not a live
+  // OTP. Extend its lifetime to the declared post-verification window so the TTL
+  // index and the expiry checks in assertVerifiedOtpForSignup/isSignupVerificationActive
+  // don't delete it after OTP_EXPIRY_MINUTES and force a needless re-verify —
+  // which made SIGNUP_VERIFIED_WINDOW_MINUTES unreachable.
+  if (purpose === "intern_signup") {
+    const verifiedWindowEnd = new Date(Date.now() + SIGNUP_VERIFIED_WINDOW_MINUTES * 60 * 1000);
+    if (record.expiresAt < verifiedWindowEnd) {
+      record.expiresAt = verifiedWindowEnd;
+    }
+  }
   await record.save();
 
   return { alreadyVerified: false, record };

@@ -1,32 +1,24 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { Users } from "lucide-react";
 import type { CompanyApplication } from "@/lib/company-portal";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
-import { Badge, type BadgeTone } from "@/components/ui/badge";
+import { Badge } from "@/components/ui/badge";
 import { Pagination } from "@/components/ui/pagination";
-import { normalizeToFlowStage } from "./hiring-utils";
+import { usePagination } from "@/lib/use-pagination";
+import { normalizeToPipelineStage, PIPELINE_STAGE_TONE, type HiringPipelineStageKey } from "./hiring-utils";
+import { CandidateCompareToggle } from "@/components/dashboard/company/candidate-compare-toggle";
 
 const PAGE_SIZE = 12;
-
-const STAGE_TONE: Record<string, BadgeTone> = {
-  applied: "warning",
-  shortlisted: "info",
-  interview: "info",
-  interview_scheduled: "info",
-  interviewed: "info",
-  selected: "success",
-  rejected: "danger"
-};
 
 type ApplicationsSheetProps = {
   open: boolean;
   title: string;
   subtitle?: string;
   applications: CompanyApplication[];
-  filterStage?: "interview" | null;
+  filterStage?: HiringPipelineStageKey | null;
   onClose: () => void;
   onViewProfile: (applicationId: string) => void;
 };
@@ -40,29 +32,25 @@ export function ApplicationsSheet({
   onClose,
   onViewProfile
 }: ApplicationsSheetProps) {
-  const [page, setPage] = useState(0);
-
   const filtered = useMemo(() => {
     if (!filterStage) return applications;
-    return applications.filter((application) => normalizeToFlowStage(application.status) === filterStage);
+    return applications.filter((application) => normalizeToPipelineStage(application.status) === filterStage);
   }, [applications, filterStage]);
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const safePage = Math.min(page, totalPages - 1);
-  const visible = filtered.slice(safePage * PAGE_SIZE, safePage * PAGE_SIZE + PAGE_SIZE);
+  const { setPage, totalPages, safePage, pageItems: visible } = usePagination(filtered, PAGE_SIZE);
 
   useEffect(() => {
     if (open) setPage(0);
   }, [open, title, filterStage]);
 
   return (
-    <Modal open={open} onClose={onClose} title={title} subtitle={subtitle} icon={Users} size="lg">
+    <Modal open={open} onClose={onClose} title={title} subtitle={subtitle} icon={Users} size="lg" variant="drawer">
       {filtered.length === 0 ? (
         <p className="ds-caption py-8 text-center">No applications in this view.</p>
       ) : (
         <div className="space-y-2">
           {visible.map((application) => {
-            const stage = normalizeToFlowStage(application.status);
+            const stage = normalizeToPipelineStage(application.status);
             return (
               <div
                 key={application._id}
@@ -74,22 +62,25 @@ export function ApplicationsSheet({
                   </p>
                   <div className="mt-1 flex flex-wrap items-center gap-1.5">
                     <p className="truncate text-xs text-[var(--ds-muted)]">{application.internship?.role || "Role"}</p>
-                    <Badge tone={STAGE_TONE[stage] || "neutral"} className="capitalize">
+                    <Badge tone={PIPELINE_STAGE_TONE[stage] || "neutral"} className="capitalize">
                       {stage.replace(/_/g, " ")}
                     </Badge>
                   </div>
                 </div>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="secondary"
-                  onClick={() => {
-                    onViewProfile(application._id);
-                    onClose();
-                  }}
-                >
-                  View Profile
-                </Button>
+                <div className="flex shrink-0 items-center gap-2">
+                  <CandidateCompareToggle applicationId={application._id} />
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => {
+                      onViewProfile(application._id);
+                      onClose();
+                    }}
+                  >
+                    View Profile
+                  </Button>
+                </div>
               </div>
             );
           })}

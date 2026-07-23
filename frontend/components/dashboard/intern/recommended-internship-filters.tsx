@@ -4,6 +4,8 @@ import type { ReactNode } from "react";
 import { SlidersHorizontal, X } from "lucide-react";
 import type { RecommendationFilterOptions, RecommendedInternshipFilters } from "@/lib/recommendation-filters";
 import { Button } from "@/components/ui/button";
+import { SearchInput } from "@/components/ui/search-input";
+import { AppIcon } from "@/components/icons/app-icon";
 import { cn } from "@/lib/utils";
 
 type RecommendedInternshipFiltersProps = {
@@ -38,7 +40,7 @@ function FilterSelect({
 }) {
   return (
     <label className="block space-y-1">
-      <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">
+      <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--ds-muted)]">
         {label}
       </span>
       <select
@@ -63,13 +65,13 @@ export function RecommendedInternshipFiltersPanel({
   className
 }: RecommendedInternshipFiltersProps) {
   return (
-    <div className={cn("space-y-4 rounded-2xl border border-slate-200/80 bg-white/70 p-4 dark:border-slate-700/80 dark:bg-slate-900/40", className)}>
+    <div className={cn("space-y-4 rounded-2xl border border-[var(--ds-border)] bg-[var(--ds-surface)] p-4", className)}>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <SlidersHorizontal className="h-4 w-4 text-primary-600 dark:text-primary-400" />
+          <AppIcon icon={SlidersHorizontal} size="sm" className="text-[var(--ds-primary)]" />
           <div>
-            <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Filter Recommendations</p>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+            <p className="text-sm font-semibold text-[var(--ds-text)]">Filter Recommendations</p>
+            <p className="text-xs text-[var(--ds-muted)]">
               Showing {resultCount} of {totalCount}
               {activeCount > 0 ? ` · ${activeCount} filter${activeCount === 1 ? "" : "s"} active` : ""}
             </p>
@@ -77,22 +79,21 @@ export function RecommendedInternshipFiltersPanel({
         </div>
         {activeCount > 0 ? (
           <Button type="button" size="sm" variant="secondary" onClick={onReset}>
-            <X className="h-3.5 w-3.5" />
+            <AppIcon icon={X} size="xs" className="text-current" />
             Clear all
           </Button>
         ) : null}
       </div>
 
-      <input
+      <SearchInput
         value={filters.query}
-        onChange={(event) => onChange({ query: event.target.value })}
+        onValueChange={(query) => onChange({ query })}
         placeholder="Search role, company, skill, or description"
-        className="surface-subtle w-full px-3 py-2 text-sm"
       />
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <label className="block space-y-1 sm:col-span-2 xl:col-span-1">
-          <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">
+          <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--ds-muted)]">
             Location
           </span>
           <input
@@ -168,7 +169,7 @@ export function RecommendedInternshipFiltersPanel({
         </FilterSelect>
 
         <label className="block space-y-1">
-          <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">
+          <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--ds-muted)]">
             Min stipend (₹)
           </span>
           <input

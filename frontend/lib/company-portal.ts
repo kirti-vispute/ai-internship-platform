@@ -10,6 +10,8 @@ export type CompanyProfile = {
   gst: string;
   contactName: string;
   phone: string;
+  /** Optional landline / office number. Forward-compatible: backend may not yet persist this. */
+  landline?: string;
   website?: string;
   address?: string;
   description?: string;
@@ -30,10 +32,12 @@ export type CompanyProfile = {
   updatedAt?: string;
 };
 
+export type CompanyAccountType = "owner" | "hr" | "ceo";
+
 export type CompanyCurrentUser = {
   _id: string;
   email: string;
-  companyAccountType: "owner" | "hr" | "ceo";
+  companyAccountType: CompanyAccountType;
   permissions: string[];
   sidebarModules: string[];
 };
@@ -200,6 +204,7 @@ export type CompanyApplication = {
     links?: string[];
     linkedinUrl?: string;
     interests?: string[];
+    languages?: string[];
     resume?: InternProfile["resume"];
     portfolio?: PortfolioSummary | null;
   };
@@ -336,9 +341,9 @@ export function peekCompanyApplications() {
 
 export function prefetchCompanyDashboardData() {
   if (typeof window === "undefined") return;
-  void fetchCompanyProfile();
-  void fetchCompanyInternships();
-  void fetchCompanyApplications();
+  void fetchCompanyProfile().catch(() => undefined);
+  void fetchCompanyInternships().catch(() => undefined);
+  void fetchCompanyApplications().catch(() => undefined);
 }
 
 export async function fetchCompanyProfile(force = false) {
@@ -391,7 +396,7 @@ export type CompanyPersonalProfile = {
   linkedInUrl: string;
   personalWebsite: string;
   bio: string;
-  companyAccountType: "owner" | "hr" | "ceo";
+  companyAccountType: CompanyAccountType;
 };
 
 export async function fetchPersonalProfile(force = false) {
@@ -552,32 +557,32 @@ export async function assignRecruiterToApplication(applicationId: string, recrui
   });
 }
 
+export type CompanyAnalytics = {
+  recruiterPerformance: Array<{
+    recruiterId: string;
+    candidatesHandled: number;
+    shortlistedCandidates: number;
+    hiredCandidates: number;
+    conversionRate: number;
+    interviewSuccessRate: number;
+    recruiterResponseTimeHours: number;
+  }>;
+  hiringAnalytics: {
+    totalHires: number;
+    totalApplications: number;
+    departmentWiseHiring: Record<string, number>;
+    internshipPerformance: number;
+  };
+  salaryAnalytics: {
+    offeredSalaryPerCandidate: number[];
+    stipendAnalytics: number[];
+    averagePackage: number;
+    totalSalaryExpenditure: number;
+  };
+};
+
 export async function fetchCompanyAnalytics() {
-  const response = await apiRequest<{
-    analytics: {
-      recruiterPerformance: Array<{
-        recruiterId: string;
-        candidatesHandled: number;
-        shortlistedCandidates: number;
-        hiredCandidates: number;
-        conversionRate: number;
-        interviewSuccessRate: number;
-        recruiterResponseTimeHours: number;
-      }>;
-      hiringAnalytics: {
-        totalHires: number;
-        totalApplications: number;
-        departmentWiseHiring: Record<string, number>;
-        internshipPerformance: number;
-      };
-      salaryAnalytics: {
-        offeredSalaryPerCandidate: number[];
-        stipendAnalytics: number[];
-        averagePackage: number;
-        totalSalaryExpenditure: number;
-      };
-    };
-  }>("/api/company/analytics");
+  const response = await apiRequest<{ analytics: CompanyAnalytics }>("/api/company/analytics");
   return response.analytics;
 }
 

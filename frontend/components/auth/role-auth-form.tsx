@@ -123,16 +123,16 @@ function AuthPortalLinks({ role }: { role: AuthRole }) {
       <p className="ds-label">Other portals</p>
       <div className="flex flex-wrap gap-x-4 gap-y-1">
         {role !== "intern" && (
-          <Link href="/auth/intern" className="font-semibold text-primary-600 hover:text-primary-700 dark:text-primary-300" data-cursor="link">
+          <Link href="/auth/intern" className="font-semibold text-[var(--ds-primary)] hover:text-[var(--ds-primary-hover)]" data-cursor="link">
             Intern login
           </Link>
         )}
         {role !== "company" && (
-          <Link href="/auth/company" className="font-semibold text-primary-600 hover:text-primary-700 dark:text-primary-300" data-cursor="link">
+          <Link href="/auth/company" className="font-semibold text-[var(--ds-primary)] hover:text-[var(--ds-primary-hover)]" data-cursor="link">
             Company login
           </Link>
         )}
-        <Link href="/auth/admin" className="font-semibold text-primary-600 hover:text-primary-700 dark:text-primary-300" data-cursor="link">
+        <Link href="/auth/admin" className="font-semibold text-[var(--ds-primary)] hover:text-[var(--ds-primary-hover)]" data-cursor="link">
           Admin login
         </Link>
       </div>
@@ -522,17 +522,17 @@ export function RoleAuthForm({ role }: { role: AuthRole }) {
       <AuthBrandHeader />
       <div className="mb-6">
         <h1 className="ds-h1">{roleTitle}</h1>
-        <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{roleCopy}</p>
+        <p className="mt-2 text-sm text-[var(--ds-text-secondary)]">{roleCopy}</p>
       </div>
-      <div className="mb-4 grid grid-cols-2 rounded-xl bg-slate-100 p-1 dark:bg-slate-800">
+      <div className="mb-4 grid grid-cols-2 rounded-xl bg-[var(--ds-surface)] p-1">
         <button
           type="button"
           onClick={() => setModeWithReset("signup")}
           data-cursor="button"
           className={`rounded-lg px-3 py-2 text-sm font-semibold transition-all duration-200 ${
             mode === "signup"
-              ? "bg-white text-slate-900 shadow-soft dark:bg-slate-900 dark:text-slate-100"
-              : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+              ? "bg-[var(--ds-card)] text-[var(--ds-text)] shadow-soft"
+              : "text-[var(--ds-muted)] hover:text-[var(--ds-text-secondary)]"
           }`}
         >
           Signup
@@ -546,8 +546,8 @@ export function RoleAuthForm({ role }: { role: AuthRole }) {
           data-cursor="button"
           className={`rounded-lg px-3 py-2 text-sm font-semibold transition-all duration-200 ${
             mode === "login"
-              ? "bg-white text-slate-900 shadow-soft dark:bg-slate-900 dark:text-slate-100"
-              : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+              ? "bg-[var(--ds-card)] text-[var(--ds-text)] shadow-soft"
+              : "text-[var(--ds-muted)] hover:text-[var(--ds-text-secondary)]"
           }`}
         >
           Login
@@ -558,7 +558,7 @@ export function RoleAuthForm({ role }: { role: AuthRole }) {
         {role === "intern" ? "Looking for company access?" : "Looking for intern access?"}{" "}
         <Link
           href={role === "intern" ? "/auth/company" : "/auth/intern"}
-          className="font-semibold text-primary-600 hover:text-primary-700 dark:text-primary-300 dark:hover:text-primary-200"
+          className="font-semibold text-[var(--ds-primary)] hover:text-[var(--ds-primary-hover)]"
           data-cursor="link"
         >
           Switch to {role === "intern" ? "Company" : "Intern"}
@@ -571,7 +571,7 @@ export function RoleAuthForm({ role }: { role: AuthRole }) {
         <form className="mt-5 space-y-4" onSubmit={handleLoginSubmit}>
           {role === "intern" && (
             <div className="space-y-3">
-              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--ds-muted)]">
                 Demo account
               </p>
               <div className="grid grid-cols-2 gap-2">
@@ -586,18 +586,18 @@ export function RoleAuthForm({ role }: { role: AuthRole }) {
                       onClick={() => applyInternLoginPreset(type)}
                       className={`rounded-xl border px-3 py-3 text-left transition ${
                         active
-                          ? "border-primary-500 bg-primary-50 shadow-soft dark:border-primary-400 dark:bg-primary-950/40"
-                          : "border-slate-200 bg-white hover:border-slate-300 dark:bg-slate-900 dark:hover:border-slate-600"
+                          ? "border-[var(--ds-primary)] bg-[var(--ds-info-bg)] shadow-soft"
+                          : "border-[var(--ds-border)] bg-[var(--ds-card)] hover:border-[var(--ds-border-strong)]"
                       }`}
                     >
-                      <p className="text-sm font-bold text-slate-900 dark:text-slate-100">{preset.title}</p>
-                      <p className="mt-1 text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">{preset.description}</p>
+                      <p className="text-sm font-bold text-[var(--ds-text)]">{preset.title}</p>
+                      <p className="mt-1 text-[11px] leading-relaxed text-[var(--ds-muted)]">{preset.description}</p>
                     </button>
                   );
                 })}
               </div>
-              <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50/80 px-3 py-2.5 text-xs text-slate-600 dark:border-slate-600 dark:bg-slate-900/50 dark:text-slate-300">
-                <p className="font-semibold text-slate-700 dark:text-slate-200">Demo credentials</p>
+              <div className="rounded-xl border border-dashed border-[var(--ds-border)] bg-[var(--ds-surface)] px-3 py-2.5 text-xs text-[var(--ds-text-secondary)]">
+                <p className="font-semibold text-[var(--ds-text)]">Demo credentials</p>
                 <p className="mt-1">
                   Email: <span className="font-mono">{INTERN_LOGIN_PRESETS[internLoginType].email}</span>
                 </p>
@@ -606,7 +606,7 @@ export function RoleAuthForm({ role }: { role: AuthRole }) {
                 </p>
                 <button
                   type="button"
-                  className="mt-2 font-semibold text-primary-600 hover:text-primary-700 dark:text-primary-300"
+                  className="mt-2 font-semibold text-[var(--ds-primary)] hover:text-[var(--ds-primary-hover)]"
                   onClick={() => applyInternLoginPreset(internLoginType)}
                 >
                   Use these credentials
@@ -616,7 +616,7 @@ export function RoleAuthForm({ role }: { role: AuthRole }) {
           )}
           {role === "company" && (
             <div className="space-y-3">
-              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--ds-muted)]">
                 Company account type
               </p>
               <div className="grid grid-cols-2 gap-2">
@@ -631,18 +631,18 @@ export function RoleAuthForm({ role }: { role: AuthRole }) {
                       onClick={() => applyCompanyLoginPreset(type)}
                       className={`rounded-xl border px-3 py-3 text-left transition ${
                         active
-                          ? "border-primary-500 bg-primary-50 shadow-soft dark:border-primary-400 dark:bg-primary-950/40"
-                          : "border-slate-200 bg-white hover:border-slate-300  dark:bg-slate-900 dark:hover:border-slate-600"
+                          ? "border-[var(--ds-primary)] bg-[var(--ds-info-bg)] shadow-soft"
+                          : "border-[var(--ds-border)] bg-[var(--ds-card)] hover:border-[var(--ds-border-strong)]"
                       }`}
                     >
-                      <p className="text-sm font-bold text-slate-900 dark:text-slate-100">{preset.title}</p>
-                      <p className="mt-1 text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">{preset.description}</p>
+                      <p className="text-sm font-bold text-[var(--ds-text)]">{preset.title}</p>
+                      <p className="mt-1 text-[11px] leading-relaxed text-[var(--ds-muted)]">{preset.description}</p>
                     </button>
                   );
                 })}
               </div>
-              <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50/80 px-3 py-2.5 text-xs text-slate-600 dark:border-slate-600 dark:bg-slate-900/50 dark:text-slate-300">
-                <p className="font-semibold text-slate-700 dark:text-slate-200">Demo credentials</p>
+              <div className="rounded-xl border border-dashed border-[var(--ds-border)] bg-[var(--ds-surface)] px-3 py-2.5 text-xs text-[var(--ds-text-secondary)]">
+                <p className="font-semibold text-[var(--ds-text)]">Demo credentials</p>
                 <p className="mt-1">
                   Email: <span className="font-mono">{COMPANY_LOGIN_PRESETS[companyLoginType].email}</span>
                 </p>
@@ -656,7 +656,7 @@ export function RoleAuthForm({ role }: { role: AuthRole }) {
                 </p>
                 <button
                   type="button"
-                  className="mt-2 font-semibold text-primary-600 hover:text-primary-700 dark:text-primary-300"
+                  className="mt-2 font-semibold text-[var(--ds-primary)] hover:text-[var(--ds-primary-hover)]"
                   onClick={() => applyCompanyLoginPreset(companyLoginType)}
                 >
                   Use these credentials
@@ -684,7 +684,7 @@ export function RoleAuthForm({ role }: { role: AuthRole }) {
             <button
               type="button"
               data-cursor="button"
-              className="font-medium text-primary-600 hover:text-primary-700"
+              className="font-medium text-[var(--ds-primary)] hover:text-[var(--ds-primary-hover)]"
               onClick={() => setShowPassword((prev) => !prev)}
             >
               {showPassword ? "Hide Password" : "Show Password"}
@@ -692,14 +692,14 @@ export function RoleAuthForm({ role }: { role: AuthRole }) {
             <button
               type="button"
               data-cursor="button"
-              className="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+              className="text-[var(--ds-muted)] hover:text-[var(--ds-text-secondary)]"
               onClick={() => setResetOtpMode((prev) => !prev)}
             >
               Forgot password?
             </button>
           </div>
           {resetOtpMode && (
-            <div className="space-y-2 rounded-xl border border-slate-200 p-3 dark:border-slate-700">
+            <div className="space-y-2 rounded-xl border border-[var(--ds-border)] p-3">
               {!resetOtpSent ? (
                 <Button type="button" size="sm" disabled={resetOtpSending} onClick={() => handleSendPasswordResetOtp(false)}>
                   {resetOtpSending ? (
@@ -806,8 +806,8 @@ export function RoleAuthForm({ role }: { role: AuthRole }) {
                 onChange={(event) => setInternData((prev) => ({ ...prev, confirmPassword: event.target.value }))}
                 error={errors.confirmPassword}
               />
-              <div className="rounded-xl border border-slate-200 p-3 dark:border-slate-700">
-                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Email Verification OTP</p>
+              <div className="rounded-xl border border-[var(--ds-border)] p-3">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--ds-muted)]">Email Verification OTP</p>
                 {!otpSent ? (
                   <Button type="button" size="sm" disabled={otpSending} onClick={() => handleSendInternOtp(false)}>
                     {otpSending ? (
@@ -862,7 +862,7 @@ export function RoleAuthForm({ role }: { role: AuthRole }) {
                       </Button>
                     </div>
                     {otpVerified && (
-                      <p className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                      <p className="text-xs font-medium text-[var(--ds-success)]">
                         Email verified. You can create your account now.
                       </p>
                     )}
@@ -873,7 +873,7 @@ export function RoleAuthForm({ role }: { role: AuthRole }) {
                 <button
                   type="button"
                   data-cursor="button"
-                  className="font-medium text-primary-600 hover:text-primary-700"
+                  className="font-medium text-[var(--ds-primary)] hover:text-[var(--ds-primary-hover)]"
                   onClick={() => setShowPassword((prev) => !prev)}
                 >
                   {showPassword ? "Hide Password" : "Show Password"}
@@ -939,7 +939,7 @@ export function RoleAuthForm({ role }: { role: AuthRole }) {
                 <button
                   type="button"
                   data-cursor="button"
-                  className="font-medium text-primary-600 hover:text-primary-700"
+                  className="font-medium text-[var(--ds-primary)] hover:text-[var(--ds-primary-hover)]"
                   onClick={() => setShowPassword((prev) => !prev)}
                 >
                   {showPassword ? "Hide Password" : "Show Password"}
@@ -947,12 +947,12 @@ export function RoleAuthForm({ role }: { role: AuthRole }) {
               </div>
               <PasswordStrength password={companyData.password} />
 
-              <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-300">
+              <p className="rounded-xl border border-[var(--ds-warning)]/40 bg-[var(--ds-warning-bg)] px-3 py-2 text-xs text-[var(--ds-warning)]">
                 Verification info: Company accounts are reviewed before posting internships.
               </p>
 
               {verificationPending && (
-                <p className="rounded-xl border border-primary-200 bg-primary-50 px-3 py-2 text-sm text-primary-700 dark:border-primary-800/70 dark:bg-primary-950/40 dark:text-primary-300">
+                <p className="rounded-xl border border-[var(--ds-primary)]/40 bg-[var(--ds-info-bg)] px-3 py-2 text-sm text-[var(--ds-primary)]">
                   Verification pending: Your company profile is under review.
                 </p>
               )}

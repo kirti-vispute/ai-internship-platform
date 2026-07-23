@@ -1,7 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import { AppIcon } from "@/components/icons/app-icon";
-import { DashboardPageHeader } from "@/components/dashboard/dashboard-page-header";
-import { ScrollReveal } from "@/components/animations/ScrollReveal";
+import { DashboardPageHeader } from "@/components/dashboard/shared/dashboard-page-header";
+import { EmptyState } from "@/components/dashboard/shared/empty-state";
 import { cn } from "@/lib/utils";
 
 export const companyDashboardStyles = {
@@ -20,7 +20,6 @@ export const companyDashboardStyles = {
   cardGridTwo: "company-dashboard-card-grid company-dashboard-card-grid--2",
   cardGridThree: "company-dashboard-card-grid company-dashboard-card-grid--3",
   listStack: "company-dashboard-list-stack",
-  emptyState: "company-dashboard-empty",
   metricGrid: "company-dashboard-metric-grid",
   metricGridFour: "company-dashboard-metric-grid company-dashboard-metric-grid--4",
   metricGridFive: "company-dashboard-metric-grid company-dashboard-metric-grid--5",
@@ -135,19 +134,37 @@ export function CompanyDashboardItemCard({
 type CompanyDashboardEmptyStateProps = {
   title: string;
   description?: string;
+  icon?: LucideIcon;
+  action?: React.ReactNode;
+  ctaLabel?: string;
+  ctaHref?: string;
+  onCtaClick?: () => void;
   children?: React.ReactNode;
   className?: string;
 };
 
-export function CompanyDashboardEmptyState({ title, description, children, className }: CompanyDashboardEmptyStateProps) {
+export function CompanyDashboardEmptyState({
+  title,
+  description,
+  icon,
+  action,
+  ctaLabel,
+  ctaHref,
+  onCtaClick,
+  children,
+  className
+}: CompanyDashboardEmptyStateProps) {
   return (
-    <ScrollReveal variant="fade-up" distance={8}>
-      <div className={cn(companyDashboardStyles.emptyState, className)}>
-        <p className="ds-body font-medium">{title}</p>
-        {description ? <p className="ds-caption mt-1">{description}</p> : null}
-        {children}
-      </div>
-    </ScrollReveal>
+    <EmptyState
+      title={title}
+      description={description}
+      icon={icon}
+      action={action ?? children}
+      ctaLabel={ctaLabel}
+      ctaHref={ctaHref}
+      onCtaClick={onCtaClick}
+      className={className}
+    />
   );
 }
 

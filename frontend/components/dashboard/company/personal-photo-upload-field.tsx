@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import Image from "next/image";
 import { UserCircle, Upload } from "lucide-react";
+import { AppIcon } from "@/components/icons/app-icon";
 import { resolveCompanyLogoUrl } from "@/lib/company-portal";
 import { cn } from "@/lib/utils";
 
@@ -90,7 +91,7 @@ export function PersonalPhotoUploadField({ photoUrl, displayName, uploading, err
           {displaySrc ? (
             <Image src={displaySrc} alt={`${displayName || "Profile"} photo`} width={64} height={64} className="h-full w-full object-cover" unoptimized />
           ) : (
-            <UserCircle className="h-8 w-8 text-[var(--ds-muted)]" />
+            <AppIcon icon={UserCircle} size="lg" />
           )}
         </div>
         <div className="flex flex-col gap-1.5">
@@ -102,7 +103,7 @@ export function PersonalPhotoUploadField({ photoUrl, displayName, uploading, err
               "inline-flex items-center gap-2 rounded-[var(--ds-radius-sm)] border border-[var(--ds-border)] px-3 py-1.5 text-sm font-semibold text-[var(--ds-text)] transition-colors duration-150 hover:bg-[var(--ds-surface-raised)] active:opacity-80 disabled:cursor-not-allowed disabled:opacity-60"
             )}
           >
-            <Upload className="h-3.5 w-3.5" />
+            <AppIcon icon={Upload} size="xs" />
             {uploading ? "Uploading..." : "Upload Photo"}
           </button>
           <p className="ds-caption">PNG, JPG, or WEBP. Max 2MB.</p>
@@ -118,7 +119,7 @@ export function PersonalPhotoUploadField({ photoUrl, displayName, uploading, err
           }}
         />
       </div>
-      {combinedError ? <p className="text-xs font-medium text-rose-400">{combinedError}</p> : null}
+      {combinedError ? <p className="text-xs font-medium text-[var(--ds-danger)]">{combinedError}</p> : null}
     </div>
   );
 }

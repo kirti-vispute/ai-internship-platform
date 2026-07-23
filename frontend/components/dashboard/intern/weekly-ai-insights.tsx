@@ -1,17 +1,17 @@
 "use client";
 
-import { memo, useMemo } from "react";
+import { memo, useMemo, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
-import { Brain, Lightbulb, Sparkles, Target, TrendingUp } from "lucide-react";
+import { Brain, ChevronDown, Lightbulb, Sparkles, Target, TrendingUp } from "lucide-react";
 import { ScrollReveal } from "@/components/animations/ScrollReveal";
 import { AppIcon } from "@/components/icons/app-icon";
-import { EmptyState } from "@/components/dashboard/empty-state";
+import { EmptyState } from "@/components/dashboard/shared/empty-state";
 import { cn } from "@/lib/utils";
 import type { Application, ResumeAnalysis } from "@/lib/intern-portal";
 import type { Weakness } from "@/lib/intern-weakness-analysis";
 
 const cardBase =
-  "rounded-2xl border border-slate-200/70 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-slate-900/60";
+  "rounded-2xl border border-[var(--ds-border)] bg-[var(--ds-card)] shadow-[0_1px_2px_rgba(15,23,42,0.04)]";
 
 type InsightCard = {
   key: string;
@@ -22,10 +22,10 @@ type InsightCard = {
 };
 
 const TONE_STYLES: Record<InsightCard["tone"], string> = {
-  primary: "bg-primary-50 text-primary-600 dark:bg-primary-900/30 dark:text-primary-300",
-  violet: "bg-violet-50 text-violet-600 dark:bg-violet-900/30 dark:text-violet-300",
-  emerald: "bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-300",
-  sky: "bg-sky-50 text-sky-600 dark:bg-sky-900/30 dark:text-sky-300"
+  primary: "bg-[var(--ds-info-bg)] text-[var(--ds-primary)]",
+  violet: "bg-[var(--ds-accent)]/10 text-[var(--ds-accent)]",
+  emerald: "bg-[var(--ds-success-bg)] text-[var(--ds-success)]",
+  sky: "bg-[var(--ds-info-bg)] text-[var(--ds-info)]"
 };
 
 function buildInsightCards(
@@ -90,8 +90,8 @@ function InsightTile({ card, index }: { card: InsightCard; index: number }) {
           <AppIcon icon={card.icon} size="sm" className="text-current" />
         </span>
         <div className="min-w-0">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{card.label}</p>
-          <p className="mt-1 text-sm leading-snug text-slate-800 dark:text-slate-100">{card.text}</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-[var(--ds-muted)]">{card.label}</p>
+          <p className="mt-1 text-sm leading-snug text-[var(--ds-text)]">{card.text}</p>
         </div>
       </div>
     </motion.div>
@@ -107,6 +107,7 @@ function WeeklyAiInsightsInner({
   applications: Application[];
   topWeakness: Weakness | null;
 }) {
+  const [open, setOpen] = useState(false);
   const cards = useMemo(
     () => buildInsightCards(analysis, applications, topWeakness),
     [analysis, applications, topWeakness]
@@ -117,8 +118,8 @@ function WeeklyAiInsightsInner({
       <ScrollReveal variant="fade-up" distance={12}>
         <div className={cn(cardBase, "p-6")}>
           <div className="mb-4 flex items-center gap-2">
-            <AppIcon icon={Sparkles} size="sm" className="text-violet-600 dark:text-violet-400" />
-            <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Weekly AI Insights</h3>
+            <AppIcon icon={Sparkles} size="sm" className="text-[var(--ds-primary)]" />
+            <h3 className="text-sm font-semibold text-[var(--ds-text)]">Weekly AI Insights</h3>
           </div>
           <EmptyState title="No insights yet" hint="Upload a resume and apply to internships to unlock weekly AI insights." icon={Sparkles} />
         </div>
@@ -126,18 +127,43 @@ function WeeklyAiInsightsInner({
     );
   }
 
+  const [lead, ...rest] = cards;
+
   return (
     <ScrollReveal variant="fade-up" distance={12}>
       <div className={cn(cardBase, "p-6")}>
         <div className="mb-4 flex items-center gap-2">
-          <AppIcon icon={Sparkles} size="sm" className="text-violet-600 dark:text-violet-400" />
-          <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Weekly AI Insights</h3>
+          <AppIcon icon={Sparkles} size="sm" className="text-[var(--ds-accent)]" />
+          <h3 className="text-sm font-semibold text-[var(--ds-text)]">Weekly AI Insights</h3>
         </div>
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          {cards.map((card, index) => (
-            <InsightTile key={card.key} card={card} index={index} />
-          ))}
-        </div>
+
+        <InsightTile card={lead} index={0} />
+
+        {rest.length > 0 ? (
+          <>
+            <button
+              type="button"
+              onClick={() => setOpen((prev) => !prev)}
+              aria-expanded={open}
+              className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--ds-primary)] transition-opacity hover:opacity-80"
+            >
+              {open ? "Show less" : `See Full Analysis (${rest.length})`}
+              <AppIcon
+                icon={ChevronDown}
+                size="xs"
+                className={cn("text-current transition-transform", open && "rotate-180")}
+              />
+            </button>
+
+            {open ? (
+              <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                {rest.map((card, index) => (
+                  <InsightTile key={card.key} card={card} index={index} />
+                ))}
+              </div>
+            ) : null}
+          </>
+        ) : null}
       </div>
     </ScrollReveal>
   );

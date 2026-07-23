@@ -50,11 +50,13 @@ function InternshipPerformancePanelInner({
       {internships.length === 0 ? (
         <CompanyDashboardEmptyState
           title="Post an internship to see role performance here."
+          icon={LineChart}
         />
       ) : !hasData ? (
         <CompanyDashboardEmptyState
           title="No applicants yet for your posted roles."
           description="Performance data appears once candidates start applying."
+          icon={LineChart}
         />
       ) : (
         <CompanyDashboardPanelCard>

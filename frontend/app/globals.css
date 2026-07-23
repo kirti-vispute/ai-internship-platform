@@ -29,8 +29,8 @@ body {
   margin: 0;
   padding: 0;
   min-height: 100%;
-  color: var(--text);
-  background: #090a0f;
+  color: var(--ds-text, var(--text));
+  background: var(--ds-bg, #090a0f);
   transition: background 300ms ease, color 300ms ease;
 }
 
@@ -51,23 +51,24 @@ body:has(.internai-home) {
 
 /* InternAI homepage — embedded interface wall (background unchanged) */
 .internai-home {
-  --internai-bg: #05060a;
-  --internai-surface: #0b1220;
-  --internai-elevated: #111827;
-  --internai-wall: rgba(8, 12, 22, 0.9);
-  --internai-wall-edge: rgba(255, 255, 255, 0.08);
-  --internai-blue: #3b82f6;
-  --internai-blue-deep: #2563eb;
-  --internai-cyan: #22d3ee;
-  --internai-orange: #f97316;
-  --internai-pink: #fb7185;
-  --internai-text: #e5e7eb;
-  --internai-muted: #b0b8c5;
+  --internai-bg: var(--ds-bg, #05060a);
+  --internai-surface: var(--ds-surface, #0b1220);
+  --internai-elevated: var(--ds-surface-raised, #111827);
+  --internai-wall: var(--ds-glass, rgba(8, 12, 22, 0.9));
+  --internai-wall-edge: var(--ds-border, rgba(255, 255, 255, 0.08));
+  --internai-blue: var(--ds-primary, #3b82f6);
+  --internai-blue-deep: var(--ds-primary-hover, #2563eb);
+  --internai-cyan: var(--ds-accent, #22d3ee);
+  --internai-orange: var(--ds-accent, #f97316);
+  --internai-pink: var(--ds-secondary, #fb7185);
+  --internai-text: var(--ds-text, #e5e7eb);
+  --internai-muted: var(--ds-muted, #b0b8c5);
   --internai-rhythm: 1.25rem;
   color: var(--internai-text);
   background-color: transparent;
   font-feature-settings: "ss01", "cv11";
   letter-spacing: -0.01em;
+  transition: color 300ms ease;
 }
 
 .internai-home-content {
@@ -78,15 +79,15 @@ body:has(.internai-home) {
 
 .internai-home-content > header {
   z-index: 50;
-  border-color: rgba(255, 255, 255, 0.08) !important;
-  background: rgba(8, 12, 22, 0.88) !important;
+  border-color: var(--internai-wall-edge) !important;
+  background: var(--internai-wall) !important;
   box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.06);
 }
 
 .internai-home-content > footer {
   z-index: 50;
-  border-color: rgba(255, 255, 255, 0.08) !important;
-  background: rgba(8, 12, 22, 0.92) !important;
+  border-color: var(--internai-wall-edge) !important;
+  background: var(--internai-wall) !important;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
@@ -493,7 +494,8 @@ body:has(.internai-home) {
 }
 
 .internai-btn-primary {
-  @apply inline-flex items-center justify-center rounded-lg bg-internai-blue px-5 py-2.5 text-sm font-semibold text-[#05060a] transition-all duration-300;
+  @apply inline-flex items-center justify-center rounded-lg bg-internai-blue px-5 py-2.5 text-sm font-semibold transition-all duration-300;
+  color: var(--ds-on-primary, #05060a);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
@@ -730,7 +732,8 @@ a {
 }
 
 .sidebar-surface {
-  @apply border-r border-slate-800 bg-gradient-to-b from-slate-950 to-slate-900;
+  border-right: 1px solid var(--ds-border, rgb(30 41 59));
+  background: var(--ds-sidebar, #020617);
 }
 
 .sidebar-shell {
@@ -742,7 +745,7 @@ a {
   overscroll-behavior: contain;
   scrollbar-gutter: stable;
   scrollbar-width: thin;
-  scrollbar-color: rgb(51 65 85 / 0.85) transparent;
+  scrollbar-color: var(--ds-scrollbar, rgb(51 65 85 / 0.85)) transparent;
 }
 
 .sidebar-nav-scroll::-webkit-scrollbar {
@@ -755,7 +758,7 @@ a {
 
 .sidebar-nav-scroll::-webkit-scrollbar-thumb {
   border-radius: 9999px;
-  background: rgb(51 65 85 / 0.85);
+  background: var(--ds-scrollbar, rgb(51 65 85 / 0.85));
 }
 
 .dashboard-stack {
@@ -849,4 +852,19 @@ a {
 
 .animate-signal-slide {
   animation: signal-slide 5.8s ease-in-out infinite;
+}
+
+@keyframes toast-progress {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+
+.toast-progress {
+  animation-name: toast-progress;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
 }

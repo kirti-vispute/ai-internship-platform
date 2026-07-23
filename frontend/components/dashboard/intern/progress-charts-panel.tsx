@@ -4,14 +4,13 @@ import { memo, useMemo } from "react";
 import { CalendarCheck2, Milestone } from "lucide-react";
 import { ScrollReveal } from "@/components/animations/ScrollReveal";
 import { AppIcon } from "@/components/icons/app-icon";
-import { EmptyState } from "@/components/dashboard/empty-state";
+import { EmptyState } from "@/components/dashboard/shared/empty-state";
 import { HorizontalBarChart, type BarDatum } from "@/components/dashboard/charts/analytics-charts";
 import { cn } from "@/lib/utils";
 import type { Application } from "@/lib/intern-portal";
 import type { ScheduledInterviewRecord } from "@/lib/interview-workflow";
 
-const cardBase =
-  "rounded-2xl border border-slate-200/70 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-slate-900/60";
+const cardBase = "rounded-2xl border border-[var(--ds-border)] bg-[var(--ds-surface)] shadow-[0_1px_2px_var(--ds-shadow)]";
 
 const INTERVIEW_STATUS_LABELS: Record<string, string> = {
   scheduled: "Scheduled",
@@ -81,8 +80,8 @@ function ProgressChartsPanelInner({
       <ScrollReveal variant="fade-up" distance={12}>
         <div className={cn(cardBase, "p-6")}>
           <div className="mb-4 flex items-center gap-2">
-            <AppIcon icon={CalendarCheck2} size="sm" className="text-primary-600 dark:text-primary-400" />
-            <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Interview Progress</h3>
+            <AppIcon icon={CalendarCheck2} size="sm" className="text-[var(--ds-accent)]" />
+            <h3 className="text-sm font-semibold text-[var(--ds-text)]">Interview Progress</h3>
           </div>
           {interviewData.length === 0 ? (
             <EmptyState title="No interviews yet" hint="Scheduled interview stages will appear here." presetKey="interviews" />
@@ -95,8 +94,8 @@ function ProgressChartsPanelInner({
       <ScrollReveal variant="fade-up" distance={12} delayMs={60}>
         <div className={cn(cardBase, "p-6")}>
           <div className="mb-4 flex items-center gap-2">
-            <AppIcon icon={Milestone} size="sm" className="text-emerald-600 dark:text-emerald-400" />
-            <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Placement Progress</h3>
+            <AppIcon icon={Milestone} size="sm" className="text-[var(--ds-success)]" />
+            <h3 className="text-sm font-semibold text-[var(--ds-text)]">Placement Progress</h3>
           </div>
           {placementData.length === 0 ? (
             <EmptyState title="No pipeline activity yet" hint="Your application stage progress will appear here." presetKey="applications" />

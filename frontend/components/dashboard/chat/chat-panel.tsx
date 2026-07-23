@@ -9,14 +9,15 @@ import { MessageComposer } from "@/components/dashboard/chat/message-composer";
 import {
   conversationTitle,
   formatChatTime,
+  formatDateSeparator,
   getInterviewEventStatus,
   groupMessages,
   parseChatMessageBody,
   type ChatRole,
   type InterviewEventStatus
 } from "@/components/dashboard/chat/chat-utils";
-import { MessageStatusIndicator } from "@/components/dashboard/message-status-indicator";
-import { EmptyState } from "@/components/dashboard/empty-state";
+import { MessageStatusIndicator } from "@/components/dashboard/chat/message-status-indicator";
+import { EmptyState } from "@/components/dashboard/shared/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AppIcon } from "@/components/icons/app-icon";
 import { Button } from "@/components/ui/button";
@@ -96,10 +97,10 @@ function ChatHeader({
    status; entire card stays dark-surfaced and readable on the dark theme. */
 
 const INTERVIEW_STATUS_STYLES: Record<InterviewEventStatus, { label: string; border: string }> = {
-  scheduled: { label: "Interview Scheduled", border: "border-l-blue-500" },
-  rescheduled: { label: "Interview Rescheduled", border: "border-l-amber-500" },
-  cancelled: { label: "Interview Cancelled", border: "border-l-red-500" },
-  completed: { label: "Interview Completed", border: "border-l-green-500" }
+  scheduled: { label: "Interview Scheduled", border: "border-l-[var(--ds-info)]" },
+  rescheduled: { label: "Interview Rescheduled", border: "border-l-[var(--ds-warning)]" },
+  cancelled: { label: "Interview Cancelled", border: "border-l-[var(--ds-danger)]" },
+  completed: { label: "Interview Completed", border: "border-l-[var(--ds-success)]" }
 };
 
 function InterviewEventCard({ message }: { message: ChatMessage }) {
@@ -112,12 +113,12 @@ function InterviewEventCard({ message }: { message: ChatMessage }) {
   return (
     <div
       className={cn(
-        "flex max-w-md items-start gap-3 rounded-2xl border border-white/[0.08] border-l-[3px] bg-[var(--ds-surface-raised)] px-3.5 py-3 shadow-sm transition-[box-shadow,transform] duration-150 hover:-translate-y-px hover:shadow-md",
+        "flex max-w-md items-start gap-3 rounded-2xl border border-[var(--ds-border)] border-l-[3px] bg-[var(--ds-surface-raised)] px-3.5 py-3 shadow-sm transition-[box-shadow,transform] duration-150 hover:-translate-y-px hover:shadow-md",
         border
       )}
     >
-      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-500/15">
-        <AppIcon icon={CalendarClock} size="xs" className="text-blue-400" />
+      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--ds-info-bg)]">
+        <AppIcon icon={CalendarClock} size="xs" className="text-[var(--ds-info)]" />
       </span>
 
       <div className="min-w-0 flex-1">
@@ -131,7 +132,7 @@ function InterviewEventCard({ message }: { message: ChatMessage }) {
           {cta?.type === "interview-cta" ? (
             <Link
               href={cta.href}
-              className="inline-flex w-fit shrink-0 items-center gap-1.5 rounded-lg border border-[var(--ds-border-strong)] px-2.5 py-1 text-xs font-semibold text-[var(--ds-text)] transition-colors hover:border-[var(--ds-accent)] hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50"
+              className="inline-flex w-fit shrink-0 items-center gap-1.5 rounded-lg border border-[var(--ds-border-strong)] px-2.5 py-1 text-xs font-semibold text-[var(--ds-text)] transition-colors hover:border-[var(--ds-accent)] hover:bg-[var(--ds-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ds-focus-ring)]"
             >
               <AppIcon icon={ExternalLink} size="xs" className="text-current" />
               View details
@@ -140,6 +141,16 @@ function InterviewEventCard({ message }: { message: ChatMessage }) {
           <span className="text-[11px] text-[var(--ds-muted)]">{formatChatTime(message.createdAt)}</span>
         </div>
       </div>
+    </div>
+  );
+}
+
+function DateSeparator({ label }: { label: string }) {
+  return (
+    <div className="my-1 flex items-center justify-center py-2" aria-hidden>
+      <span className="rounded-full bg-[var(--ds-surface-raised)] px-3 py-1 text-[11px] font-medium text-[var(--ds-muted)]">
+        {label}
+      </span>
     </div>
   );
 }
@@ -198,6 +209,14 @@ function MessageList({
   }, [conversationId, messages.length, messages]);
 
   const groups = groupMessages(messages, role);
+  let lastDateKey = "";
+  const groupsWithDates = groups.map((group) => {
+    const first = group.messages[0];
+    const dateKey = first?.createdAt ? new Date(first.createdAt).toDateString() : "";
+    const showSeparator = Boolean(dateKey) && dateKey !== lastDateKey;
+    lastDateKey = dateKey;
+    return { group, showSeparator, dateLabel: formatDateSeparator(first?.createdAt) };
+  });
 
   return (
     <div
@@ -224,57 +243,58 @@ function MessageList({
         <ListSkeleton />
       ) : messages.length === 0 ? (
         <div className="flex flex-1 items-center justify-center py-8">
-          <p className="text-center text-sm text-[var(--ds-muted)]">No messages yet. Say hello to start.</p>
+          <EmptyState
+            presetKey="chat"
+            title="No Messages Yet"
+            description="Say hello to start the conversation."
+            size="sm"
+            className="border-none bg-transparent shadow-none"
+          />
         </div>
       ) : (
         <div className="mt-auto w-full space-y-3 pb-1">
           <AnimatePresence initial={false}>
-            {groups.map((group) =>
-              group.isInterviewEvent ? (
-                <motion.div
-                  key={group.id}
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.2 }}
-                >
+            {groupsWithDates.map(({ group, showSeparator, dateLabel }) => (
+              <motion.div
+                key={group.id}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                {showSeparator && dateLabel ? <DateSeparator label={dateLabel} /> : null}
+                {group.isInterviewEvent ? (
                   <InterviewEventCard message={group.messages[0]} />
-                </motion.div>
-              ) : (
-                <motion.div
-                  key={group.id}
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className={cn("flex", group.mine ? "justify-end" : "justify-start")}
-                >
-                  <div className={cn("flex w-fit max-w-[88%] flex-col gap-1 sm:max-w-[65%]", group.mine ? "items-end" : "items-start")}>
-                    {group.messages.map((message, index) => (
-                      <div
-                        key={message._id}
-                        className={cn(
-                          "w-fit rounded-2xl px-3.5 py-2 text-sm shadow-sm",
-                          group.mine
-                            ? "chat-bubble-mine bg-primary-600 text-white"
-                            : "chat-bubble-theirs border border-[var(--ds-border)] bg-[var(--ds-surface-raised)] text-[var(--ds-text)]",
-                          index === 0 ? "" : group.mine ? "rounded-tr-md" : "rounded-tl-md"
-                        )}
-                      >
-                        <ChatMessageBody body={message.body} mine={group.mine} />
+                ) : (
+                  <div className={cn("flex", group.mine ? "justify-end" : "justify-start")}>
+                    <div className={cn("flex w-fit max-w-[88%] flex-col gap-1 sm:max-w-[65%]", group.mine ? "items-end" : "items-start")}>
+                      {group.messages.map((message, index) => (
+                        <div
+                          key={message._id}
+                          className={cn(
+                            "w-fit rounded-2xl px-3.5 py-2 text-sm shadow-sm",
+                            group.mine
+                              ? "chat-bubble-mine bg-[var(--ds-primary)] text-[var(--ds-on-primary)]"
+                              : "chat-bubble-theirs border border-[var(--ds-border)] bg-[var(--ds-surface-raised)] text-[var(--ds-text)]",
+                            index === 0 ? "" : group.mine ? "rounded-tr-md" : "rounded-tl-md"
+                          )}
+                        >
+                          <ChatMessageBody body={message.body} mine={group.mine} />
+                        </div>
+                      ))}
+                      <div className="flex items-center gap-1 px-1 text-[10px] text-[var(--ds-muted)]">
+                        <span>{formatChatTime(group.messages[group.messages.length - 1].createdAt)}</span>
+                        {group.mine ? (
+                          <MessageStatusIndicator
+                            status={group.messages[group.messages.length - 1].status || "sent"}
+                            className="text-[var(--ds-muted)]"
+                          />
+                        ) : null}
                       </div>
-                    ))}
-                    <div className="flex items-center gap-1 px-1 text-[10px] text-[var(--ds-muted)]">
-                      <span>{formatChatTime(group.messages[group.messages.length - 1].createdAt)}</span>
-                      {group.mine ? (
-                        <MessageStatusIndicator
-                          status={group.messages[group.messages.length - 1].status || "sent"}
-                          className="text-[var(--ds-muted)]"
-                        />
-                      ) : null}
                     </div>
                   </div>
-                </motion.div>
-              )
-            )}
+                )}
+              </motion.div>
+            ))}
           </AnimatePresence>
         </div>
       )}

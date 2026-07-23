@@ -8,12 +8,12 @@ const SIZE_CLASSES = {
 } as const;
 
 const GRADIENTS = [
-  "from-blue-500 to-cyan-400",
-  "from-violet-500 to-fuchsia-400",
-  "from-emerald-500 to-teal-400",
-  "from-amber-500 to-orange-400",
-  "from-rose-500 to-pink-400",
-  "from-indigo-500 to-blue-400"
+  "from-[var(--ds-chart-1)] to-[var(--ds-chart-6)]",
+  "from-[var(--ds-accent)] to-[var(--ds-secondary)]",
+  "from-[var(--ds-chart-4)] to-[var(--ds-chart-6)]",
+  "from-[var(--ds-chart-5)] to-[var(--ds-chart-2)]",
+  "from-[var(--ds-danger)] to-[var(--ds-accent)]",
+  "from-[var(--ds-chart-3)] to-[var(--ds-chart-1)]"
 ];
 
 function initialsOf(name?: string) {

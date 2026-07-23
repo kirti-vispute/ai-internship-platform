@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { safeUrl } from "@/lib/safe-url";
 import Image from "next/image";
 import { Award, Building2, Calendar, Briefcase, MapPin, Percent, ShieldCheck, ShieldAlert, TrendingUp, Users } from "lucide-react";
 import { fetchPublicCompanyProfile, buildAssetUrl, type PublicCompanyProfile } from "@/lib/intern-portal";
@@ -120,11 +121,11 @@ export function CompanyPublicProfilePage({ companyId }: Props) {
         </div>
         {profile.website ? (
           <a
-            href={profile.website}
+            href={safeUrl(profile.website)}
             target="_blank"
             rel="noreferrer noopener"
             data-cursor="button"
-            className="tilt-3d inline-flex h-9 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary-500 to-blue-500 px-4 text-sm font-semibold text-white shadow-glow transition duration-200 hover:-translate-y-0.5 hover:from-primary-600 hover:to-blue-600 dark:from-primary-600 dark:to-cyan-500"
+            className="tilt-3d inline-flex h-9 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[var(--ds-gradient-from)] to-[var(--ds-gradient-to)] px-4 text-sm font-semibold text-[var(--ds-on-primary)] shadow-glow transition duration-200 hover:-translate-y-0.5"
           >
             Visit official website
           </a>

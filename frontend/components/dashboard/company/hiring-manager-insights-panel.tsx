@@ -16,18 +16,18 @@ export function HiringManagerInsightsPanel({ evaluation, className }: HiringMana
     <div className={className}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--ds-muted)]">
             Hiring Intelligence Breakdown
           </p>
-          <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+          <p className="mt-0.5 text-xs text-[var(--ds-muted)]">
             {evaluation.roleTemplateLabel} weight model · {evaluation.confidenceTier}
           </p>
         </div>
         <div className="shrink-0 text-right">
-          <p className="text-2xl font-bold leading-none text-primary-600 dark:text-primary-400">
+          <p className="text-2xl font-bold leading-none text-[var(--ds-primary)]">
             {evaluation.overallScore}%
           </p>
-          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+          <p className="mt-1 text-xs text-[var(--ds-muted)]">
             Confidence {evaluation.confidenceScore}%
             {showRecommendationLevel ? ` · ${evaluation.recommendationLevel}` : ""}
           </p>
@@ -38,22 +38,22 @@ export function HiringManagerInsightsPanel({ evaluation, className }: HiringMana
         {evaluation.scoreBreakdown.map((item) => (
           <div
             key={item.factor}
-            className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 dark:border-slate-700 dark:bg-slate-800/60"
+            className="rounded-lg border border-[var(--ds-border)] bg-[var(--ds-surface)] px-3 py-2.5"
           >
-            <p className="line-clamp-1 text-[11px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+            <p className="line-clamp-1 text-[11px] font-medium uppercase tracking-wide text-[var(--ds-muted)]">
               {item.label}
             </p>
-            <p className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">{item.rawScore}%</p>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400">Weight {item.weight}%</p>
+            <p className="mt-1 text-lg font-semibold text-[var(--ds-text)]">{item.rawScore}%</p>
+            <p className="text-[11px] text-[var(--ds-muted)]">Weight {item.weight}%</p>
           </div>
         ))}
       </div>
 
-      <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50/70 px-3.5 py-3 dark:border-emerald-900/40 dark:bg-emerald-950/20">
-        <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
+      <div className="mt-4 rounded-lg border border-[var(--ds-success)]/30 bg-[var(--ds-success-bg)] px-3.5 py-3">
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--ds-success)]">
           Strengths
         </p>
-        <ul className="mt-1.5 list-disc space-y-1 pl-4 text-sm text-slate-700 dark:text-slate-300">
+        <ul className="mt-1.5 list-disc space-y-1 pl-4 text-sm text-[var(--ds-text-secondary)]">
           {evaluation.strengths.map((item) => (
             <li key={item} className="line-clamp-1">
               {item}
@@ -63,14 +63,14 @@ export function HiringManagerInsightsPanel({ evaluation, className }: HiringMana
       </div>
 
       {reasoningPoints.length > 0 ? (
-        <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50/70 px-3.5 py-3 dark:border-slate-700 dark:bg-slate-800/40">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+        <div className="mt-3 rounded-lg border border-[var(--ds-border)] bg-[var(--ds-surface)] px-3.5 py-3">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--ds-muted)]">
             Top Contributors
           </p>
-          <p className="mt-1 text-sm font-medium text-slate-700 dark:text-slate-200">
+          <p className="mt-1 text-sm font-medium text-[var(--ds-text)]">
             {evaluation.topContributors.join(" · ") || "Insufficient evidence"}
           </p>
-          <ul className="mt-2 list-disc space-y-1 pl-4 text-sm text-slate-600 dark:text-slate-300">
+          <ul className="mt-2 list-disc space-y-1 pl-4 text-sm text-[var(--ds-text-secondary)]">
             {reasoningPoints.map((sentence) => (
               <li key={sentence} className="line-clamp-2">
                 {sentence}

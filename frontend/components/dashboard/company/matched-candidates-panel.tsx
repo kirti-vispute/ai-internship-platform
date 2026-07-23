@@ -2,21 +2,22 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Brain, ChevronDown, ChevronUp, Sparkles } from "lucide-react";
+import { Brain, Briefcase, ChevronDown, ChevronUp, Sparkles } from "lucide-react";
 import type { CompanyApplication, CompanyInternship, CompanyMatchedCandidate } from "@/lib/company-portal";
 import { hiringAIEngine, type RankedCandidate } from "@/lib/ai-hiring";
 import {
   CompanyDashboardEmptyState,
   CompanyDashboardItemCard,
-  CompanyDashboardSection,
-  companyDashboardStyles
+  CompanyDashboardSection
 } from "./company-dashboard-layout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { cn, isRejectionLanguage } from "@/lib/utils";
+import { AppIcon } from "@/components/icons/app-icon";
+import { isRejectionLanguage } from "@/lib/utils";
 import { AiMatchInsightModal } from "./ai-match-insight-modal";
 import { HrCandidateMatchCard } from "./hr-candidate-match-card";
 import { ResumePreviewModal } from "./resume-preview-modal";
+import { CandidateCompareToggle } from "./candidate-compare-toggle";
 
 const DEFAULT_TOP_LIMIT = 10;
 
@@ -76,12 +77,12 @@ export function MatchedCandidatesPanel({
         <Button type="button" size="sm" variant="ghost" onClick={() => setExpanded((value) => !value)}>
           {expanded ? (
             <>
-              <ChevronUp className="h-4 w-4" />
+              <AppIcon icon={ChevronUp} size="sm" />
               Show Top {defaultLimit}
             </>
           ) : (
             <>
-              <ChevronDown className="h-4 w-4" />
+              <AppIcon icon={ChevronDown} size="sm" />
               View All ({rankedCandidates.length})
             </>
           )}
@@ -105,7 +106,7 @@ export function MatchedCandidatesPanel({
         actions={sectionActions}
       >
         {visibleCandidates.length === 0 ? (
-          <CompanyDashboardEmptyState title="No matched candidates available yet." />
+          <CompanyDashboardEmptyState title="No matched candidates available yet." icon={Sparkles} />
         ) : isHrScoped ? (
           <div className="flex flex-col gap-3">
             {visibleCandidates.map((ranked) => {
@@ -139,7 +140,7 @@ export function MatchedCandidatesPanel({
             })}
           </div>
         ) : (
-          <div className={companyDashboardStyles.cardGridThree}>
+          <div className="flex flex-col gap-3">
             {visibleCandidates.map((ranked) => {
               const recommended = recommendedByRole.get(ranked.internshipId);
               const isRecommended = recommended?.candidateId === cardKey(ranked);
@@ -213,61 +214,123 @@ function CandidateCard({
   onScheduleInterview
 }: CandidateCardProps) {
   const { match, applicationId, application } = ranked;
-  const skills = (match.internProfile?.skills || application?.intern?.skills || []).slice(0, 4);
+  const skills = (match.internProfile?.skills || application?.intern?.skills || []).slice(0, 5);
   const candidateName = match.internProfile?.fullName || "Candidate";
+  const experience = (application?.intern?.experience || [])[0];
   const explanation = useMemo(() => hiringAIEngine.explainMatch(ranked, internships), [ranked, internships]);
 
   return (
-    <CompanyDashboardItemCard highlighted={isRecommended} className="group overflow-hidden p-0">
+    <CompanyDashboardItemCard
+      highlighted={isRecommended}
+      className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:gap-5"
+    >
+      {/* Identity + details — click opens the applicant profile */}
       <button
         type="button"
-        className="w-full px-5 pb-3 pt-5 text-left transition group-hover:bg-white/[0.03]"
+        className="flex min-w-0 flex-1 items-start gap-3 rounded-lg text-left transition disabled:cursor-default"
         onClick={() => {
           if (applicationId) onOpenProfile(applicationId);
         }}
         disabled={!applicationId}
       >
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge tone="neutral" className="!px-1.5 !py-0.5 !text-[10px]">
-                #{ranked.rankingPosition}
+        <span className="mt-0.5 flex h-7 min-w-[1.75rem] items-center justify-center rounded-full bg-[var(--ds-surface-raised)] px-2 text-xs font-bold tabular-nums text-[var(--ds-muted)]">
+          #{ranked.rankingPosition}
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="ds-h3 truncate">{candidateName}</h3>
+            {isRecommended ? (
+              <Badge tone="success" className="!px-1.5 !py-0.5 !text-[10px]">
+                Recommended Hire
               </Badge>
-              {isRecommended ? (
-                <Badge tone="success" className="!px-1.5 !py-0.5 !text-[10px]">
-                  Recommended Hire
-                </Badge>
-              ) : null}
-              <h3 className="ds-h3 truncate">{candidateName}</h3>
-            </div>
-            <p className="ds-caption mt-0.5 truncate">{match.internshipRole}</p>
+            ) : null}
           </div>
-          <div className="text-right">
-            <Badge tone="accent">{ranked.evaluation.overallScore}%</Badge>
-            <p className="mt-1 text-[10px] text-[var(--ds-muted)]">
-              Conf. {ranked.evaluation.confidenceScore}%
-              {!isRejectionLanguage(ranked.evaluation.recommendationLevel) ? ` · ${ranked.evaluation.recommendationLevel}` : ""}
+          <p className="ds-caption mt-0.5 truncate">{match.internshipRole}</p>
+          {experience ? (
+            <p className="mt-1.5 flex items-center gap-1.5 truncate text-xs text-[var(--ds-muted)]">
+              <AppIcon icon={Briefcase} size="xs" className="text-current" />
+              {experience}
             </p>
-          </div>
+          ) : null}
+          {skills.length > 0 ? (
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {skills.map((skill) => (
+                <span
+                  key={`${match.internshipId}-${skill}`}
+                  className="rounded-md bg-[var(--ds-surface-hover)] px-2 py-0.5 text-xs font-medium text-[var(--ds-muted)]"
+                >
+                  {skill}
+                </span>
+              ))}
+            </div>
+          ) : null}
         </div>
-
-        {ranked.strengths.length > 0 ? (
-          <p className="mt-2 line-clamp-2 text-xs text-emerald-300">{ranked.strengths[0]}</p>
-        ) : null}
-
-        {skills.length > 0 ? (
-          <div className="mt-3 flex flex-wrap gap-1.5">
-            {skills.map((skill) => (
-              <span
-                key={`${match.internshipId}-${skill}`}
-                className="rounded-md bg-white/5 px-2 py-0.5 text-xs font-medium text-[var(--ds-muted)]"
-              >
-                {skill}
-              </span>
-            ))}
-          </div>
-        ) : null}
       </button>
+
+      {/* Match score + quick actions */}
+      <div className="flex shrink-0 flex-col gap-3 sm:items-end">
+        <div className="flex items-center gap-2 sm:flex-col sm:items-end sm:gap-1">
+          <Badge tone="accent" className="!text-sm">
+            {ranked.evaluation.overallScore}% Match
+          </Badge>
+          <span className="text-[10px] text-[var(--ds-muted)]">
+            Conf. {ranked.evaluation.confidenceScore}%
+            {!isRejectionLanguage(ranked.evaluation.recommendationLevel) ? ` · ${ranked.evaluation.recommendationLevel}` : ""}
+          </span>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+          <CandidateCompareToggle applicationId={applicationId} />
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            disabled={!applicationId || saving}
+            onClick={(event) => {
+              event.stopPropagation();
+              onToggleInsight();
+            }}
+          >
+            <AppIcon icon={Brain} size="xs" />
+            AI Insight
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            disabled={!applicationId || saving}
+            onClick={(event) => {
+              event.stopPropagation();
+              if (applicationId) onMessage(match, applicationId);
+            }}
+          >
+            Message
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="secondary"
+            disabled={!applicationId || saving}
+            onClick={(event) => {
+              event.stopPropagation();
+              if (applicationId) onViewResume(applicationId);
+            }}
+          >
+            View Resume
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            disabled={!applicationId || saving}
+            className="bg-gradient-to-r from-[var(--ds-gradient-from)] to-[var(--ds-gradient-to)] text-[var(--ds-on-primary)]"
+            onClick={(event) => {
+              event.stopPropagation();
+              if (applicationId) onScheduleInterview(applicationId, candidateName);
+            }}
+          >
+            Schedule Interview
+          </Button>
+        </div>
+      </div>
 
       <AiMatchInsightModal
         open={insightOpen}
@@ -277,70 +340,6 @@ function CandidateCard({
         evaluation={ranked.evaluation}
         onClose={onToggleInsight}
       />
-
-      <div className={cn(companyDashboardStyles.actionsFooter, "px-5 pb-3")}>
-        <Button
-          type="button"
-          size="sm"
-          variant="ghost"
-          disabled={!applicationId || saving}
-          onClick={(event) => {
-            event.stopPropagation();
-            onToggleInsight();
-          }}
-        >
-          <Brain className="h-3.5 w-3.5" />
-          AI Insight
-        </Button>
-        <Button
-          type="button"
-          size="sm"
-          variant="ghost"
-          disabled={!applicationId || saving}
-          onClick={(event) => {
-            event.stopPropagation();
-            if (applicationId) onMessage(match, applicationId);
-          }}
-        >
-          Message
-        </Button>
-        <Button
-          type="button"
-          size="sm"
-          variant="secondary"
-          disabled={!applicationId || saving}
-          onClick={(event) => {
-            event.stopPropagation();
-            if (applicationId) onShortlist(applicationId);
-          }}
-        >
-          Shortlist
-        </Button>
-        <Button
-          type="button"
-          size="sm"
-          variant="secondary"
-          disabled={!applicationId || saving}
-          onClick={(event) => {
-            event.stopPropagation();
-            if (applicationId) onViewResume(applicationId);
-          }}
-        >
-          View Resume
-        </Button>
-        <Button
-          type="button"
-          size="sm"
-          disabled={!applicationId || saving}
-          className="bg-gradient-to-r from-primary-600 to-violet-600 text-white hover:from-primary-500 hover:to-violet-500"
-          onClick={(event) => {
-            event.stopPropagation();
-            if (applicationId) onScheduleInterview(applicationId, candidateName);
-          }}
-        >
-          Schedule Interview
-        </Button>
-      </div>
     </CompanyDashboardItemCard>
   );
 }

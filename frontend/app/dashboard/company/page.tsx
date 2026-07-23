@@ -1,4 +1,4 @@
-﻿import { CompanyDashboardPage } from "@/components/dashboard/company-dashboard-page";
+﻿import { CompanyDashboardPage } from "@/components/dashboard/company/company-dashboard-page";
 
 export default function CompanyDashboardOverviewRoute() {
   return <CompanyDashboardPage view="overview" />;

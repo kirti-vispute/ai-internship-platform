@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { useEffect, useLayoutEffect, useState } from "react";
-import { DashboardPageHeader } from "@/components/dashboard/dashboard-page-header";
-import { BrandedEmptyState } from "@/components/dashboard/empty-state";
+import { DashboardPageHeader } from "@/components/dashboard/shared/dashboard-page-header";
+import { BrandedEmptyState } from "@/components/dashboard/shared/empty-state";
+import { SkeletonList } from "@/components/ui/skeleton";
 import { BRANDED_EMPTY_STATES } from "@/lib/brand";
 import { Button } from "@/components/ui/button";
 import {
@@ -105,9 +106,7 @@ export default function CompanyNotificationsPage() {
         }
       />
 
-      {shouldBlockPageContent(notifications) && loading && (
-        <div className="ds-card border-dashed px-4 py-3 text-sm text-[var(--ds-muted)]">Loading notifications...</div>
-      )}
+      {shouldBlockPageContent(notifications) && loading && <SkeletonList rows={4} />}
       {error && <div className="ds-alert ds-alert--error">{error}</div>}
 
       {!loading && !error && notifications.length === 0 && (
@@ -150,9 +149,9 @@ export default function CompanyNotificationsPage() {
         </ul>
       )}
 
-      <p className="text-xs text-slate-500 dark:text-slate-400">
+      <p className="text-xs text-[var(--ds-muted)]">
         View conversations in{" "}
-        <Link href="/dashboard/company/chat" className="font-semibold text-primary-600 hover:underline dark:text-primary-300">
+        <Link href="/dashboard/company/chat" className="font-semibold text-[var(--ds-primary)] hover:underline">
           Messages
         </Link>
         .

@@ -307,6 +307,33 @@ exports.getMe = asyncHandler(async (req, res) => {
   sendSuccess(res, { data: { user: req.user } });
 });
 
+const VALID_THEME_IDS = ["ocean", "olive", "crimson", "golden", "sunset", "royal", "rose", "modern", "midnight", "earth"];
+const VALID_APPEARANCE_MODES = ["light", "dark"];
+
+exports.updateThemePreference = asyncHandler(async (req, res) => {
+  const { theme, appearance } = req.body || {};
+
+  if (theme !== undefined && theme !== null && !VALID_THEME_IDS.includes(theme)) {
+    throw new AppError("Invalid theme id", 400);
+  }
+  if (appearance !== undefined && appearance !== null && !VALID_APPEARANCE_MODES.includes(appearance)) {
+    throw new AppError("Invalid appearance mode", 400);
+  }
+
+  const update = {};
+  if (theme !== undefined) update.themePreference = theme;
+  if (appearance !== undefined) update.appearanceMode = appearance;
+
+  const user = await User.findByIdAndUpdate(req.user._id, update, { new: true }).select(
+    "themePreference appearanceMode"
+  );
+
+  sendSuccess(res, {
+    message: "Theme preference updated",
+    data: { themePreference: user.themePreference, appearanceMode: user.appearanceMode }
+  });
+});
+
 exports.refreshSession = asyncHandler(async (req, res) => {
   // Body-only, deliberately -- see the comment in auth.middleware.js. Accepting
   // the refreshToken cookie here would let a forged cross-site request mint a

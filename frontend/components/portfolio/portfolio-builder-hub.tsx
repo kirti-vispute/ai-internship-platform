@@ -4,8 +4,8 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { Copy, ExternalLink, Loader2, RefreshCw, Sparkles } from "lucide-react";
 import { Portfolio3DViewer } from "@/components/portfolio/portfolio-3d-viewer";
-import { DashboardPageHeader } from "@/components/dashboard/dashboard-page-header";
-import { SectionPanel } from "@/components/dashboard/section-panel";
+import { DashboardPageHeader } from "@/components/dashboard/shared/dashboard-page-header";
+import { SectionPanel } from "@/components/dashboard/shared/section-panel";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 import {
@@ -18,6 +18,7 @@ import {
 } from "@/lib/portfolio-portal";
 import type { InternPortfolioRecord, PortfolioTheme } from "@/lib/portfolio-types";
 import { cn } from "@/lib/utils";
+import { SkeletonText } from "@/components/ui/skeleton";
 
 export function PortfolioBuilderHub() {
   const { pushToast } = useToast();
@@ -66,7 +67,7 @@ export function PortfolioBuilderHub() {
 
       <SectionPanel title="Portfolio controls" subtitle="Generate, publish, and share your portfolio." titleIcon={Sparkles}>
         {loading ? (
-          <p className="text-sm text-slate-500">Loading portfolio settings…</p>
+          <SkeletonText lines={3} />
         ) : (
           <div className="space-y-4">
             <div className="flex flex-wrap gap-2">
@@ -100,7 +101,7 @@ export function PortfolioBuilderHub() {
                 Regenerate
               </Button>
               {publicPath ? (
-                <Link href={publicPath} target="_blank" className="inline-flex">
+                <Link href={publicPath} target="_blank" rel="noopener noreferrer" className="inline-flex">
                   <Button type="button" variant="secondary">
                     <ExternalLink className="mr-2 h-4 w-4" />
                     Open live portfolio
@@ -110,10 +111,10 @@ export function PortfolioBuilderHub() {
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              <label className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+              <label className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--ds-muted)]">
                 Theme
                 <select
-                  className="mt-1 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900"
+                  className="mt-1 block w-full rounded-xl border border-[var(--ds-border)] bg-[var(--ds-card)] px-3 py-2 text-sm"
                   value={portfolio?.theme || "midnight"}
                   disabled={Boolean(busy) || !portfolio}
                   onChange={(event) =>
@@ -131,10 +132,10 @@ export function PortfolioBuilderHub() {
                 </select>
               </label>
 
-              <label className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+              <label className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--ds-muted)]">
                 Visibility
                 <select
-                  className="mt-1 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900"
+                  className="mt-1 block w-full rounded-xl border border-[var(--ds-border)] bg-[var(--ds-card)] px-3 py-2 text-sm"
                   value={portfolio?.status || "draft"}
                   disabled={Boolean(busy) || !portfolio}
                   onChange={(event) =>
@@ -153,10 +154,10 @@ export function PortfolioBuilderHub() {
                 </select>
               </label>
 
-              <label className="flex items-end gap-2 text-sm text-slate-700 dark:text-slate-200">
+              <label className="flex items-end gap-2 text-sm text-[var(--ds-text)]">
                 <input
                   type="checkbox"
-                  className="h-4 w-4 rounded border-slate-300"
+                  className="h-4 w-4 rounded border-[var(--ds-border)]"
                   checked={portfolio?.autoSync ?? true}
                   disabled={Boolean(busy) || !portfolio}
                   onChange={(event) =>
@@ -169,18 +170,18 @@ export function PortfolioBuilderHub() {
                 Auto-sync when profile changes
               </label>
 
-              <div className="rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2 text-xs dark:border-slate-700 dark:bg-slate-900/40">
-                <p className="font-semibold text-slate-700 dark:text-slate-200">Status</p>
-                <p className="mt-1 capitalize text-slate-600 dark:text-slate-300">{portfolio?.status || "Not generated"}</p>
+              <div className="rounded-xl border border-[var(--ds-border)] bg-[var(--ds-surface)] px-3 py-2 text-xs">
+                <p className="font-semibold text-[var(--ds-text)]">Status</p>
+                <p className="mt-1 capitalize text-[var(--ds-text-secondary)]">{portfolio?.status || "Not generated"}</p>
                 {portfolio?.lastGeneratedAt ? (
-                  <p className="mt-1 text-slate-500">Updated {new Date(portfolio.lastGeneratedAt).toLocaleString()}</p>
+                  <p className="mt-1 text-[var(--ds-muted)]">Updated {new Date(portfolio.lastGeneratedAt).toLocaleString()}</p>
                 ) : null}
               </div>
             </div>
 
             {portfolio?.slug ? (
-              <div className="flex flex-wrap items-center gap-2 rounded-xl border border-primary-200/60 bg-primary-50/50 px-3 py-2 text-sm dark:border-primary-900/40 dark:bg-primary-950/20">
-                <span className="font-medium text-primary-800 dark:text-primary-200">{portfolioAbsoluteUrl(portfolio.slug)}</span>
+              <div className="flex flex-wrap items-center gap-2 rounded-xl border border-[var(--ds-primary)]/30 bg-[var(--ds-info-bg)] px-3 py-2 text-sm">
+                <span className="font-medium text-[var(--ds-primary)]">{portfolioAbsoluteUrl(portfolio.slug)}</span>
                 <Button
                   type="button"
                   size="sm"
@@ -200,13 +201,13 @@ export function PortfolioBuilderHub() {
 
       {portfolio?.content ? (
         <SectionPanel title="Live preview" subtitle="This is how recruiters will see your portfolio.">
-          <div className={cn("overflow-hidden rounded-2xl border border-slate-200/80 shadow-xl shadow-slate-900/10 ring-1 ring-slate-900/5 dark:border-slate-700/80 dark:shadow-black/30 dark:ring-white/5")}>
+          <div className={cn("overflow-hidden rounded-2xl border border-[var(--ds-border)] shadow-xl shadow-[var(--ds-shadow)] ring-1 ring-[var(--ds-border)]")}>
             <Portfolio3DViewer content={portfolio.content} theme={portfolio.theme} slug={portfolio.slug} />
           </div>
         </SectionPanel>
       ) : (
         <SectionPanel title="Preview" subtitle="Generate your portfolio to see the 3D preview here.">
-          <p className="text-sm text-slate-500">Your 3D portfolio preview will appear here after generation.</p>
+          <p className="text-sm text-[var(--ds-muted)]">Your 3D portfolio preview will appear here after generation.</p>
         </SectionPanel>
       )}
     </div>

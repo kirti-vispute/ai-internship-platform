@@ -1,22 +1,29 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { ErrorPageShell } from "@/components/errors/error-page-shell";
+import { ErrorState } from "@/components/errors/error-state";
+import { getAuthSession } from "@/lib/session";
+import { getDashboardPathForRole } from "@/lib/auth-routes";
 
-export default function GlobalError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
+export default function ErrorPage({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
+  const [fallbackCta, setFallbackCta] = useState({ label: "Go Home", href: "/" });
+
   useEffect(() => {
     // eslint-disable-next-line no-console
     console.error(error);
   }, [error]);
 
+  useEffect(() => {
+    const session = getAuthSession();
+    if (session.loggedIn && session.role) {
+      setFallbackCta({ label: "Back to Dashboard", href: getDashboardPathForRole(session.role) });
+    }
+  }, []);
+
   return (
-    <main className="mx-auto max-w-2xl p-6">
-      <div className="rounded-xl border border-rose-200 bg-rose-50 p-4">
-        <h2 className="text-lg font-semibold text-rose-800">Something went wrong</h2>
-        <p className="mt-2 text-sm text-rose-700">{error.message || "Unexpected application error."}</p>
-        <button type="button" className="mt-3 rounded-lg border border-rose-400 px-3 py-2 text-sm font-semibold text-rose-800" onClick={reset}>
-          Try again
-        </button>
-      </div>
-    </main>
+    <ErrorPageShell>
+      <ErrorState variant="500" size="page" onRetry={reset} secondaryCta={fallbackCta} />
+    </ErrorPageShell>
   );
 }
