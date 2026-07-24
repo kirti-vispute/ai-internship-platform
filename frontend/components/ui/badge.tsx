@@ -2,15 +2,17 @@ import type { LucideIcon } from "lucide-react";
 import { AppIcon } from "@/components/icons/app-icon";
 import { cn } from "@/lib/utils";
 
-export type BadgeTone = "neutral" | "accent" | "success" | "warning" | "danger" | "info";
+export type BadgeTone = "neutral" | "accent" | "success" | "warning" | "danger" | "info" | "emerald" | "purple";
 
 const TONE_CLASSES: Record<BadgeTone, string> = {
   neutral: "border-[var(--ds-border)] bg-[var(--ds-surface-raised)] text-[var(--ds-muted)]",
   accent: "border-[var(--ds-border-strong)] bg-[var(--ds-surface-raised)] text-[var(--ds-accent)]",
-  success: "border-emerald-400/25 bg-emerald-400/10 text-emerald-300",
-  warning: "border-amber-400/25 bg-amber-400/10 text-amber-300",
-  danger: "border-rose-400/25 bg-rose-400/10 text-rose-300",
-  info: "border-sky-400/25 bg-sky-400/10 text-sky-300"
+  success: "border-[var(--ds-success)] bg-[var(--ds-success-bg)] text-[var(--ds-success)]",
+  warning: "border-[var(--ds-warning)] bg-[var(--ds-warning-bg)] text-[var(--ds-warning)]",
+  danger: "border-[var(--ds-danger)] bg-[var(--ds-danger-bg)] text-[var(--ds-danger)]",
+  info: "border-[var(--ds-info)] bg-[var(--ds-info-bg)] text-[var(--ds-info)]",
+  emerald: "border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:border-emerald-400/40 dark:bg-emerald-400/10 dark:text-emerald-400",
+  purple: "border-purple-500/40 bg-purple-500/10 text-purple-600 dark:border-purple-400/40 dark:bg-purple-400/10 dark:text-purple-400"
 };
 
 type BadgeProps = {

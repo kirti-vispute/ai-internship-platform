@@ -15,13 +15,13 @@ export function SectionTabButton({ label, active, icon, onClick }: SectionTabBut
       type="button"
       onClick={onClick}
       className={cn(
-        "inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium transition",
+        "inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium transition-colors",
         active
-          ? "bg-primary-100 font-semibold text-primary-700 dark:bg-primary-900/40 dark:text-primary-300"
-          : "text-slate-600 hover:bg-white dark:text-slate-300 dark:hover:bg-slate-800"
+          ? "bg-[var(--ds-primary)]/10 font-semibold text-[var(--ds-primary)]"
+          : "text-[var(--ds-muted)] hover:bg-[var(--ds-hover)] hover:text-[var(--ds-text)]"
       )}
     >
-      {icon ? <AppIcon icon={icon} size="xs" className={active ? "text-primary-600 dark:text-primary-300" : undefined} /> : null}
+      {icon ? <AppIcon icon={icon} size="xs" className={active ? "text-[var(--ds-primary)]" : undefined} /> : null}
       {label}
     </button>
   );

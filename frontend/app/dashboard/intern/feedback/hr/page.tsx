@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useMemo, useState } from "react";
-import { SectionPanel } from "@/components/dashboard/section-panel";
-import { DashboardPageHeader } from "@/components/dashboard/dashboard-page-header";
-import { EmptyState } from "@/components/dashboard/empty-state";
+import { SectionPanel } from "@/components/dashboard/shared/section-panel";
+import { DashboardPageHeader } from "@/components/dashboard/shared/dashboard-page-header";
+import { EmptyState } from "@/components/dashboard/shared/empty-state";
 import { Application, fetchInternApplications, peekInternApplications } from "@/lib/intern-portal";
+import { SkeletonList } from "@/components/ui/skeleton";
 
 export default function HrFeedbackPage() {
   const [applications, setApplications] = useState<Application[]>([]);
@@ -58,29 +59,36 @@ export default function HrFeedbackPage() {
             subtitle="Recruiter feedback, ratings, and improvement notes on your applications."
           />
           {loading ? (
-            <div className="surface-muted p-5 text-sm text-slate-700 dark:text-slate-300">Loading HR feedback...</div>
+            <SkeletonList rows={3} />
           ) : (
             <SectionPanel title="Feedback History" subtitle="Only candidate-visible feedback is shown here.">
-              {error && <p className="text-sm text-rose-700 dark:text-rose-300">{error}</p>}
+              {error && <p className="text-sm text-[var(--ds-danger)]">{error}</p>}
               {!error && feedbackItems.length === 0 && (
-                <EmptyState title="No HR feedback yet" hint="Feedback appears after recruiters review your applications." presetKey="feedback" />
+                <EmptyState
+                  title="No HR Feedback Yet"
+                  description="Feedback and ratings appear here after recruiters review your applications."
+                  presetKey="feedback"
+                  ctaLabel="View Applications"
+                  ctaHref="/dashboard/intern/applications"
+                  size="sm"
+                />
               )}
               {!error && feedbackItems.length > 0 && (
                 <div className="space-y-3">
                   {feedbackItems.map((item, idx) => (
                     <div key={`${item.internship}-${idx}`} className="surface-subtle px-4 py-3">
                       <div className="flex flex-wrap items-center justify-between gap-2">
-                        <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                        <p className="text-sm font-semibold text-[var(--ds-text)]">
                           {item.internship} · {item.company}
                         </p>
                         {item.rating && (
-                          <span className="rounded-full bg-primary-100 px-2 py-0.5 text-xs font-semibold text-primary-700 dark:bg-primary-900/40 dark:text-primary-300">
+                          <span className="rounded-full bg-[var(--ds-info-bg)] px-2 py-0.5 text-xs font-semibold text-[var(--ds-primary)]">
                             {item.rating}/5
                           </span>
                         )}
                       </div>
-                      <p className="mt-2 text-sm text-slate-700 dark:text-slate-300">{item.feedback}</p>
-                      <p className="mt-2 text-xs text-slate-500 capitalize">
+                      <p className="mt-2 text-sm text-[var(--ds-text-secondary)]">{item.feedback}</p>
+                      <p className="mt-2 text-xs text-[var(--ds-muted)] capitalize">
                         {item.category || "general"} · {item.status.replace(/_/g, " ")}
                         {item.createdAt ? ` · ${new Date(item.createdAt).toLocaleDateString()}` : ""}
                       </p>

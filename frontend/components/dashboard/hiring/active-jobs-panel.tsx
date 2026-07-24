@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Briefcase } from "lucide-react";
 import type { CompanyApplication, CompanyInternship } from "@/lib/company-portal";
+import { usePagination } from "@/lib/use-pagination";
 import {
   CompanyDashboardEmptyState,
   CompanyDashboardItemCard,
@@ -57,11 +58,8 @@ export function ActiveJobsPanel({
   onAssignRecruiter,
   onDeleteInternship
 }: ActiveJobsPanelProps) {
-  const [page, setPage] = useState(0);
   const activeJobs = useMemo(() => getActiveInternships(internships), [internships]);
-  const totalPages = Math.max(1, Math.ceil(activeJobs.length / PAGE_SIZE));
-  const safePage = Math.min(page, totalPages - 1);
-  const visibleJobs = activeJobs.slice(safePage * PAGE_SIZE, safePage * PAGE_SIZE + PAGE_SIZE);
+  const { setPage, totalPages, safePage, pageItems: visibleJobs } = usePagination(activeJobs, PAGE_SIZE);
 
   return (
     <CompanyDashboardSection

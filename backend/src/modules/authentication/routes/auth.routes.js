@@ -29,5 +29,6 @@ router.post("/refresh", authController.refreshSession);
 router.post("/logout", authController.logout);
 
 router.get("/me", authMiddleware, authController.getMe);
+router.patch("/theme", authMiddleware, authController.updateThemePreference);
 
 module.exports = router;

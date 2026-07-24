@@ -6,6 +6,7 @@ import {
   FolderKanban,
   GraduationCap,
   Link2,
+  Palette,
   Sparkles,
   Target,
   User,
@@ -18,7 +19,8 @@ export const PROFILE_TAB_ICONS: Record<string, LucideIcon> = {
   education: GraduationCap,
   projects: FolderKanban,
   achievements: Award,
-  learning: BookOpen
+  learning: BookOpen,
+  theme: Palette
 };
 
 export const RESUME_TAB_ICONS: Record<string, LucideIcon> = {

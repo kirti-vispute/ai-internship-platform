@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useDeferredValue, useLayoutEffect, useMemo, useState } from "react";
-import { SectionPanel } from "@/components/dashboard/section-panel";
+import { useEffect, useDeferredValue, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { SectionPanel } from "@/components/dashboard/shared/section-panel";
 import { Button } from "@/components/ui/button";
-import { InternApplicationModal } from "@/components/dashboard/intern-application-modal";
+import { SearchInput } from "@/components/ui/search-input";
+import { InternApplicationModal } from "@/components/dashboard/intern/intern-application-modal";
 import { shouldBlockPageContent, appliedInternshipIdsFromApplications } from "@/lib/instant-load";
 import {
   InternshipListing,
@@ -20,8 +21,10 @@ import {
   unsaveInternship
 } from "@/lib/intern-portal";
 import { normalizeSkillList, normalizeSkillValue } from "@/lib/skill-normalizer";
-import { CompanyPublicCard } from "@/components/dashboard/company-public-card";
+import { CompanyPublicCard } from "@/components/dashboard/shared/company-public-card";
 import { useToast } from "@/components/ui/toast";
+import { EmptyState } from "@/components/dashboard/shared/empty-state";
+import { SkeletonList } from "@/components/ui/skeleton";
 
 export default function SearchInternshipsPage() {
   const [profile, setProfile] = useState<InternProfile | null>(null);
@@ -37,6 +40,7 @@ export default function SearchInternshipsPage() {
   const [applySuccess, setApplySuccess] = useState<string | null>(null);
   const [selectedInternship, setSelectedInternship] = useState<InternshipListing | null>(null);
   const [savedInternshipIds, setSavedInternshipIds] = useState<Set<string>>(new Set());
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   useLayoutEffect(() => {
     const cachedProfile = peekInternProfile();
@@ -149,21 +153,24 @@ export default function SearchInternshipsPage() {
       <SectionPanel title="Search Internships" subtitle="Explore active internships from verified company postings.">
           <div className="space-y-3">
             <div className="grid gap-3 sm:grid-cols-3">
-              <input
+              <SearchInput
+                ref={searchInputRef}
                 value={query}
-                onChange={(event) => setQuery(event.target.value)}
+                onValueChange={setQuery}
                 placeholder="Search by role, company, or skill"
-                className="surface-subtle w-full px-3 py-2 text-sm sm:col-span-3"
+                containerClassName="sm:col-span-3"
               />
               <input
                 value={filterLocation}
                 onChange={(event) => setFilterLocation(event.target.value)}
                 placeholder="Filter by location"
+                aria-label="Filter by location"
                 className="surface-subtle w-full px-3 py-2 text-sm"
               />
               <select
                 className="surface-subtle w-full px-3 py-2 text-sm"
                 value={filterMode}
+                aria-label="Filter by work mode"
                 onChange={(event) => setFilterMode(event.target.value)}
               >
                 <option value="">All modes</option>
@@ -173,19 +180,45 @@ export default function SearchInternshipsPage() {
               </select>
             </div>
 
-            {shouldBlockPageContent(internships) && loading && (
-              <div className="surface-subtle px-4 py-3 text-sm text-slate-700 dark:text-slate-300">Loading internships...</div>
-            )}
-            {error && <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300">{error}</div>}
-            {!error && applyError && <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300">{applyError}</div>}
-            {!error && applySuccess && <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300">{applySuccess}</div>}
+            {shouldBlockPageContent(internships) && loading && <SkeletonList rows={4} />}
+            {error && <div className="rounded-xl border border-[var(--ds-danger)]/40 bg-[var(--ds-danger-bg)] px-4 py-3 text-sm text-[var(--ds-danger)]">{error}</div>}
+            {!error && applyError && <div className="rounded-xl border border-[var(--ds-danger)]/40 bg-[var(--ds-danger-bg)] px-4 py-3 text-sm text-[var(--ds-danger)]">{applyError}</div>}
+            {!error && applySuccess && <div className="rounded-xl border border-[var(--ds-success)]/40 bg-[var(--ds-success-bg)] px-4 py-3 text-sm text-[var(--ds-success)]">{applySuccess}</div>}
 
             {!loading && !error && internships.length === 0 && (
-              <div className="surface-subtle px-4 py-3 text-sm text-slate-700 dark:text-slate-300">No internships posted yet.</div>
+              <EmptyState
+                presetKey="internships"
+                title="No Internships Posted Yet"
+                description="New postings from verified companies will show up here as soon as they go live."
+                size="sm"
+              />
             )}
 
             {!error && internships.length > 0 && filtered.length === 0 && (
-              <div className="surface-subtle px-4 py-3 text-sm text-slate-700 dark:text-slate-300">No results for this search.</div>
+              <EmptyState
+                presetKey="search"
+                title="No Results Found"
+                description="Try a different keyword, location, or mode filter."
+                action={
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => {
+                      setQuery("");
+                      setFilterLocation("");
+                      setFilterMode("");
+                    }}
+                  >
+                    Clear Filters
+                  </Button>
+                }
+                secondaryCtaLabel="Try Different Keywords"
+                onSecondaryCtaClick={() => {
+                  setQuery("");
+                  searchInputRef.current?.focus();
+                }}
+                size="sm"
+              />
             )}
 
             {!error && filtered.length > 0 && (
@@ -199,16 +232,16 @@ export default function SearchInternshipsPage() {
                       <div className="flex flex-wrap items-start justify-between gap-3">
                         <div>
                           <div className="flex flex-wrap items-center gap-2">
-                            <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{item.role}</p>
+                            <p className="text-sm font-semibold text-[var(--ds-text)]">{item.role}</p>
                             {typeof item.matchPercent === "number" && (
-                              <span className="rounded-full bg-primary-100 px-2 py-0.5 text-xs font-semibold text-primary-700 dark:bg-primary-900/40 dark:text-primary-300">
+                              <span className="rounded-full bg-[var(--ds-info-bg)] px-2 py-0.5 text-xs font-semibold text-[var(--ds-primary)]">
                                 {item.matchPercent}% match
                               </span>
                             )}
                           </div>
-                          <p className="text-xs text-slate-600 dark:text-slate-300">{item.company?.companyName || "Company"}</p>
-                          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{item.location || "Location not specified"}</p>
-                          <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
+                          <p className="text-xs text-[var(--ds-text-secondary)]">{item.company?.companyName || "Company"}</p>
+                          <p className="mt-1 text-xs text-[var(--ds-muted)]">{item.location || "Location not specified"}</p>
+                          <p className="mt-1 text-xs text-[var(--ds-text-secondary)]">
                             Required skills: {(item.skillsRequired || []).length > 0 ? item.skillsRequired?.join(", ") : "Not specified"}
                           </p>
                         </div>

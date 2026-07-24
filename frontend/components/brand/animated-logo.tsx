@@ -26,7 +26,18 @@ export function AnimatedLogo({ size = 72, className = "" }: AnimatedLogoProps) {
         animate={{ y: [0, -3, 0] }}
         transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
       >
-        <Image src={BRAND_LOGO_PATH} alt={BRAND_NAME} width={size} height={size} priority className="relative z-10 object-contain" />
+        {/* Inline width/height (size is a runtime value, not a static Tailwind class) keep both
+            axes CSS-governed to match the props — otherwise Tailwind's preflight
+            `img { height: auto }` only overrides height, which Next.js flags as a mismatch. */}
+        <Image
+          src={BRAND_LOGO_PATH}
+          alt={BRAND_NAME}
+          width={size}
+          height={size}
+          priority
+          className="relative z-10 object-contain"
+          style={{ width: size, height: size }}
+        />
       </motion.div>
     </motion.div>
   );

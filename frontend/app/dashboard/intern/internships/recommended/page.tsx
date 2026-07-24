@@ -1,9 +1,9 @@
 "use client";
 
 import { useCallback, useDeferredValue, useEffect, useLayoutEffect, useMemo, useState } from "react";
-import { SectionPanel } from "@/components/dashboard/section-panel";
+import { SectionPanel } from "@/components/dashboard/shared/section-panel";
 import { Button } from "@/components/ui/button";
-import { InternApplicationModal } from "@/components/dashboard/intern-application-modal";
+import { InternApplicationModal } from "@/components/dashboard/intern/intern-application-modal";
 import { RecommendedInternshipFiltersPanel } from "@/components/dashboard/intern/recommended-internship-filters";
 import {
   InternshipListing,
@@ -26,6 +26,8 @@ import {
   persistRecommendedFilters,
   type RecommendedInternshipFilters
 } from "@/lib/recommendation-filters";
+import { EmptyState } from "@/components/dashboard/shared/empty-state";
+import { SkeletonPage } from "@/components/ui/skeleton";
 
 export default function RecommendedInternshipsPage() {
   const [profile, setProfile] = useState<InternProfile | null>(null);
@@ -155,19 +157,24 @@ export default function RecommendedInternshipsPage() {
   return (
     <>
       {loading ? (
-        <div className="surface-muted p-5 text-sm text-slate-700 dark:text-slate-300">Loading recommendations...</div>
+        <SkeletonPage />
       ) : (
         <SectionPanel
           title="Recommended Internships"
           subtitle="Transparent recommendation model with separate required, preferred, and overall scoring."
         >
-          {error && <p className="text-sm text-rose-700 dark:text-rose-300">{error}</p>}
-          {applyError && !error && <p className="text-sm text-rose-700 dark:text-rose-300">{applyError}</p>}
-          {applySuccess && !error && <p className="text-sm text-emerald-700 dark:text-emerald-300">{applySuccess}</p>}
+          {error && <p className="text-sm text-[var(--ds-danger)]">{error}</p>}
+          {applyError && !error && <p className="text-sm text-[var(--ds-danger)]">{applyError}</p>}
+          {applySuccess && !error && <p className="text-sm text-[var(--ds-success)]">{applySuccess}</p>}
           {!error && (!profile?.resumeUploaded || !hasParsedResumeSkills) && (
-            <div className="surface-subtle px-4 py-3 text-sm text-slate-700 dark:text-slate-300">
-              Upload your resume to get accurate AI internship recommendations.
-            </div>
+            <EmptyState
+              presetKey="resume"
+              title="Upload Your Resume to Get Recommendations"
+              description="Our AI matches your skills against live internships once your resume is uploaded and parsed."
+              ctaLabel="Upload Resume"
+              ctaHref="/dashboard/intern/resume"
+              size="sm"
+            />
           )}
 
           {!error && profile?.resumeUploaded && hasParsedResumeSkills && recommendations.length > 0 && (
@@ -185,15 +192,25 @@ export default function RecommendedInternshipsPage() {
           )}
 
           {!error && profile?.resumeUploaded && hasParsedResumeSkills && recommendations.length === 0 && (
-            <div className="surface-subtle px-4 py-3 text-sm text-slate-700 dark:text-slate-300">
-              No matching internships found right now.
-            </div>
+            <EmptyState
+              presetKey="internships"
+              title="No Matching Internships Yet"
+              description="We'll surface new matches here as soon as relevant postings go live."
+              ctaLabel="Search All Internships"
+              ctaHref="/dashboard/intern/internships/search"
+              size="sm"
+            />
           )}
 
           {!error && recommendations.length > 0 && filteredRecommendations.length === 0 && (
-            <div className="surface-subtle px-4 py-3 text-sm text-slate-700 dark:text-slate-300">
-              No recommendations match your current filters. Try clearing filters or broadening your search.
-            </div>
+            <EmptyState
+              presetKey="search"
+              title="No Matches for These Filters"
+              description="Try clearing filters or broadening your search criteria."
+              ctaLabel="Clear Filters"
+              onCtaClick={resetFilters}
+              size="sm"
+            />
           )}
 
           {!error && filteredRecommendations.length > 0 && (
@@ -206,18 +223,18 @@ export default function RecommendedInternshipsPage() {
                   <div key={internshipId} className="surface-subtle p-3.5">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div>
-                        <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{item.internship.role}</p>
-                        <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
+                        <p className="text-sm font-semibold text-[var(--ds-text)]">{item.internship.role}</p>
+                        <p className="mt-1 text-xs text-[var(--ds-text-secondary)]">
                           {item.internship.company?.companyName || "Company"}
                         </p>
-                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                        <p className="mt-1 text-xs text-[var(--ds-muted)]">
                           {[item.internship.location, item.internship.mode, item.internship.duration, item.internship.stipend ? `₹${item.internship.stipend}` : ""]
                             .filter(Boolean)
                             .join(" · ") || "Details not specified"}
                         </p>
                       </div>
                       <div className="flex items-center gap-2">
-                        <p className="rounded-full bg-primary-100/80 px-2 py-1 text-xs font-semibold text-primary-700 dark:bg-primary-900/40 dark:text-primary-300">
+                        <p className="rounded-full bg-[var(--ds-info-bg)] px-2 py-1 text-xs font-semibold text-[var(--ds-info)]">
                           Overall Score {item.overallRecommendationScore}%
                         </p>
                         <Button type="button" size="sm" variant="secondary" onClick={() => toggleSave(item.internship)}>
@@ -235,19 +252,19 @@ export default function RecommendedInternshipsPage() {
                       </div>
                     </div>
 
-                    <div className="mt-2 grid gap-2 text-xs text-slate-700 dark:text-slate-300 sm:grid-cols-2">
+                    <div className="mt-2 grid gap-2 text-xs text-[var(--ds-text-secondary)] sm:grid-cols-2">
                       <div className="surface-subtle px-2.5 py-2">Required Skill Match: {item.requiredSkillMatchPercent}%</div>
                       {item.preferredSkillMatchPercent !== null && (
                         <div className="surface-subtle px-2.5 py-2">Preferred Skill Match: {item.preferredSkillMatchPercent}%</div>
                       )}
                     </div>
 
-                    <p className="mt-2 text-xs text-slate-600 dark:text-slate-300">
+                    <p className="mt-2 text-xs text-[var(--ds-text-secondary)]">
                       Missing required skills: {item.missingRequiredSkills.length > 0 ? item.missingRequiredSkills.join(", ") : "None"}
                     </p>
 
                     {item.preferredSkillMatchPercent !== null && (
-                      <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
+                      <p className="mt-1 text-xs text-[var(--ds-text-secondary)]">
                         Missing preferred skills: {item.missingPreferredSkills.length > 0 ? item.missingPreferredSkills.join(", ") : "None"}
                       </p>
                     )}

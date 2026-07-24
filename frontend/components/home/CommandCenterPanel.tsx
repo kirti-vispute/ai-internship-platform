@@ -1,7 +1,7 @@
 "use client";
 
 import { ScrollReveal } from "@/components/animations/ScrollReveal";
-import { TiltCard } from "@/components/dashboard/TiltCard";
+import { TiltCard } from "@/components/dashboard/shared/TiltCard";
 
 const commandItems = [
   {
@@ -29,23 +29,23 @@ export function CommandCenterPanel() {
           key={item.title}
           className={
             item.tone === "accent"
-              ? "border-cyan-300/45 bg-gradient-to-b from-cyan-100/55 to-white p-5 shadow-[0_14px_34px_rgba(14,165,233,0.2)] dark:border-cyan-400/35 dark:from-cyan-900/20 dark:to-slate-900"
-              : "bg-gradient-to-b from-white to-slate-50 p-5 dark:from-slate-900 dark:to-slate-900/80"
+              ? "border-[var(--ds-primary)]/45 bg-gradient-to-b from-[var(--ds-info-bg)] to-[var(--ds-card)] p-5 shadow-[0_14px_34px_rgba(14,165,233,0.2)]"
+              : "bg-gradient-to-b from-[var(--ds-card)] to-[var(--ds-surface)] p-5"
           }
         >
           <div className="mb-3 flex items-center justify-end">
             <span
               className={
                 index === 0
-                  ? "h-2.5 w-2.5 rounded-full bg-cyan-500/80"
+                  ? "h-2.5 w-2.5 rounded-full bg-[var(--ds-chart-1)]/80"
                   : index === 1
-                    ? "h-2.5 w-2.5 rounded-full bg-blue-500/80"
-                    : "h-2.5 w-2.5 rounded-full bg-indigo-500/80"
+                    ? "h-2.5 w-2.5 rounded-full bg-[var(--ds-chart-2)]/80"
+                    : "h-2.5 w-2.5 rounded-full bg-[var(--ds-chart-3)]/80"
               }
             />
           </div>
-          <h3 className="mt-2 text-lg font-bold leading-tight text-slate-900 dark:text-slate-100">{item.title}</h3>
-          <p className="mt-2 text-sm leading-6 text-slate-700 dark:text-slate-300">{item.body}</p>
+          <h3 className="mt-2 text-lg font-bold leading-tight text-[var(--ds-text)]">{item.title}</h3>
+          <p className="mt-2 text-sm leading-6 text-[var(--ds-text-secondary)]">{item.body}</p>
         </TiltCard>
       ))}
     </ScrollReveal>

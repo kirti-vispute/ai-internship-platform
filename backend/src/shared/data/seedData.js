@@ -25,7 +25,7 @@ module.exports = {
     {
       email: "hr@novatech.example",
       role: USER_ROLES.COMPANY,
-      password: "CompanyHr@2026",
+      password: "CompanyHr@123",
       companyAccountType: "hr",
       displayName: "NovaTech HR",
       linkedCompanyEmail: "company1@example.com"

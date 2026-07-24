@@ -12,8 +12,8 @@ type CalendarEmojiPickerProps = {
 
 export function CalendarEmojiPicker({ selected, onSelect, className }: CalendarEmojiPickerProps) {
   return (
-    <div className={cn("rounded-2xl border border-slate-200 bg-slate-50/80 p-3 dark:border-slate-700 dark:bg-slate-900/60", className)}>
-      <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
+    <div className={cn("rounded-2xl border border-[var(--ds-border)] bg-[var(--ds-surface)] p-3", className)}>
+      <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--ds-muted)]">
         Sticker picker
       </p>
       <div className="grid grid-cols-6 gap-2 sm:grid-cols-8">
@@ -26,7 +26,7 @@ export function CalendarEmojiPicker({ selected, onSelect, className }: CalendarE
               onClick={() => onSelect(emoji)}
               className={cn(
                 "flex items-center justify-center rounded-xl p-0.5 transition",
-                isSelected && "ring-2 ring-primary-500 ring-offset-2 ring-offset-slate-50 dark:ring-offset-slate-900"
+                isSelected && "ring-2 ring-[var(--ds-primary)] ring-offset-2 ring-offset-[var(--ds-surface)]"
               )}
               aria-label={`Add ${emoji} sticker`}
               title={`Add ${emoji}`}

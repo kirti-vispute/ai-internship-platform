@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { CalendarDays, MessageSquare } from "lucide-react";
+import { AppIcon } from "@/components/icons/app-icon";
 import type { Application } from "@/lib/intern-portal";
 import {
   extractPastInterviews,
@@ -11,16 +12,17 @@ import {
 } from "@/lib/interview-workflow";
 import { formatInterviewJoinHint } from "@/lib/interview-join";
 import { useInterviewCountdown } from "@/lib/use-interview-countdown";
-import { SectionPanel } from "@/components/dashboard/section-panel";
+import { SectionPanel } from "@/components/dashboard/shared/section-panel";
 import { Button } from "@/components/ui/button";
 import { InterviewStatusChip } from "@/components/dashboard/interview/interview-status-chip";
 import { InterviewDetailsModal } from "@/components/dashboard/interview/interview-details-modal";
 import { InterviewJoinButton } from "@/components/dashboard/interview/interview-join-button";
+import { EmptyState } from "@/components/dashboard/shared/empty-state";
 
 function InterviewCountdownHint({ item }: { item: ScheduledInterviewRecord }) {
   const countdown = useInterviewCountdown(item.interviewDate, item.interviewTime);
   if (!countdown) return null;
-  return <p className="text-xs font-medium text-primary-700 dark:text-primary-300">Starts in {countdown.label}</p>;
+  return <p className="text-xs font-medium text-[var(--ds-primary)]">Starts in {countdown.label}</p>;
 }
 
 type ScheduledInterviewsPanelProps = {
@@ -62,9 +64,14 @@ export function ScheduledInterviewsPanel({
           </div>
         ) : null}
         {visible.length === 0 ? (
-          <div className="surface-subtle px-4 py-5 text-sm text-slate-600 dark:text-slate-300">
-            No interviews scheduled yet. When a recruiter schedules your interview, it will appear here immediately.
-          </div>
+          <EmptyState
+            presetKey="interviews"
+            title="No Interviews Scheduled"
+            description="When a recruiter schedules your interview, it will appear here immediately."
+            ctaLabel="Track Progress"
+            ctaHref="/dashboard/intern/track-progress"
+            size="sm"
+          />
         ) : (
           <div className="grid gap-3">
             {visible.map((item) => {
@@ -72,20 +79,20 @@ export function ScheduledInterviewsPanel({
               return (
                 <article
                   key={item.interviewId}
-                  className="flex h-full flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-primary-200 dark:border-slate-700 dark:bg-slate-900/70 dark:hover:border-primary-900/50 sm:flex-row sm:items-center sm:justify-between"
+                  className="flex h-full flex-col gap-4 rounded-2xl border border-[var(--ds-border)] bg-[var(--ds-card)] p-4 shadow-sm transition hover:border-[var(--ds-primary)] sm:flex-row sm:items-center sm:justify-between"
                 >
                   <div className="min-w-0 space-y-2">
                     <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">{item.companyName}</h3>
+                      <h3 className="text-base font-semibold text-[var(--ds-text)]">{item.companyName}</h3>
                       <InterviewStatusChip status={item.interviewStatus} />
                     </div>
-                    <p className="text-sm text-slate-600 dark:text-slate-300">
+                    <p className="text-sm text-[var(--ds-text-secondary)]">
                       {item.role} · {item.interviewType}
                     </p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                    <p className="text-xs text-[var(--ds-muted)]">
                       {formatInterviewDateTime(item.interviewDate, item.interviewTime)}
                     </p>
-                    {joinHint ? <p className="text-xs text-primary-700 dark:text-primary-300">{joinHint}</p> : null}
+                    {joinHint ? <p className="text-xs text-[var(--ds-primary)]">{joinHint}</p> : null}
                     <InterviewCountdownHint item={item} />
                   </div>
                   <div className="flex flex-wrap gap-2 sm:justify-end">
@@ -93,7 +100,7 @@ export function ScheduledInterviewsPanel({
                       View Details
                     </Button>
                     <Button type="button" size="sm" variant="ghost" href="/dashboard/intern/chat">
-                      <MessageSquare className="h-3.5 w-3.5" />
+                      <AppIcon icon={MessageSquare} size="xs" className="text-current" />
                       Message Recruiter
                     </Button>
                     <InterviewJoinButton interview={item} />
@@ -111,17 +118,17 @@ export function ScheduledInterviewsPanel({
             {pastInterviews.slice(0, 10).map((item) => (
               <article
                 key={`past-${item.interviewId}`}
-                className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900/70 sm:flex-row sm:items-center sm:justify-between"
+                className="flex flex-col gap-3 rounded-2xl border border-[var(--ds-border)] bg-[var(--ds-card)] p-4 sm:flex-row sm:items-center sm:justify-between"
               >
                 <div className="min-w-0 space-y-2">
                   <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">{item.companyName}</h3>
+                    <h3 className="text-base font-semibold text-[var(--ds-text)]">{item.companyName}</h3>
                     <InterviewStatusChip status={item.interviewStatus} />
                   </div>
-                  <p className="text-sm text-slate-600 dark:text-slate-300">
+                  <p className="text-sm text-[var(--ds-text-secondary)]">
                     {item.role} · {item.interviewType}
                   </p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                  <p className="text-xs text-[var(--ds-muted)]">
                     {formatInterviewDateTime(item.interviewDate, item.interviewTime)}
                   </p>
                 </div>

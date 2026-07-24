@@ -2,6 +2,7 @@
 
 import { useMemo, useRef, useState } from "react";
 import { X } from "lucide-react";
+import { AppIcon } from "@/components/icons/app-icon";
 import { COMPANY_TECHNOLOGY_SUGGESTIONS } from "@/lib/company-portal";
 import { cn } from "@/lib/utils";
 
@@ -55,7 +56,7 @@ export function TechnologiesInput({ value, onChange, error, disabled }: Technolo
       <div
         className={cn(
           "ds-input flex min-h-[2.75rem] flex-wrap items-center gap-1.5 !h-auto py-1.5",
-          error ? "border-rose-400/60" : ""
+          error ? "border-[var(--ds-danger)]" : ""
         )}
         onClick={() => inputRef.current?.focus()}
       >
@@ -75,7 +76,7 @@ export function TechnologiesInput({ value, onChange, error, disabled }: Technolo
                 className="rounded-full p-0.5 text-current transition-colors hover:bg-[var(--ds-border)]"
                 aria-label={`Remove ${tech}`}
               >
-                <X className="h-3 w-3" />
+                <AppIcon icon={X} size="xs" className="text-current" />
               </button>
             )}
           </span>
@@ -111,7 +112,7 @@ export function TechnologiesInput({ value, onChange, error, disabled }: Technolo
         </div>
       )}
 
-      {error ? <p className="text-xs font-medium text-rose-400">{error}</p> : null}
+      {error ? <p className="text-xs font-medium text-[var(--ds-danger)]">{error}</p> : null}
     </div>
   );
 }

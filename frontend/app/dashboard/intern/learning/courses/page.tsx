@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { DashboardPageHeader } from "@/components/dashboard/dashboard-page-header";
-import { LearningCoursesModule } from "@/components/dashboard/learning-courses-module";
+import { DashboardPageHeader } from "@/components/dashboard/shared/dashboard-page-header";
+import { Skeleton, SkeletonCard } from "@/components/ui/skeleton";
+import { LearningCoursesModule } from "@/components/dashboard/intern/learning-courses-module";
 import { InternProfile, fetchInternProfileWithScore } from "@/lib/intern-portal";
 
 export default function LearningCoursesPage() {
@@ -25,8 +26,13 @@ export default function LearningCoursesPage() {
           />
 
           {loading ? (
-            <div className="rounded-2xl border border-slate-200/70 bg-white px-6 py-12 text-center text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-400">
-              Loading courses…
+            <div className="space-y-4" aria-busy="true" aria-live="polite">
+              <Skeleton className="h-24 w-full rounded-xl" />
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <SkeletonCard key={i} />
+                ))}
+              </div>
             </div>
           ) : (
             <LearningCoursesModule profile={profile} />

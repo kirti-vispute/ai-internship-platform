@@ -1,7 +1,7 @@
 "use client";
 
-import { InternResumePanel } from "@/components/dashboard/intern-resume-panel";
-import { DashboardPageHeader } from "@/components/dashboard/dashboard-page-header";
+import { InternResumePanel } from "@/components/dashboard/intern/intern-resume-panel";
+import { DashboardPageHeader } from "@/components/dashboard/shared/dashboard-page-header";
 
 export default function InternResumePage() {
   return (

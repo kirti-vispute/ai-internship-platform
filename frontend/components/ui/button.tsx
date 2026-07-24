@@ -8,14 +8,14 @@ type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
 };
 
 const baseClasses =
-  "tilt-3d inline-flex items-center justify-center gap-2 rounded-xl font-semibold transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 disabled:cursor-not-allowed disabled:opacity-60 active:scale-[0.99]";
+  "tilt-3d inline-flex items-center justify-center gap-2 rounded-xl font-semibold transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ds-focus-ring,rgba(59,130,246,0.45))] disabled:cursor-not-allowed disabled:opacity-60 active:scale-[0.99]";
 
 const variants = {
   primary:
-    "bg-gradient-to-r from-primary-500 to-blue-500 text-white shadow-glow hover:from-primary-600 hover:to-blue-600 hover:-translate-y-0.5 dark:from-primary-600 dark:to-cyan-500 dark:hover:from-primary-500 dark:hover:to-cyan-400",
+    "bg-[linear-gradient(135deg,var(--ds-gradient-from,#1f6fff),var(--ds-gradient-to,#22d3ee))] text-[var(--ds-on-primary,#fff)] shadow-glow hover:brightness-110 hover:-translate-y-0.5",
   secondary:
-    "border border-slate-200 bg-white text-slate-900 shadow-soft hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-slate-600 dark:hover:bg-slate-800",
-  ghost: "bg-transparent text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+    "border border-[var(--ds-border)] bg-[var(--ds-surface)] text-[var(--ds-text)] shadow-soft hover:border-[var(--ds-border-strong)] hover:bg-[var(--ds-surface-raised)]",
+  ghost: "bg-transparent text-[var(--ds-muted)] hover:bg-[var(--ds-hover)] hover:text-[var(--ds-text)]"
 };
 
 const sizes = {

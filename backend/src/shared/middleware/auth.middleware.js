@@ -22,7 +22,7 @@ async function authMiddleware(req, res, next) {
 
     const payload = verifyAccessToken(token);
     const user = await User.findById(payload.userId).select(
-      "_id email role adminRole permissions companyAccountType companyProfileRef isActive isDeleted sidebarModules"
+      "_id email role adminRole permissions companyAccountType companyProfileRef isActive isDeleted sidebarModules themePreference appearanceMode"
     );
 
     if (!user || !user.isActive || user.isDeleted) {

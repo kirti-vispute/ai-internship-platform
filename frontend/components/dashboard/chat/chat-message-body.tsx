@@ -29,8 +29,8 @@ export function ChatMessageBody({ body, mine = false }: ChatMessageBodyProps) {
         const className = cn(
           "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition",
           mine
-            ? "bg-white/20 text-white hover:bg-white/30"
-            : "bg-primary-600 text-white hover:bg-primary-500"
+            ? "bg-white/20 text-[var(--ds-on-primary)] hover:bg-white/30"
+            : "bg-[var(--ds-primary)] text-[var(--ds-on-primary)] hover:bg-[var(--ds-primary-hover)]"
         );
 
         if (isInternal) {

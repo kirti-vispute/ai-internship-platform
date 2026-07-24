@@ -2,9 +2,9 @@
 
 import { useCallback, useEffect, useLayoutEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { CompanyShell } from "@/components/dashboard/company-shell";
+import { CompanyShell } from "@/components/dashboard/company/company-shell";
 import { RoleDashboardGuard } from "@/components/ui/role-dashboard-guard";
-import { AccessDenied } from "@/components/dashboard/access-denied";
+import { AccessDenied } from "@/components/dashboard/shared/access-denied";
 import {
   fetchCompanyProfile,
   peekCompanyProfile,

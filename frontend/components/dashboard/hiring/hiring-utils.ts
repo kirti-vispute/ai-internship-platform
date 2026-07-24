@@ -1,4 +1,27 @@
 import type { CompanyApplication, CompanyInternship, CompanyMatchedCandidate } from "@/lib/company-portal";
+import type { BadgeTone } from "@/components/ui/badge";
+
+// Canonical status→color mapping shared across the company dashboard so the same
+// stage/status always reads the same color regardless of which card renders it.
+export const PIPELINE_STAGE_TONE: Record<string, BadgeTone> = {
+  applied: "warning",
+  reviewed: "neutral",
+  shortlisted: "success",
+  interview: "info",
+  interview_scheduled: "info",
+  interviewed: "info",
+  selected: "emerald",
+  rejected: "danger"
+};
+
+export const INTERVIEW_STATUS_TONE: Record<string, BadgeTone> = {
+  scheduled: "info",
+  completed: "purple",
+  cleared: "success",
+  rejected: "danger",
+  cancelled: "neutral",
+  no_show: "warning"
+};
 
 export const EXTENDED_PIPELINE_STAGES = [
   { key: "applied", label: "Applied" },
@@ -122,6 +145,68 @@ export function findApplicationForMatch(match: CompanyMatchedCandidate, applicat
 
 export function countInterviewStageCandidates(applications: CompanyApplication[]) {
   return computeFlowStageCounts(applications).interview;
+}
+
+export const HIRING_PIPELINE_STAGES = [
+  { key: "applied", label: "Applied" },
+  { key: "reviewed", label: "Reviewed" },
+  { key: "shortlisted", label: "Shortlisted" },
+  { key: "interview", label: "Interview" },
+  { key: "selected", label: "Selected" },
+  { key: "rejected", label: "Rejected" }
+] as const;
+
+export type HiringPipelineStageKey = (typeof HIRING_PIPELINE_STAGES)[number]["key"];
+
+export function normalizeToPipelineStage(status: string): HiringPipelineStageKey {
+  const normalized = normalizeRawStatus(status);
+  if (normalized === "rejected" || normalized === "withdrawn") return "rejected";
+  if (normalized === "selected") return "selected";
+  if (["interview_scheduled", "technical_round", "hr_round"].includes(normalized)) return "interview";
+  if (normalized === "shortlisted") return "shortlisted";
+  if (normalized === "under_review" || normalized === "on_hold") return "reviewed";
+  return "applied";
+}
+
+export function computePipelineStageCounts(applications: CompanyApplication[]) {
+  const counts: Record<HiringPipelineStageKey, number> = {
+    applied: 0,
+    reviewed: 0,
+    shortlisted: 0,
+    interview: 0,
+    selected: 0,
+    rejected: 0
+  };
+  applications.forEach((application) => {
+    counts[normalizeToPipelineStage(application.status)] += 1;
+  });
+  return counts;
+}
+
+export function countOffersPending(applications: CompanyApplication[]) {
+  return applications.filter((application) => String(application.status || "").toLowerCase() === "offered").length;
+}
+
+export function computeAcceptanceRate(applications: CompanyApplication[]) {
+  const offered = applications.filter((application) => String(application.status || "").toLowerCase() === "offered").length;
+  const selected = applications.filter((application) => String(application.status || "").toLowerCase() === "selected").length;
+  const total = offered + selected;
+  return total > 0 ? Math.round((selected / total) * 100) : 0;
+}
+
+export function computeInterviewRate(applications: CompanyApplication[]) {
+  if (applications.length === 0) return 0;
+  const reached = applications.filter((application) => {
+    const stage = normalizeToPipelineStage(application.status);
+    return stage === "interview" || stage === "selected";
+  }).length;
+  return Math.round((reached / applications.length) * 100);
+}
+
+export function computeHiringProgress(applications: CompanyApplication[]) {
+  if (applications.length === 0) return 0;
+  const advanced = applications.filter((application) => normalizeToPipelineStage(application.status) !== "applied").length;
+  return Math.round((advanced / applications.length) * 100);
 }
 
 export function getMatchScore(application: CompanyApplication) {

@@ -6,15 +6,24 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { AppIcon } from "@/components/icons/app-icon";
+import { useFocusTrap } from "@/lib/use-focus-trap";
 import { cn } from "@/lib/utils";
 
 type ModalSize = "sm" | "md" | "lg" | "xl";
+type ModalVariant = "dialog" | "drawer";
 
 const SIZE_CLASSES: Record<ModalSize, string> = {
   sm: "max-w-sm",
   md: "max-w-lg",
   lg: "max-w-2xl",
   xl: "max-w-4xl"
+};
+
+const DRAWER_WIDTH_CLASSES: Record<ModalSize, string> = {
+  sm: "sm:max-w-sm",
+  md: "sm:max-w-md",
+  lg: "sm:max-w-xl",
+  xl: "sm:max-w-2xl"
 };
 
 type ModalProps = {
@@ -24,6 +33,8 @@ type ModalProps = {
   subtitle?: string;
   icon?: LucideIcon;
   size?: ModalSize;
+  /** "dialog" (default) centers with fade+scale. "drawer" slides in from the right edge, full height — for browsing lists without stacking a second dialog on top. */
+  variant?: ModalVariant;
   footer?: React.ReactNode;
   closeOnBackdrop?: boolean;
   bodyClassName?: string;
@@ -37,12 +48,14 @@ export function Modal({
   subtitle,
   icon,
   size = "md",
+  variant = "dialog",
   footer,
   closeOnBackdrop = true,
   bodyClassName,
   children
 }: ModalProps) {
   const reducedMotion = useReducedMotion();
+  const dialogRef = useFocusTrap<HTMLDivElement>(open);
 
   useEffect(() => {
     if (!open) return;
@@ -62,7 +75,13 @@ export function Modal({
   return createPortal(
     <AnimatePresence>
       {open ? (
-        <div className="fixed inset-0 z-[90] flex items-end justify-center p-0 sm:items-center sm:p-4" role="presentation">
+        <div
+          className={cn(
+            "fixed inset-0 z-[90] p-0",
+            variant === "drawer" ? "flex justify-end" : "flex items-end justify-center sm:items-center sm:p-4"
+          )}
+          role="presentation"
+        >
           <motion.button
             type="button"
             aria-label="Close dialog"
@@ -74,17 +93,31 @@ export function Modal({
             transition={{ duration: reducedMotion ? 0 : 0.18 }}
           />
           <motion.div
+            ref={dialogRef}
             role="dialog"
             aria-modal="true"
             aria-labelledby={title ? "ds-modal-title" : undefined}
             className={cn(
-              "ds-card relative z-10 flex max-h-[92vh] w-full flex-col overflow-hidden !p-0 shadow-2xl",
-              "rounded-t-2xl sm:rounded-2xl",
-              SIZE_CLASSES[size]
+              "ds-card relative z-10 flex w-full flex-col overflow-hidden !p-0 shadow-2xl",
+              variant === "drawer"
+                ? cn("h-full rounded-none sm:rounded-l-2xl", DRAWER_WIDTH_CLASSES[size])
+                : cn("max-h-[92vh] rounded-t-2xl sm:rounded-2xl", SIZE_CLASSES[size])
             )}
-            initial={reducedMotion ? { opacity: 0 } : { opacity: 0, y: 16, scale: 0.97 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={reducedMotion ? { opacity: 0 } : { opacity: 0, y: 12, scale: 0.98 }}
+            initial={
+              variant === "drawer"
+                ? { opacity: 0, x: reducedMotion ? 0 : 32 }
+                : reducedMotion
+                  ? { opacity: 0 }
+                  : { opacity: 0, y: 16, scale: 0.97 }
+            }
+            animate={variant === "drawer" ? { opacity: 1, x: 0 } : { opacity: 1, y: 0, scale: 1 }}
+            exit={
+              variant === "drawer"
+                ? { opacity: 0, x: reducedMotion ? 0 : 32 }
+                : reducedMotion
+                  ? { opacity: 0 }
+                  : { opacity: 0, y: 12, scale: 0.98 }
+            }
             transition={{ duration: reducedMotion ? 0.12 : 0.22, ease: [0.22, 1, 0.36, 1] }}
           >
             {title ? (

@@ -1,12 +1,12 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { DashboardPageHeader } from "@/components/dashboard/dashboard-page-header";
-import { SectionPanel } from "@/components/dashboard/section-panel";
+import { DashboardPageHeader } from "@/components/dashboard/shared/dashboard-page-header";
+import { SectionPanel } from "@/components/dashboard/shared/section-panel";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const MockAptitudeHub = dynamic(
-  () => import("@/components/dashboard/mock-aptitude-hub").then((mod) => mod.MockAptitudeHub),
+  () => import("@/components/dashboard/intern/mock-aptitude-hub").then((mod) => mod.MockAptitudeHub),
   {
     loading: () => <Skeleton className="h-96 w-full rounded-2xl" />,
     ssr: false

@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { SIDEBAR_MODULE_REGISTRY, SIDEBAR_MODULE_DESCRIPTIONS, type SidebarModuleKey } from "@/lib/company-portal";
+import { SearchInput } from "@/components/ui/search-input";
 import { cn } from "@/lib/utils";
 
 type SidebarModulePickerProps = {
@@ -49,11 +50,12 @@ export function SidebarModulePicker({ value, onChange, className }: SidebarModul
   return (
     <div className={cn("space-y-3", className)}>
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <input
+        <SearchInput
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onValueChange={setSearch}
           placeholder="Search permissions..."
-          className="ds-input w-full max-w-xs !h-9 text-xs"
+          containerClassName="w-full max-w-xs"
+          className="!h-9 text-xs"
         />
         <div className="flex items-center gap-3 text-xs">
           <span className="ds-caption">
@@ -75,6 +77,19 @@ export function SidebarModulePicker({ value, onChange, className }: SidebarModul
           </button>
         </div>
       </div>
+
+      {groups.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-[var(--ds-border)] px-4 py-6 text-center">
+          <p className="text-sm text-[var(--ds-text-secondary)]">No permissions match &quot;{search}&quot;.</p>
+          <button
+            type="button"
+            onClick={() => setSearch("")}
+            className="mt-2 text-xs font-semibold text-[var(--ds-accent)] hover:underline"
+          >
+            Clear search
+          </button>
+        </div>
+      ) : null}
 
       <div className="grid gap-3 sm:grid-cols-2">
         {groups.map(({ group, entries }) => (
@@ -98,7 +113,7 @@ export function SidebarModulePicker({ value, onChange, className }: SidebarModul
                       checked={checked}
                       disabled={disabled}
                       onChange={() => toggle(entry.key)}
-                      className="h-4 w-4 rounded border-[var(--ds-border-strong)] text-[var(--ds-accent)] focus:ring-primary-500"
+                      className="h-4 w-4 rounded border-[var(--ds-border-strong)] text-[var(--ds-accent)] focus:ring-[var(--ds-focus-ring)]"
                     />
                     <span className="text-[var(--ds-text)]">{entry.label}</span>
                     {disabled && <span className="text-[10px] uppercase tracking-wide text-[var(--ds-muted)]">CEO only</span>}

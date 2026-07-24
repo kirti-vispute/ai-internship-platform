@@ -126,6 +126,16 @@ const userSchema = new mongoose.Schema(
     sidebarModules: {
       type: [String],
       default: undefined
+    },
+    themePreference: {
+      type: String,
+      default: null,
+      trim: true
+    },
+    appearanceMode: {
+      type: String,
+      enum: ["light", "dark", null],
+      default: null
     }
   },
   { timestamps: true }

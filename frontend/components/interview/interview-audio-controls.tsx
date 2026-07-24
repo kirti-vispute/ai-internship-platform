@@ -45,28 +45,28 @@ export function InterviewAudioControls({
         <span
           className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium ${
             !micReady
-              ? "bg-amber-950/50 text-amber-300"
+              ? "bg-[var(--ds-warning-bg)] text-[var(--ds-warning)]"
               : muted
-                ? "bg-rose-950/50 text-rose-300"
-                : "bg-emerald-950/50 text-emerald-300"
+                ? "bg-[var(--ds-danger-bg)] text-[var(--ds-danger)]"
+                : "bg-[var(--ds-success-bg)] text-[var(--ds-success)]"
           }`}
         >
           {!micReady ? <MicOff className="h-3 w-3" /> : muted ? <MicOff className="h-3 w-3" /> : <Mic className="h-3 w-3" />}
           {!micReady ? "Microphone unavailable" : muted ? "You are muted" : "Microphone live"}
         </span>
         {mediaMode === "audio-only" ? (
-          <span className="rounded-full bg-sky-950/50 px-2.5 py-1 text-[11px] font-medium text-sky-300">Voice-only mode</span>
+          <span className="rounded-full bg-[var(--ds-info-bg)] px-2.5 py-1 text-[11px] font-medium text-[var(--ds-info)]">Voice-only mode</span>
         ) : null}
       </div>
 
       <div className="flex flex-wrap items-center justify-center gap-3">
         {audioInputDevices.length > 0 ? (
           <label className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
-            <span className="text-center text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+            <span className="text-center text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--ds-muted)]">
               Microphone
             </span>
             <select
-              className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs text-slate-200"
+              className="rounded-lg border border-[var(--ds-border)] bg-[var(--ds-surface)] px-3 py-1.5 text-xs text-[var(--ds-text)]"
               value={selectedAudioDeviceId}
               onChange={(event) => onSelectAudioDevice(event.target.value)}
               disabled={!micReady}
@@ -82,11 +82,11 @@ export function InterviewAudioControls({
 
         {videoInputDevices.length > 0 && onSelectVideoDevice ? (
           <label className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
-            <span className="text-center text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+            <span className="text-center text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--ds-muted)]">
               Camera
             </span>
             <select
-              className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs text-slate-200"
+              className="rounded-lg border border-[var(--ds-border)] bg-[var(--ds-surface)] px-3 py-1.5 text-xs text-[var(--ds-text)]"
               value={selectedVideoDeviceId}
               onChange={(event) => onSelectVideoDevice(event.target.value)}
             >
@@ -101,11 +101,11 @@ export function InterviewAudioControls({
 
         {speakerSupported && audioOutputDevices.length > 0 && onSelectSpeakerDevice ? (
           <label className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
-            <span className="text-center text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+            <span className="text-center text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--ds-muted)]">
               Speaker
             </span>
             <select
-              className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs text-slate-200"
+              className="rounded-lg border border-[var(--ds-border)] bg-[var(--ds-surface)] px-3 py-1.5 text-xs text-[var(--ds-text)]"
               value={selectedSpeakerDeviceId}
               onChange={(event) => onSelectSpeakerDevice(event.target.value)}
             >
@@ -117,13 +117,13 @@ export function InterviewAudioControls({
             </select>
           </label>
         ) : !speakerSupported ? (
-          <span className="text-[11px] text-slate-600">Speaker selection not supported in this browser</span>
+          <span className="text-[11px] text-[var(--ds-muted)]">Speaker selection not supported in this browser</span>
         ) : null}
       </div>
 
       {mediaError ? (
-        <div className="flex flex-col items-center gap-2 rounded-xl border border-amber-900/50 bg-amber-950/20 px-3 py-2 text-center">
-          <p className="text-xs text-amber-200">{mediaError}</p>
+        <div className="flex flex-col items-center gap-2 rounded-xl border border-[var(--ds-warning)] bg-[var(--ds-warning-bg)] px-3 py-2 text-center">
+          <p className="text-xs text-[var(--ds-warning)]">{mediaError}</p>
           <Button type="button" size="sm" variant="secondary" onClick={onRetryMedia}>
             <RefreshCw className="h-3.5 w-3.5" />
             Retry microphone

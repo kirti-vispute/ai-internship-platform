@@ -31,7 +31,7 @@ export function LogoMarquee({ logos = DEFAULT_LOGOS, className, tone = "light" }
       <p
         className={cn(
           "mb-4 text-center text-xs font-semibold uppercase tracking-[0.2em]",
-          isDark ? "text-internai-muted" : "text-slate-500 dark:text-slate-400"
+          isDark ? "text-internai-muted" : "text-[var(--ds-muted)]"
         )}
       >
         Trusted by hiring teams
@@ -41,7 +41,7 @@ export function LogoMarquee({ logos = DEFAULT_LOGOS, className, tone = "light" }
           "logo-marquee-mask relative overflow-hidden rounded-2xl border py-4",
           isDark
             ? "border-white/[0.06] bg-internai-surface/60"
-            : "border-slate-200/70 bg-white/50 dark:border-slate-700/80 dark:bg-slate-900/40"
+            : "border-[var(--ds-border)] bg-[var(--ds-card)]/50"
         )}
       >
         <div className="logo-marquee-track flex w-max items-center gap-10 px-6">
@@ -52,7 +52,7 @@ export function LogoMarquee({ logos = DEFAULT_LOGOS, className, tone = "light" }
                 "shrink-0 text-sm font-semibold tracking-wide transition-colors duration-300",
                 isDark
                   ? "text-internai-muted hover:text-internai-blue"
-                  : "text-slate-600 hover:text-cyan-600 dark:text-slate-300 dark:hover:text-cyan-300"
+                  : "text-[var(--ds-text-secondary)] hover:text-[var(--ds-primary)]"
               )}
             >
               {name}

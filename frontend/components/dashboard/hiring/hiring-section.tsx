@@ -12,6 +12,7 @@ import {
 import { InterviewScheduleModal } from "@/components/dashboard/company/interview-schedule-modal";
 import { ActiveJobsPanel } from "./active-jobs-panel";
 import { ApplicationsSheet } from "./applications-sheet";
+import { HiringPipelineKanban } from "./hiring-pipeline-kanban";
 import { PipelineOverview } from "./pipeline-overview";
 import { QuickActionsPanel } from "./quick-actions-panel";
 import { ShortlistPanel } from "./shortlist-panel";
@@ -51,6 +52,7 @@ type HiringSectionProps = {
   onViewProfile: (applicationId: string) => void;
   onViewResume?: (applicationId: string) => void;
   onScheduleInterview?: (applicationId: string, slot: InterviewScheduleSlot) => Promise<void>;
+  onMoveStage?: (applicationId: string, status: string, note?: string) => Promise<void>;
 };
 
 export function HiringSection({
@@ -68,7 +70,8 @@ export function HiringSection({
   onDeleteInternship,
   onViewProfile,
   onViewResume,
-  onScheduleInterview
+  onScheduleInterview,
+  onMoveStage
 }: HiringSectionProps) {
   const router = useRouter();
   const [sheet, setSheet] = useState<SheetState>({ mode: "closed" });
@@ -139,7 +142,22 @@ export function HiringSection({
                 onDeleteInternship={onDeleteInternship}
                 onViewApplications={(internshipId, role) => setSheet({ mode: "job", internshipId, role })}
               />
-              <PipelineOverview applications={applications} variant="extended" />
+              {focus === "pipeline" && onMoveStage ? (
+                <HiringPipelineKanban
+                  applications={applications}
+                  matches={matches}
+                  internships={internships}
+                  saving={saving}
+                  onMoveStage={onMoveStage}
+                  onOpenProfile={onViewProfile}
+                  onViewResume={(applicationId) => onViewResume?.(applicationId)}
+                  onScheduleInterview={(applicationId, candidateName) =>
+                    setScheduleTarget({ applicationId, candidateName })
+                  }
+                />
+              ) : (
+                <PipelineOverview applications={applications} variant="extended" />
+              )}
               <ShortlistPanel
                 applications={applications}
                 matches={matches}

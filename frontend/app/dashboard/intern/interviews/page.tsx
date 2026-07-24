@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { DashboardPageHeader } from "@/components/dashboard/dashboard-page-header";
+import { DashboardPageHeader } from "@/components/dashboard/shared/dashboard-page-header";
 import { ScheduledInterviewsPanel } from "@/components/dashboard/intern/scheduled-interviews-panel";
 import {
   fetchInternInterviews,
@@ -13,7 +13,7 @@ import {
   mapApiInterviewsToRecords,
   type ScheduledInterviewRecord
 } from "@/lib/interview-workflow";
-import { Skeleton } from "@/components/ui/skeleton";
+import { SkeletonList } from "@/components/ui/skeleton";
 import { useChatSocket } from "@/lib/use-chat-socket";
 
 export default function InternInterviewsPage() {
@@ -82,13 +82,15 @@ export default function InternInterviewsPage() {
           />
 
           {error && (
-            <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300">
+            <div className="rounded-xl border border-[var(--ds-danger)] bg-[var(--ds-danger-bg)] px-4 py-3 text-sm text-[var(--ds-danger)]">
               {error}
             </div>
           )}
 
           {loading ? (
-            <Skeleton className="h-48 w-full rounded-2xl" />
+            <div aria-busy="true" aria-live="polite">
+              <SkeletonList rows={3} />
+            </div>
           ) : (
             <ScheduledInterviewsPanel interviewRecords={allApiInterviews} pastInterviewRecords={pastInterviewRecords} />
           )}

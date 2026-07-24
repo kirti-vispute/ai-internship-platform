@@ -1,12 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from "react";
-import { DashboardPageHeader } from "@/components/dashboard/dashboard-page-header";
-import { SectionPanel } from "@/components/dashboard/section-panel";
-import { BrandedEmptyState, EmptyState } from "@/components/dashboard/empty-state";
+import { DashboardPageHeader } from "@/components/dashboard/shared/dashboard-page-header";
+import { SectionPanel } from "@/components/dashboard/shared/section-panel";
+import { BrandedEmptyState, EmptyState } from "@/components/dashboard/shared/empty-state";
+import { ErrorState, classifyErrorMessage } from "@/components/errors/error-state";
 import { BRANDED_EMPTY_STATES } from "@/lib/brand";
 import { BarChart3, ClipboardList, LayoutGrid, Pencil, Sparkles } from "lucide-react";
-import { RecentMessagesWidget } from "@/components/dashboard/recent-messages-widget";
+import { RecentMessagesWidget } from "@/components/dashboard/chat/recent-messages-widget";
 import { Button } from "@/components/ui/button";
 import { AppIcon } from "@/components/icons/app-icon";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -50,7 +51,14 @@ import {
 import { CareerProgressHub } from "@/components/dashboard/intern/career-progress-hub";
 import { WeeklyAiInsights } from "@/components/dashboard/intern/weekly-ai-insights";
 import { ProgressChartsPanel } from "@/components/dashboard/intern/progress-charts-panel";
-import { DashboardTabs, type DashboardTabItem } from "@/components/dashboard/dashboard-tabs";
+import { DashboardTabs, type DashboardTabItem } from "@/components/dashboard/shared/dashboard-tabs";
+import {
+  AchievementsSection,
+  CareerReadinessSection,
+  PlacementReadinessTiersSection,
+  PriorityRoadmapSection,
+  TodaysFocusSection
+} from "@/components/dashboard/intern/career-coach-dashboard";
 
 export default function InternDashboardOverviewPage() {
   const [profile, setProfile] = useState<InternProfile | null>(null);
@@ -166,18 +174,6 @@ export default function InternDashboardOverviewPage() {
   );
 
   const recentApplications = applications.slice(0, 5);
-  const nextSteps = useMemo(() => {
-    if (!profile) return [];
-    const steps: string[] = [];
-    if (!profile.resumeUploaded) steps.push("Upload Resume");
-    if (profileCompletion < 100) steps.push("Complete Profile");
-    if ((profile.certifications || []).length === 0 && (profile.certificationEntries || []).length === 0) {
-      steps.push("Add Certifications");
-    }
-    if ((profile.resume?.score || 0) < 75) steps.push("Improve Resume Score");
-    if (missingSkills.length > 0) steps.push("Missing Skills");
-    return steps;
-  }, [profile, profileCompletion, missingSkills]);
 
   const tabs = useMemo(() => {
     const items: DashboardTabItem[] = [
@@ -187,41 +183,41 @@ export default function InternDashboardOverviewPage() {
         icon: LayoutGrid,
         content: (
           <>
-            <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              <AtsReadinessCard profile={profile} analysis={profile?.resume?.analysis} />
-              <SkillGapCard analysis={profile?.resume?.analysis} />
-              <PlacementReadinessCard readiness={readiness} analysis={profile?.resume?.analysis} />
-            </section>
+            <QuickActions />
 
-            <StatisticsCards
+            <SectionPanel title="Recent Notifications" subtitle="Latest updates from applications and recruiters.">
+              {notifications.length === 0 ? (
+                <BrandedEmptyState preset={BRANDED_EMPTY_STATES.notifications} presetKey="notifications" />
+              ) : (
+                <>
+                  <ul className="space-y-2">
+                    {notifications.slice(0, 3).map((item) => (
+                      <li key={item._id} className="surface-subtle px-4 py-3">
+                        <p className="text-sm font-semibold text-[var(--ds-text)]">{item.title}</p>
+                        {item.message ? <p className="mt-0.5 text-xs text-[var(--ds-text-secondary)]">{item.message}</p> : null}
+                        <p className="mt-1 text-[11px] text-[var(--ds-muted)]">{new Date(item.createdAt).toLocaleString()}</p>
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="pt-3">
+                    <Button href="/dashboard/intern/notifications" type="button" size="sm" variant="secondary">
+                      View all
+                    </Button>
+                  </div>
+                </>
+              )}
+            </SectionPanel>
+
+            <CareerReadinessSection readiness={readiness} analysis={profile?.resume?.analysis} profile={profile} />
+
+            <TodaysFocusSection
               profile={profile}
               analysis={profile?.resume?.analysis}
-              profileCompletion={profileCompletion}
-              applications={applications}
-              interviewCount={interviewCount}
-              savedCount={savedInternships.length}
+              topWeakness={topWeakness}
+              missingSkills={missingSkills}
             />
 
-            <QuickActions />
-          </>
-        )
-      },
-      {
-        key: "progress",
-        label: "Progress & Analytics",
-        icon: BarChart3,
-        content: (
-          <>
-            <CareerProgressHub profile={profile} analysis={profile?.resume?.analysis} readiness={readiness} />
-            <DashboardCharts applications={applications} analysis={profile?.resume?.analysis} />
-            <ProgressChartsPanel applications={applications} interviewRecords={interviewRecords} />
-            <WeaknessAnalysisPanel
-              profile={profile}
-              options={weaknessOptions}
-              loading={recommendationsLoading}
-              error={error}
-              onRetry={loadDashboard}
-            />
+            <PriorityRoadmapSection profile={profile} analysis={profile?.resume?.analysis} />
           </>
         )
       },
@@ -247,23 +243,23 @@ export default function InternDashboardOverviewPage() {
                 <div className="overflow-x-auto">
                   <table className="w-full text-left">
                     <thead>
-                      <tr className="border-b border-slate-200 dark:border-slate-800">
-                        <th className="py-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Role</th>
-                        <th className="py-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Company</th>
-                        <th className="py-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Applied On</th>
-                        <th className="py-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Status</th>
+                      <tr className="border-b border-[var(--ds-border)]">
+                        <th className="py-2 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--ds-muted)]">Role</th>
+                        <th className="py-2 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--ds-muted)]">Company</th>
+                        <th className="py-2 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--ds-muted)]">Applied On</th>
+                        <th className="py-2 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--ds-muted)]">Status</th>
                       </tr>
                     </thead>
                     <tbody>
                       {recentApplications.map((app) => (
-                        <tr key={app._id} className="border-b border-slate-100 text-sm dark:border-slate-800/70">
-                          <td className="py-2.5 pr-2 font-medium text-slate-900 dark:text-slate-100">{app.internship?.role || "Internship"}</td>
-                          <td className="py-2.5 pr-2 text-slate-600 dark:text-slate-300">{app.internship?.company?.companyName || "Company"}</td>
-                          <td className="py-2.5 pr-2 text-slate-600 dark:text-slate-300">
+                        <tr key={app._id} className="border-b border-[var(--ds-border)] text-sm">
+                          <td className="py-2.5 pr-2 font-medium text-[var(--ds-text)]">{app.internship?.role || "Internship"}</td>
+                          <td className="py-2.5 pr-2 text-[var(--ds-text-secondary)]">{app.internship?.company?.companyName || "Company"}</td>
+                          <td className="py-2.5 pr-2 text-[var(--ds-text-secondary)]">
                             {app.appliedAt ? new Date(app.appliedAt).toLocaleDateString() : "—"}
                           </td>
                           <td className="py-2.5">
-                            <span className="inline-flex rounded-full bg-primary-100 px-2.5 py-1 text-xs font-semibold capitalize text-primary-700 dark:bg-primary-900/40 dark:text-primary-300">
+                            <span className="inline-flex rounded-full bg-[var(--ds-primary)]/10 px-2.5 py-1 text-xs font-semibold capitalize text-[var(--ds-primary)]">
                               {(app.status || "pending").replace(/_/g, " ")}
                             </span>
                           </td>
@@ -299,51 +295,50 @@ export default function InternDashboardOverviewPage() {
               notifications={notifications}
             />
 
-            <SectionPanel title="Next Steps" subtitle="Priority actions to improve matching and hiring outcomes.">
-              {nextSteps.length === 0 ? (
-                <p className="surface-subtle px-4 py-3 text-sm text-slate-700 dark:text-slate-300">
-                  Great progress. Keep monitoring applications and interview updates.
-                </p>
-              ) : (
-                <ul className="space-y-2 text-sm text-slate-700 dark:text-slate-300">
-                  {nextSteps.includes("Upload Resume") && (
-                    <li className="surface-subtle px-4 py-3">Upload Resume</li>
-                  )}
-                  {nextSteps.includes("Complete Profile") && (
-                    <li className="surface-subtle px-4 py-3">Complete Profile</li>
-                  )}
-                  {nextSteps.includes("Add Certifications") && (
-                    <li className="surface-subtle px-4 py-3">Add Certifications</li>
-                  )}
-                  {nextSteps.includes("Improve Resume Score") && (
-                    <li className="surface-subtle px-4 py-3">Improve Resume Score</li>
-                  )}
-                  {nextSteps.includes("Missing Skills") && (
-                    <li className="surface-subtle px-4 py-3">
-                      Missing Skills{missingSkills.length > 0 ? `: ${missingSkills.join(", ")}` : ""}
-                    </li>
-                  )}
-                </ul>
-              )}
-            </SectionPanel>
-
             <RecentMessagesWidget role="intern" chatHref="/dashboard/intern/chat" />
+          </>
+        )
+      },
+      {
+        key: "progress",
+        label: "Progress & Analytics",
+        icon: BarChart3,
+        content: (
+          <>
+            <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              <AtsReadinessCard profile={profile} analysis={profile?.resume?.analysis} />
+              <SkillGapCard analysis={profile?.resume?.analysis} />
+              <PlacementReadinessCard readiness={readiness} analysis={profile?.resume?.analysis} />
+            </section>
 
-            <SectionPanel title="Recent Notifications" subtitle="Latest updates from applications and recruiters.">
-              {notifications.length === 0 ? (
-                <BrandedEmptyState preset={BRANDED_EMPTY_STATES.notifications} presetKey="notifications" />
-              ) : (
-                <ul className="space-y-2">
-                  {notifications.map((item) => (
-                    <li key={item._id} className="surface-subtle px-4 py-3">
-                      <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{item.title}</p>
-                      {item.message ? <p className="mt-0.5 text-xs text-slate-600 dark:text-slate-300">{item.message}</p> : null}
-                      <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">{new Date(item.createdAt).toLocaleString()}</p>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </SectionPanel>
+            <StatisticsCards
+              profile={profile}
+              analysis={profile?.resume?.analysis}
+              profileCompletion={profileCompletion}
+              applications={applications}
+              interviewCount={interviewCount}
+              savedCount={savedInternships.length}
+            />
+
+            <PlacementReadinessTiersSection readiness={readiness} />
+
+            <CareerProgressHub profile={profile} analysis={profile?.resume?.analysis} readiness={readiness} />
+
+            <AchievementsSection
+              profile={profile}
+              applications={applications}
+              interviewCount={interviewCount}
+              profileCompletion={profileCompletion}
+            />
+            <DashboardCharts applications={applications} analysis={profile?.resume?.analysis} />
+            <ProgressChartsPanel applications={applications} interviewRecords={interviewRecords} />
+            <WeaknessAnalysisPanel
+              profile={profile}
+              options={weaknessOptions}
+              loading={recommendationsLoading}
+              error={error}
+              onRetry={loadDashboard}
+            />
           </>
         )
       }
@@ -365,7 +360,6 @@ export default function InternDashboardOverviewPage() {
     topWeakness,
     recommendations,
     notifications,
-    nextSteps,
     missingSkills
   ]);
 
@@ -384,9 +378,12 @@ export default function InternDashboardOverviewPage() {
           />
 
           {error && (
-            <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300">
-              {error}
-            </div>
+            <ErrorState
+              variant={classifyErrorMessage(error)}
+              size="inline"
+              description={error}
+              onRetry={loadDashboard}
+            />
           )}
 
           {shouldBlockPageContent(profile, applications) && loading ? (

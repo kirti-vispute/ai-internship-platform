@@ -2,8 +2,10 @@
 
 import { ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { AppIcon } from "@/components/icons/app-icon";
 import type { ScheduledInterviewRecord } from "@/lib/interview-workflow";
 import { getInterviewJoinAvailability, formatInterviewJoinHint } from "@/lib/interview-join";
+import { safeUrl } from "@/lib/safe-url";
 
 type InterviewJoinButtonProps = {
   interview: ScheduledInterviewRecord;
@@ -19,18 +21,18 @@ export function InterviewJoinButton({ interview, size = "sm", className }: Inter
 
   if (!canJoin) {
     if (!hint) return null;
-    return <p className={`text-xs text-slate-500 dark:text-slate-400 ${className || ""}`}>{hint}</p>;
+    return <p className={`text-xs text-[var(--ds-muted)] ${className || ""}`}>{hint}</p>;
   }
 
   if (isExternalLink) {
     return (
       <a
-        href={joinHref}
+        href={safeUrl(joinHref)}
         target="_blank"
         rel="noopener noreferrer"
-        className={`inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary-500 to-blue-500 px-4 py-2 text-sm font-semibold text-white shadow-glow transition hover:from-primary-600 hover:to-blue-600 ${className || ""}`}
+        className={`inline-flex items-center justify-center gap-2 rounded-xl bg-[linear-gradient(135deg,var(--ds-gradient-from),var(--ds-gradient-to))] px-4 py-2 text-sm font-semibold text-[var(--ds-on-primary)] shadow-glow transition hover:brightness-110 ${className || ""}`}
       >
-        <ExternalLink className="h-3.5 w-3.5" />
+        <AppIcon icon={ExternalLink} size="xs" />
         Join Interview
       </a>
     );
@@ -38,7 +40,7 @@ export function InterviewJoinButton({ interview, size = "sm", className }: Inter
 
   return (
     <Button type="button" size={size} href={joinHref} className={className}>
-      <ExternalLink className="h-3.5 w-3.5" />
+      <AppIcon icon={ExternalLink} size="xs" />
       Join Interview
     </Button>
   );

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { Activity, AlertCircle, CalendarClock, ClipboardList, Users } from "lucide-react";
+import { Activity, CalendarClock, ClipboardList, Gift, TrendingUp, Users } from "lucide-react";
 import type { CompanyApplication } from "@/lib/company-portal";
 import {
   CompanyDashboardMetricTile,
@@ -9,7 +9,8 @@ import {
   CompanyDashboardSection,
   companyDashboardStyles
 } from "./company-dashboard-layout";
-import { getInterviewStageCandidates, normalizeRawStatus } from "../hiring/hiring-utils";
+import { AppIcon } from "@/components/icons/app-icon";
+import { computeHiringProgress, countOffersPending, normalizeRawStatus } from "../hiring/hiring-utils";
 import { extractScheduledInterviews } from "@/lib/interview-workflow";
 
 type TodayHiringActivityPanelProps = {
@@ -32,7 +33,7 @@ export function TodayHiringActivityPanel({ applications }: TodayHiringActivityPa
     const interviewsToday = extractScheduledInterviews(applications).filter((item) =>
       isToday(item.interviewDate)
     ).length;
-    const newApplicantsToday = applications.filter((app) => {
+    const candidatesAppliedToday = applications.filter((app) => {
       const appliedAt = (app as CompanyApplication & { appliedAt?: string; createdAt?: string }).appliedAt;
       const createdAt = (app as CompanyApplication & { createdAt?: string }).createdAt;
       return isToday(appliedAt || createdAt);
@@ -40,19 +41,15 @@ export function TodayHiringActivityPanel({ applications }: TodayHiringActivityPa
     const pendingReviews = applications.filter((app) =>
       ["applied", "reviewed", "under_review", "screening"].includes(normalizeRawStatus(app.status))
     ).length;
-    const awaitingFeedback = applications.filter((app) =>
-      ["interview_scheduled", "interview_completed", "technical_round", "hr_round"].includes(
-        normalizeRawStatus(app.status)
-      )
-    ).length;
-    const scheduledInterviews = getInterviewStageCandidates(applications).length;
+    const offersPending = countOffersPending(applications);
+    const hiringProgress = computeHiringProgress(applications);
 
     return {
       interviewsToday,
-      newApplicantsToday,
+      candidatesAppliedToday,
       pendingReviews,
-      awaitingFeedback,
-      scheduledInterviews
+      offersPending,
+      hiringProgress
     };
   }, [applications]);
 
@@ -60,58 +57,58 @@ export function TodayHiringActivityPanel({ applications }: TodayHiringActivityPa
     <CompanyDashboardSection
       id="dashboard-today-activity"
       icon={Activity}
-      title="Today's Hiring Activity"
+      title="Today's Hiring Overview"
       description="What needs your attention right now?"
     >
-      <CompanyDashboardPanelCard className="bg-gradient-to-br from-slate-950/20 via-transparent to-primary-950/20">
+      <CompanyDashboardPanelCard className="bg-gradient-to-br from-[var(--ds-shadow)] via-transparent to-[var(--ds-primary)]/10">
         <div className={companyDashboardStyles.metricGridFive}>
           <CompanyDashboardMetricTile
-            label="Interviews Today"
+            label="Candidates Applied Today"
+            value={metrics.candidatesAppliedToday}
+            className="company-dashboard-kpi-accent"
+          />
+          <CompanyDashboardMetricTile
+            label="Interviews Scheduled Today"
             value={metrics.interviewsToday}
             className="company-dashboard-kpi-accent"
           />
           <CompanyDashboardMetricTile
-            label="New Applicants Today"
-            value={metrics.newApplicantsToday}
-            className="company-dashboard-kpi-accent"
-          />
-          <CompanyDashboardMetricTile
-            label="Pending Candidate Reviews"
+            label="Pending Reviews"
             value={metrics.pendingReviews}
             className="company-dashboard-kpi-accent"
           />
           <CompanyDashboardMetricTile
-            label="Awaiting Feedback"
-            value={metrics.awaitingFeedback}
+            label="Offers Pending"
+            value={metrics.offersPending}
             className="company-dashboard-kpi-accent"
           />
           <CompanyDashboardMetricTile
-            label="Scheduled Interviews"
-            value={metrics.scheduledInterviews}
+            label="Hiring Progress"
+            value={`${metrics.hiringProgress}%`}
             className="company-dashboard-kpi-accent"
           />
         </div>
 
         <div className="mt-4 grid gap-2 text-xs text-[var(--ds-muted)] sm:grid-cols-2 lg:grid-cols-5">
           <p className="inline-flex items-center gap-1.5">
-            <CalendarClock className="h-3.5 w-3.5" />
-            Live interview load
-          </p>
-          <p className="inline-flex items-center gap-1.5">
-            <Users className="h-3.5 w-3.5" />
+            <AppIcon icon={Users} size="xs" />
             Fresh pipeline intake
           </p>
           <p className="inline-flex items-center gap-1.5">
-            <ClipboardList className="h-3.5 w-3.5" />
+            <AppIcon icon={CalendarClock} size="xs" />
+            Live interview load
+          </p>
+          <p className="inline-flex items-center gap-1.5">
+            <AppIcon icon={ClipboardList} size="xs" />
             Screening backlog
           </p>
           <p className="inline-flex items-center gap-1.5">
-            <AlertCircle className="h-3.5 w-3.5" />
-            Post-interview follow-ups
+            <AppIcon icon={Gift} size="xs" />
+            Awaiting candidate response
           </p>
           <p className="inline-flex items-center gap-1.5">
-            <CalendarClock className="h-3.5 w-3.5" />
-            Interview pipeline
+            <AppIcon icon={TrendingUp} size="xs" />
+            Share of pipeline past Applied
           </p>
         </div>
       </CompanyDashboardPanelCard>

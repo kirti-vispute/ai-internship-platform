@@ -5,17 +5,18 @@ import { Activity, BarChart3, CalendarClock, Sparkles } from "lucide-react";
 import type { CompanyApplication, CompanyInternship, CompanyMatchedCandidate, CompanyCurrentUser } from "@/lib/company-portal";
 import { hasSidebarModule, SIDEBAR_MODULE_KEYS } from "@/lib/company-portal";
 import type { InterviewScheduleSlot } from "@/lib/ai-hiring";
-import { RecentMessagesWidget } from "@/components/dashboard/recent-messages-widget";
+import { RecentMessagesWidget } from "@/components/dashboard/chat/recent-messages-widget";
 import { ApplicationsSheet } from "@/components/dashboard/hiring/applications-sheet";
 import { QuickActionsPanel } from "@/components/dashboard/hiring/quick-actions-panel";
-import { countInterviewStageCandidates, countOffersSent } from "@/components/dashboard/hiring/hiring-utils";
+import { PipelineOverview } from "@/components/dashboard/hiring/pipeline-overview";
+import { countInterviewStageCandidates, type HiringPipelineStageKey } from "@/components/dashboard/hiring/hiring-utils";
 import { extractScheduledInterviews, getInterviewerSuggestions, type ScheduledInterviewRecord } from "@/lib/interview-workflow";
 import {
   CompanyDashboardMainGrid,
   CompanyDashboardPageIntro,
   companyDashboardStyles
 } from "./company-dashboard-layout";
-import { DashboardTabs, type DashboardTabItem } from "@/components/dashboard/dashboard-tabs";
+import { DashboardTabs, type DashboardTabItem } from "@/components/dashboard/shared/dashboard-tabs";
 import { DashboardOverviewStats } from "./dashboard-overview-stats";
 import { ApplicationsOverTimePanel } from "./applications-over-time-panel";
 import { InternshipPerformancePanel } from "./internship-performance-panel";
@@ -25,8 +26,16 @@ import { InterviewSchedulingPanel, type InterviewScheduleTarget } from "./interv
 import { MatchedCandidatesPanel } from "./matched-candidates-panel";
 import { RoleHiringIntelligencePanel } from "./role-hiring-intelligence-panel";
 import { TodayHiringActivityPanel } from "./today-hiring-activity-panel";
+import { TodaysInterviewsPanel } from "./todays-interviews-panel";
+import { PriorityCandidatesPanel } from "./priority-candidates-panel";
+import { HiringInsightsSummary } from "./hiring-insights-summary";
+import { RecentActivityTimeline } from "./recent-activity-timeline";
 
-type SheetState = { mode: "closed" } | { mode: "all" } | { mode: "interviews" };
+type SheetState =
+  | { mode: "closed" }
+  | { mode: "all" }
+  | { mode: "interviews" }
+  | { mode: "stage"; stage: HiringPipelineStageKey };
 
 type ScheduleTarget = InterviewScheduleTarget;
 
@@ -68,7 +77,6 @@ export function CompanyDashboardHub({
 
   const activeJobsCount = useMemo(() => internships.filter((item) => item.isActive).length, [internships]);
   const interviewCount = useMemo(() => countInterviewStageCandidates(applications), [applications]);
-  const offersSent = useMemo(() => countOffersSent(applications), [applications]);
   const interviewerSuggestions = useMemo(
     () => getInterviewerSuggestions(extractScheduledInterviews(applications)),
     [applications]
@@ -84,8 +92,8 @@ export function CompanyDashboardHub({
         icon: Activity,
         content: (
           <>
-            <TodayHiringActivityPanel applications={applications} />
             <ApplicationsOverTimePanel applications={applications} />
+            <RecentActivityTimeline applications={applications} />
           </>
         )
       },
@@ -136,6 +144,7 @@ export function CompanyDashboardHub({
       icon: BarChart3,
       content: (
         <>
+          <HiringInsightsSummary applications={applications} shortlistedCount={shortlistedCount} />
           <RoleHiringIntelligencePanel
             matches={matches}
             applications={applications}
@@ -164,6 +173,7 @@ export function CompanyDashboardHub({
     matches,
     saving,
     isHrScoped,
+    shortlistedCount,
     onOpenProfile,
     onMessage,
     onShortlist,
@@ -193,12 +203,27 @@ export function CompanyDashboardHub({
         <CompanyDashboardMainGrid
           main={
             <>
-              <DashboardOverviewStats
-                activeJobs={activeJobsCount}
-                applicants={applications.length}
-                shortlisted={shortlistedCount}
-                interviews={interviewCount}
-                offersSent={offersSent}
+              <TodayHiringActivityPanel applications={applications} />
+
+              <DashboardOverviewStats activeJobs={activeJobsCount} interviews={interviewCount} />
+
+              <PipelineOverview
+                applications={applications}
+                variant="pipeline"
+                onStageClick={(stage) => setSheet({ mode: "stage", stage })}
+              />
+
+              <TodaysInterviewsPanel
+                applications={applications}
+                onViewProfile={onOpenProfile}
+                onScheduleInterview={(target) => setScheduleTarget(target)}
+              />
+
+              <PriorityCandidatesPanel
+                matches={matches}
+                applications={applications}
+                internships={internships}
+                onOpenProfile={onOpenProfile}
               />
 
               <DashboardTabs tabs={tabs} />
@@ -220,16 +245,24 @@ export function CompanyDashboardHub({
 
       <ApplicationsSheet
         open={sheet.mode !== "closed"}
-        title={sheet.mode === "interviews" ? "Schedule Interviews" : "All Applications"}
+        title={
+          sheet.mode === "interviews"
+            ? "Schedule Interviews"
+            : sheet.mode === "stage"
+              ? `Pipeline · ${sheet.stage.charAt(0).toUpperCase()}${sheet.stage.slice(1)}`
+              : "All Applications"
+        }
         subtitle={
           sheet.mode === "interviews"
             ? "Candidates currently in the interview stage."
-            : sheet.mode === "all"
-              ? "Browse every application across active roles."
-              : undefined
+            : sheet.mode === "stage"
+              ? "Candidates currently in this pipeline stage."
+              : sheet.mode === "all"
+                ? "Browse every application across active roles."
+                : undefined
         }
         applications={applications}
-        filterStage={sheet.mode === "interviews" ? "interview" : null}
+        filterStage={sheet.mode === "interviews" ? "interview" : sheet.mode === "stage" ? sheet.stage : null}
         onClose={() => setSheet({ mode: "closed" })}
         onViewProfile={onOpenProfile}
       />

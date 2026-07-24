@@ -1,6 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import { ExternalLink as ExternalLinkIcon } from "lucide-react";
 import { AppIcon } from "@/components/icons/app-icon";
+import { safeUrl } from "@/lib/safe-url";
 import { cn } from "@/lib/utils";
 
 type ExternalLinkProps = {
@@ -17,7 +18,7 @@ export function ExternalLink({ href, children, className, icon, showIcon = true 
 
   return (
     <a
-      href={href}
+      href={safeUrl(href)}
       target="_blank"
       rel="noreferrer noopener"
       className={cn("text-link", className)}

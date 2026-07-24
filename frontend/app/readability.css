@@ -9,14 +9,14 @@
   --ds-muted: #b4c2d0;
   --ds-muted-soft: #9eb0c2;
   --ds-accent: #d8e8ff;
-  --ds-accent-strong: #eef4ff;
+  --ds-accent-strong: var(--ds-accent);
   --ds-surface: rgba(18, 26, 40, 0.9);
   --ds-surface-raised: rgba(30, 42, 58, 0.96);
   --ds-border: rgba(255, 255, 255, 0.12);
   --ds-border-strong: rgba(255, 255, 255, 0.2);
   --ds-focus-ring: rgba(216, 232, 255, 0.35);
-  --ds-placeholder: #9eb0c2;
-  --ds-disabled-text: #8fa3b8;
+  --ds-placeholder: var(--ds-muted);
+  --ds-disabled-text: var(--ds-muted);
   --ds-disabled-bg: rgba(18, 26, 40, 0.55);
 }
 
@@ -184,7 +184,7 @@
 }
 
 .internai-platform .ds-input-error {
-  color: #fca5a5;
+  color: var(--ds-danger);
   font-weight: 500;
 }
 
@@ -208,6 +208,11 @@
 
 .internai-platform .ds-icon-btn:hover {
   color: var(--ds-text);
+}
+
+.internai-platform .ds-icon-btn:focus-visible {
+  outline: 2px solid var(--ds-focus-ring);
+  outline-offset: 2px;
 }
 
 /* —— Tables —— */
@@ -345,12 +350,12 @@
 
 /* —— Alerts —— */
 .internai-platform .ds-alert--success {
-  color: #a7f3d0;
+  color: var(--ds-success);
   border-color: rgba(110, 231, 183, 0.4);
 }
 
 .internai-platform .ds-alert--error {
-  color: #fecaca;
+  color: var(--ds-danger);
   border-color: rgba(248, 113, 113, 0.45);
 }
 
@@ -899,7 +904,7 @@
 
 .internai-platform .skill-chip:hover {
   color: var(--ds-accent-strong) !important;
-  background: rgba(40, 54, 74, 0.98) !important;
+  background: var(--ds-surface-hover) !important;
   border-color: var(--ds-border-strong) !important;
   -webkit-text-fill-color: var(--ds-accent-strong);
 }

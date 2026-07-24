@@ -2,11 +2,12 @@
 
 import { useCallback, useEffect, useLayoutEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ResumeIntelligenceDashboard } from "@/components/dashboard/resume-intelligence-dashboard";
-import { InternshipPicker } from "@/components/dashboard/internship-picker";
+import { ResumeIntelligenceDashboard } from "@/components/dashboard/intern/resume-intelligence-dashboard";
+import { InternshipPicker } from "@/components/dashboard/intern/internship-picker";
 import { InternProfile, InternshipListing, fetchInternProfileWithScore, peekInternProfile } from "@/lib/intern-portal";
 import { ReportDownloadButton } from "@/components/reports/report-download-button";
 import { apiRequest } from "@/lib/api-client";
+import { SkeletonPage } from "@/components/ui/skeleton";
 
 export default function InternResumeScorePage() {
   const router = useRouter();
@@ -86,11 +87,11 @@ export default function InternResumeScorePage() {
   return (
     <>
       {loading ? (
-          <div className="surface-muted p-5 text-sm text-slate-600 dark:text-slate-300">Loading resume intelligence…</div>
+          <SkeletonPage />
         ) : (
           <div className="space-y-5">
             {error && (
-              <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300">
+              <div className="rounded-xl border border-[var(--ds-danger)] bg-[var(--ds-danger-bg)] px-4 py-3 text-sm text-[var(--ds-danger)]">
                 {error}
               </div>
             )}

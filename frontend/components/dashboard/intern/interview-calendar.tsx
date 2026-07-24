@@ -20,6 +20,8 @@ import {
   Video,
   type LucideIcon
 } from "lucide-react";
+import { AppIcon } from "@/components/icons/app-icon";
+import { useTablistKeyboard } from "@/lib/use-tablist-keyboard";
 import type { Application } from "@/lib/intern-portal";
 import type { CompanyApplication } from "@/lib/company-portal";
 import type { CalendarDayEntry } from "@/lib/calendar-stickers";
@@ -43,7 +45,7 @@ import {
   weekDateRange
 } from "@/lib/calendar-personalization";
 import { CalendarDayDetailModal } from "@/components/calendar/calendar-day-detail-modal";
-import { SectionPanel } from "@/components/dashboard/section-panel";
+import { SectionPanel } from "@/components/dashboard/shared/section-panel";
 import { Button } from "@/components/ui/button";
 import { InterviewStatusChip } from "@/components/dashboard/interview/interview-status-chip";
 import { InterviewDetailsModal } from "@/components/dashboard/interview/interview-details-modal";
@@ -79,34 +81,34 @@ type EventAccent = { dot: string; chip: string; bar: string };
 
 const STATUS_ACCENTS: Record<InterviewDisplayStatus, EventAccent> = {
   upcoming: {
-    dot: "bg-sky-500",
-    bar: "bg-sky-500",
-    chip: "border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-900/50 dark:bg-sky-950/40 dark:text-sky-200"
+    dot: "bg-[var(--ds-info)]",
+    bar: "bg-[var(--ds-info)]",
+    chip: "border-[var(--ds-info)] bg-[var(--ds-info-bg)] text-[var(--ds-info)]"
   },
   scheduled: {
-    dot: "bg-amber-500",
-    bar: "bg-amber-500",
-    chip: "border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-200"
+    dot: "bg-[var(--ds-warning)]",
+    bar: "bg-[var(--ds-warning)]",
+    chip: "border-[var(--ds-warning)] bg-[var(--ds-warning-bg)] text-[var(--ds-warning)]"
   },
   in_progress: {
-    dot: "bg-violet-500",
-    bar: "bg-violet-500",
-    chip: "border-violet-200 bg-violet-50 text-violet-700 dark:border-violet-900/50 dark:bg-violet-950/40 dark:text-violet-200"
+    dot: "bg-[var(--ds-accent)]",
+    bar: "bg-[var(--ds-accent)]",
+    chip: "border-[var(--ds-accent)] bg-[var(--ds-surface-raised)] text-[var(--ds-accent)]"
   },
   completed: {
-    dot: "bg-emerald-500",
-    bar: "bg-emerald-500",
-    chip: "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:text-emerald-200"
+    dot: "bg-[var(--ds-success)]",
+    bar: "bg-[var(--ds-success)]",
+    chip: "border-[var(--ds-success)] bg-[var(--ds-success-bg)] text-[var(--ds-success)]"
   },
   cancelled: {
-    dot: "bg-rose-500",
-    bar: "bg-rose-500",
-    chip: "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-200"
+    dot: "bg-[var(--ds-danger)]",
+    bar: "bg-[var(--ds-danger)]",
+    chip: "border-[var(--ds-danger)] bg-[var(--ds-danger-bg)] text-[var(--ds-danger)]"
   },
   no_show: {
-    dot: "bg-slate-500",
-    bar: "bg-slate-500",
-    chip: "border-slate-300 bg-slate-100 text-slate-700 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-300"
+    dot: "bg-[var(--ds-muted)]",
+    bar: "bg-[var(--ds-muted)]",
+    chip: "border-[var(--ds-border)] bg-[var(--ds-surface-raised)] text-[var(--ds-muted)]"
   }
 };
 
@@ -156,11 +158,11 @@ const EventChip = memo(function EventChip({
       title={`${label} · ${formatInterviewDateTime(event.interviewDate, event.interviewTime)}`}
       aria-label={`${event.interviewType} with ${label} at ${formatInterviewTimeLabel(event.interviewTime)}, status ${event.interviewStatus}`}
       className={cn(
-        "flex w-full items-center gap-1 rounded-md border px-1.5 py-1 text-left text-[10px] font-medium transition duration-150 hover:brightness-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500",
+        "flex w-full items-center gap-1.5 rounded-md border px-1.5 py-1.5 text-left text-[11px] font-semibold transition duration-150 hover:-translate-y-px hover:shadow-sm hover:brightness-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ds-focus-ring)]",
         accent.chip
       )}
     >
-      <Icon className="h-2.5 w-2.5 shrink-0" aria-hidden />
+      <AppIcon icon={Icon} size="xs" className="text-current" />
       <span className="shrink-0 tabular-nums opacity-80">{formatInterviewTimeLabel(event.interviewTime)}</span>
       <span className="truncate">{label}</span>
     </button>
@@ -188,38 +190,38 @@ function EventCard({
   const showJoinSlot = audience === "company" && Boolean(joinAvailability.joinHref);
 
   return (
-    <div className="group flex w-full items-stretch gap-0 overflow-hidden rounded-xl border border-slate-200 bg-white text-left transition-[transform,box-shadow,border-color] duration-150 hover:-translate-y-px hover:border-primary-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-900 dark:hover:border-primary-800">
+    <div className="group flex w-full items-stretch gap-0 overflow-hidden rounded-xl border border-[var(--ds-border)] bg-[var(--ds-surface)] text-left transition-[transform,box-shadow,border-color] duration-150 hover:-translate-y-px hover:border-[var(--ds-primary)] hover:shadow-md">
       <span className={cn("w-1 shrink-0", accent.bar)} aria-hidden />
-      <button type="button" onClick={() => onSelect(event)} className="min-w-0 flex-1 px-3 py-2.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500">
+      <button type="button" onClick={() => onSelect(event)} className="min-w-0 flex-1 px-3 py-2.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ds-focus-ring)]">
         <span className="flex min-w-0 items-start gap-3">
           <span className={cn("mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border", accent.chip)}>
-            <Icon className="h-4 w-4" aria-hidden />
+            <AppIcon icon={Icon} size="sm" className="text-current" />
           </span>
           <span className="min-w-0 flex-1">
             <span className="flex flex-wrap items-center gap-2">
-              <span className="truncate font-semibold text-slate-900 dark:text-slate-100">{event.interviewType}</span>
+              <span className="truncate font-semibold text-[var(--ds-text)]">{event.interviewType}</span>
               <InterviewStatusChip status={event.interviewStatus} />
             </span>
-            <span className="mt-0.5 block truncate text-xs text-slate-600 dark:text-slate-300">
+            <span className="mt-0.5 block truncate text-xs text-[var(--ds-text-secondary)]">
               {getCalendarEventLabel(event, audience)} · {event.role}
             </span>
-            <span className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-500 dark:text-slate-400">
+            <span className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-[var(--ds-muted)]">
               <span className="whitespace-nowrap">{formatInterviewDateTime(event.interviewDate, event.interviewTime)}</span>
               <span className="whitespace-nowrap">{durationMinutes} min</span>
               <span className="inline-flex items-center gap-1 whitespace-nowrap">
-                <ModeIcon className="h-3 w-3" aria-hidden />
+                <AppIcon icon={ModeIcon} size="xs" />
                 {modeLabel}
               </span>
               {interviewers.length > 0 ? (
                 <span className="inline-flex items-center gap-1 truncate">
-                  <Users className="h-3 w-3 shrink-0" aria-hidden />
+                  <AppIcon icon={Users} size="xs" />
                   <span className="truncate">{interviewers.map((entry) => entry.name).join(", ")}</span>
                 </span>
               ) : null}
             </span>
             {event.notes ? (
-              <span className="mt-1 block truncate text-[11px] italic text-slate-500 dark:text-slate-400">
-                <StickyNote className="mr-1 inline h-3 w-3 shrink-0 align-[-1px]" aria-hidden />
+              <span className="mt-1 block truncate text-[11px] italic text-[var(--ds-muted)]">
+                <AppIcon icon={StickyNote} size="xs" className="mr-1 shrink-0 align-[-2px]" />
                 {event.notes}
               </span>
             ) : null}
@@ -266,10 +268,12 @@ const MonthDayCell = memo(function MonthDayCell({
     <div
       role="gridcell"
       className={cn(
-        "group relative flex min-h-[104px] flex-col gap-1 border-b border-r border-slate-100 p-1.5 transition-colors duration-150 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-900/40",
-        !inMonth && "bg-slate-50/60 dark:bg-slate-950/40",
-        isToday && "bg-primary-50/40 dark:bg-primary-950/30",
-        isSelected && "ring-2 ring-inset ring-primary-400 dark:ring-primary-600"
+        "group relative flex min-h-[110px] flex-col gap-1 border-b border-r border-[var(--ds-border)] p-1.5 transition-colors duration-150 hover:bg-[var(--ds-hover)]",
+        !inMonth && "bg-[var(--ds-surface)] opacity-60",
+        isToday && "bg-[color-mix(in_srgb,var(--ds-primary)_6%,transparent)]",
+        isSelected
+          ? "ring-2 ring-inset ring-[var(--ds-primary)]"
+          : isToday && "ring-1 ring-inset ring-[color-mix(in_srgb,var(--ds-primary)_40%,transparent)]"
       )}
     >
       <div className="flex items-center justify-between">
@@ -278,12 +282,12 @@ const MonthDayCell = memo(function MonthDayCell({
           onClick={() => onOpenDay(dayKey)}
           aria-label={`${dayLabelFromKey(dayKey)}. ${events.length} interview${events.length === 1 ? "" : "s"}. Open day details.`}
           className={cn(
-            "flex h-6 min-w-6 items-center justify-center rounded-full px-1 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500",
+            "flex h-6 min-w-6 items-center justify-center rounded-full px-1 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ds-focus-ring)]",
             isToday
-              ? "bg-primary-600 text-white"
+              ? "bg-[var(--ds-primary)] text-[var(--ds-on-primary)]"
               : inMonth
-                ? "text-slate-800 hover:bg-slate-100 dark:text-slate-100 dark:hover:bg-slate-800"
-                : "text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                ? "text-[var(--ds-text)] hover:bg-[var(--ds-hover)]"
+                : "text-[var(--ds-muted)] hover:bg-[var(--ds-hover)]"
           )}
         >
           {day.getDate()}
@@ -292,9 +296,9 @@ const MonthDayCell = memo(function MonthDayCell({
           type="button"
           onClick={() => onOpenDay(dayKey)}
           aria-label={`Add note or sticker for ${dayLabelFromKey(dayKey)}`}
-          className="rounded-md p-0.5 text-slate-400 opacity-0 transition hover:bg-slate-100 hover:text-slate-600 focus-visible:opacity-100 group-hover:opacity-100 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+          className="rounded-md p-0.5 text-[var(--ds-muted)] opacity-0 transition hover:bg-[var(--ds-hover)] hover:text-[var(--ds-text)] focus-visible:opacity-100 group-hover:opacity-100"
         >
-          <Plus className="h-3.5 w-3.5" aria-hidden />
+          <AppIcon icon={Plus} size="xs" />
         </button>
       </div>
 
@@ -303,16 +307,16 @@ const MonthDayCell = memo(function MonthDayCell({
           type="button"
           onClick={() => onOpenDay(dayKey)}
           aria-label={`${stickers.length} sticker${stickers.length === 1 ? "" : "s"}, ${noteCount} note${noteCount === 1 ? "" : "s"}`}
-          className="flex items-center gap-1 self-start rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] leading-none transition hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700"
+          className="flex items-center gap-1.5 self-start rounded-full bg-[var(--ds-surface-raised)] px-2 py-0.5 text-[10px] leading-none transition hover:bg-[var(--ds-hover)]"
         >
           {stickers.slice(0, 3).map((emoji, index) => (
-            <span key={index} aria-hidden>
+            <span key={index} aria-hidden className="text-lg leading-none">
               {emoji}
             </span>
           ))}
           {noteCount > 0 ? (
-            <span className="inline-flex items-center gap-0.5 text-slate-500 dark:text-slate-400">
-              <StickyNote className="h-2.5 w-2.5" aria-hidden />
+            <span className="inline-flex items-center gap-0.5 text-[var(--ds-muted)]">
+              <AppIcon icon={StickyNote} size="xs" />
               {noteCount}
             </span>
           ) : null}
@@ -327,7 +331,7 @@ const MonthDayCell = memo(function MonthDayCell({
           <button
             type="button"
             onClick={() => onOpenDay(dayKey)}
-            className="w-full rounded px-1 text-left text-[10px] font-medium text-slate-500 hover:text-primary-600 dark:text-slate-400"
+            className="w-full rounded px-1 text-left text-[11px] font-semibold text-[var(--ds-muted)] hover:text-[var(--ds-primary)]"
           >
             +{events.length - 2} more
           </button>
@@ -341,21 +345,21 @@ const MonthDayCell = memo(function MonthDayCell({
 
 function CalendarSkeleton() {
   return (
-    <div className="overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-700" aria-hidden>
-      <div className="grid grid-cols-7 border-b border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-900/60">
+    <div className="overflow-hidden rounded-2xl border border-[var(--ds-border)]" aria-hidden>
+      <div className="grid grid-cols-7 border-b border-[var(--ds-border)] bg-[var(--ds-surface)]">
         {WEEKDAYS.map((label) => (
-          <div key={label} className="px-2 py-2 text-center text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+          <div key={label} className="px-2 py-2 text-center text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--ds-muted)]">
             {label}
           </div>
         ))}
       </div>
       <div className="grid grid-cols-7">
         {Array.from({ length: 42 }).map((_, index) => (
-          <div key={index} className="min-h-[104px] border-b border-r border-slate-100 p-2 dark:border-slate-800">
-            <div className="h-5 w-5 rounded-full bg-slate-100 dark:bg-slate-800" />
+          <div key={index} className="min-h-[104px] border-b border-r border-[var(--ds-border)] p-2">
+            <div className="h-5 w-5 rounded-full bg-[var(--ds-surface-raised)]" />
             <div className="mt-3 space-y-1">
-              {index % 4 === 0 ? <div className="h-4 w-full animate-pulse rounded bg-slate-100 dark:bg-slate-800" /> : null}
-              {index % 3 === 0 ? <div className="h-4 w-4/5 animate-pulse rounded bg-slate-100 dark:bg-slate-800" /> : null}
+              {index % 4 === 0 ? <div className="h-4 w-full animate-pulse rounded bg-[var(--ds-surface-raised)]" /> : null}
+              {index % 3 === 0 ? <div className="h-4 w-4/5 animate-pulse rounded bg-[var(--ds-surface-raised)]" /> : null}
             </div>
           </div>
         ))}
@@ -368,6 +372,8 @@ function CalendarSkeleton() {
 
 export function InterviewCalendar({ applications = [], interviewRecords, audience = "intern", onViewProfile }: InterviewCalendarProps) {
   const [view, setView] = useState<CalendarView>("month");
+  const viewTablistRef = useRef<HTMLDivElement>(null);
+  useTablistKeyboard(viewTablistRef);
   const [cursor, setCursor] = useState(() => new Date());
   const [selected, setSelected] = useState<ScheduledInterviewRecord | null>(null);
   const [dayModalKey, setDayModalKey] = useState<string | null>(null);
@@ -508,7 +514,8 @@ const directionRef = useRef<1 | -1>(1);
         <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           {/* View switcher */}
           <div
-            className="inline-flex w-full rounded-xl border border-slate-200 bg-slate-50 p-1 dark:border-slate-700 dark:bg-slate-900/60 sm:w-auto"
+            ref={viewTablistRef}
+            className="inline-flex w-full rounded-xl border border-[var(--ds-border)] bg-[var(--ds-surface)] p-1 sm:w-auto"
             role="tablist"
             aria-label="Calendar view"
           >
@@ -524,20 +531,20 @@ const directionRef = useRef<1 | -1>(1);
                 aria-selected={view === mode}
                 onClick={() => setView(mode)}
                 className={cn(
-                  "relative inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 sm:flex-none",
+                  "relative inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ds-focus-ring)] sm:flex-none",
                   view === mode
-                    ? "text-white"
-                    : "text-slate-600 hover:bg-white hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+                    ? "text-[var(--ds-on-primary)]"
+                    : "text-[var(--ds-muted)] hover:bg-[var(--ds-hover)] hover:text-[var(--ds-text)]"
                 )}
               >
                 {view === mode ? (
                   <motion.span
                     layoutId="calendar-view-pill"
-                    className="absolute inset-0 rounded-lg bg-primary-600 shadow-sm"
+                    className="absolute inset-0 rounded-lg bg-[var(--ds-primary)] shadow-sm"
                     transition={{ type: "spring", stiffness: 420, damping: 34 }}
                   />
                 ) : null}
-                <Icon className="relative h-3.5 w-3.5" aria-hidden />
+                <AppIcon icon={Icon} size="xs" className="relative text-current" />
                 <span className="relative">{label}</span>
               </button>
             ))}
@@ -554,9 +561,9 @@ const directionRef = useRef<1 | -1>(1);
                   type="button"
                   onClick={stepBackward}
                   aria-label={view === "month" ? "Previous month" : "Previous week"}
-                  className="rounded-lg border border-slate-200 p-1.5 text-slate-600 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                  className="rounded-lg border border-[var(--ds-border)] p-1.5 text-[var(--ds-muted)] transition hover:bg-[var(--ds-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ds-focus-ring)]"
                 >
-                  <ChevronLeft className="h-4 w-4" aria-hidden />
+                  <AppIcon icon={ChevronLeft} size="sm" />
                 </button>
 
                 {view === "month" ? (
@@ -568,7 +575,7 @@ const directionRef = useRef<1 | -1>(1);
                       id="calendar-month-select"
                       value={cursor.getMonth()}
                       onChange={(event) => setCursor(new Date(cursor.getFullYear(), Number(event.target.value), 1))}
-                      className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm font-semibold text-slate-900 outline-none transition focus:ring-2 focus:ring-primary-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                      className="rounded-lg border border-[var(--ds-border)] bg-[var(--ds-surface)] px-2 py-1.5 text-sm font-semibold text-[var(--ds-text)] outline-none transition focus:ring-2 focus:ring-[var(--ds-focus-ring)]"
                     >
                       {MONTHS.map((month, index) => (
                         <option key={month} value={index}>
@@ -583,7 +590,7 @@ const directionRef = useRef<1 | -1>(1);
                       id="calendar-year-select"
                       value={cursor.getFullYear()}
                       onChange={(event) => setCursor(new Date(Number(event.target.value), cursor.getMonth(), 1))}
-                      className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm font-semibold text-slate-900 outline-none transition focus:ring-2 focus:ring-primary-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                      className="rounded-lg border border-[var(--ds-border)] bg-[var(--ds-surface)] px-2 py-1.5 text-sm font-semibold text-[var(--ds-text)] outline-none transition focus:ring-2 focus:ring-[var(--ds-focus-ring)]"
                     >
                       {yearOptions.map((year) => (
                         <option key={year} value={year}>
@@ -593,7 +600,7 @@ const directionRef = useRef<1 | -1>(1);
                     </select>
                   </div>
                 ) : (
-                  <span className="min-w-[9.5rem] px-2 text-center text-sm font-semibold text-slate-900 dark:text-slate-100">
+                  <span className="min-w-[9.5rem] px-2 text-center text-sm font-semibold text-[var(--ds-text)]">
                     {monthLabel} {cursor.getDate()}, {cursor.getFullYear()}
                   </span>
                 )}
@@ -602,9 +609,9 @@ const directionRef = useRef<1 | -1>(1);
                   type="button"
                   onClick={stepForward}
                   aria-label={view === "month" ? "Next month" : "Next week"}
-                  className="rounded-lg border border-slate-200 p-1.5 text-slate-600 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                  className="rounded-lg border border-[var(--ds-border)] p-1.5 text-[var(--ds-muted)] transition hover:bg-[var(--ds-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ds-focus-ring)]"
                 >
-                  <ChevronRight className="h-4 w-4" aria-hidden />
+                  <AppIcon icon={ChevronRight} size="sm" />
                 </button>
               </div>
             </div>
@@ -613,13 +620,13 @@ const directionRef = useRef<1 | -1>(1);
 
         {/* Error banner (non-blocking) */}
         {showError ? (
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 dark:border-rose-900/60 dark:bg-rose-950/30">
-            <div className="flex items-center gap-2 text-sm text-rose-700 dark:text-rose-200">
-              <AlertCircle className="h-4 w-4 shrink-0" aria-hidden />
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[var(--ds-danger)] bg-[var(--ds-danger-bg)] px-4 py-3">
+            <div className="flex items-center gap-2 text-sm text-[var(--ds-danger)]">
+              <AppIcon icon={AlertCircle} size="sm" className="text-current" />
               <span>Couldn&apos;t load your notes &amp; stickers. Interviews are still shown.</span>
             </div>
             <Button type="button" size="sm" variant="secondary" onClick={retryEntries}>
-              <RotateCcw className="h-3.5 w-3.5" aria-hidden />
+              <AppIcon icon={RotateCcw} size="xs" className="text-current" />
               Retry
             </Button>
           </div>
@@ -639,11 +646,11 @@ const directionRef = useRef<1 | -1>(1);
                 animate="center"
                 exit="exit"
                 transition={{ duration: 0.18, ease: "easeOut" }}
-                className="overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-700"
+                className="overflow-hidden rounded-2xl border border-[var(--ds-border)]"
                 role="grid"
                 aria-label={`${monthLabel} ${cursor.getFullYear()}`}
               >
-              <div className="grid grid-cols-7 border-b border-slate-200 bg-slate-50 text-center text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500 dark:border-slate-700 dark:bg-slate-900/60">
+              <div className="grid grid-cols-7 border-b border-[var(--ds-border)] bg-[var(--ds-surface)] text-center text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--ds-muted)]">
                 {WEEKDAYS.map((label) => (
                   <div key={label} role="columnheader" className="px-2 py-2">
                     <span className="hidden sm:inline">{label}</span>
@@ -702,33 +709,33 @@ const directionRef = useRef<1 | -1>(1);
                   <div
                     key={dayKey}
                     className={cn(
-                      "flex flex-col rounded-2xl border border-slate-200 p-3 transition-colors duration-150 dark:border-slate-700",
-                      isToday && "border-primary-300 bg-primary-50/40 dark:border-primary-800 dark:bg-primary-950/20"
+                      "flex flex-col rounded-2xl border border-[var(--ds-border)] p-3 transition-colors duration-150",
+                      isToday && "border-2 border-[var(--ds-primary)] bg-[color-mix(in_srgb,var(--ds-primary)_6%,transparent)]"
                     )}
                   >
                     <button
                       type="button"
                       onClick={() => openDay(dayKey)}
-                      className="flex items-center justify-between rounded-lg text-left transition hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+                      className="flex items-center justify-between rounded-lg p-1 -m-1 text-left transition hover:bg-[var(--ds-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ds-focus-ring)]"
                       aria-label={`Open ${dayLabelFromKey(dayKey)}`}
                     >
                       <span>
-                        <span className="block text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+                        <span className="block text-xs font-semibold uppercase tracking-[0.12em] text-[var(--ds-muted)]">
                           {day.toLocaleDateString(undefined, { weekday: "short" })}
                         </span>
-                        <span className={cn("mt-0.5 block text-lg font-bold", isToday ? "text-primary-700 dark:text-primary-300" : "text-slate-900 dark:text-slate-100")}>
+                        <span className={cn("mt-0.5 block text-lg font-bold", isToday ? "text-[var(--ds-primary)]" : "text-[var(--ds-text)]")}>
                           {day.getDate()}
                         </span>
                       </span>
-                      <span className="flex items-center gap-1 text-sm">
+                      <span className="flex items-center gap-1.5 text-sm">
                         {stickers.slice(0, 3).map((sticker, index) => (
-                          <span key={index} aria-hidden>
+                          <span key={index} aria-hidden className="text-lg leading-none">
                             {sticker.emoji || "🙂"}
                           </span>
                         ))}
                         {noteCount > 0 ? (
-                          <span className="inline-flex items-center gap-0.5 text-[10px] text-slate-400">
-                            <StickyNote className="h-3 w-3" aria-hidden />
+                          <span className="inline-flex items-center gap-0.5 text-[10px] text-[var(--ds-muted)]">
+                            <AppIcon icon={StickyNote} size="xs" />
                             {noteCount}
                           </span>
                         ) : null}
@@ -737,7 +744,7 @@ const directionRef = useRef<1 | -1>(1);
 
                     <div className="mt-3 space-y-2">
                       {events.length === 0 ? (
-                        <p className="rounded-lg border border-dashed border-slate-200 px-2 py-3 text-center text-[11px] text-slate-400 dark:border-slate-700">
+                        <p className="rounded-lg border border-dashed border-[var(--ds-border)] px-2 py-3 text-center text-[11px] text-[var(--ds-muted)]">
                           No interviews
                         </p>
                       ) : (
@@ -757,13 +764,13 @@ const directionRef = useRef<1 | -1>(1);
         {/* Timeline view */}
         {view === "timeline" ? (
           interviews.length === 0 ? (
-            <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-slate-200 px-6 py-12 text-center dark:border-slate-700">
-              <span className="flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 text-slate-400 dark:bg-slate-800">
-                <CalendarX2 className="h-7 w-7" aria-hidden />
+            <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-[var(--ds-border)] px-6 py-12 text-center">
+              <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--ds-surface-raised)]">
+                <AppIcon icon={CalendarX2} size="lg" />
               </span>
               <div>
-                <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">No events scheduled</p>
-                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                <p className="text-sm font-semibold text-[var(--ds-text)]">No events scheduled</p>
+                <p className="mt-1 text-xs text-[var(--ds-muted)]">
                   {audience === "company"
                     ? "Interviews you schedule will appear here as a chronological timeline."
                     : "Your upcoming interviews will appear here once they're scheduled."}

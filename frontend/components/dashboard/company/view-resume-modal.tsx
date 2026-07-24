@@ -2,8 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { AlertTriangle, Download, ExternalLink, FileText, Loader2, X } from "lucide-react";
+import { AlertTriangle, Download, ExternalLink, FileText, X } from "lucide-react";
 import { fetchCompanyApplicationResume } from "@/lib/company-portal";
+import { Skeleton } from "@/components/ui/skeleton";
+import { AppIcon } from "@/components/icons/app-icon";
 
 type ViewResumeModalProps = {
   open: boolean;
@@ -82,7 +84,7 @@ export function ViewResumeModal({ open, applicationId, candidateName, role, onCl
             <div className="flex items-start justify-between gap-3 border-b border-[var(--ds-border)] bg-gradient-to-r from-white/[0.03] via-transparent to-transparent px-5 py-4">
               <div className="flex items-start gap-3">
                 <span className="ds-stat-icon shrink-0">
-                  <FileText className="h-5 w-5" />
+                  <AppIcon icon={FileText} size="md" />
                 </span>
                 <div className="min-w-0">
                   <h2 id="view-resume-title" className="ds-h3">
@@ -105,7 +107,7 @@ export function ViewResumeModal({ open, applicationId, candidateName, role, onCl
                       aria-label="Open resume in new tab"
                       title="Open in new tab"
                     >
-                      <ExternalLink className="h-4 w-4" />
+                      <AppIcon icon={ExternalLink} size="sm" />
                     </a>
                     <a
                       href={objectUrl}
@@ -114,28 +116,35 @@ export function ViewResumeModal({ open, applicationId, candidateName, role, onCl
                       aria-label="Download resume"
                       title="Download"
                     >
-                      <Download className="h-4 w-4" />
+                      <AppIcon icon={Download} size="sm" />
                     </a>
                   </>
                 ) : null}
                 <button type="button" onClick={onClose} className="ds-icon-btn" aria-label="Close">
-                  <X className="h-4 w-4" />
+                  <AppIcon icon={X} size="sm" />
                 </button>
               </div>
             </div>
 
             <div className="min-h-0 flex-1 bg-[var(--ds-deep)]">
               {status === "loading" ? (
-                <div className="flex h-full flex-col items-center justify-center gap-2 text-[var(--ds-muted)]">
-                  <Loader2 className="h-6 w-6 animate-spin" />
-                  <p className="text-sm">Loading resume…</p>
+                <div className="flex h-full items-center justify-center p-8">
+                  <div className="w-full max-w-md space-y-3">
+                    <Skeleton className="h-4 w-2/3" />
+                    <Skeleton className="h-3 w-full" />
+                    <Skeleton className="h-3 w-full" />
+                    <Skeleton className="h-3 w-5/6" />
+                    <Skeleton className="mt-6 h-3 w-full" />
+                    <Skeleton className="h-3 w-full" />
+                    <Skeleton className="h-3 w-4/5" />
+                  </div>
                 </div>
               ) : null}
 
               {status === "error" ? (
                 <div className="flex h-full flex-col items-center justify-center gap-2 px-6 text-center">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-full border border-amber-400/25 bg-amber-400/10 text-amber-300">
-                    <AlertTriangle className="h-5 w-5" />
+                  <span className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--ds-warning)]/25 bg-[var(--ds-warning)]/10">
+                    <AppIcon icon={AlertTriangle} size="md" className="text-[var(--ds-warning)]" />
                   </span>
                   <p className="ds-h3">Resume unavailable</p>
                   <p className="ds-caption max-w-sm">{errorMessage}</p>
@@ -148,7 +157,7 @@ export function ViewResumeModal({ open, applicationId, candidateName, role, onCl
                 ) : (
                   <div className="flex h-full flex-col items-center justify-center gap-3 px-6 text-center">
                     <span className="ds-stat-icon">
-                      <FileText className="h-5 w-5" />
+                      <AppIcon icon={FileText} size="md" />
                     </span>
                     <p className="ds-h3">
                       Preview isn&apos;t available for this file type.
@@ -157,9 +166,9 @@ export function ViewResumeModal({ open, applicationId, candidateName, role, onCl
                       href={objectUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-primary-600 to-violet-600 px-3.5 py-2 text-sm font-medium text-white transition hover:from-primary-500 hover:to-violet-500"
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-[var(--ds-gradient-from)] to-[var(--ds-gradient-to)] px-3.5 py-2 text-sm font-medium text-[var(--ds-on-primary)] transition"
                     >
-                      <ExternalLink className="h-4 w-4" />
+                      <AppIcon icon={ExternalLink} size="sm" />
                       Open in new tab
                     </a>
                   </div>

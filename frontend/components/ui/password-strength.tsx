@@ -16,16 +16,16 @@ export function PasswordStrength({ password }: PasswordStrengthProps) {
             className={`h-1.5 flex-1 rounded-full ${
               segment <= score
                 ? score <= 1
-                  ? "bg-rose-500"
+                  ? "bg-[var(--ds-danger)]"
                   : score <= 3
-                    ? "bg-amber-500"
-                    : "bg-emerald-500"
-                : "bg-slate-200 dark:bg-slate-700"
+                    ? "bg-[var(--ds-warning)]"
+                    : "bg-[var(--ds-success)]"
+                : "bg-[var(--ds-border)]"
             }`}
           />
         ))}
       </div>
-      <p className="text-xs text-slate-500 dark:text-slate-400">Password strength: {label}</p>
+      <p className="text-xs text-[var(--ds-muted)]">Password strength: {label}</p>
     </div>
   );
 }

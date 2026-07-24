@@ -10,8 +10,10 @@ import {
   HelpCircle,
   IdCard,
   LayoutGrid,
+  LineChart,
   Lightbulb,
   MessageSquare,
+  Rocket,
   Search,
   Sparkles,
   UserPen
@@ -35,7 +37,10 @@ export type InternSidebarSectionConfig = {
 const BASE_SECTIONS: InternSidebarSectionConfig[] = [
   {
     title: "Main",
-    items: [{ label: "Dashboard Overview", href: "/dashboard/intern", icon: LayoutGrid }]
+    items: [
+      { label: "Dashboard Overview", href: "/dashboard/intern", icon: LayoutGrid },
+      { label: "Placement Hub", href: "/dashboard/intern/placement-hub", icon: Rocket }
+    ]
   },
   {
     title: "My Profile",
@@ -59,7 +64,7 @@ const BASE_SECTIONS: InternSidebarSectionConfig[] = [
       { label: "Saved Internships", href: "/dashboard/intern/internships/saved", icon: Bookmark },
       { label: "My Applications", href: "/dashboard/intern/applications", icon: ClipboardList },
       { label: "Scheduled Interviews", href: "/dashboard/intern/interviews", icon: Calendar },
-      { label: "Track Progress", href: "/dashboard/intern/track-progress", icon: BarChart3 }
+      { label: "Analytics Center", href: "/dashboard/intern/track-progress", icon: LineChart }
     ]
   },
   {

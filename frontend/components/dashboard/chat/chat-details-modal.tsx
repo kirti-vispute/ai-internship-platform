@@ -7,6 +7,7 @@ import { Briefcase, Calendar, ClipboardCheck, ExternalLink, Mail, ShieldCheck, U
 import type { Application } from "@/lib/intern-portal";
 import type { ChatCompanyContact, ChatConversation, ChatInternContact } from "@/lib/chat-portal";
 import { conversationTitle, type ChatRole } from "@/components/dashboard/chat/chat-utils";
+import { initialsFromWords as initialsFor } from "@/components/dashboard/shared/avatar-initials";
 import { AppIcon } from "@/components/icons/app-icon";
 import { cn } from "@/lib/utils";
 
@@ -20,29 +21,18 @@ type Props = {
 };
 
 const AVATAR_TONES = [
-  "bg-primary-500",
-  "bg-violet-500",
-  "bg-emerald-500",
-  "bg-amber-500",
-  "bg-rose-500",
-  "bg-sky-500"
+  "bg-[var(--ds-chart-1)]",
+  "bg-[var(--ds-chart-2)]",
+  "bg-[var(--ds-chart-3)]",
+  "bg-[var(--ds-chart-4)]",
+  "bg-[var(--ds-chart-5)]",
+  "bg-[var(--ds-chart-6)]"
 ];
 
 function toneForName(name: string) {
   let hash = 0;
   for (let i = 0; i < name.length; i += 1) hash = (hash * 31 + name.charCodeAt(i)) >>> 0;
   return AVATAR_TONES[hash % AVATAR_TONES.length];
-}
-
-function initialsFor(name: string) {
-  return (
-    name
-      .split(/\s+/)
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((part) => part[0]?.toUpperCase() || "")
-      .join("") || "?"
-  );
 }
 
 function formatStatusLabel(status?: string) {
@@ -52,10 +42,10 @@ function formatStatusLabel(status?: string) {
 function DetailRow({ icon, label, value }: { icon: typeof Briefcase; label: string; value: React.ReactNode }) {
   return (
     <div className="flex items-start gap-2.5">
-      <AppIcon icon={icon} size="xs" className="mt-0.5 shrink-0 text-slate-400 dark:text-slate-500" />
+      <AppIcon icon={icon} size="xs" className="mt-0.5 shrink-0 text-[var(--ds-muted)]" />
       <div className="min-w-0">
-        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">{label}</p>
-        <div className="mt-0.5 text-sm text-slate-700 dark:text-slate-200">{value}</div>
+        <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--ds-muted)]">{label}</p>
+        <div className="mt-0.5 text-sm text-[var(--ds-text-secondary)]">{value}</div>
       </div>
     </div>
   );
@@ -93,7 +83,7 @@ export function ChatDetailsModal({ role, conversation, contact, application, ope
           <motion.button
             type="button"
             aria-label="Close details"
-            className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
             onClick={onClose}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -104,7 +94,7 @@ export function ChatDetailsModal({ role, conversation, contact, application, ope
             role="dialog"
             aria-modal="true"
             aria-labelledby="chat-details-title"
-            className="relative z-10 w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-slate-800 dark:bg-slate-900"
+            className="relative z-10 w-full max-w-sm rounded-2xl border border-[var(--ds-border)] bg-[var(--ds-modal)] p-5 shadow-2xl"
             initial={{ opacity: 0, scale: 0.96, y: 8 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: 8 }}
@@ -114,24 +104,24 @@ export function ChatDetailsModal({ role, conversation, contact, application, ope
               <div className="flex items-start gap-3">
                 <span
                   className={cn(
-                    "flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-base font-bold text-white",
+                    "flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-base font-bold text-[var(--ds-on-primary)]",
                     toneForName(title)
                   )}
                 >
                   {initialsFor(title)}
                 </span>
                 <div className="min-w-0">
-                  <p id="chat-details-title" className="font-semibold text-slate-900 dark:text-slate-100">
+                  <p id="chat-details-title" className="font-semibold text-[var(--ds-text)]">
                     {title}
                   </p>
                   {role === "intern" && conversation.company?.verificationStatus ? (
-                    <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-medium uppercase text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
+                    <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-[var(--ds-success-bg)] px-2 py-0.5 text-[10px] font-medium uppercase text-[var(--ds-success)]">
                       <AppIcon icon={ShieldCheck} size="xs" className="text-current" />
                       {conversation.company.verificationStatus}
                     </span>
                   ) : null}
                   {role === "company" ? (
-                    <span className="mt-1 inline-block rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
+                    <span className="mt-1 inline-block rounded-full bg-[var(--ds-success-bg)] px-2 py-0.5 text-[10px] font-medium text-[var(--ds-success)]">
                       Active candidate
                     </span>
                   ) : null}
@@ -140,10 +130,10 @@ export function ChatDetailsModal({ role, conversation, contact, application, ope
               <button
                 type="button"
                 onClick={onClose}
-                className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+                className="rounded-lg p-1.5 text-[var(--ds-muted)] hover:bg-[var(--ds-hover)]"
                 aria-label="Close"
               >
-                <X className="h-4 w-4" />
+                <AppIcon icon={X} size="sm" />
               </button>
             </div>
 
@@ -163,7 +153,7 @@ export function ChatDetailsModal({ role, conversation, contact, application, ope
                   icon={ClipboardCheck}
                   label="Application Status"
                   value={
-                    <span className="inline-flex rounded-full bg-primary-50 px-2 py-0.5 text-xs font-semibold text-primary-700 dark:bg-primary-900/30 dark:text-primary-300">
+                    <span className="inline-flex rounded-full bg-[var(--ds-surface-raised)] px-2 py-0.5 text-xs font-semibold text-[var(--ds-accent)]">
                       {formatStatusLabel(application.status)}
                     </span>
                   }
@@ -179,29 +169,29 @@ export function ChatDetailsModal({ role, conversation, contact, application, ope
                       <>
                         <span className="font-medium">{formatStatusLabel(latestRound.status)}</span>
                         {latestRound.interviewDate ? (
-                          <span className="block text-xs text-slate-500 dark:text-slate-400">
+                          <span className="block text-xs text-[var(--ds-muted)]">
                             {new Date(latestRound.interviewDate).toLocaleDateString()}
                             {latestRound.roundType ? ` · ${latestRound.roundType}` : ""}
                           </span>
                         ) : null}
                       </>
                     ) : (
-                      <span className="text-slate-500 dark:text-slate-400">No interview scheduled yet</span>
+                      <span className="text-[var(--ds-muted)]">No interview scheduled yet</span>
                     )
                   }
                 />
               ) : null}
             </div>
 
-            <div className="mt-5 space-y-1.5 border-t border-slate-200/70 pt-4 dark:border-slate-800/70">
-              <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+            <div className="mt-5 space-y-1.5 border-t border-[var(--ds-border)] pt-4">
+              <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-[var(--ds-muted)]">
                 Quick actions
               </p>
               {role === "intern" ? (
                 <>
                   <Link
                     href="/dashboard/intern/applications"
-                    className="flex items-center gap-2 rounded-lg border border-slate-200/70 px-3 py-2 text-sm text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                    className="flex items-center gap-2 rounded-lg border border-[var(--ds-border)] px-3 py-2 text-sm text-[var(--ds-text-secondary)] transition-colors hover:bg-[var(--ds-hover)]"
                     onClick={onClose}
                   >
                     <AppIcon icon={ClipboardCheck} size="xs" />
@@ -209,7 +199,7 @@ export function ChatDetailsModal({ role, conversation, contact, application, ope
                   </Link>
                   <Link
                     href="/dashboard/intern/internships/search"
-                    className="flex items-center gap-2 rounded-lg border border-slate-200/70 px-3 py-2 text-sm text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                    className="flex items-center gap-2 rounded-lg border border-[var(--ds-border)] px-3 py-2 text-sm text-[var(--ds-text-secondary)] transition-colors hover:bg-[var(--ds-hover)]"
                     onClick={onClose}
                   >
                     <AppIcon icon={ExternalLink} size="xs" />
@@ -217,7 +207,7 @@ export function ChatDetailsModal({ role, conversation, contact, application, ope
                   </Link>
                   <Link
                     href="/dashboard/intern/interviews"
-                    className="flex items-center gap-2 rounded-lg border border-slate-200/70 px-3 py-2 text-sm text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                    className="flex items-center gap-2 rounded-lg border border-[var(--ds-border)] px-3 py-2 text-sm text-[var(--ds-text-secondary)] transition-colors hover:bg-[var(--ds-hover)]"
                     onClick={onClose}
                   >
                     <AppIcon icon={Calendar} size="xs" />
@@ -227,7 +217,7 @@ export function ChatDetailsModal({ role, conversation, contact, application, ope
               ) : (
                 <Link
                   href="/dashboard/company/hiring/applicants"
-                  className="flex items-center gap-2 rounded-lg border border-slate-200/70 px-3 py-2 text-sm text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                  className="flex items-center gap-2 rounded-lg border border-[var(--ds-border)] px-3 py-2 text-sm text-[var(--ds-text-secondary)] transition-colors hover:bg-[var(--ds-hover)]"
                   onClick={onClose}
                 >
                   <AppIcon icon={UserRound} size="xs" />

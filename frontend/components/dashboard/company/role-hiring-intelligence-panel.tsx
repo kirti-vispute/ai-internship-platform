@@ -12,6 +12,7 @@ import {
   companyDashboardStyles
 } from "./company-dashboard-layout";
 import { Button } from "@/components/ui/button";
+import { AppIcon } from "@/components/icons/app-icon";
 import { cn } from "@/lib/utils";
 
 type RoleHiringIntelligencePanelProps = {
@@ -28,9 +29,9 @@ const MAX_VISIBLE_ROLES = 6;
 type Priority = "High" | "Medium" | "Low";
 
 const priorityTone: Record<Priority, string> = {
-  High: "text-rose-300 bg-rose-950/40 ring-1 ring-rose-500/30",
-  Medium: "text-amber-300 bg-amber-950/40 ring-1 ring-amber-500/30",
-  Low: "text-emerald-300 bg-emerald-950/40 ring-1 ring-emerald-500/30"
+  High: "text-[var(--ds-danger)] bg-[var(--ds-danger-bg)] ring-1 ring-[var(--ds-danger)]/30",
+  Medium: "text-[var(--ds-warning)] bg-[var(--ds-warning-bg)] ring-1 ring-[var(--ds-warning)]/30",
+  Low: "text-[var(--ds-success)] bg-[var(--ds-success-bg)] ring-1 ring-[var(--ds-success)]/30"
 };
 
 /**
@@ -111,6 +112,7 @@ export function RoleHiringIntelligencePanel({
         <CompanyDashboardEmptyState
           title="No recommendations yet"
           description="Insights appear here once your roles start receiving applicants."
+          icon={TrendingUp}
         />
       </CompanyDashboardSection>
     );
@@ -146,9 +148,9 @@ type RecommendationCardProps = {
 type ConfidenceLevel = "High" | "Medium" | "Low";
 
 const confidenceTone: Record<ConfidenceLevel, { dot: string; badge: string }> = {
-  High: { dot: "bg-emerald-400", badge: "bg-emerald-950/40 text-emerald-300 ring-1 ring-emerald-500/30" },
-  Medium: { dot: "bg-amber-400", badge: "bg-amber-950/40 text-amber-300 ring-1 ring-amber-500/30" },
-  Low: { dot: "bg-rose-400", badge: "bg-rose-950/40 text-rose-300 ring-1 ring-rose-500/30" }
+  High: { dot: "bg-[var(--ds-success)]", badge: "bg-[var(--ds-success-bg)] text-[var(--ds-success)] ring-1 ring-[var(--ds-success)]/30" },
+  Medium: { dot: "bg-[var(--ds-warning)]", badge: "bg-[var(--ds-warning-bg)] text-[var(--ds-warning)] ring-1 ring-[var(--ds-warning)]/30" },
+  Low: { dot: "bg-[var(--ds-danger)]", badge: "bg-[var(--ds-danger-bg)] text-[var(--ds-danger)] ring-1 ring-[var(--ds-danger)]/30" }
 };
 
 function confidenceLevel(recommended: BestCandidateRecommendation): ConfidenceLevel {
@@ -179,7 +181,7 @@ function InsightRow({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex gap-2.5 border-t border-white/[0.06] py-2 first:border-t-0 first:pt-0 last:pb-0">
+    <div className="flex gap-2.5 border-t border-[var(--ds-border)] py-2 first:border-t-0 first:pt-0 last:pb-0">
       <span className={cn("mt-1.5 h-2 w-2 shrink-0 rounded-full", dot)} aria-hidden />
       <div className="min-w-0 flex-1">
         <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--ds-text)]">{title}</p>
@@ -232,10 +234,10 @@ function RecommendationCard({ prediction, recommended, onOpenProfile }: Recommen
       </div>
 
       {/* Recommended candidate strip */}
-      <div className="rounded-lg border border-white/10 bg-white/[0.02] px-3 py-2.5">
+      <div className="rounded-lg border border-[var(--ds-border)] bg-[var(--ds-glass)] px-3.5 py-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex min-w-0 items-center gap-1.5">
-            <Sparkles className="h-3.5 w-3.5 shrink-0 text-primary-300" aria-hidden />
+            <AppIcon icon={Sparkles} size="xs" className="text-[var(--ds-primary)]" />
             <p className="ds-body truncate font-medium">{insight.mainRecommendation}</p>
           </div>
           {recommended && confidence ? (
@@ -254,7 +256,7 @@ function RecommendationCard({ prediction, recommended, onOpenProfile }: Recommen
         {recommended ? (
           <div className="mt-2">
             <div
-              className="h-1.5 w-full overflow-hidden rounded-full bg-white/10"
+              className="h-1.5 w-full overflow-hidden rounded-full bg-[var(--ds-border)]"
               role="progressbar"
               aria-valuenow={recommended.matchScore}
               aria-valuemin={0}
@@ -262,12 +264,12 @@ function RecommendationCard({ prediction, recommended, onOpenProfile }: Recommen
               aria-label={`Match score for ${recommended.candidateName}: ${recommended.matchScore}%`}
             >
               <div
-                className="h-full rounded-full bg-gradient-to-r from-primary-500 to-emerald-400"
+                className="h-full rounded-full bg-gradient-to-r from-[var(--ds-gradient-from)] to-[var(--ds-gradient-to)]"
                 style={{ width: `${Math.min(100, Math.max(0, recommended.matchScore))}%` }}
               />
             </div>
-            <p className="mt-1 text-[10px] font-medium uppercase tracking-wide text-[var(--ds-muted)]">
-              {recommended.matchScore}% match · {recommended.recommendationLevel}
+            <p className="mt-1.5 text-xs font-semibold text-[var(--ds-text)]">
+              {recommended.matchScore}% match <span className="font-normal text-[var(--ds-muted)]">· {recommended.recommendationLevel}</span>
             </p>
           </div>
         ) : null}
@@ -276,29 +278,29 @@ function RecommendationCard({ prediction, recommended, onOpenProfile }: Recommen
       {/* Compact insight rows */}
       <div>
         {strengthSkills.length > 0 ? (
-          <InsightRow dot="bg-emerald-400" title="Key strengths">
+          <InsightRow dot="bg-[var(--ds-success)]" title="Key strengths">
             <SkillDots skills={strengthSkills} />
           </InsightRow>
         ) : (
-          <InsightRow dot="bg-emerald-400" title="Why recommended">
+          <InsightRow dot="bg-[var(--ds-success)]" title="Why recommended">
             <span className="line-clamp-2">{insight.reason}</span>
           </InsightRow>
         )}
 
         {missingSkills.length > 0 ? (
-          <InsightRow dot="bg-amber-400" title="Missing skills">
+          <InsightRow dot="bg-[var(--ds-warning)]" title="Missing skills">
             <SkillDots skills={missingSkills} />
           </InsightRow>
         ) : null}
 
-        <InsightRow dot="bg-violet-400" title="Next step">
+        <InsightRow dot="bg-[var(--ds-accent)]" title="Next step">
           {insight.suggestedAction}
         </InsightRow>
 
         {insight.improvementOpportunity ? (
-          <InsightRow dot="bg-amber-400" title="Verify first">
-            <span className="line-clamp-2 text-amber-200/90">
-              <AlertTriangle className="mr-1 inline h-3 w-3 align-[-1px]" aria-hidden />
+          <InsightRow dot="bg-[var(--ds-warning)]" title="Verify first">
+            <span className="line-clamp-2 text-[var(--ds-warning)]">
+              <AppIcon icon={AlertTriangle} size="xs" className="mr-1 align-[-1px]" />
               {insight.improvementOpportunity}
             </span>
           </InsightRow>
@@ -316,7 +318,7 @@ function RecommendationCard({ prediction, recommended, onOpenProfile }: Recommen
             onClick={() => onOpenProfile(recommended.applicationId!)}
           >
             View candidate
-            <ArrowRight className="h-3.5 w-3.5" />
+            <AppIcon icon={ArrowRight} size="xs" />
           </Button>
         </div>
       ) : null}
@@ -329,15 +331,15 @@ function RecommendationCardSkeleton() {
     <CompanyDashboardItemCard className="gap-3">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 space-y-2">
-          <div className="h-4 w-32 animate-pulse rounded bg-white/10" />
-          <div className="h-3 w-40 animate-pulse rounded bg-white/5" />
+          <div className="h-4 w-32 animate-pulse rounded bg-[var(--ds-surface-raised)]" />
+          <div className="h-3 w-40 animate-pulse rounded bg-[var(--ds-surface)]" />
         </div>
-        <div className="h-5 w-20 animate-pulse rounded-full bg-white/10" />
+        <div className="h-5 w-20 animate-pulse rounded-full bg-[var(--ds-surface-raised)]" />
       </div>
-      <div className="h-16 w-full animate-pulse rounded-lg bg-white/5" />
+      <div className="h-16 w-full animate-pulse rounded-lg bg-[var(--ds-surface)]" />
       <div className="space-y-2">
-        <div className="h-3 w-full animate-pulse rounded bg-white/5" />
-        <div className="h-3 w-2/3 animate-pulse rounded bg-white/5" />
+        <div className="h-3 w-full animate-pulse rounded bg-[var(--ds-surface)]" />
+        <div className="h-3 w-2/3 animate-pulse rounded bg-[var(--ds-surface)]" />
       </div>
     </CompanyDashboardItemCard>
   );

@@ -12,7 +12,7 @@ type AiMatchInsightPanelProps = {
 export function AiMatchInsightPanel({ explanation, evaluation }: AiMatchInsightPanelProps) {
   if (!explanation.sufficient) {
     return (
-      <div className="rounded-lg border border-amber-200 bg-amber-50 px-3.5 py-2.5 text-sm text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-200">
+      <div className="rounded-lg border border-[var(--ds-warning)]/40 bg-[var(--ds-warning-bg)] px-3.5 py-2.5 text-sm text-[var(--ds-warning)]">
         Insufficient data for AI analysis.
       </div>
     );
@@ -37,7 +37,7 @@ export function AiMatchInsightPanel({ explanation, evaluation }: AiMatchInsightP
 
   return (
     <div className="space-y-4 text-sm">
-      <p className="text-xs font-semibold uppercase tracking-wide text-primary-600 dark:text-primary-400">
+      <p className="text-xs font-semibold uppercase tracking-wide text-[var(--ds-primary)]">
         Why This Candidate Was Ranked
       </p>
 
@@ -46,17 +46,17 @@ export function AiMatchInsightPanel({ explanation, evaluation }: AiMatchInsightP
       {!evaluation ? (
         <div className="space-y-3">
           {ranking?.scoreBreakdown?.length ? (
-            <p className="text-slate-500 dark:text-slate-400">
+            <p className="text-[var(--ds-muted)]">
               Rank #{ranking.rankedPosition} · Overall {ranking.overallScore}/100 · Confidence {ranking.confidenceScore}
               /100
             </p>
           ) : null}
 
-          <div className="rounded-lg border border-emerald-200 bg-emerald-50/70 px-3.5 py-3 dark:border-emerald-900/40 dark:bg-emerald-950/20">
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
+          <div className="rounded-lg border border-[var(--ds-success)]/30 bg-[var(--ds-success-bg)] px-3.5 py-3">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--ds-success)]">
               Strengths
             </p>
-            <ul className="mt-1.5 list-disc space-y-1 pl-4 text-slate-700 dark:text-slate-300">
+            <ul className="mt-1.5 list-disc space-y-1 pl-4 text-[var(--ds-text-secondary)]">
               {(ranking?.strengths || explanation.skillAlignment).map((item) => (
                 <li key={item} className="line-clamp-1">
                   {item}
@@ -66,8 +66,8 @@ export function AiMatchInsightPanel({ explanation, evaluation }: AiMatchInsightP
           </div>
 
           {ranking?.topContributors?.length ? (
-            <p className="text-slate-600 dark:text-slate-300">
-              <span className="font-medium text-slate-700 dark:text-slate-200">Top contributors: </span>
+            <p className="text-[var(--ds-text-secondary)]">
+              <span className="font-medium text-[var(--ds-text)]">Top contributors: </span>
               {ranking.topContributors.join(", ")}
             </p>
           ) : null}
@@ -75,17 +75,17 @@ export function AiMatchInsightPanel({ explanation, evaluation }: AiMatchInsightP
       ) : null}
 
       {projectRelevanceLine || experienceMatchLine ? (
-        <div className="rounded-lg border border-slate-200 bg-slate-50/70 px-3.5 py-3 dark:border-slate-700 dark:bg-slate-800/40">
-          <ul className="list-disc space-y-1 pl-4 text-slate-600 dark:text-slate-300">
+        <div className="rounded-lg border border-[var(--ds-border)] bg-[var(--ds-surface)] px-3.5 py-3">
+          <ul className="list-disc space-y-1 pl-4 text-[var(--ds-text-secondary)]">
             {projectRelevanceLine ? (
               <li className="line-clamp-2">
-                <span className="font-medium text-slate-700 dark:text-slate-200">Project relevance: </span>
+                <span className="font-medium text-[var(--ds-text)]">Project relevance: </span>
                 {projectRelevanceLine}
               </li>
             ) : null}
             {experienceMatchLine ? (
               <li className="line-clamp-2">
-                <span className="font-medium text-slate-700 dark:text-slate-200">Experience match: </span>
+                <span className="font-medium text-[var(--ds-text)]">Experience match: </span>
                 {experienceMatchLine}
               </li>
             ) : null}

@@ -23,26 +23,25 @@ import { ScrollReveal } from "@/components/animations/ScrollReveal";
 import { AppIcon } from "@/components/icons/app-icon";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { EmptyState } from "@/components/dashboard/empty-state";
+import { EmptyState } from "@/components/dashboard/shared/empty-state";
 import { cn } from "@/lib/utils";
 import type { Application, InAppNotification, InternProfile, Recommendation, ResumeAnalysis } from "@/lib/intern-portal";
 import type { ScheduledInterviewRecord } from "@/lib/interview-workflow";
 
-const cardBase =
-  "rounded-2xl border border-slate-200/70 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-slate-900/60";
+const cardBase = "rounded-2xl border border-[var(--ds-border)] bg-[var(--ds-surface)] shadow-[0_1px_2px_var(--ds-shadow)]";
 
 const OFFER_STATUSES = new Set(["offered", "selected", "hired"]);
 
-type StatusGroup = "applied" | "interviewing" | "offered" | "rejected";
+export type StatusGroup = "applied" | "interviewing" | "offered" | "rejected";
 
-const STATUS_GROUP_META: Record<StatusGroup, { label: string; barClass: string; dotClass: string }> = {
-  applied: { label: "Applied", barClass: "bg-sky-500", dotClass: "bg-sky-500" },
-  interviewing: { label: "Interviewing", barClass: "bg-primary-500", dotClass: "bg-primary-500" },
-  offered: { label: "Offered", barClass: "bg-emerald-500", dotClass: "bg-emerald-500" },
-  rejected: { label: "Rejected/Withdrawn", barClass: "bg-rose-400", dotClass: "bg-rose-400" }
+export const STATUS_GROUP_META: Record<StatusGroup, { label: string; barClass: string; dotClass: string; colorVar: string }> = {
+  applied: { label: "Applied", barClass: "bg-[var(--ds-info)]", dotClass: "bg-[var(--ds-info)]", colorVar: "var(--ds-info)" },
+  interviewing: { label: "Interviewing", barClass: "bg-[var(--ds-primary)]", dotClass: "bg-[var(--ds-primary)]", colorVar: "var(--ds-primary)" },
+  offered: { label: "Offered", barClass: "bg-[var(--ds-success)]", dotClass: "bg-[var(--ds-success)]", colorVar: "var(--ds-success)" },
+  rejected: { label: "Rejected/Withdrawn", barClass: "bg-[var(--ds-danger)]", dotClass: "bg-[var(--ds-danger)]", colorVar: "var(--ds-danger)" }
 };
 
-function toStatusGroup(status?: string): StatusGroup {
+export function toStatusGroup(status?: string): StatusGroup {
   const value = String(status || "").toLowerCase();
   if (["offered", "selected", "hired"].includes(value)) return "offered";
   if (["rejected", "withdrawn"].includes(value)) return "rejected";
@@ -80,8 +79,8 @@ export function RecommendationsCard({
       <HoverCard>
         <div className="mb-4 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <AppIcon icon={Briefcase} size="sm" className="text-primary-600 dark:text-primary-400" />
-            <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Recommended Internships</h3>
+            <AppIcon icon={Briefcase} size="sm" className="text-[var(--ds-accent)]" />
+            <h3 className="text-sm font-semibold text-[var(--ds-text)]">Recommended Internships</h3>
           </div>
           <Button href="/dashboard/intern/internships/recommended" type="button" size="sm" variant="ghost">
             View all
@@ -110,15 +109,15 @@ export function RecommendationsCard({
             {top.map((item) => (
               <li
                 key={item.internship._id}
-                className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200/70 bg-slate-50/60 px-4 py-3 dark:border-slate-800 dark:bg-slate-900/50"
+                className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[var(--ds-border)] bg-[var(--ds-surface)] px-4 py-3"
               >
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">{item.internship.role}</p>
-                  <p className="mt-0.5 truncate text-xs text-slate-600 dark:text-slate-300">
+                  <p className="truncate text-sm font-semibold text-[var(--ds-text)]">{item.internship.role}</p>
+                  <p className="mt-0.5 truncate text-xs text-[var(--ds-text-secondary)]">
                     {item.internship.company?.companyName || "Company"}
                   </p>
                   {item.internship.location || item.internship.stipend ? (
-                    <p className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-slate-500 dark:text-slate-400">
+                    <p className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-[var(--ds-muted)]">
                       {item.internship.location ? (
                         <span className="flex items-center gap-1">
                           <AppIcon icon={MapPin} size="xs" />
@@ -130,7 +129,7 @@ export function RecommendationsCard({
                   ) : null}
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
-                  <span className="rounded-full bg-primary-100/80 px-2.5 py-1 text-xs font-semibold text-primary-700 dark:bg-primary-900/40 dark:text-primary-300">
+                  <span className="rounded-full bg-[var(--ds-surface-raised)] px-2.5 py-1 text-xs font-semibold text-[var(--ds-accent)]">
                     {item.overallRecommendationScore}% match
                   </span>
                   <Button href="/dashboard/intern/internships/recommended" type="button" size="sm">
@@ -195,12 +194,12 @@ export function StatisticsCards({
         <ScrollReveal key={stat.label} variant="fade-up" distance={10} delayMs={idx * 40}>
           <motion.div whileHover={{ y: -3 }} transition={{ duration: 0.2 }} className={cn(cardBase, "p-4")}>
             <div className="flex items-center gap-3">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-50 text-primary-600 dark:bg-primary-900/30 dark:text-primary-300">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--ds-surface-raised)] text-[var(--ds-accent)]">
                 <AppIcon icon={stat.icon} size="sm" className="text-current" />
               </span>
               <div>
-                <p className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">{stat.label}</p>
-                <p className="text-xl font-bold tabular-nums text-slate-900 dark:text-slate-100">{stat.value}</p>
+                <p className="text-xs font-medium uppercase tracking-wide text-[var(--ds-muted)]">{stat.label}</p>
+                <p className="text-xl font-bold tabular-nums text-[var(--ds-text)]">{stat.value}</p>
               </div>
             </div>
           </motion.div>
@@ -215,20 +214,26 @@ export function StatisticsCards({
 export function QuickActions() {
   const actions = [
     { label: "Upload Resume", href: "/dashboard/intern/resume", icon: FileUp },
-    { label: "Edit Profile", href: "/dashboard/intern/profile/edit", icon: Pencil },
-    { label: "Improve Resume", href: "/dashboard/intern/resume/score", icon: Wand2 },
-    { label: "Skill Gap Analysis", href: "/dashboard/intern/skill-gap", icon: Target },
-    { label: "Browse Internships", href: "/dashboard/intern/internships/search", icon: Search },
-    { label: "My Applications", href: "/dashboard/intern/applications", icon: ClipboardList }
+    { label: "Improve Profile", href: "/dashboard/intern/profile/edit", icon: Pencil },
+    { label: "Apply Internships", href: "/dashboard/intern/internships/search", icon: Search },
+    { label: "Practice Interview", href: "/dashboard/intern/learning/mock-interview", icon: Wand2 },
+    { label: "Mock Test", href: "/dashboard/intern/learning/mock-aptitude", icon: Target }
   ];
 
   return (
     <ScrollReveal variant="fade-up" distance={12}>
       <div className={cn(cardBase, "p-6")}>
-        <h3 className="mb-4 text-sm font-semibold text-slate-900 dark:text-slate-100">Quick Actions</h3>
+        <h3 className="mb-4 text-sm font-semibold text-[var(--ds-text)]">Quick Actions</h3>
         <div className="flex flex-wrap gap-2.5">
-          {actions.map((action) => (
-            <Button key={action.href} href={action.href} type="button" size="sm" variant="secondary" className="gap-2">
+          {actions.map((action, index) => (
+            <Button
+              key={action.href}
+              href={action.href}
+              type="button"
+              size="sm"
+              variant={index === 0 ? "primary" : "secondary"}
+              className="gap-2"
+            >
               <AppIcon icon={action.icon} size="xs" className="text-current" />
               {action.label}
             </Button>
@@ -313,7 +318,7 @@ export function ActivityTimeline({
   return (
     <ScrollReveal variant="fade-up" distance={12}>
       <div className={cn(cardBase, "p-6")}>
-        <h3 className="mb-4 text-sm font-semibold text-slate-900 dark:text-slate-100">Activity Timeline</h3>
+        <h3 className="mb-4 text-sm font-semibold text-[var(--ds-text)]">Activity Timeline</h3>
         {events.length === 0 ? (
           <EmptyState
             title="No activity yet"
@@ -325,15 +330,15 @@ export function ActivityTimeline({
             {events.map((event, idx) => (
               <li key={event.id} className="relative flex gap-3 pl-1">
                 <div className="flex flex-col items-center">
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary-50 text-primary-600 dark:bg-primary-900/30 dark:text-primary-300">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--ds-surface-raised)] text-[var(--ds-accent)]">
                     <AppIcon icon={event.icon} size="xs" className="text-current" />
                   </span>
-                  {idx < events.length - 1 ? <span className="mt-1 h-full w-px flex-1 bg-slate-200 dark:bg-slate-800" /> : null}
+                  {idx < events.length - 1 ? <span className="mt-1 h-full w-px flex-1 bg-[var(--ds-border)]" /> : null}
                 </div>
                 <div className="min-w-0 pb-2">
-                  <p className="text-sm font-medium text-slate-800 dark:text-slate-100">{event.label}</p>
-                  {event.detail ? <p className="text-xs text-slate-500 dark:text-slate-400">{event.detail}</p> : null}
-                  <p className="mt-0.5 text-[11px] text-slate-400 dark:text-slate-500">{event.date.toLocaleString()}</p>
+                  <p className="text-sm font-medium text-[var(--ds-text)]">{event.label}</p>
+                  {event.detail ? <p className="text-xs text-[var(--ds-muted)]">{event.detail}</p> : null}
+                  <p className="mt-0.5 text-[11px] text-[var(--ds-muted)]">{event.date.toLocaleString()}</p>
                 </div>
               </li>
             ))}
@@ -350,7 +355,7 @@ function ChartLegend({ groups }: { groups: StatusGroup[] }) {
   return (
     <div className="mb-3 flex flex-wrap gap-x-4 gap-y-1.5">
       {groups.map((group) => (
-        <span key={group} className="flex items-center gap-1.5 text-[11px] font-medium text-slate-500 dark:text-slate-400">
+        <span key={group} className="flex items-center gap-1.5 text-[11px] font-medium text-[var(--ds-muted)]">
           <span className={cn("h-2 w-2 rounded-full", STATUS_GROUP_META[group].dotClass)} />
           {STATUS_GROUP_META[group].label}
         </span>
@@ -401,7 +406,7 @@ function ApplicationsTimelineChart({ applications }: { applications: Application
           return (
             <div key={label} className="flex flex-1 flex-col items-center gap-2">
               <div
-                className="flex h-32 w-full flex-col-reverse overflow-hidden rounded-lg bg-slate-100 dark:bg-slate-800"
+                className="flex h-32 w-full flex-col-reverse overflow-hidden rounded-lg bg-[var(--ds-surface-raised)]"
                 title={`${label}: ${total} application${total === 1 ? "" : "s"}`}
               >
                 {(["applied", "interviewing", "offered", "rejected"] as StatusGroup[]).map((group) =>
@@ -418,58 +423,12 @@ function ApplicationsTimelineChart({ applications }: { applications: Application
                   ) : null
                 )}
               </div>
-              <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">{label}</span>
-              <span className="text-xs font-semibold tabular-nums text-slate-800 dark:text-slate-100">{total}</span>
+              <span className="text-[11px] font-medium text-[var(--ds-muted)]">{label}</span>
+              <span className="text-xs font-semibold tabular-nums text-[var(--ds-text)]">{total}</span>
             </div>
           );
         })}
       </div>
-    </div>
-  );
-}
-
-function ApplicationStatusBreakdown({ applications }: { applications: Application[] }) {
-  const counts: Record<StatusGroup, number> = { applied: 0, interviewing: 0, offered: 0, rejected: 0 };
-  applications.forEach((app) => {
-    counts[toStatusGroup(app.status)] += 1;
-  });
-
-  const total = counts.applied + counts.interviewing + counts.offered + counts.rejected;
-  const groups = (["applied", "interviewing", "offered", "rejected"] as StatusGroup[]).filter((group) => counts[group] > 0);
-
-  if (total === 0) {
-    return (
-      <EmptyState
-        title="No applications yet"
-        hint="Your pipeline distribution will appear here once you apply."
-        presetKey="applications"
-      />
-    );
-  }
-
-  return (
-    <div className="space-y-4">
-      <div className="flex h-4 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
-        {groups.map((group) => (
-          <div
-            key={group}
-            className={cn(STATUS_GROUP_META[group].barClass, "h-full transition-all duration-700 ease-out")}
-            style={{ width: `${(counts[group] / total) * 100}%` }}
-            title={`${STATUS_GROUP_META[group].label}: ${counts[group]} (${Math.round((counts[group] / total) * 100)}%)`}
-          />
-        ))}
-      </div>
-      <ul className="grid grid-cols-2 gap-x-4 gap-y-2">
-        {groups.map((group) => (
-          <li key={group} className="flex items-center justify-between gap-2 text-xs">
-            <span className="flex items-center gap-1.5 font-medium text-slate-600 dark:text-slate-300">
-              <span className={cn("h-2 w-2 rounded-full", STATUS_GROUP_META[group].dotClass)} />
-              {STATUS_GROUP_META[group].label}
-            </span>
-            <span className="font-semibold tabular-nums text-slate-900 dark:text-slate-100">{counts[group]}</span>
-          </li>
-        ))}
-      </ul>
     </div>
   );
 }
@@ -498,12 +457,12 @@ function SkillsDistributionChart({ analysis }: { analysis: ResumeAnalysis | null
       {entries.map(([category, count]) => (
         <div key={category}>
           <div className="mb-1 flex items-center justify-between text-xs">
-            <span className="font-medium text-slate-600 dark:text-slate-300">{category}</span>
-            <span className="font-semibold tabular-nums text-slate-900 dark:text-slate-100">{count}</span>
+            <span className="font-medium text-[var(--ds-text-secondary)]">{category}</span>
+            <span className="font-semibold tabular-nums text-[var(--ds-text)]">{count}</span>
           </div>
-          <div className="h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800" title={`${category}: ${count} skill${count === 1 ? "" : "s"}`}>
+          <div className="h-1.5 overflow-hidden rounded-full bg-[var(--ds-surface-raised)]" title={`${category}: ${count} skill${count === 1 ? "" : "s"}`}>
             <div
-              className="h-full rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 transition-all duration-700 ease-out"
+              className="h-full rounded-full bg-[linear-gradient(90deg,var(--ds-chart-3),var(--ds-accent))] transition-all duration-700 ease-out"
               style={{ width: `${Math.max(4, (count / max) * 100)}%` }}
             />
           </div>
@@ -533,22 +492,16 @@ export function DashboardCharts({
   }
 
   return (
-    <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
+    <div className="grid gap-4 lg:grid-cols-2">
       <ScrollReveal variant="fade-up" distance={12}>
         <div className={cn(cardBase, "p-6")}>
-          <h3 className="mb-4 text-sm font-semibold text-slate-900 dark:text-slate-100">Applications Timeline</h3>
+          <h3 className="mb-4 text-sm font-semibold text-[var(--ds-text)]">Applications Timeline</h3>
           <ApplicationsTimelineChart applications={applications} />
         </div>
       </ScrollReveal>
       <ScrollReveal variant="fade-up" distance={12} delayMs={60}>
         <div className={cn(cardBase, "p-6")}>
-          <h3 className="mb-4 text-sm font-semibold text-slate-900 dark:text-slate-100">Pipeline Breakdown</h3>
-          <ApplicationStatusBreakdown applications={applications} />
-        </div>
-      </ScrollReveal>
-      <ScrollReveal variant="fade-up" distance={12} delayMs={120}>
-        <div className={cn(cardBase, "p-6")}>
-          <h3 className="mb-4 text-sm font-semibold text-slate-900 dark:text-slate-100">Skills Distribution</h3>
+          <h3 className="mb-4 text-sm font-semibold text-[var(--ds-text)]">Skills Distribution</h3>
           <SkillsDistributionChart analysis={analysis} />
         </div>
       </ScrollReveal>

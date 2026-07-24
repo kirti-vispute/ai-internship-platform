@@ -4,7 +4,7 @@ import { memo } from "react";
 import { Activity } from "lucide-react";
 import { ScrollReveal } from "@/components/animations/ScrollReveal";
 import { AppIcon } from "@/components/icons/app-icon";
-import { EmptyState } from "@/components/dashboard/empty-state";
+import { EmptyState } from "@/components/dashboard/shared/empty-state";
 import type { AdminActivityLog } from "@/lib/admin-portal";
 
 function formatDateTime(value?: string) {
@@ -21,7 +21,7 @@ function AdminRecentActivityPanelInner({ logs }: { logs: AdminActivityLog[] }) {
     <ScrollReveal variant="fade-up" distance={12}>
       <div className="ds-card p-6">
         <div className="mb-4 flex items-center gap-2">
-          <AppIcon icon={Activity} size="sm" className="text-primary-600 dark:text-primary-400" />
+          <AppIcon icon={Activity} size="sm" className="text-[var(--ds-primary)]" />
           <h3 className="ds-h3">Recent Platform Activity</h3>
         </div>
 
@@ -32,18 +32,18 @@ function AdminRecentActivityPanelInner({ logs }: { logs: AdminActivityLog[] }) {
             {recent.map((log) => (
               <li
                 key={log._id}
-                className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 dark:border-slate-700 dark:bg-slate-900/60"
+                className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[var(--ds-border)] bg-[var(--ds-card)] px-3 py-2.5"
               >
                 <div className="min-w-0">
-                  <p className="text-sm font-semibold capitalize text-slate-800 dark:text-slate-100">
+                  <p className="text-sm font-semibold capitalize text-[var(--ds-text)]">
                     {(log.action || "").replace(/_/g, " ") || "Action"}
                   </p>
-                  <p className="truncate text-xs text-slate-500 dark:text-slate-400">
+                  <p className="truncate text-xs text-[var(--ds-muted)]">
                     {log.actorUser?.email ? `${log.actorUser.email} · ` : log.actorRole ? `${log.actorRole} · ` : ""}
                     {log.entityType || ""}
                   </p>
                 </div>
-                <span className="shrink-0 text-xs text-slate-400">{formatDateTime(log.createdAt)}</span>
+                <span className="shrink-0 text-xs text-[var(--ds-muted)]">{formatDateTime(log.createdAt)}</span>
               </li>
             ))}
           </ul>

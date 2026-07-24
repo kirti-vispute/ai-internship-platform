@@ -2,7 +2,7 @@
 
 import { PortfolioBuilderHub } from "@/components/portfolio/portfolio-builder-hub";
 import { FEATURE_FLAGS } from "@/constants/featureFlags";
-import { EmptyState } from "@/components/dashboard/empty-state";
+import { EmptyState } from "@/components/dashboard/shared/empty-state";
 
 export default function InternPortfolioPage() {
   if (!FEATURE_FLAGS.ENABLE_3D_PORTFOLIO) {

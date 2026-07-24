@@ -19,3 +19,7 @@ export {
   CompanyDashboardMetricTile,
   companyDashboardStyles
 } from "./company-dashboard-layout";
+export { CandidateCompareProvider, useCandidateCompare } from "./candidate-comparison-context";
+export { CandidateCompareToggle } from "./candidate-compare-toggle";
+export { CandidateCompareBar } from "./candidate-compare-bar";
+export { CandidateComparisonWorkspace } from "./candidate-comparison-workspace";

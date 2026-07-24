@@ -383,7 +383,7 @@ export function InterviewRoomShell({ roomId }: InterviewRoomShellProps) {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-950 text-sm text-slate-300">
+      <div className="flex min-h-screen items-center justify-center bg-[var(--ds-bg)] text-sm text-[var(--ds-text-secondary)]">
         Preparing interview room and requesting microphone access...
       </div>
     );
@@ -392,10 +392,10 @@ export function InterviewRoomShell({ roomId }: InterviewRoomShellProps) {
   if (error || !payload) {
     const joinError = getInterviewJoinErrorMessage(error || "Interview room unavailable.");
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-slate-950 px-4 text-center">
-        <div className="max-w-md rounded-2xl border border-slate-800 bg-slate-900 px-6 py-5">
-          <p className="text-base font-semibold text-white">{joinError.title}</p>
-          <p className="mt-2 text-sm text-slate-400">{joinError.description}</p>
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[var(--ds-bg)] px-4 text-center">
+        <div className="max-w-md rounded-2xl border border-[var(--ds-border)] bg-[var(--ds-surface)] px-6 py-5">
+          <p className="text-base font-semibold text-[var(--ds-text)]">{joinError.title}</p>
+          <p className="mt-2 text-sm text-[var(--ds-muted)]">{joinError.description}</p>
           <div className="mt-5 flex flex-wrap justify-center gap-2">
             {joinError.kind === "network" || joinError.kind === "unknown" ? (
               <Button type="button" variant="secondary" onClick={() => setBootstrapAttempt((value) => value + 1)}>
@@ -441,25 +441,25 @@ export function InterviewRoomShell({ roomId }: InterviewRoomShellProps) {
   }
 
   return (
-    <div ref={rootRef} className="flex min-h-screen flex-col bg-slate-950 text-slate-100">
-      <header className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 px-4 py-3">
+    <div ref={rootRef} className="flex min-h-screen flex-col bg-[var(--ds-bg)] text-[var(--ds-text)]">
+      <header className="flex flex-wrap items-center justify-between gap-2 border-b border-[var(--ds-border)] px-4 py-3">
         <div>
-          <p className="text-xs uppercase tracking-[0.16em] text-slate-400">{payload.room.roundType || "Interview"}</p>
-          <h1 className="text-lg font-semibold text-white">{jobTitle}</h1>
-          <p className="text-xs text-slate-400">{headerSubtitle}</p>
+          <p className="text-xs uppercase tracking-[0.16em] text-[var(--ds-muted)]">{payload.room.roundType || "Interview"}</p>
+          <h1 className="text-lg font-semibold text-[var(--ds-text)]">{jobTitle}</h1>
+          <p className="text-xs text-[var(--ds-muted)]">{headerSubtitle}</p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="hidden items-center gap-1 text-xs text-slate-400 sm:flex">
+          <div className="hidden items-center gap-1 text-xs text-[var(--ds-muted)] sm:flex">
             <Users className="h-3.5 w-3.5" />
             {connectedPeerCount + 1}/{totalParticipants} connected
           </div>
-          <div className="rounded-full border border-slate-700 px-3 py-1 font-mono text-sm text-emerald-300">
+          <div className="rounded-full border border-[var(--ds-border)] px-3 py-1 font-mono text-sm text-[var(--ds-success)]">
             {formatDuration(elapsedSeconds)}
           </div>
           {fullscreenSupported ? (
             <button
               type="button"
-              className="rounded-full border border-slate-700 p-2 text-slate-300 hover:bg-slate-800"
+              className="rounded-full border border-[var(--ds-border)] p-2 text-[var(--ds-text-secondary)] hover:bg-[var(--ds-hover)]"
               onClick={() => void handleToggleFullscreen()}
               aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
               title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
@@ -471,7 +471,7 @@ export function InterviewRoomShell({ roomId }: InterviewRoomShellProps) {
             <Button
               type="button"
               size="sm"
-              className="bg-rose-600 text-white hover:bg-rose-500"
+              className="bg-[var(--ds-danger)] text-white hover:brightness-110"
               disabled={sessionEnded || ending}
               onClick={handleEndInterview}
             >
@@ -490,8 +490,8 @@ export function InterviewRoomShell({ roomId }: InterviewRoomShellProps) {
               style={{ gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))" }}
             >
               {webrtc.peers.length === 0 ? (
-                <div className="flex min-h-[240px] items-center justify-center rounded-2xl border border-slate-800 bg-slate-900">
-                  <p className="text-sm text-slate-400">Waiting for other participants to join...</p>
+                <div className="flex min-h-[240px] items-center justify-center rounded-2xl border border-[var(--ds-border)] bg-[var(--ds-surface)]">
+                  <p className="text-sm text-[var(--ds-muted)]">Waiting for other participants to join...</p>
                 </div>
               ) : (
                 webrtc.peers.map((peer) => (
@@ -532,13 +532,13 @@ export function InterviewRoomShell({ roomId }: InterviewRoomShellProps) {
               onSelectSpeakerDevice={(deviceId) => webrtc.switchSpeaker(deviceId)}
             />
             {webrtc.screenShareError ? (
-              <p className="mt-2 text-center text-xs text-amber-300">{webrtc.screenShareError}</p>
+              <p className="mt-2 text-center text-xs text-[var(--ds-warning)]">{webrtc.screenShareError}</p>
             ) : null}
             {sessionEnded ? (
-              <div className="absolute inset-0 flex items-center justify-center bg-slate-950/80">
-                <div className="rounded-2xl border border-slate-700 bg-slate-900 px-6 py-4 text-center">
-                  <p className="text-sm font-medium text-white">Interview completed</p>
-                  <p className="mt-1 text-xs text-slate-400">You can return to your dashboard.</p>
+              <div className="absolute inset-0 flex items-center justify-center bg-black/70">
+                <div className="rounded-2xl border border-[var(--ds-border)] bg-[var(--ds-surface)] px-6 py-4 text-center">
+                  <p className="text-sm font-medium text-[var(--ds-text)]">Interview completed</p>
+                  <p className="mt-1 text-xs text-[var(--ds-muted)]">You can return to your dashboard.</p>
                   <Button
                     type="button"
                     className="mt-4"
@@ -555,7 +555,7 @@ export function InterviewRoomShell({ roomId }: InterviewRoomShellProps) {
             ) : null}
           </div>
 
-          <div className="border-t border-slate-800 px-4 py-3">
+          <div className="border-t border-[var(--ds-border)] px-4 py-3">
             <div className="mx-auto flex max-w-2xl flex-wrap items-center justify-center gap-3">
               <ControlButton
                 active={webrtc.muted || !webrtc.micReady}
@@ -587,7 +587,7 @@ export function InterviewRoomShell({ roomId }: InterviewRoomShellProps) {
               />
               <button
                 type="button"
-                className="rounded-xl border border-slate-700 px-3 py-2 text-xs text-slate-300 lg:hidden"
+                className="rounded-xl border border-[var(--ds-border)] px-3 py-2 text-xs text-[var(--ds-text-secondary)] lg:hidden"
                 onClick={() => setSidebarOpen((value) => !value)}
               >
                 {sidebarOpen ? "Hide panel" : "Show panel"}
@@ -596,8 +596,8 @@ export function InterviewRoomShell({ roomId }: InterviewRoomShellProps) {
           </div>
 
           {isHr ? (
-            <div className="border-t border-slate-800 px-4 py-3">
-              <p className="mb-2 text-xs uppercase tracking-[0.14em] text-slate-500">Candidate decision</p>
+            <div className="border-t border-[var(--ds-border)] px-4 py-3">
+              <p className="mb-2 text-xs uppercase tracking-[0.14em] text-[var(--ds-muted)]">Candidate decision</p>
               <div className="flex flex-wrap gap-2">
                 <OutcomeButton active={outcome === "selected"} label="Selected" tone="success" onClick={() => handleOutcome("selected")} />
                 <OutcomeButton active={outcome === "on_hold"} label="On Hold" tone="warning" onClick={() => handleOutcome("on_hold")} />
@@ -607,9 +607,9 @@ export function InterviewRoomShell({ roomId }: InterviewRoomShellProps) {
           ) : null}
         </main>
 
-        <aside className={`border-l border-slate-800 bg-slate-900/60 transition-all duration-200 ${sidebarOpen ? "w-full max-w-sm" : "w-12"}`}>
+        <aside className={`border-l border-[var(--ds-border)] bg-[var(--ds-surface)] transition-all duration-200 ${sidebarOpen ? "w-full max-w-sm" : "w-12"}`}>
           <div className="flex h-full flex-col">
-            <div className="flex items-center justify-between border-b border-slate-800 px-2 py-2">
+            <div className="flex items-center justify-between border-b border-[var(--ds-border)] px-2 py-2">
               {sidebarOpen ? (
                 <div className="flex gap-1">
                   <PanelTab active={activePanel === "chat"} icon={MessageSquare} label="Chat" onClick={() => setActivePanel("chat")} />
@@ -622,7 +622,7 @@ export function InterviewRoomShell({ roomId }: InterviewRoomShellProps) {
               ) : null}
               <button
                 type="button"
-                className="rounded-lg p-2 text-slate-400 hover:bg-slate-800"
+                className="rounded-lg p-2 text-[var(--ds-muted)] hover:bg-[var(--ds-hover)]"
                 onClick={() => setSidebarOpen((value) => !value)}
                 aria-label={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
               >
@@ -636,18 +636,18 @@ export function InterviewRoomShell({ roomId }: InterviewRoomShellProps) {
                   <>
                     <div className="flex-1 space-y-2 overflow-y-auto p-3">
                       {chatMessages.length === 0 ? (
-                        <p className="text-xs text-slate-500">No messages yet. Say hello to start the conversation.</p>
+                        <p className="text-xs text-[var(--ds-muted)]">No messages yet. Say hello to start the conversation.</p>
                       ) : (
                         chatMessages.map((message) => (
                           <div
                             key={message._id}
                             className={`rounded-xl px-3 py-2 text-sm ${
                               message.senderRole === payload.participantRole
-                                ? "ml-8 bg-indigo-600/20 text-indigo-100"
-                                : "mr-8 bg-slate-800 text-slate-200"
+                                ? "ml-8 bg-[var(--ds-primary)]/20 text-[var(--ds-text)]"
+                                : "mr-8 bg-[var(--ds-surface-raised)] text-[var(--ds-text)]"
                             }`}
                           >
-                            <p className="text-[10px] uppercase tracking-[0.12em] text-slate-400">
+                            <p className="text-[10px] uppercase tracking-[0.12em] text-[var(--ds-muted)]">
                               {message.senderName || message.senderRole}
                             </p>
                             <p className="mt-1 whitespace-pre-wrap">{message.body}</p>
@@ -655,7 +655,7 @@ export function InterviewRoomShell({ roomId }: InterviewRoomShellProps) {
                         ))
                       )}
                     </div>
-                    <div className="border-t border-slate-800 p-3">
+                    <div className="border-t border-[var(--ds-border)] p-3">
                       <div className="flex gap-2">
                         <input
                           value={chatInput}
@@ -664,7 +664,7 @@ export function InterviewRoomShell({ roomId }: InterviewRoomShellProps) {
                             if (event.key === "Enter") void handleSendChat();
                           }}
                           placeholder="Type a message"
-                          className="flex-1 rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-indigo-500"
+                          className="flex-1 rounded-lg border border-[var(--ds-border)] bg-[var(--ds-input)] px-3 py-2 text-sm text-[var(--ds-text)] outline-none focus:border-[var(--ds-primary)]"
                           disabled={sessionEnded}
                         />
                         <Button type="button" size="sm" onClick={() => void handleSendChat()} disabled={sessionEnded}>
@@ -703,22 +703,22 @@ export function InterviewRoomShell({ roomId }: InterviewRoomShellProps) {
                 {activePanel === "profile" ? (
                   <div className="space-y-3 overflow-y-auto p-4 text-sm">
                     <div>
-                      <p className="text-xs uppercase tracking-[0.14em] text-slate-500">Candidate</p>
-                      <p className="mt-1 text-base font-semibold text-white">{candidate?.fullName || "Candidate"}</p>
-                      <p className="text-xs text-slate-400">{candidate?.email}</p>
+                      <p className="text-xs uppercase tracking-[0.14em] text-[var(--ds-muted)]">Candidate</p>
+                      <p className="mt-1 text-base font-semibold text-[var(--ds-text)]">{candidate?.fullName || "Candidate"}</p>
+                      <p className="text-xs text-[var(--ds-muted)]">{candidate?.email}</p>
                     </div>
                     {candidate?.summary ? (
                       <div>
-                        <p className="text-xs uppercase tracking-[0.14em] text-slate-500">Summary</p>
-                        <p className="mt-1 text-slate-300">{candidate.summary}</p>
+                        <p className="text-xs uppercase tracking-[0.14em] text-[var(--ds-muted)]">Summary</p>
+                        <p className="mt-1 text-[var(--ds-text-secondary)]">{candidate.summary}</p>
                       </div>
                     ) : null}
                     {candidate?.skills?.length ? (
                       <div>
-                        <p className="text-xs uppercase tracking-[0.14em] text-slate-500">Skills</p>
+                        <p className="text-xs uppercase tracking-[0.14em] text-[var(--ds-muted)]">Skills</p>
                         <div className="mt-2 flex flex-wrap gap-1.5">
                           {candidate.skills.slice(0, 12).map((skill) => (
-                            <span key={skill} className="rounded-full bg-slate-800 px-2 py-0.5 text-xs text-slate-300">
+                            <span key={skill} className="rounded-full bg-[var(--ds-surface-raised)] px-2 py-0.5 text-xs text-[var(--ds-text-secondary)]">
                               {skill}
                             </span>
                           ))}
@@ -727,8 +727,8 @@ export function InterviewRoomShell({ roomId }: InterviewRoomShellProps) {
                     ) : null}
                     {candidate?.education?.length ? (
                       <div>
-                        <p className="text-xs uppercase tracking-[0.14em] text-slate-500">Education</p>
-                        <ul className="mt-1 space-y-1 text-slate-300">
+                        <p className="text-xs uppercase tracking-[0.14em] text-[var(--ds-muted)]">Education</p>
+                        <ul className="mt-1 space-y-1 text-[var(--ds-text-secondary)]">
                           {candidate.education.slice(0, 4).map((item) => (
                             <li key={item}>{item}</li>
                           ))}
@@ -741,16 +741,16 @@ export function InterviewRoomShell({ roomId }: InterviewRoomShellProps) {
                 {activePanel === "notes" && isHr ? (
                   <div className="flex min-h-0 flex-1 flex-col p-3">
                     <div className="mb-2 flex items-center justify-between">
-                      <p className="text-xs uppercase tracking-[0.14em] text-slate-500">Private HR notes</p>
+                      <p className="text-xs uppercase tracking-[0.14em] text-[var(--ds-muted)]">Private HR notes</p>
                       <span
                         className={`text-[10px] uppercase tracking-[0.1em] ${
                           notesSyncState === "synced"
-                            ? "text-emerald-400"
+                            ? "text-[var(--ds-success)]"
                             : notesSyncState === "pending"
-                              ? "text-amber-400"
+                              ? "text-[var(--ds-warning)]"
                               : notesSyncState === "offline"
-                                ? "text-rose-400"
-                                : "text-slate-600"
+                                ? "text-[var(--ds-danger)]"
+                                : "text-[var(--ds-muted)]"
                         }`}
                       >
                         {notesSyncState === "synced"
@@ -772,7 +772,7 @@ export function InterviewRoomShell({ roomId }: InterviewRoomShellProps) {
                         notesFocusedRef.current = false;
                       }}
                       placeholder="Capture observations, strengths, and concerns... Synced live with other interviewers."
-                      className="min-h-[220px] flex-1 rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-indigo-500"
+                      className="min-h-[220px] flex-1 rounded-xl border border-[var(--ds-border)] bg-[var(--ds-input)] px-3 py-2 text-sm text-[var(--ds-text)] outline-none focus:border-[var(--ds-primary)]"
                       disabled={sessionEnded}
                     />
                     <Button
@@ -796,10 +796,10 @@ export function InterviewRoomShell({ roomId }: InterviewRoomShellProps) {
 }
 
 const QUALITY_COLORS: Record<ConnectionQuality, string> = {
-  good: "bg-emerald-400",
-  fair: "bg-amber-400",
-  poor: "bg-rose-500",
-  unknown: "bg-slate-500"
+  good: "bg-[var(--ds-success)]",
+  fair: "bg-[var(--ds-warning)]",
+  poor: "bg-[var(--ds-danger)]",
+  unknown: "bg-[var(--ds-muted)]"
 };
 
 const QUALITY_LABELS: Record<ConnectionQuality, string> = {
@@ -839,12 +839,12 @@ function RemoteVideoTile({ peer, speakerDeviceId }: { peer: MeshPeer; speakerDev
   const showPlaceholder = connecting || (peer.cameraOff && !peer.screenSharing);
 
   return (
-    <div className="relative min-h-[240px] overflow-hidden rounded-2xl border border-indigo-500/40 bg-slate-900">
+    <div className="relative min-h-[240px] overflow-hidden rounded-2xl border border-[var(--ds-primary)]/40 bg-black">
       <video ref={videoRef} autoPlay playsInline muted className="h-full min-h-[240px] w-full object-cover" />
       <audio ref={audioRef} autoPlay playsInline className="hidden" aria-hidden="true" />
       {showPlaceholder ? (
-        <div className="absolute inset-0 flex items-center justify-center bg-slate-900/80">
-          <p className="px-4 text-center text-sm text-slate-300">
+        <div className="absolute inset-0 flex items-center justify-center bg-black/70">
+          <p className="px-4 text-center text-sm text-white/70">
             {connecting
               ? peer.connectionState === "connecting" || peer.connectionState === "new"
                 ? "Connecting..."
@@ -856,18 +856,18 @@ function RemoteVideoTile({ peer, speakerDeviceId }: { peer: MeshPeer; speakerDev
         </div>
       ) : null}
       <div className="absolute bottom-3 left-3 flex items-center gap-2">
-        <div className="flex items-center gap-1.5 rounded-lg bg-slate-950/70 px-2 py-1 text-xs text-white">
+        <div className="flex items-center gap-1.5 rounded-lg bg-black/70 px-2 py-1 text-xs text-white">
           <QualityDot quality={peer.quality} />
           {peer.name}
           {peer.screenSharing ? " · Presenting" : ""}
         </div>
         {peer.muted ? (
-          <div className="rounded-lg bg-rose-950/80 px-2 py-1 text-[10px] text-rose-200">
+          <div className="rounded-lg bg-[var(--ds-danger-bg)] px-2 py-1 text-[10px] text-[var(--ds-danger)]">
             <MicOff className="inline h-3 w-3" />
           </div>
         ) : null}
         {peer.handRaised ? (
-          <div className="rounded-lg bg-amber-950/80 px-2 py-1 text-[10px] text-amber-200">
+          <div className="rounded-lg bg-[var(--ds-warning-bg)] px-2 py-1 text-[10px] text-[var(--ds-warning)]">
             <Hand className="inline h-3 w-3" />
           </div>
         ) : null}
@@ -894,22 +894,22 @@ function VideoTile({
   handRaised?: boolean;
 }) {
   return (
-    <div className="relative min-h-[240px] overflow-hidden rounded-2xl border border-slate-800 bg-slate-900">
+    <div className="relative min-h-[240px] overflow-hidden rounded-2xl border border-[var(--ds-border)] bg-black">
       <video ref={videoRef} autoPlay playsInline muted={muted} className="h-full min-h-[240px] w-full object-cover" />
       {showPlaceholder ? (
-        <div className="absolute inset-0 flex items-center justify-center bg-slate-900/80">
-          <p className="px-4 text-center text-sm text-slate-300">{placeholder}</p>
+        <div className="absolute inset-0 flex items-center justify-center bg-black/70">
+          <p className="px-4 text-center text-sm text-white/70">{placeholder}</p>
         </div>
       ) : null}
       <div className="absolute bottom-3 left-3 flex items-center gap-2">
-        <div className="rounded-lg bg-slate-950/70 px-2 py-1 text-xs text-white">{label}</div>
+        <div className="rounded-lg bg-black/70 px-2 py-1 text-xs text-white">{label}</div>
         {participantMuted ? (
-          <div className="rounded-lg bg-rose-950/80 px-2 py-1 text-[10px] text-rose-200">
+          <div className="rounded-lg bg-[var(--ds-danger-bg)] px-2 py-1 text-[10px] text-[var(--ds-danger)]">
             <MicOff className="inline h-3 w-3" />
           </div>
         ) : null}
         {handRaised ? (
-          <div className="rounded-lg bg-amber-950/80 px-2 py-1 text-[10px] text-amber-200">
+          <div className="rounded-lg bg-[var(--ds-warning-bg)] px-2 py-1 text-[10px] text-[var(--ds-warning)]">
             <Hand className="inline h-3 w-3" />
           </div>
         ) : null}
@@ -936,21 +936,21 @@ function ParticipantRow({
   isSelf?: boolean;
 }) {
   return (
-    <div className="flex items-center justify-between rounded-xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm">
+    <div className="flex items-center justify-between rounded-xl border border-[var(--ds-border)] bg-[var(--ds-surface-raised)] px-3 py-2 text-sm">
       <div className="flex items-center gap-2">
         <QualityDot quality={quality} />
         <div>
-          <p className="text-slate-100">
+          <p className="text-[var(--ds-text)]">
             {name}
             {isSelf ? " (You)" : ""}
           </p>
-          <p className="text-[10px] uppercase tracking-[0.1em] text-slate-500">{role === "intern" ? "Candidate" : "Interviewer"}</p>
+          <p className="text-[10px] uppercase tracking-[0.1em] text-[var(--ds-muted)]">{role === "intern" ? "Candidate" : "Interviewer"}</p>
         </div>
       </div>
-      <div className="flex items-center gap-1.5 text-slate-400">
-        {handRaised ? <Hand className="h-3.5 w-3.5 text-amber-300" /> : null}
-        {muted ? <MicOff className="h-3.5 w-3.5 text-rose-300" /> : <Mic className="h-3.5 w-3.5" />}
-        {cameraOff ? <CameraOff className="h-3.5 w-3.5 text-rose-300" /> : <Camera className="h-3.5 w-3.5" />}
+      <div className="flex items-center gap-1.5 text-[var(--ds-muted)]">
+        {handRaised ? <Hand className="h-3.5 w-3.5 text-[var(--ds-warning)]" /> : null}
+        {muted ? <MicOff className="h-3.5 w-3.5 text-[var(--ds-danger)]" /> : <Mic className="h-3.5 w-3.5" />}
+        {cameraOff ? <CameraOff className="h-3.5 w-3.5 text-[var(--ds-danger)]" /> : <Camera className="h-3.5 w-3.5" />}
       </div>
     </div>
   );
@@ -975,7 +975,7 @@ function ControlButton({
       onClick={onClick}
       disabled={disabled}
       className={`flex flex-col items-center gap-1 rounded-2xl px-4 py-2 text-xs disabled:cursor-not-allowed disabled:opacity-50 ${
-        active ? "bg-rose-600 text-white" : "bg-slate-800 text-slate-200 hover:bg-slate-700"
+        active ? "bg-[var(--ds-danger)] text-white" : "bg-[var(--ds-surface-raised)] text-[var(--ds-text-secondary)] hover:bg-[var(--ds-hover)]"
       }`}
     >
       <Icon className="h-5 w-5" />
@@ -1000,7 +1000,7 @@ function PanelTab({
       type="button"
       onClick={onClick}
       className={`flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs ${
-        active ? "bg-indigo-600/20 text-indigo-200" : "text-slate-400 hover:bg-slate-800"
+        active ? "bg-[var(--ds-primary)]/20 text-[var(--ds-accent)]" : "text-[var(--ds-muted)] hover:bg-[var(--ds-hover)]"
       }`}
     >
       <Icon className="h-3.5 w-3.5" />
@@ -1021,9 +1021,9 @@ function OutcomeButton({
   onClick: () => void;
 }) {
   const tones = {
-    success: active ? "bg-emerald-600 text-white" : "border-emerald-700 text-emerald-300",
-    warning: active ? "bg-amber-600 text-white" : "border-amber-700 text-amber-300",
-    danger: active ? "bg-rose-600 text-white" : "border-rose-700 text-rose-300"
+    success: active ? "bg-[var(--ds-success)] text-white" : "border-[var(--ds-success)] text-[var(--ds-success)]",
+    warning: active ? "bg-[var(--ds-warning)] text-white" : "border-[var(--ds-warning)] text-[var(--ds-warning)]",
+    danger: active ? "bg-[var(--ds-danger)] text-white" : "border-[var(--ds-danger)] text-[var(--ds-danger)]"
   };
 
   return (

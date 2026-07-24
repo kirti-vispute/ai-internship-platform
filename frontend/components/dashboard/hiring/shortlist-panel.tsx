@@ -12,8 +12,10 @@ import {
 } from "@/components/dashboard/company/company-dashboard-layout";
 import { Button } from "@/components/ui/button";
 import { Badge, type BadgeTone } from "@/components/ui/badge";
+import { AppIcon } from "@/components/icons/app-icon";
 import { cn } from "@/lib/utils";
 import { getMatchScore, getShortlistedCandidates, getSkillPreview } from "./hiring-utils";
+import { CandidateCompareToggle } from "@/components/dashboard/company/candidate-compare-toggle";
 
 const INITIAL_VISIBLE = 6;
 const LOAD_BATCH = 2;
@@ -103,7 +105,7 @@ export function ShortlistPanel({
                     </div>
                     {evaluation ? (
                       <div className="text-right">
-                        <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-primary-500/20 to-violet-500/20 text-sm font-bold text-primary-200 ring-1 ring-primary-400/30">
+                        <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-[var(--ds-gradient-from)]/20 to-[var(--ds-gradient-to)]/20 text-sm font-bold text-[var(--ds-primary)] ring-1 ring-[var(--ds-primary)]/30">
                           {evaluation.overallScore}
                         </div>
                         <p className="mt-1 text-[10px] text-[var(--ds-muted)]">Conf. {evaluation.confidenceScore}%</p>
@@ -116,7 +118,7 @@ export function ShortlistPanel({
                       {skills.map((skill) => (
                         <span
                           key={`${application._id}-${skill}`}
-                          className="rounded-md bg-white/5 px-2 py-0.5 text-xs font-medium text-[var(--ds-muted)]"
+                          className="rounded-md bg-[var(--ds-surface-hover)] px-2 py-0.5 text-xs font-medium text-[var(--ds-muted)]"
                         >
                           {skill}
                         </span>
@@ -124,18 +126,19 @@ export function ShortlistPanel({
                     </div>
                   )}
 
-                  <p className="line-clamp-2 text-xs leading-relaxed text-slate-300/90">{aiSummary}</p>
+                  <p className="line-clamp-2 text-xs leading-relaxed text-[var(--ds-text-secondary)]">{aiSummary}</p>
                 </div>
 
                 <div className={cn(companyDashboardStyles.actionsFooter, "mt-auto")}>
+                  <CandidateCompareToggle applicationId={application._id} />
                   <Button
                     type="button"
                     size="sm"
                     disabled={saving}
-                    className="bg-gradient-to-r from-primary-600 to-violet-600 text-white shadow-sm hover:from-primary-500 hover:to-violet-500"
+                    className="bg-gradient-to-r from-[var(--ds-gradient-from)] to-[var(--ds-gradient-to)] text-[var(--ds-on-primary)] shadow-sm hover:opacity-90"
                     onClick={() => onScheduleInterview(application._id, candidateName)}
                   >
-                    <CalendarClock className="h-3.5 w-3.5" />
+                    <AppIcon icon={CalendarClock} size="xs" />
                     Schedule Interview
                   </Button>
                   <Button type="button" size="sm" variant="secondary" onClick={() => onViewProfile(application._id)}>

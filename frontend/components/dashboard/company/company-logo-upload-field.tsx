@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import Image from "next/image";
 import { Building2, Upload } from "lucide-react";
+import { AppIcon } from "@/components/icons/app-icon";
 import { resolveCompanyLogoUrl } from "@/lib/company-portal";
 import { cn } from "@/lib/utils";
 
@@ -92,7 +93,7 @@ export function CompanyLogoUploadField({ logoUrl, companyName, uploading, error,
           {displaySrc ? (
             <Image src={displaySrc} alt={`${companyName || "Company"} logo`} width={64} height={64} className="h-full w-full object-cover" unoptimized />
           ) : (
-            <Building2 className="h-7 w-7 text-[var(--ds-muted)]" />
+            <AppIcon icon={Building2} size="lg" />
           )}
         </div>
         <div className="flex flex-col gap-1.5">
@@ -104,7 +105,7 @@ export function CompanyLogoUploadField({ logoUrl, companyName, uploading, error,
               "inline-flex items-center gap-2 rounded-[var(--ds-radius-sm)] border border-[var(--ds-border)] px-3 py-1.5 text-sm font-semibold text-[var(--ds-text)] transition-colors duration-150 hover:bg-[var(--ds-surface-raised)] active:opacity-80 disabled:cursor-not-allowed disabled:opacity-60"
             )}
           >
-            <Upload className="h-3.5 w-3.5" />
+            <AppIcon icon={Upload} size="xs" />
             {uploading ? "Uploading..." : "Upload Logo"}
           </button>
           <p className="ds-caption">PNG, JPG, WEBP, or SVG. Max 2MB.</p>
@@ -120,7 +121,7 @@ export function CompanyLogoUploadField({ logoUrl, companyName, uploading, error,
           }}
         />
       </div>
-      {combinedError ? <p className="text-xs font-medium text-rose-400">{combinedError}</p> : null}
+      {combinedError ? <p className="text-xs font-medium text-[var(--ds-danger)]">{combinedError}</p> : null}
     </div>
   );
 }

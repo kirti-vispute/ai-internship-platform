@@ -15,15 +15,14 @@ type AppIconProps = {
   size?: AppIconSize;
   className?: string;
   strokeWidth?: number;
+  style?: React.CSSProperties;
 };
 
-export function AppIcon({ icon: Icon, size = "sm", className, strokeWidth = 1.75 }: AppIconProps) {
+export function AppIcon({ icon: Icon, size = "sm", className, strokeWidth = 1.75, style }: AppIconProps) {
   return (
     <span
-      className={cn(
-        "inline-flex shrink-0 items-center justify-center text-slate-500 transition-colors dark:text-slate-400",
-        className
-      )}
+      className={cn("inline-flex shrink-0 items-center justify-center text-[var(--ds-muted)] transition-colors", className)}
+      style={style}
       aria-hidden
     >
       <Icon size={SIZE_MAP[size]} strokeWidth={strokeWidth} />

@@ -1,0 +1,29 @@
+Sunita Rao
+Email: sunita.rao.test@example.com
+Mobile: 9123456780
+LinkedIn: linkedin.com/in/sunitarao
+GitHub: github.com/sunitarao
+
+PROFESSIONAL SUMMARY
+Backend-focused engineer with experience building distributed systems.
+
+SKILLS
+Go, Kubernetes, Docker, PostgreSQL, gRPC
+
+EDUCATION
+Bachelor of Technology in Information Technology, NIT Trichy, 2023, CGPA 8.9
+
+PROJECTS
+CloudNine Orchestrator - Built a container orchestration tool in Go.
+
+EXPERIENCE
+Backend Engineer at CloudNine Technologies - Designed microservices, Jan 2024 to Present.
+
+CERTIFICATIONS
+AWS Certified Solutions Architect, Amazon, 2023
+
+ACHIEVEMENTS
+Speaker, KubeCon India 2024
+
+LANGUAGES
+English, Telugu

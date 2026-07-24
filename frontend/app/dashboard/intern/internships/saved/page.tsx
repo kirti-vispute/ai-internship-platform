@@ -1,10 +1,11 @@
 "use client";
 
-import { BrandedEmptyState } from "@/components/dashboard/empty-state";
+import { BrandedEmptyState } from "@/components/dashboard/shared/empty-state";
+import { SkeletonList } from "@/components/ui/skeleton";
 import { BRANDED_EMPTY_STATES } from "@/lib/brand";
-import { SectionPanel } from "@/components/dashboard/section-panel";
+import { SectionPanel } from "@/components/dashboard/shared/section-panel";
 import { Button } from "@/components/ui/button";
-import { InternApplicationModal } from "@/components/dashboard/intern-application-modal";
+import { InternApplicationModal } from "@/components/dashboard/intern/intern-application-modal";
 import { useEffect, useLayoutEffect, useState } from "react";
 import { shouldBlockPageContent, appliedInternshipIdsFromApplications } from "@/lib/instant-load";
 import {
@@ -60,11 +61,9 @@ export default function SavedInternshipsPage() {
   return (
     <>
       <SectionPanel title="Saved Internships" subtitle="Track opportunities you want to revisit.">
-          {shouldBlockPageContent(saved) && loading && (
-            <div className="surface-subtle px-4 py-3 text-sm text-slate-700 dark:text-slate-300">Loading saved internships...</div>
-          )}
-          {error && <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300">{error}</div>}
-          {!error && applySuccess && <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300">{applySuccess}</div>}
+          {shouldBlockPageContent(saved) && loading && <SkeletonList rows={3} />}
+          {error && <div className="rounded-xl border border-[var(--ds-danger)]/40 bg-[var(--ds-danger-bg)] px-4 py-3 text-sm text-[var(--ds-danger)]">{error}</div>}
+          {!error && applySuccess && <div className="rounded-xl border border-[var(--ds-success)]/40 bg-[var(--ds-success-bg)] px-4 py-3 text-sm text-[var(--ds-success)]">{applySuccess}</div>}
           {!loading && !error && saved.length === 0 && (
             <BrandedEmptyState preset={BRANDED_EMPTY_STATES.savedInternships} presetKey="savedInternships" />
           )}
@@ -73,9 +72,9 @@ export default function SavedInternshipsPage() {
               {saved.map((item) => (
                 <div key={item._id} className="surface-subtle flex flex-wrap items-start justify-between gap-3 px-4 py-3">
                   <div>
-                    <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{item.role}</p>
-                    <p className="text-xs text-slate-600 dark:text-slate-300">{item.company?.companyName || "Company"}</p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">{item.location || "Location not specified"}</p>
+                    <p className="text-sm font-semibold text-[var(--ds-text)]">{item.role}</p>
+                    <p className="text-xs text-[var(--ds-text-secondary)]">{item.company?.companyName || "Company"}</p>
+                    <p className="text-xs text-[var(--ds-muted)]">{item.location || "Location not specified"}</p>
                   </div>
                   <div className="flex gap-2">
                     <Button

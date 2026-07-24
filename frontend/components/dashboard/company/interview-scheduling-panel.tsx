@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   AlertCircle,
   Ban,
@@ -51,6 +51,8 @@ import { InterviewStatusChip } from "@/components/dashboard/interview/interview-
 import { InterviewJoinButton } from "@/components/dashboard/interview/interview-join-button";
 import { InterviewDetailsModal } from "@/components/dashboard/interview/interview-details-modal";
 import { getInterviewStageCandidates } from "../hiring/hiring-utils";
+import { AppIcon } from "@/components/icons/app-icon";
+import { useTablistKeyboard } from "@/lib/use-tablist-keyboard";
 import { cn } from "@/lib/utils";
 
 export type InterviewScheduleTarget = {
@@ -111,7 +113,7 @@ function DetailItem({
 }) {
   return (
     <div className="flex items-start gap-2 min-w-0">
-      <Icon className="mt-0.5 h-4 w-4 shrink-0 text-[var(--ds-accent)]" aria-hidden />
+      <AppIcon icon={Icon} size="sm" className="mt-0.5 text-[var(--ds-accent)]" />
       <div className="min-w-0">
         <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--ds-muted)]">{label}</p>
         <div className="text-sm text-[var(--ds-text)]">{children}</div>
@@ -120,13 +122,21 @@ function DetailItem({
   );
 }
 
-function platformLabel(item: ScheduledInterviewRecord): string {
-  if (item.mode === "offline") return "In person";
+function platformInfo(item: ScheduledInterviewRecord): { label: string; className: string } {
+  if (item.mode === "offline") {
+    return { label: "In person", className: "bg-[var(--ds-accent)]/15 text-[var(--ds-accent)]" };
+  }
   const link = String(item.meetingLink || "").toLowerCase();
-  if (link.includes("meet.google")) return "Google Meet";
-  if (link.includes("zoom.us")) return "Zoom";
-  if (link.includes("teams.microsoft") || link.includes("teams.live")) return "Microsoft Teams";
-  return "Platform room";
+  if (link.includes("meet.google")) {
+    return { label: "Google Meet", className: "bg-[var(--ds-success-bg)] text-[var(--ds-success)]" };
+  }
+  if (link.includes("zoom.us")) {
+    return { label: "Zoom", className: "bg-[var(--ds-info-bg)] text-[var(--ds-info)]" };
+  }
+  if (link.includes("teams.microsoft") || link.includes("teams.live")) {
+    return { label: "Microsoft Teams", className: "bg-[var(--ds-accent)]/15 text-[var(--ds-accent)]" };
+  }
+  return { label: "Platform room", className: "bg-[var(--ds-info-bg)] text-[var(--ds-info)]" };
 }
 
 function InterviewCard({
@@ -157,6 +167,8 @@ function InterviewCard({
   const isCancellable = isOpenRound;
   const canComplete = isOpenRound;
   const canMarkNoShow = isOpenRound;
+  const platform = platformInfo(item);
+  const isUpcomingSoon = item.interviewStatus === "upcoming" || item.interviewStatus === "in_progress";
 
   async function copyLink() {
     if (!joinHref) return;
@@ -175,7 +187,7 @@ function InterviewCard({
   }
 
   return (
-    <CompanyDashboardItemCard className="gap-4">
+    <CompanyDashboardItemCard highlighted={isUpcomingSoon} className="gap-4">
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2">
         <div className="min-w-0">
@@ -188,22 +200,15 @@ function InterviewCard({
             {item.interviewType ? ` · ${item.interviewType}` : ""}
           </p>
         </div>
-        <span
-          className={cn(
-            "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold",
-            isOnline
-              ? "bg-sky-100 text-sky-700 dark:bg-sky-950/50 dark:text-sky-300"
-              : "bg-violet-100 text-violet-700 dark:bg-violet-950/50 dark:text-violet-300"
-          )}
-        >
-          {isOnline ? <Video className="h-3.5 w-3.5" aria-hidden /> : <MapPin className="h-3.5 w-3.5" aria-hidden />}
-          {platformLabel(item)}
+        <span className={cn("inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold", platform.className)}>
+          <AppIcon icon={isOnline ? Video : MapPin} size="xs" className="text-current" />
+          {platform.label}
         </span>
       </div>
 
       {item.rescheduleRequestedByCandidate ? (
-        <p className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-200">
-          <MessageCircleWarning className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
+        <p className="flex items-start gap-2 rounded-lg border border-[var(--ds-warning)]/40 bg-[var(--ds-warning-bg)] px-3 py-2 text-xs text-[var(--ds-warning)]">
+          <AppIcon icon={MessageCircleWarning} size="xs" className="mt-0.5 text-[var(--ds-warning)]" />
           <span>
             Candidate requested a reschedule
             {item.rescheduleRequestedByCandidate.reason ? `: “${item.rescheduleRequestedByCandidate.reason}”` : "."}
@@ -255,6 +260,7 @@ function InterviewCard({
 
       {/* Actions */}
       <div className={cn(companyDashboardStyles.actionsRow, "mt-auto")}>
+        <InterviewJoinButton interview={item} />
         <Button type="button" size="sm" variant="secondary" onClick={() => onViewDetails(item)}>
           View Details
         </Button>
@@ -263,13 +269,18 @@ function InterviewCard({
         </Button>
         {isOnline && joinHref ? (
           <Button type="button" size="sm" variant="ghost" onClick={copyLink} aria-label="Copy meeting link">
-            {copied ? <Check className="h-3.5 w-3.5" aria-hidden /> : <Copy className="h-3.5 w-3.5" aria-hidden />}
+            {copied ? <AppIcon icon={Check} size="xs" /> : <AppIcon icon={Copy} size="xs" />}
             {copied ? "Copied" : "Copy Link"}
           </Button>
         ) : null}
+
+        {isOpenRound || (canComplete && onUpdateStatus) || (canMarkNoShow && onUpdateStatus) || (isCancellable && onCancel) ? (
+          <span className="mx-0.5 hidden h-5 w-px self-center bg-[var(--ds-border)] sm:block" aria-hidden />
+        ) : null}
+
         {isOpenRound ? (
           <Button type="button" size="sm" variant="ghost" disabled={saving} onClick={() => onReschedule(item)}>
-            <RotateCcw className="h-3.5 w-3.5" aria-hidden />
+            <AppIcon icon={RotateCcw} size="xs" />
             Reschedule
           </Button>
         ) : null}
@@ -280,9 +291,9 @@ function InterviewCard({
             variant="ghost"
             disabled={saving}
             onClick={() => onUpdateStatus(item, "completed")}
-            className="text-emerald-600 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-950/40"
+            className="text-[var(--ds-success)] hover:bg-[var(--ds-success-bg)]"
           >
-            <CheckCircle2 className="h-3.5 w-3.5" aria-hidden />
+            <AppIcon icon={CheckCircle2} size="xs" className="text-[var(--ds-success)]" />
             Complete
           </Button>
         ) : null}
@@ -293,9 +304,9 @@ function InterviewCard({
             variant="ghost"
             disabled={saving}
             onClick={() => onUpdateStatus(item, "no_show")}
-            className="text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+            className="text-[var(--ds-muted)] hover:bg-[var(--ds-hover)]"
           >
-            <UserX className="h-3.5 w-3.5" aria-hidden />
+            <AppIcon icon={UserX} size="xs" />
             No Show
           </Button>
         ) : null}
@@ -306,13 +317,12 @@ function InterviewCard({
             variant="ghost"
             disabled={saving}
             onClick={() => onCancel(item)}
-            className="text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/40"
+            className="text-[var(--ds-danger)] hover:bg-[var(--ds-danger-bg)]"
           >
-            <Ban className="h-3.5 w-3.5" aria-hidden />
+            <AppIcon icon={Ban} size="xs" className="text-[var(--ds-danger)]" />
             Cancel
           </Button>
         ) : null}
-        <InterviewJoinButton interview={item} />
       </div>
     </CompanyDashboardItemCard>
   );
@@ -353,30 +363,30 @@ function AwaitingCandidateCard({
   return (
     <CompanyDashboardItemCard className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex min-w-0 items-start gap-3">
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary-500/30 to-violet-500/30 text-sm font-bold text-primary-200 ring-2 ring-[var(--ds-border)]">
+        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[var(--ds-gradient-from)]/30 to-[var(--ds-gradient-to)]/30 text-sm font-bold text-[var(--ds-primary)] ring-2 ring-[var(--ds-border)]">
           {candidateInitials(name)}
         </span>
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <h4 className="ds-h3 truncate">{name}</h4>
-            <span className="inline-flex shrink-0 items-center rounded-full bg-violet-950/40 px-2 py-0.5 text-[10px] font-semibold text-violet-300 ring-1 ring-violet-500/30">
+            <span className="inline-flex shrink-0 items-center rounded-full bg-[var(--ds-accent)]/15 px-2 py-0.5 text-[10px] font-semibold text-[var(--ds-accent)] ring-1 ring-[var(--ds-accent)]/30">
               {stageLabel(application.status)}
             </span>
           </div>
           <p className="ds-caption truncate">{application.internship?.role || "Role"}</p>
           <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
             {typeof resumeScore === "number" && resumeScore > 0 ? (
-              <span className="rounded-md bg-white/5 px-2 py-0.5 text-[10px] font-semibold text-[var(--ds-muted)]">
+              <span className="rounded-md bg-[var(--ds-surface-hover)] px-2 py-0.5 text-[10px] font-semibold text-[var(--ds-muted)]">
                 Resume {Math.round(resumeScore)}
               </span>
             ) : null}
             {typeof atsScore === "number" && atsScore > 0 ? (
-              <span className="rounded-md bg-white/5 px-2 py-0.5 text-[10px] font-semibold text-[var(--ds-muted)]">
+              <span className="rounded-md bg-[var(--ds-surface-hover)] px-2 py-0.5 text-[10px] font-semibold text-[var(--ds-muted)]">
                 ATS {Math.round(atsScore)}
               </span>
             ) : null}
             {skills.map((skill) => (
-              <span key={skill} className="rounded-md bg-primary-950/40 px-2 py-0.5 text-[10px] font-medium text-primary-300">
+              <span key={skill} className="rounded-md bg-[var(--ds-surface-hover)] px-2 py-0.5 text-xs font-medium text-[var(--ds-muted)]">
                 {skill}
               </span>
             ))}
@@ -398,7 +408,7 @@ function AwaitingCandidateCard({
             })
           }
         >
-          <CalendarClock className="h-3.5 w-3.5" aria-hidden />
+          <AppIcon icon={CalendarClock} size="xs" />
           Schedule Interview
         </Button>
       </div>
@@ -465,6 +475,8 @@ export function InterviewSchedulingPanel({
   const [selected, setSelected] = useState<ScheduledInterviewRecord | null>(null);
   const [actionTarget, setActionTarget] = useState<{ item: ScheduledInterviewRecord; action: RoundAction } | null>(null);
   const [actionBusy, setActionBusy] = useState(false);
+  const filterTablistRef = useRef<HTMLDivElement>(null);
+  useTablistKeyboard(filterTablistRef);
 
   // Every round regardless of status — the status filter tabs (including
   // Completed/Cancelled/No Shows) do the narrowing, not the extraction step.
@@ -601,8 +613,8 @@ export function InterviewSchedulingPanel({
               { label: "Awaiting round", value: awaiting.length, icon: Hourglass }
             ].map(({ label, value, icon: Icon }) => (
               <div key={label} className={cn(companyDashboardStyles.metricTile, "flex items-center gap-3")}>
-                <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--ds-surface-raised)] text-[var(--ds-accent)]">
-                  <Icon className="h-4 w-4" aria-hidden />
+                <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--ds-surface-raised)]">
+                  <AppIcon icon={Icon} size="sm" className="text-[var(--ds-accent)]" />
                 </span>
                 <div>
                   <p className="ds-stat-value leading-none">{value}</p>
@@ -621,15 +633,15 @@ export function InterviewSchedulingPanel({
           </div>
         ) : error ? (
           /* Error + retry */
-          <div className="flex flex-col items-center gap-3 rounded-xl border border-rose-200 bg-rose-50 px-6 py-8 text-center dark:border-rose-900/60 dark:bg-rose-950/30">
-            <AlertCircle className="h-8 w-8 text-rose-500" aria-hidden />
+          <div className="flex flex-col items-center gap-3 rounded-xl border border-[var(--ds-danger)]/40 bg-[var(--ds-danger-bg)] px-6 py-8 text-center">
+            <AppIcon icon={AlertCircle} size="lg" className="text-[var(--ds-danger)]" />
             <div>
-              <p className="text-sm font-semibold text-rose-800 dark:text-rose-200">Couldn&apos;t load interview data</p>
-              <p className="mt-1 text-xs text-rose-600 dark:text-rose-300">{error}</p>
+              <p className="text-sm font-semibold text-[var(--ds-danger)]">Couldn&apos;t load interview data</p>
+              <p className="mt-1 text-xs text-[var(--ds-danger)]">{error}</p>
             </div>
             {onRetry ? (
               <Button type="button" size="sm" variant="secondary" onClick={onRetry}>
-                <RotateCcw className="h-3.5 w-3.5" aria-hidden />
+                <AppIcon icon={RotateCcw} size="xs" />
                 Retry
               </Button>
             ) : null}
@@ -639,16 +651,13 @@ export function InterviewSchedulingPanel({
           <CompanyDashboardEmptyState
             title="No interviews to schedule yet"
             description="Once you move shortlisted candidates into the interview stage, they'll appear here ready to schedule."
-          >
-            <span className="mt-3 inline-flex h-12 w-12 items-center justify-center rounded-full bg-[var(--ds-surface-raised)] text-[var(--ds-accent)]">
-              <CalendarClock className="h-6 w-6" aria-hidden />
-            </span>
-          </CompanyDashboardEmptyState>
+            icon={CalendarClock}
+          />
         ) : (
           <div className="space-y-5">
             {/* Filter tabs */}
             {scheduled.length > 0 ? (
-              <div className="flex flex-wrap gap-1.5" role="tablist" aria-label="Filter interviews by status">
+              <div ref={filterTablistRef} className="flex flex-wrap gap-1.5" role="tablist" aria-label="Filter interviews by status">
                 {FILTERS.map(({ value, label }) => {
                   const active = filter === value;
                   return (
@@ -659,14 +668,14 @@ export function InterviewSchedulingPanel({
                       aria-selected={active}
                       onClick={() => applyFilter(value)}
                       className={cn(
-                        "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500",
+                        "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ds-focus-ring)]",
                         active
-                          ? "bg-primary-600 text-white"
+                          ? "bg-[var(--ds-primary)] text-[var(--ds-on-primary)]"
                           : "border border-[var(--ds-border)] text-[var(--ds-muted)] hover:bg-[var(--ds-surface-raised)]"
                       )}
                     >
                       {label}
-                      <span className={cn("rounded-full px-1.5 text-[10px]", active ? "bg-white/25" : "bg-[var(--ds-surface-raised)]")}>
+                      <span className={cn("rounded-full px-1.5 text-[10px]", active ? "bg-[var(--ds-on-primary)]/25" : "bg-[var(--ds-surface-raised)]")}>
                         {counts[value]}
                       </span>
                     </button>
@@ -679,7 +688,11 @@ export function InterviewSchedulingPanel({
             {scheduled.length > 0 ? (
               <div className="flex flex-wrap items-center gap-2">
                 <div className="relative min-w-[200px] flex-1">
-                  <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--ds-muted)]" aria-hidden />
+                  <AppIcon
+                    icon={Search}
+                    size="xs"
+                    className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2"
+                  />
                   <input
                     type="search"
                     value={search}
@@ -688,7 +701,8 @@ export function InterviewSchedulingPanel({
                       setPage(1);
                     }}
                     placeholder="Search candidate, role, or interviewer…"
-                    className="w-full rounded-lg border border-[var(--ds-border)] bg-[var(--ds-surface)] py-1.5 pl-8 pr-3 text-xs text-[var(--ds-text)] outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/30"
+                    aria-label="Search scheduled interviews by candidate, role, or interviewer"
+                    className="w-full rounded-lg border border-[var(--ds-border)] bg-[var(--ds-surface)] py-1.5 pl-8 pr-3 text-xs text-[var(--ds-text)] outline-none focus:border-[var(--ds-primary)] focus:ring-2 focus:ring-[var(--ds-primary)]/30"
                   />
                 </div>
                 <input
@@ -699,7 +713,7 @@ export function InterviewSchedulingPanel({
                     setPage(1);
                   }}
                   aria-label="From date"
-                  className="rounded-lg border border-[var(--ds-border)] bg-[var(--ds-surface)] px-2 py-1.5 text-xs text-[var(--ds-text)] outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/30"
+                  className="rounded-lg border border-[var(--ds-border)] bg-[var(--ds-surface)] px-2 py-1.5 text-xs text-[var(--ds-text)] outline-none focus:border-[var(--ds-primary)] focus:ring-2 focus:ring-[var(--ds-primary)]/30"
                 />
                 <span className="text-xs text-[var(--ds-muted)]">to</span>
                 <input
@@ -710,7 +724,7 @@ export function InterviewSchedulingPanel({
                     setPage(1);
                   }}
                   aria-label="To date"
-                  className="rounded-lg border border-[var(--ds-border)] bg-[var(--ds-surface)] px-2 py-1.5 text-xs text-[var(--ds-text)] outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/30"
+                  className="rounded-lg border border-[var(--ds-border)] bg-[var(--ds-surface)] px-2 py-1.5 text-xs text-[var(--ds-text)] outline-none focus:border-[var(--ds-primary)] focus:ring-2 focus:ring-[var(--ds-primary)]/30"
                 />
               </div>
             ) : null}
@@ -732,9 +746,26 @@ export function InterviewSchedulingPanel({
                 ))}
               </div>
             ) : scheduled.length > 0 ? (
-              <p className="ds-caption rounded-xl border border-dashed border-[var(--ds-border)] px-4 py-6 text-center">
-                No interviews match this filter.
-              </p>
+              <CompanyDashboardEmptyState
+                title="No interviews match this filter"
+                description="Adjust the search or date range to see more interviews."
+                icon={Search}
+                action={
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => {
+                      setSearch("");
+                      setDateFrom("");
+                      setDateTo("");
+                      setPage(1);
+                    }}
+                  >
+                    Clear Filters
+                  </Button>
+                }
+              />
             ) : null}
 
             {totalPages > 1 ? (
@@ -746,7 +777,7 @@ export function InterviewSchedulingPanel({
                   disabled={safePage <= 1}
                   onClick={() => setPage((prev) => Math.max(1, prev - 1))}
                 >
-                  <ChevronLeft className="h-3.5 w-3.5" aria-hidden />
+                  <AppIcon icon={ChevronLeft} size="xs" />
                   Prev
                 </Button>
                 <span className="ds-caption">
@@ -760,7 +791,7 @@ export function InterviewSchedulingPanel({
                   onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
                 >
                   Next
-                  <ChevronRight className="h-3.5 w-3.5" aria-hidden />
+                  <AppIcon icon={ChevronRight} size="xs" />
                 </Button>
               </div>
             ) : null}
@@ -769,7 +800,7 @@ export function InterviewSchedulingPanel({
             {awaiting.length > 0 ? (
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
-                  <Users className="h-4 w-4 text-[var(--ds-accent)]" aria-hidden />
+                  <AppIcon icon={Users} size="sm" className="text-[var(--ds-accent)]" />
                   <h3 className="ds-label">Awaiting scheduling ({awaiting.length})</h3>
                 </div>
                 <div className={companyDashboardStyles.listStack}>

@@ -1,7 +1,7 @@
 "use client";
 
-import { LearningAssessmentPanel } from "@/components/dashboard/learning-assessment-panel";
-import { DashboardPageHeader } from "@/components/dashboard/dashboard-page-header";
+import { LearningAssessmentPanel } from "@/components/dashboard/intern/learning-assessment-panel";
+import { DashboardPageHeader } from "@/components/dashboard/shared/dashboard-page-header";
 
 export default function MockInterviewPage() {
   return (
