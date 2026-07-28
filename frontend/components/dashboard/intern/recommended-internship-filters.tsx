@@ -68,7 +68,7 @@ export function RecommendedInternshipFiltersPanel({
     <div className={cn("space-y-4 rounded-2xl border border-[var(--ds-border)] bg-[var(--ds-surface)] p-4", className)}>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <AppIcon icon={SlidersHorizontal} size="sm" className="text-[var(--ds-primary)]" />
+          <AppIcon icon={SlidersHorizontal} size="sm" className="text-[var(--ds-primary-text)]" />
           <div>
             <p className="text-sm font-semibold text-[var(--ds-text)]">Filter Recommendations</p>
             <p className="text-xs text-[var(--ds-muted)]">

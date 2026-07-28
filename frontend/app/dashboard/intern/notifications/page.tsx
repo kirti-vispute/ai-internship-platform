@@ -144,7 +144,7 @@ export default function InternNotificationsPage() {
 
           <p className="text-xs text-[var(--ds-muted)]">
             Prefer the full tracker? Visit{" "}
-            <Link href="/dashboard/intern/track-progress" className="font-semibold text-[var(--ds-primary)] hover:underline">
+            <Link href="/dashboard/intern/track-progress" className="font-semibold text-[var(--ds-primary-text)] hover:underline">
               Track Progress
             </Link>
             .

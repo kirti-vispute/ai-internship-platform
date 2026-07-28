@@ -4,6 +4,7 @@ const path = require("path");
 const { Certification, CERTIFICATION_STATUS } = require("../../../models/Certification");
 const InternProfile = require("../../../models/InternProfile");
 const AppError = require("../../../shared/utils/AppError");
+const { resolvePagination } = require("../../../shared/utils/pagination");
 
 function normalizeText(value = "", max = 500) {
   return String(value || "").trim().slice(0, max);
@@ -17,6 +18,15 @@ function parseCompletionDate(value) {
   const now = new Date();
   if (date > now) {
     throw new AppError("Completion date cannot be in the future", 400);
+  }
+  return date;
+}
+
+function parseExpiryDate(value) {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    throw new AppError("Expiry date is invalid", 400);
   }
   return date;
 }
@@ -43,6 +53,7 @@ function serializeCertification(doc) {
     skillCategory: item.skillCategory,
     provider: item.provider,
     completionDate: item.completionDate,
+    expiryDate: item.expiryDate || null,
     credentialUrl: item.credentialUrl || "",
     credentialId: item.credentialId || "",
     description: item.description || "",
@@ -50,6 +61,7 @@ function serializeCertification(doc) {
     uploadTimestamp: item.uploadTimestamp,
     adminReviewTimestamp: item.adminReviewTimestamp || null,
     rejectionReason: item.rejectionReason || "",
+    reviewNotes: item.reviewNotes || "",
     certificateFile: item.certificateFile
       ? {
           originalName: item.certificateFile.originalName,
@@ -149,6 +161,7 @@ async function createCertificationSubmission({ userId, internProfileId, body, fi
   const skillCategory = normalizeText(body.skillCategory, 80);
   const provider = normalizeText(body.provider, 120);
   const completionDate = parseCompletionDate(body.completionDate);
+  const expiryDate = parseExpiryDate(body.expiryDate);
   const credentialUrl = normalizeText(body.credentialUrl, 500);
   const credentialId = normalizeText(body.credentialId, 120);
   const description = normalizeText(body.description, 500);
@@ -177,6 +190,7 @@ async function createCertificationSubmission({ userId, internProfileId, body, fi
     skillCategory,
     provider,
     completionDate,
+    expiryDate,
     credentialUrl,
     credentialId,
     description,
@@ -230,7 +244,7 @@ async function getCertificationFileRecord(certificationId, { userId, isAdmin = f
   return { item, absolutePath };
 }
 
-async function listCertificationsForAdmin({ status, q, limit = 100 }) {
+async function listCertificationsForAdmin({ status, q, page = 1, limit = 20 }) {
   const filter = { isDeleted: false };
   if (status) filter.verificationStatus = status;
   if (q) {
@@ -241,21 +255,36 @@ async function listCertificationsForAdmin({ status, q, limit = 100 }) {
     ];
   }
 
-  const items = await Certification.find(filter)
-    .populate("user", "email role")
-    .populate("internProfile", "fullName email")
-    .sort({ createdAt: -1 })
-    .limit(Math.min(200, Math.max(1, Number(limit))))
-    .lean();
+  const { page: resolvedPage, limit: resolvedLimit, skip } = resolvePagination(
+    { page, limit },
+    { defaultLimit: 20, maxLimit: 100 }
+  );
 
-  return items.map((item) => ({
-    ...serializeCertification(item),
-    userEmail: item.user?.email || "",
-    internName: item.internProfile?.fullName || ""
-  }));
+  const [items, total] = await Promise.all([
+    Certification.find(filter)
+      .populate("user", "email role")
+      .populate("internProfile", "fullName email")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(resolvedLimit)
+      .lean(),
+    Certification.countDocuments(filter)
+  ]);
+
+  return {
+    certifications: items.map((item) => ({
+      ...serializeCertification(item),
+      userEmail: item.user?.email || "",
+      internName: item.internProfile?.fullName || ""
+    })),
+    page: resolvedPage,
+    limit: resolvedLimit,
+    total,
+    totalPages: resolvedLimit > 0 ? Math.ceil(total / resolvedLimit) : 0
+  };
 }
 
-async function reviewCertification({ certificationId, adminUserId, status, rejectionReason = "" }) {
+async function reviewCertification({ certificationId, adminUserId, status, rejectionReason = "", reviewNotes = "" }) {
   if (![CERTIFICATION_STATUS.VERIFIED, CERTIFICATION_STATUS.REJECTED].includes(status)) {
     throw new AppError("Invalid review status. Use verified or rejected.", 400);
   }
@@ -275,10 +304,17 @@ async function reviewCertification({ certificationId, adminUserId, status, rejec
   certification.adminReviewer = adminUserId;
   certification.adminReviewTimestamp = new Date();
   certification.rejectionReason = status === CERTIFICATION_STATUS.REJECTED ? normalizeText(rejectionReason, 500) : "";
+  certification.reviewNotes = normalizeText(reviewNotes, 500);
   await certification.save();
 
   if (status === CERTIFICATION_STATUS.VERIFIED) {
     await syncVerifiedCertificationsToProfile(certification.user);
+    // Keep a live/published portfolio in lock-step with verification decisions,
+    // the same fire-and-forget sync profile edits and resume uploads already
+    // trigger (see intern.controller.js) -- so a newly verified cert shows up
+    // on the student's portfolio without them needing to regenerate it.
+    const { syncPortfolioOnProfileChange } = require("../../../services/portfolio.service");
+    syncPortfolioOnProfileChange(certification.user).catch(() => undefined);
   }
 
   return serializeCertification(certification);

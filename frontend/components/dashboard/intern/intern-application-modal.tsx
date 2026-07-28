@@ -76,13 +76,16 @@ export function InternApplicationModal({ internship, resumePath, onClose, onSucc
     <div className="fixed inset-0 z-[1000] bg-slate-950/50" onClick={onClose}>
       <div className="flex h-full w-full items-start justify-center overflow-hidden px-4 pb-6 pt-6 md:pt-8">
         <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="intern-application-modal-title"
           className="pointer-events-auto flex w-full max-w-[900px] flex-col overflow-hidden rounded-2xl border border-[var(--ds-border)] bg-[var(--ds-card)] shadow-[0_24px_60px_rgba(15,23,42,0.2)] "
           style={{ maxHeight: "88vh" }}
           onClick={(event) => event.stopPropagation()}
         >
           <header className="flex items-start justify-between gap-4 border-b border-[var(--ds-border)] px-5 py-4 md:px-6">
             <div className="min-w-0">
-              <h3 className="text-xl font-semibold text-[var(--ds-text)]">Apply for Internship</h3>
+              <h3 id="intern-application-modal-title" className="text-xl font-semibold text-[var(--ds-text)]">Apply for Internship</h3>
               <p className="mt-1 truncate text-sm text-[var(--ds-muted)]">
                 {internship.role} • {internship.company?.companyName || "Company"}
               </p>
@@ -218,7 +221,7 @@ export function InternApplicationModal({ internship, resumePath, onClose, onSucc
                 </div>
               </section>
 
-              {error && <p className="text-sm text-[var(--ds-danger)]">{error}</p>}
+              {error && <p role="alert" className="text-sm text-[var(--ds-danger)]">{error}</p>}
             </div>
           </div>
 

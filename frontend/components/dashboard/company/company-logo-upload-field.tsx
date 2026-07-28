@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useId, useRef, useState } from "react";
 import Image from "next/image";
 import { Building2, Upload } from "lucide-react";
 import { AppIcon } from "@/components/icons/app-icon";
@@ -63,6 +63,7 @@ export function CompanyLogoUploadField({ logoUrl, companyName, uploading, error,
   const inputRef = useRef<HTMLInputElement>(null);
   const [localError, setLocalError] = useState<string | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
+  const errorId = useId();
 
   async function handleFiles(files: FileList | null) {
     const file = files?.[0];
@@ -101,12 +102,13 @@ export function CompanyLogoUploadField({ logoUrl, companyName, uploading, error,
             type="button"
             disabled={uploading}
             onClick={() => inputRef.current?.click()}
+            aria-describedby={combinedError ? errorId : undefined}
             className={cn(
               "inline-flex items-center gap-2 rounded-[var(--ds-radius-sm)] border border-[var(--ds-border)] px-3 py-1.5 text-sm font-semibold text-[var(--ds-text)] transition-colors duration-150 hover:bg-[var(--ds-surface-raised)] active:opacity-80 disabled:cursor-not-allowed disabled:opacity-60"
             )}
           >
             <AppIcon icon={Upload} size="xs" />
-            {uploading ? "Uploading..." : "Upload Logo"}
+            <span aria-live="polite">{uploading ? "Uploading..." : "Upload Logo"}</span>
           </button>
           <p className="ds-caption">PNG, JPG, WEBP, or SVG. Max 2MB.</p>
         </div>
@@ -121,7 +123,11 @@ export function CompanyLogoUploadField({ logoUrl, companyName, uploading, error,
           }}
         />
       </div>
-      {combinedError ? <p className="text-xs font-medium text-[var(--ds-danger)]">{combinedError}</p> : null}
+      {combinedError ? (
+        <p id={errorId} role="alert" className="text-xs font-medium text-[var(--ds-danger)]">
+          {combinedError}
+        </p>
+      ) : null}
     </div>
   );
 }

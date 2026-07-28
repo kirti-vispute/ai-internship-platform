@@ -156,32 +156,25 @@ function mergeExperience(profile, parsed) {
   }).slice(0, 10);
 }
 
-function mergeCertifications(profile, parsed) {
-  const structured = Array.isArray(profile.profileSections?.certifications) ? profile.profileSections.certifications : [];
-  const entries = Array.isArray(profile.certificationEntries) ? profile.certificationEntries : [];
+// Portfolio certifications must show ONLY admin-verified credentials, never
+// self-reported/resume-parsed/manual ones -- a recruiter viewing the public
+// portfolio should never see a claim the platform hasn't confirmed. This
+// reads the same verifiedCertificationEntries mirror that
+// certification.service.js keeps in sync whenever an admin approves a
+// certification, so it can never drift ahead of the actual review decision.
+function mergeCertifications(profile) {
   const verified = Array.isArray(profile.verifiedCertificationEntries) ? profile.verifiedCertificationEntries : [];
-  const parsedCerts = Array.isArray(parsed?.certifications) ? parsed.certifications : [];
-  const legacy = Array.isArray(profile.certifications) ? profile.certifications : [];
-
-  const rows = [
-    ...structured.map((c) => ({ name: c.name || "", issuer: c.issuer || "", year: c.year || "" })),
-    ...entries.map((c) => ({ name: c.name || "", issuer: c.issuer || "", year: c.year || "" })),
-    ...verified.map((c) => ({ name: c.name || "", issuer: c.issuer || "", year: c.year || "", verified: true })),
-    ...parsedCerts.map((c) => ({
-      name: typeof c === "string" ? c : c.name || "",
-      issuer: typeof c === "string" ? "" : c.issuer || "",
-      year: typeof c === "string" ? "" : c.year || ""
-    })),
-    ...legacy.map((line) => ({ name: String(line), issuer: "", year: "" }))
-  ];
 
   const seen = new Set();
-  return rows.filter((row) => {
-    const key = row.name.toLowerCase();
-    if (!row.name || seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  }).slice(0, 12);
+  return verified
+    .map((c) => ({ name: c.name || "", issuer: c.issuer || "", year: c.year || "", verified: true }))
+    .filter((row) => {
+      const key = row.name.toLowerCase();
+      if (!row.name || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .slice(0, 12);
 }
 
 function collectSourceData(profileDoc) {
@@ -245,7 +238,7 @@ function collectSourceData(profileDoc) {
       "",
     skills,
     projects: mergeProjects(profile, parsed),
-    certifications: mergeCertifications(profile, parsed),
+    certifications: mergeCertifications(profile),
     experience: mergeExperience(profile, parsed),
     education: mergeEducation(profile, parsed),
     achievements,
@@ -423,10 +416,24 @@ async function syncPortfolioOnProfileChange(userId) {
   return generatePortfolio(userId, { theme: portfolio.theme, useAi: false });
 }
 
+// The rest of a portfolio's content (bio, projects, AI copy) is intentionally
+// cached and only refreshed via generatePortfolio/autoSync — but the
+// student's own name must never lag behind their profile, regardless of
+// publish/autoSync state, so it's overlaid from the live InternProfile at
+// read time instead of trusting the generated-at-some-point-in-time snapshot.
+function applyLiveHeroName(payload, fullName) {
+  if (fullName && payload?.content?.hero) {
+    payload.content.hero.name = fullName;
+  }
+  return payload;
+}
+
 async function getPortfolioForUser(userId) {
   const portfolio = await InternPortfolio.findOne({ user: userId }).lean();
   if (!portfolio) return null;
-  return toPortfolioPayload(portfolio);
+  const payload = toPortfolioPayload(portfolio);
+  const profile = await InternProfile.findOne({ user: userId }).select("fullName").lean();
+  return applyLiveHeroName(payload, profile?.fullName);
 }
 
 async function updatePortfolioSettings(userId, updates) {
@@ -447,7 +454,9 @@ async function updatePortfolioSettings(userId, updates) {
   }
 
   await portfolio.save();
-  return toPortfolioPayload(portfolio);
+  const payload = toPortfolioPayload(portfolio);
+  const profile = await InternProfile.findOne({ user: userId }).select("fullName").lean();
+  return applyLiveHeroName(payload, profile?.fullName);
 }
 
 async function getPublicPortfolio(slug) {
@@ -459,16 +468,21 @@ async function getPublicPortfolio(slug) {
   portfolio.metadata.lastViewedAt = new Date();
   await portfolio.save();
 
-  return {
-    slug: portfolio.slug,
-    theme: portfolio.theme,
-    lastGeneratedAt: portfolio.lastGeneratedAt,
-    content: portfolio.content,
-    metadata: {
-      viewCount: portfolio.metadata.viewCount,
-      aiGenerated: portfolio.metadata.aiGenerated
-    }
-  };
+  const profile = await InternProfile.findById(portfolio.internProfile).select("fullName").lean();
+
+  return applyLiveHeroName(
+    {
+      slug: portfolio.slug,
+      theme: portfolio.theme,
+      lastGeneratedAt: portfolio.lastGeneratedAt,
+      content: portfolio.content,
+      metadata: {
+        viewCount: portfolio.metadata.viewCount,
+        aiGenerated: portfolio.metadata.aiGenerated
+      }
+    },
+    profile?.fullName
+  );
 }
 
 async function attachPortfolioSummaries(applications) {

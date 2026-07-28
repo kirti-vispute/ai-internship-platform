@@ -8,6 +8,9 @@
         "build": "next build",
         "start": "next start",
         "lint": "next lint",
+        "test": "vitest run",
+        "test:watch": "vitest",
+        "test:e2e": "playwright test",
         "server:dev": "npm --prefix ../backend run dev",
         "server:start": "npm --prefix ../backend run start",
         "server:seed": "npm --prefix ../backend run seed",
@@ -21,20 +24,35 @@
     "dependencies": {
         "framer-motion": "^12.38.0",
         "lucide-react": "^1.17.0",
-        "next": "15.5.7",
+        "next": "15.5.21",
         "react": "19.2.1",
         "react-dom": "19.2.1",
         "socket.io-client": "^4.8.3"
     },
     "devDependencies": {
         "@netlify/plugin-nextjs": "^5.15.9",
+        "@playwright/test": "^1.62.0",
+        "@testing-library/jest-dom": "^7.0.0",
+        "@testing-library/react": "^16.3.2",
+        "@testing-library/user-event": "^14.6.1",
         "@types/node": "^22.14.1",
         "@types/react": "^19.0.12",
         "@types/react-dom": "^19.0.5",
+        "@vitejs/plugin-react": "^6.0.4",
         "autoprefixer": "^10.4.21",
+        "eslint": "^9.39.5",
+        "eslint-config-next": "^16.2.11",
+        "jsdom": "^29.1.1",
         "postcss": "^8.5.3",
-        "sharp": "^0.34.5",
+        "sharp": "^0.35.3",
         "tailwindcss": "^3.4.17",
-        "typescript": "^5.8.3"
+        "typescript": "^5.8.3",
+        "vitest": "^4.1.10"
+    },
+    "overrides": {
+        "next": {
+            "postcss": "$postcss",
+            "sharp": "$sharp"
+        }
     }
 }

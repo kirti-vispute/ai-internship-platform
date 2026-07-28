@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import { CalendarDays, MessageSquare } from "lucide-react";
 import { AppIcon } from "@/components/icons/app-icon";
 import type { Application } from "@/lib/intern-portal";
@@ -15,14 +16,18 @@ import { useInterviewCountdown } from "@/lib/use-interview-countdown";
 import { SectionPanel } from "@/components/dashboard/shared/section-panel";
 import { Button } from "@/components/ui/button";
 import { InterviewStatusChip } from "@/components/dashboard/interview/interview-status-chip";
-import { InterviewDetailsModal } from "@/components/dashboard/interview/interview-details-modal";
 import { InterviewJoinButton } from "@/components/dashboard/interview/interview-join-button";
 import { EmptyState } from "@/components/dashboard/shared/empty-state";
+
+const InterviewDetailsModal = dynamic(
+  () => import("@/components/dashboard/interview/interview-details-modal").then((m) => m.InterviewDetailsModal),
+  { ssr: false }
+);
 
 function InterviewCountdownHint({ item }: { item: ScheduledInterviewRecord }) {
   const countdown = useInterviewCountdown(item.interviewDate, item.interviewTime);
   if (!countdown) return null;
-  return <p className="text-xs font-medium text-[var(--ds-primary)]">Starts in {countdown.label}</p>;
+  return <p className="text-xs font-medium text-[var(--ds-primary-text)]">Starts in {countdown.label}</p>;
 }
 
 type ScheduledInterviewsPanelProps = {
@@ -92,7 +97,7 @@ export function ScheduledInterviewsPanel({
                     <p className="text-xs text-[var(--ds-muted)]">
                       {formatInterviewDateTime(item.interviewDate, item.interviewTime)}
                     </p>
-                    {joinHint ? <p className="text-xs text-[var(--ds-primary)]">{joinHint}</p> : null}
+                    {joinHint ? <p className="text-xs text-[var(--ds-primary-text)]">{joinHint}</p> : null}
                     <InterviewCountdownHint item={item} />
                   </div>
                   <div className="flex flex-wrap gap-2 sm:justify-end">

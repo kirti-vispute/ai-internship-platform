@@ -44,14 +44,22 @@ import {
   monthGridDateRange,
   weekDateRange
 } from "@/lib/calendar-personalization";
-import { CalendarDayDetailModal } from "@/components/calendar/calendar-day-detail-modal";
 import { SectionPanel } from "@/components/dashboard/shared/section-panel";
 import { Button } from "@/components/ui/button";
 import { InterviewStatusChip } from "@/components/dashboard/interview/interview-status-chip";
-import { InterviewDetailsModal } from "@/components/dashboard/interview/interview-details-modal";
 import { InterviewJoinButton } from "@/components/dashboard/interview/interview-join-button";
 import { getInterviewJoinAvailability } from "@/lib/interview-join";
 import { cn } from "@/lib/utils";
+import dynamic from "next/dynamic";
+
+const CalendarDayDetailModal = dynamic(
+  () => import("@/components/calendar/calendar-day-detail-modal").then((m) => m.CalendarDayDetailModal),
+  { ssr: false }
+);
+const InterviewDetailsModal = dynamic(
+  () => import("@/components/dashboard/interview/interview-details-modal").then((m) => m.InterviewDetailsModal),
+  { ssr: false }
+);
 
 type CalendarView = "month" | "week" | "timeline";
 type Audience = "intern" | "company";
@@ -171,7 +179,7 @@ const EventChip = memo(function EventChip({
 
 /* ---------- Event card (timeline / week) ---------- */
 
-function EventCard({
+const EventCard = memo(function EventCard({
   event,
   audience,
   onSelect
@@ -235,7 +243,7 @@ function EventCard({
       ) : null}
     </div>
   );
-}
+});
 
 /* ---------- Month day cell ---------- */
 
@@ -272,8 +280,8 @@ const MonthDayCell = memo(function MonthDayCell({
         !inMonth && "bg-[var(--ds-surface)] opacity-60",
         isToday && "bg-[color-mix(in_srgb,var(--ds-primary)_6%,transparent)]",
         isSelected
-          ? "ring-2 ring-inset ring-[var(--ds-primary)]"
-          : isToday && "ring-1 ring-inset ring-[color-mix(in_srgb,var(--ds-primary)_40%,transparent)]"
+          ? "ring-2 ring-inset ring-[var(--ds-primary-text)] dark:ring-[var(--ds-primary)]"
+          : isToday && "ring-1 ring-inset ring-[color-mix(in_srgb,var(--ds-primary-text)_40%,transparent)] dark:ring-[color-mix(in_srgb,var(--ds-primary)_40%,transparent)]"
       )}
     >
       <div className="flex items-center justify-between">
@@ -331,7 +339,7 @@ const MonthDayCell = memo(function MonthDayCell({
           <button
             type="button"
             onClick={() => onOpenDay(dayKey)}
-            className="w-full rounded px-1 text-left text-[11px] font-semibold text-[var(--ds-muted)] hover:text-[var(--ds-primary)]"
+            className="w-full rounded px-1 text-left text-[11px] font-semibold text-[var(--ds-muted)] hover:text-[var(--ds-primary-text)]"
           >
             +{events.length - 2} more
           </button>
@@ -710,7 +718,7 @@ const directionRef = useRef<1 | -1>(1);
                     key={dayKey}
                     className={cn(
                       "flex flex-col rounded-2xl border border-[var(--ds-border)] p-3 transition-colors duration-150",
-                      isToday && "border-2 border-[var(--ds-primary)] bg-[color-mix(in_srgb,var(--ds-primary)_6%,transparent)]"
+                      isToday && "border-2 border-[var(--ds-primary-text)] bg-[color-mix(in_srgb,var(--ds-primary-text)_6%,transparent)] dark:border-[var(--ds-primary)] dark:bg-[color-mix(in_srgb,var(--ds-primary)_6%,transparent)]"
                     )}
                   >
                     <button
@@ -723,7 +731,7 @@ const directionRef = useRef<1 | -1>(1);
                         <span className="block text-xs font-semibold uppercase tracking-[0.12em] text-[var(--ds-muted)]">
                           {day.toLocaleDateString(undefined, { weekday: "short" })}
                         </span>
-                        <span className={cn("mt-0.5 block text-lg font-bold", isToday ? "text-[var(--ds-primary)]" : "text-[var(--ds-text)]")}>
+                        <span className={cn("mt-0.5 block text-lg font-bold", isToday ? "text-[var(--ds-primary-text)]" : "text-[var(--ds-text)]")}>
                           {day.getDate()}
                         </span>
                       </span>

@@ -84,8 +84,8 @@ export function OTPInput({
 
   return (
     <div>
-      <label className="ds-input-label">Enter OTP</label>
-      <div className="flex gap-2" onPaste={handlePaste}>
+      <span className="ds-input-label" id="otp-input-label">Enter OTP</span>
+      <div className="flex gap-2" role="group" aria-labelledby="otp-input-label" onPaste={handlePaste}>
         {Array.from({ length }).map((_, index) => (
           <input
             key={index}

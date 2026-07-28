@@ -28,37 +28,37 @@ async function renderReport(res, code, generatedBy, subject, data) {
 
 exports.downloadInternResumeAnalysis = asyncHandler(async (req, res) => {
   const data = await buildResumeAnalysisData(req.user);
-  await renderReport(res, REPORT_CODES.RAR, formatUserName(req.user, req.user.email), data.subject, data);
+  await renderReport(res, REPORT_CODES.RAR, data.subject.name || formatUserName(req.user, req.user.email), data.subject, data);
 });
 
 exports.downloadInternSkillGap = asyncHandler(async (req, res) => {
   const internshipId = req.query.internshipId || null;
   const data = await buildSkillGapData(req.user, internshipId);
-  await renderReport(res, REPORT_CODES.SGR, formatUserName(req.user, req.user.email), data.subject, data);
+  await renderReport(res, REPORT_CODES.SGR, data.subject.name || formatUserName(req.user, req.user.email), data.subject, data);
 });
 
 exports.downloadInternApplicationHistory = asyncHandler(async (req, res) => {
   const data = await buildApplicationHistoryData(req.user);
-  await renderReport(res, REPORT_CODES.AHR, formatUserName(req.user, req.user.email), data.subject, data);
+  await renderReport(res, REPORT_CODES.AHR, data.subject.name || formatUserName(req.user, req.user.email), data.subject, data);
 });
 
 exports.downloadCompanyCandidateEvaluation = asyncHandler(async (req, res) => {
   const { applicationId } = req.params;
   if (!applicationId) throw new AppError("applicationId is required", 400);
   const data = await buildCandidateEvaluationData(req.user, applicationId);
-  await renderReport(res, REPORT_CODES.CHR, formatUserName(req.user, req.user.email), data.subject, data);
+  await renderReport(res, REPORT_CODES.CHR, data.subject.name || formatUserName(req.user, req.user.email), data.subject, data);
 });
 
 exports.downloadCompanyInterviewReport = asyncHandler(async (req, res) => {
   const { applicationId } = req.params;
   if (!applicationId) throw new AppError("applicationId is required", 400);
   const data = await buildInterviewReportData(req.user, applicationId);
-  await renderReport(res, REPORT_CODES.INR, formatUserName(req.user, req.user.email), data.subject, data);
+  await renderReport(res, REPORT_CODES.INR, data.subject.name || formatUserName(req.user, req.user.email), data.subject, data);
 });
 
 exports.downloadCompanyHiringReport = asyncHandler(async (req, res) => {
   const data = await buildHiringReportData(req.user);
-  await renderReport(res, REPORT_CODES.HIR, formatUserName(req.user, req.user.email), data.subject, data);
+  await renderReport(res, REPORT_CODES.HIR, data.subject.name || formatUserName(req.user, req.user.email), data.subject, data);
 });
 
 exports.downloadAdminPlatformStatistics = asyncHandler(async (req, res) => {

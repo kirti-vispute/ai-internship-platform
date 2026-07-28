@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import type { LucideIcon } from "lucide-react";
 import { ShieldAlert, ShieldBan, ShieldCheck, ShieldQuestion, Star } from "lucide-react";
 import type { CompanyProfile } from "@/lib/company-portal";
@@ -20,14 +20,17 @@ const NOTE_CLAMP_THRESHOLD = 220;
 export function ClampedNote({ text }: { text: string }) {
   const [expanded, setExpanded] = useState(false);
   const isLong = text.length > NOTE_CLAMP_THRESHOLD;
+  const noteId = useId();
 
   return (
     <div>
-      <p className={cn("ds-body mt-2 leading-relaxed", !expanded && isLong && "line-clamp-3")}>{text}</p>
+      <p id={noteId} className={cn("ds-body mt-2 leading-relaxed", !expanded && isLong && "line-clamp-3")}>{text}</p>
       {isLong ? (
         <button
           type="button"
           onClick={() => setExpanded((prev) => !prev)}
+          aria-expanded={expanded}
+          aria-controls={noteId}
           className="mt-1 text-xs font-semibold text-[var(--ds-accent)] transition hover:underline"
         >
           {expanded ? "View less" : "View more"}

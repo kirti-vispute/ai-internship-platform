@@ -217,10 +217,12 @@ export function LearningCoursesModule({ profile }: Props) {
           <button
             type="button"
             onClick={() => setFiltersOpen((v) => !v)}
+            aria-expanded={filtersOpen}
+            aria-controls="learning-courses-filters"
             className={cn(
               "flex items-center gap-1.5 rounded-xl border px-3 py-2 text-sm font-medium transition",
               filtersOpen || hasFilters
-                ? "border-[var(--ds-primary)] bg-[var(--ds-info-bg)] text-[var(--ds-primary)]"
+                ? "border-[var(--ds-primary)] bg-[var(--ds-info-bg)] text-[var(--ds-primary-text)]"
                 : "border-[var(--ds-border)] bg-[var(--ds-card)] text-[var(--ds-text-secondary)] hover:border-[var(--ds-border-strong)]"
             )}
           >
@@ -230,24 +232,24 @@ export function LearningCoursesModule({ profile }: Props) {
         </div>
 
         {filtersOpen && (
-          <div className="grid gap-3 rounded-xl border border-[var(--ds-border)] bg-[var(--ds-surface)] p-4 sm:grid-cols-3">
+          <div id="learning-courses-filters" className="grid gap-3 rounded-xl border border-[var(--ds-border)] bg-[var(--ds-surface)] p-4 sm:grid-cols-3">
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-[var(--ds-text-secondary)]">Skill</label>
-              <select value={filterSkill} onChange={(e) => setFilterSkill(e.target.value)} className={selectBase}>
+              <label htmlFor="learning-filter-skill" className="mb-1.5 block text-xs font-medium text-[var(--ds-text-secondary)]">Skill</label>
+              <select id="learning-filter-skill" value={filterSkill} onChange={(e) => setFilterSkill(e.target.value)} className={selectBase}>
                 <option value="all">All Skills</option>
                 {sortedSkills.map((s) => <option key={s} value={s}>{s}</option>)}
               </select>
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-[var(--ds-text-secondary)]">Provider</label>
-              <select value={filterProvider} onChange={(e) => setFilterProvider(e.target.value)} className={selectBase}>
+              <label htmlFor="learning-filter-provider" className="mb-1.5 block text-xs font-medium text-[var(--ds-text-secondary)]">Provider</label>
+              <select id="learning-filter-provider" value={filterProvider} onChange={(e) => setFilterProvider(e.target.value)} className={selectBase}>
                 <option value="all">All Providers</option>
                 {ALL_PROVIDERS.map((p) => <option key={p} value={p}>{p}</option>)}
               </select>
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-[var(--ds-text-secondary)]">Level</label>
-              <select value={filterLevel} onChange={(e) => setFilterLevel(e.target.value)} className={selectBase}>
+              <label htmlFor="learning-filter-level" className="mb-1.5 block text-xs font-medium text-[var(--ds-text-secondary)]">Level</label>
+              <select id="learning-filter-level" value={filterLevel} onChange={(e) => setFilterLevel(e.target.value)} className={selectBase}>
                 <option value="all">All Levels</option>
                 {ALL_LEVELS.map((l) => <option key={l} value={l}>{LEVEL_LABELS[l]}</option>)}
               </select>
@@ -256,7 +258,7 @@ export function LearningCoursesModule({ profile }: Props) {
         )}
 
         {hasFilters && (
-          <button type="button" onClick={clearFilters} className="flex items-center gap-1 text-xs font-medium text-[var(--ds-primary)] hover:text-[var(--ds-primary-hover)]">
+          <button type="button" onClick={clearFilters} className="flex items-center gap-1 text-xs font-medium text-[var(--ds-primary-text)] hover:text-[var(--ds-primary-hover)]">
             <AppIcon icon={X} size="xs" />
             Clear filters
           </button>
@@ -351,7 +353,7 @@ export function LearningCoursesModule({ profile }: Props) {
               return (
                 <section key={skill} className="space-y-5">
                   <div className="flex items-center gap-2">
-                    <AppIcon icon={ChevronRight} size="xs" className="text-[var(--ds-primary)]" />
+                    <AppIcon icon={ChevronRight} size="xs" className="text-[var(--ds-primary-text)]" />
                     <h3 className="text-sm font-bold text-[var(--ds-text)]">{skill}</h3>
                     <span className="rounded-full bg-[var(--ds-surface-hover)] px-2 py-0.5 text-[11px] font-semibold text-[var(--ds-muted)]">
                       {courses.length}

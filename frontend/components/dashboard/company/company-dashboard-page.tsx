@@ -41,7 +41,6 @@ import { SectionPanel } from "@/components/dashboard/shared/section-panel";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { SearchInput } from "@/components/ui/search-input";
-import { ThemeSettingsPanel } from "@/components/theme/theme-settings-panel";
 import { Badge, type BadgeTone } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
 import { AppIcon } from "@/components/icons/app-icon";
@@ -126,27 +125,65 @@ import {
   normalizeApplicantStage,
   normalizePipelineStatus
 } from "@/components/dashboard/company/company-dashboard-shared";
-import {
-  CompanyCandidateSearchView,
-  CompanyExportView,
-  CompanyFeedbackView,
-  CompanyNotesView,
-  CompanySavedCandidatesView
-} from "@/components/dashboard/company/views/company-matching-reports-views";
-import { CompanyAnalyticsOverviewView, CompanySalaryAnalyticsView } from "@/components/dashboard/company/views/company-analytics-views";
-import { CompanyTeamRecruitersView } from "@/components/dashboard/company/views/company-team-recruiters-view";
-import {
-  CompanyPersonalProfileEditView,
-  CompanyPersonalProfileView,
-  CompanyProfileEditView,
-  CompanyProfileView,
-  CompanyVerificationView
-} from "@/components/dashboard/company/views/company-profile-views";
-import { CompanyPostInternshipView } from "@/components/dashboard/company/views/company-hiring-post-view";
-
 // Heavy, view-gated or modal-only surfaces: split out of the initial company-dashboard
 // bundle so switching views (hiring/interviews/matching/etc.) fetches its own chunk
 // instead of every view's code shipping on first load.
+const CompanyCandidateSearchView = dynamic(
+  () => import("@/components/dashboard/company/views/company-matching-reports-views").then((m) => m.CompanyCandidateSearchView),
+  { ssr: false, loading: () => <SkeletonPage /> }
+);
+const CompanyExportView = dynamic(
+  () => import("@/components/dashboard/company/views/company-matching-reports-views").then((m) => m.CompanyExportView),
+  { ssr: false, loading: () => <SkeletonPage /> }
+);
+const CompanyFeedbackView = dynamic(
+  () => import("@/components/dashboard/company/views/company-matching-reports-views").then((m) => m.CompanyFeedbackView),
+  { ssr: false, loading: () => <SkeletonPage /> }
+);
+const CompanyNotesView = dynamic(
+  () => import("@/components/dashboard/company/views/company-matching-reports-views").then((m) => m.CompanyNotesView),
+  { ssr: false, loading: () => <SkeletonPage /> }
+);
+const CompanySavedCandidatesView = dynamic(
+  () => import("@/components/dashboard/company/views/company-matching-reports-views").then((m) => m.CompanySavedCandidatesView),
+  { ssr: false, loading: () => <SkeletonPage /> }
+);
+const CompanyAnalyticsOverviewView = dynamic(
+  () => import("@/components/dashboard/company/views/company-analytics-views").then((m) => m.CompanyAnalyticsOverviewView),
+  { ssr: false, loading: () => <SkeletonPage /> }
+);
+const CompanySalaryAnalyticsView = dynamic(
+  () => import("@/components/dashboard/company/views/company-analytics-views").then((m) => m.CompanySalaryAnalyticsView),
+  { ssr: false, loading: () => <SkeletonPage /> }
+);
+const CompanyTeamRecruitersView = dynamic(
+  () => import("@/components/dashboard/company/views/company-team-recruiters-view").then((m) => m.CompanyTeamRecruitersView),
+  { ssr: false, loading: () => <SkeletonPage /> }
+);
+const CompanyPersonalProfileEditView = dynamic(
+  () => import("@/components/dashboard/company/views/company-profile-views").then((m) => m.CompanyPersonalProfileEditView),
+  { ssr: false, loading: () => <SkeletonPage /> }
+);
+const CompanyPersonalProfileView = dynamic(
+  () => import("@/components/dashboard/company/views/company-profile-views").then((m) => m.CompanyPersonalProfileView),
+  { ssr: false, loading: () => <SkeletonPage /> }
+);
+const CompanyProfileEditView = dynamic(
+  () => import("@/components/dashboard/company/views/company-profile-views").then((m) => m.CompanyProfileEditView),
+  { ssr: false, loading: () => <SkeletonPage /> }
+);
+const CompanyProfileView = dynamic(
+  () => import("@/components/dashboard/company/views/company-profile-views").then((m) => m.CompanyProfileView),
+  { ssr: false, loading: () => <SkeletonPage /> }
+);
+const CompanyVerificationView = dynamic(
+  () => import("@/components/dashboard/company/views/company-profile-views").then((m) => m.CompanyVerificationView),
+  { ssr: false, loading: () => <SkeletonPage /> }
+);
+const CompanyPostInternshipView = dynamic(
+  () => import("@/components/dashboard/company/views/company-hiring-post-view").then((m) => m.CompanyPostInternshipView),
+  { ssr: false, loading: () => <SkeletonPage /> }
+);
 const ApplicantDetailsModal = dynamic(
   () => import("@/components/dashboard/company/applicant-details-modal").then((m) => m.ApplicantDetailsModal),
   { ssr: false }
@@ -1287,7 +1324,7 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
           onRetry={() => window.location.reload()}
         />
       )}
-      {success && <div className="rounded-xl border border-[var(--ds-success)] bg-[var(--ds-success-bg)] px-4 py-3 text-sm text-[var(--ds-success)]">{success}</div>}
+      {success && <div role="status" aria-live="polite" className="rounded-xl border border-[var(--ds-success)] bg-[var(--ds-success-bg)] px-4 py-3 text-sm text-[var(--ds-success)]">{success}</div>}
       <CandidateCompareProvider>
         {viewNode}
         <CandidateCompareBar applications={apps} />

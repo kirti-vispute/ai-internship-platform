@@ -32,7 +32,7 @@ type Portfolio3DViewerProps = {
 function SectionHeader({ title, count }: { title: string; count?: number }) {
   return (
     <div className="portfolio-section-header">
-      <p className="portfolio-section-title">{title}</p>
+      <h2 className="portfolio-section-title">{title}</h2>
       <span className="portfolio-section-line" aria-hidden />
       {typeof count === "number" ? <span className="portfolio-section-count">{count}</span> : null}
     </div>

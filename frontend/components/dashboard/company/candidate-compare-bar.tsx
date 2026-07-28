@@ -31,6 +31,7 @@ export function CandidateCompareBar({ applications }: CandidateCompareBarProps) 
           className="fixed inset-x-0 bottom-4 z-[70] mx-auto flex w-[min(94vw,640px)] flex-wrap items-center gap-3 rounded-2xl border border-[var(--ds-border-strong)] bg-[var(--ds-surface-raised)] px-4 py-3 shadow-2xl backdrop-blur-md sm:flex-nowrap"
           role="region"
           aria-label="Candidate comparison tray"
+          aria-live="polite"
         >
           <div className="flex -space-x-2">
             {selected.map((application) => {
@@ -38,7 +39,7 @@ export function CandidateCompareBar({ applications }: CandidateCompareBarProps) 
               return (
                 <span
                   key={application._id}
-                  className="group relative flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-[var(--ds-gradient-from)] to-[var(--ds-gradient-to)] text-[11px] font-bold text-white ring-2 ring-[var(--ds-surface-raised)]"
+                  className="group relative flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-[var(--ds-gradient-from)] to-[var(--ds-gradient-to)] text-[11px] font-bold text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.45)] ring-2 ring-[var(--ds-surface-raised)]"
                   title={name}
                 >
                   {initialsFor(name)}
@@ -46,7 +47,7 @@ export function CandidateCompareBar({ applications }: CandidateCompareBarProps) 
                     type="button"
                     onClick={() => remove(application._id)}
                     aria-label={`Remove ${name} from comparison`}
-                    className="absolute -right-1 -top-1 hidden h-4 w-4 items-center justify-center rounded-full bg-[var(--ds-danger)] text-white group-hover:flex"
+                    className="absolute -right-1 -top-1 hidden h-4 w-4 items-center justify-center rounded-full bg-[var(--ds-danger)] text-[var(--ds-on-danger)] group-hover:flex group-focus-within:flex focus:flex"
                   >
                     <AppIcon icon={X} size="xs" className="text-current" />
                   </button>

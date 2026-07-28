@@ -166,28 +166,28 @@ export function CompanyProfileEditView({
 
           <Card title="Company Details" titleIcon={Building2}>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              <input className={field} placeholder="Company Name" value={profileForm.companyName} onChange={(e) => setProfileForm((p) => ({ ...p, companyName: e.target.value }))} />
-              <input className={field} placeholder="Contact Name" value={profileForm.contactName} onChange={(e) => setProfileForm((p) => ({ ...p, contactName: e.target.value }))} />
-              <input className={field} placeholder="Phone" value={profileForm.phone} onChange={(e) => setProfileForm((p) => ({ ...p, phone: e.target.value }))} />
-              <input className={field} placeholder="Landline" value={landline} onChange={(e) => setLandline(e.target.value)} />
-              <input className={field} placeholder="Website" value={profileForm.website} onChange={(e) => setProfileForm((p) => ({ ...p, website: e.target.value }))} />
-              <input className={field} placeholder="Industry" value={profileForm.industry} onChange={(e) => setProfileForm((p) => ({ ...p, industry: e.target.value }))} />
+              <input aria-label="Company Name" className={field} placeholder="Company Name" value={profileForm.companyName} onChange={(e) => setProfileForm((p) => ({ ...p, companyName: e.target.value }))} />
+              <input aria-label="Contact Name" className={field} placeholder="Contact Name" value={profileForm.contactName} onChange={(e) => setProfileForm((p) => ({ ...p, contactName: e.target.value }))} />
+              <input aria-label="Phone" className={field} placeholder="Phone" value={profileForm.phone} onChange={(e) => setProfileForm((p) => ({ ...p, phone: e.target.value }))} />
+              <input aria-label="Landline" className={field} placeholder="Landline" value={landline} onChange={(e) => setLandline(e.target.value)} />
+              <input aria-label="Website" className={field} placeholder="Website" value={profileForm.website} onChange={(e) => setProfileForm((p) => ({ ...p, website: e.target.value }))} />
+              <input aria-label="Industry" className={field} placeholder="Industry" value={profileForm.industry} onChange={(e) => setProfileForm((p) => ({ ...p, industry: e.target.value }))} />
             </div>
           </Card>
 
           <Card title="Size & Location" titleIcon={MapPin}>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              <input className={field} placeholder="Company Size (e.g. 51-200 employees)" value={profileForm.companySize} onChange={(e) => setProfileForm((p) => ({ ...p, companySize: e.target.value }))} />
-              <input className={field} placeholder="Headquarters (city, country)" value={profileForm.headquarters} onChange={(e) => setProfileForm((p) => ({ ...p, headquarters: e.target.value }))} />
-              <input type="number" className={field} placeholder="Founded Year" value={profileForm.foundedYear} onChange={(e) => setProfileForm((p) => ({ ...p, foundedYear: e.target.value }))} />
-              <input className={`${field} sm:col-span-2 lg:col-span-3`} placeholder="Address" value={profileForm.address} onChange={(e) => setProfileForm((p) => ({ ...p, address: e.target.value }))} />
+              <input aria-label="Company Size" className={field} placeholder="Company Size (e.g. 51-200 employees)" value={profileForm.companySize} onChange={(e) => setProfileForm((p) => ({ ...p, companySize: e.target.value }))} />
+              <input aria-label="Headquarters" className={field} placeholder="Headquarters (city, country)" value={profileForm.headquarters} onChange={(e) => setProfileForm((p) => ({ ...p, headquarters: e.target.value }))} />
+              <input aria-label="Founded Year" type="number" className={field} placeholder="Founded Year" value={profileForm.foundedYear} onChange={(e) => setProfileForm((p) => ({ ...p, foundedYear: e.target.value }))} />
+              <input aria-label="Address" className={`${field} sm:col-span-2 lg:col-span-3`} placeholder="Address" value={profileForm.address} onChange={(e) => setProfileForm((p) => ({ ...p, address: e.target.value }))} />
             </div>
           </Card>
 
           <Card title="About & Hiring" titleIcon={Layers}>
             <div className="grid gap-3">
               <div>
-                <p className="ds-label mb-1.5">
+                <p className="ds-label mb-1.5" id="company-technologies-label">
                   Technologies <span className="text-[var(--ds-danger)]">*</span>
                 </p>
                 <TechnologiesInput
@@ -198,10 +198,12 @@ export function CompanyProfileEditView({
                   }}
                   error={technologiesError}
                   disabled={saving}
+                  labelledBy="company-technologies-label"
                 />
               </div>
-              <textarea className={`${fieldArea} min-h-28`} placeholder="Description" value={profileForm.description} onChange={(e) => setProfileForm((p) => ({ ...p, description: e.target.value }))} />
+              <textarea aria-label="Description" className={`${fieldArea} min-h-28`} placeholder="Description" value={profileForm.description} onChange={(e) => setProfileForm((p) => ({ ...p, description: e.target.value }))} />
               <textarea
+                aria-label="Hiring Process Overview"
                 className={`${fieldArea} min-h-20`}
                 placeholder="Hiring Process Overview (e.g. Application -> Screening -> Technical round -> Offer)"
                 value={profileForm.hiringProcessOverview}
@@ -303,16 +305,16 @@ export function CompanyPersonalProfileEditView({
 
           <Card title="Personal Details" titleIcon={UserCircle}>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              <input className={field} placeholder="Full Name" value={personalProfileForm.displayName} onChange={(e) => setPersonalProfileForm((p) => ({ ...p, displayName: e.target.value }))} />
-              <input className={field} placeholder="Phone" value={personalProfileForm.phone} onChange={(e) => setPersonalProfileForm((p) => ({ ...p, phone: e.target.value }))} />
-              <input className={field} placeholder="Designation (e.g. Founder & CEO)" value={personalProfileForm.designation} onChange={(e) => setPersonalProfileForm((p) => ({ ...p, designation: e.target.value }))} />
-              <input className={field} placeholder="LinkedIn URL" value={personalProfileForm.linkedInUrl} onChange={(e) => setPersonalProfileForm((p) => ({ ...p, linkedInUrl: e.target.value }))} />
-              <input className={field} placeholder="Personal Website" value={personalProfileForm.personalWebsite} onChange={(e) => setPersonalProfileForm((p) => ({ ...p, personalWebsite: e.target.value }))} />
+              <input aria-label="Full Name" className={field} placeholder="Full Name" value={personalProfileForm.displayName} onChange={(e) => setPersonalProfileForm((p) => ({ ...p, displayName: e.target.value }))} />
+              <input aria-label="Phone" className={field} placeholder="Phone" value={personalProfileForm.phone} onChange={(e) => setPersonalProfileForm((p) => ({ ...p, phone: e.target.value }))} />
+              <input aria-label="Designation" className={field} placeholder="Designation (e.g. Founder & CEO)" value={personalProfileForm.designation} onChange={(e) => setPersonalProfileForm((p) => ({ ...p, designation: e.target.value }))} />
+              <input aria-label="LinkedIn URL" className={field} placeholder="LinkedIn URL" value={personalProfileForm.linkedInUrl} onChange={(e) => setPersonalProfileForm((p) => ({ ...p, linkedInUrl: e.target.value }))} />
+              <input aria-label="Personal Website" className={field} placeholder="Personal Website" value={personalProfileForm.personalWebsite} onChange={(e) => setPersonalProfileForm((p) => ({ ...p, personalWebsite: e.target.value }))} />
             </div>
           </Card>
 
           <Card title="Bio" titleIcon={FileText}>
-            <textarea className={`${fieldArea} min-h-28`} placeholder="A short bio about yourself" value={personalProfileForm.bio} onChange={(e) => setPersonalProfileForm((p) => ({ ...p, bio: e.target.value }))} />
+            <textarea aria-label="Bio" className={`${fieldArea} min-h-28`} placeholder="A short bio about yourself" value={personalProfileForm.bio} onChange={(e) => setPersonalProfileForm((p) => ({ ...p, bio: e.target.value }))} />
           </Card>
 
           <Button type="submit" disabled={personalSaving}>

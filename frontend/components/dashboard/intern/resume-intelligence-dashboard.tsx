@@ -174,7 +174,7 @@ export function ResumeIntelligenceDashboard({ profile, analysis, onTargetRoleCha
     return (
       <div className={cn(cardBase, "px-6 py-12 text-center")}>
         <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl border border-[var(--ds-border)] bg-[var(--ds-surface)]">
-          <AppIcon icon={Sparkles} size="md" className="text-[var(--ds-primary)]" />
+          <AppIcon icon={Sparkles} size="md" className="text-[var(--ds-primary-text)]" />
         </span>
         <p className="mt-4 text-sm text-[var(--ds-text-secondary)]">
           Upload your resume to unlock AI-powered resume intelligence and skill gap analysis.
@@ -232,7 +232,7 @@ export function ResumeIntelligenceDashboard({ profile, analysis, onTargetRoleCha
             {breakdown.length > 0 && (
               <div className={cn(cardBase, cardHover, "p-6")}>
                 <div className="mb-5 flex items-center gap-2">
-                  <AppIcon icon={TrendingUp} size="sm" className="text-[var(--ds-primary)]" />
+                  <AppIcon icon={TrendingUp} size="sm" className="text-[var(--ds-primary-text)]" />
                   <h3 className="text-sm font-semibold text-[var(--ds-text)]">Score Breakdown</h3>
                 </div>
                 <div className="space-y-4">

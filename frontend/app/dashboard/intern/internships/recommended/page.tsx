@@ -3,8 +3,13 @@
 import { useCallback, useDeferredValue, useEffect, useLayoutEffect, useMemo, useState } from "react";
 import { SectionPanel } from "@/components/dashboard/shared/section-panel";
 import { Button } from "@/components/ui/button";
-import { InternApplicationModal } from "@/components/dashboard/intern/intern-application-modal";
+import dynamic from "next/dynamic";
 import { RecommendedInternshipFiltersPanel } from "@/components/dashboard/intern/recommended-internship-filters";
+
+const InternApplicationModal = dynamic(
+  () => import("@/components/dashboard/intern/intern-application-modal").then((m) => m.InternApplicationModal),
+  { ssr: false }
+);
 import {
   InternshipListing,
   InternProfile,

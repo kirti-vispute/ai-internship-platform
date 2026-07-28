@@ -260,6 +260,12 @@ exports.updateCompanyVerification = asyncHandler(async (req, res) => {
   if (status === COMPANY_VERIFICATION_STATUS.VERIFIED && verifiedBadge) {
     company.verifiedBadgeIssuedAt = new Date();
     company.verifiedByAdmin = req.user._id;
+  } else if (status !== COMPANY_VERIFICATION_STATUS.VERIFIED) {
+    // Moving away from verified (including a revoke-to-pending "unverify")
+    // must clear the badge stamp - otherwise a company that lost its
+    // verified badge keeps showing a stale verifiedByAdmin/issuedAt pair.
+    company.verifiedBadgeIssuedAt = null;
+    company.verifiedByAdmin = null;
   }
   if (status === COMPANY_VERIFICATION_STATUS.SUSPENDED) {
     company.rejectionReason = rejectionReason || "Suspended by administrator";
@@ -278,10 +284,26 @@ exports.updateCompanyVerification = asyncHandler(async (req, res) => {
   return sendSuccess(res, { message: "Company verification updated", data: { company } });
 });
 
+const OBJECT_ID_PATTERN = /^[0-9a-fA-F]{24}$/;
+
 exports.reportCompany = asyncHandler(async (req, res) => {
   const { companyId, reason, details = "", reportType = "other", evidenceUrls = [], internshipId = null, hrUserId = null } = req.body;
   if (!companyId || !reason) {
     throw new AppError("companyId and reason are required", 400);
+  }
+  if (!OBJECT_ID_PATTERN.test(companyId)) {
+    throw new AppError("Invalid company ID", 400);
+  }
+  if (internshipId && !OBJECT_ID_PATTERN.test(internshipId)) {
+    throw new AppError("Invalid internship ID", 400);
+  }
+  if (hrUserId && !OBJECT_ID_PATTERN.test(hrUserId)) {
+    throw new AppError("Invalid HR user ID", 400);
+  }
+
+  const company = await CompanyProfile.exists({ _id: companyId });
+  if (!company) {
+    throw new AppError("Company not found", 404);
   }
 
   const report = await ReportedCompany.create({

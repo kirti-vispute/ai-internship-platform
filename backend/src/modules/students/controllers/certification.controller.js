@@ -80,21 +80,23 @@ exports.downloadMyCertificate = asyncHandler(async (req, res) => {
 });
 
 exports.listCertificationsAdmin = asyncHandler(async (req, res) => {
-  const certifications = await listCertificationsForAdmin({
+  const { certifications, page, limit, total, totalPages } = await listCertificationsForAdmin({
     status: req.query.status,
     q: req.query.q,
+    page: req.query.page,
     limit: req.query.limit
   });
-  return sendSuccess(res, { data: { certifications } });
+  return sendSuccess(res, { data: { certifications, page, limit, total, totalPages } });
 });
 
 exports.reviewCertificationAdmin = asyncHandler(async (req, res) => {
-  const { status, rejectionReason = "" } = req.body || {};
+  const { status, rejectionReason = "", reviewNotes = "" } = req.body || {};
   const certification = await reviewCertification({
     certificationId: req.params.certificationId,
     adminUserId: req.user._id,
     status,
-    rejectionReason
+    rejectionReason,
+    reviewNotes
   });
 
   await logActivity({
@@ -106,7 +108,8 @@ exports.reviewCertificationAdmin = asyncHandler(async (req, res) => {
     metadata: {
       courseName: certification.courseName,
       status,
-      rejectionReason: certification.rejectionReason || ""
+      rejectionReason: certification.rejectionReason || "",
+      reviewNotes: certification.reviewNotes || ""
     },
     ipAddress: req.ip
   });

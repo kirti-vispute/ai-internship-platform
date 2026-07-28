@@ -16,14 +16,17 @@ type AppIconProps = {
   className?: string;
   strokeWidth?: number;
   style?: React.CSSProperties;
+  "aria-label"?: string;
 };
 
-export function AppIcon({ icon: Icon, size = "sm", className, strokeWidth = 1.75, style }: AppIconProps) {
+export function AppIcon({ icon: Icon, size = "sm", className, strokeWidth = 1.75, style, "aria-label": ariaLabel }: AppIconProps) {
   return (
     <span
       className={cn("inline-flex shrink-0 items-center justify-center text-[var(--ds-muted)] transition-colors", className)}
       style={style}
-      aria-hidden
+      role={ariaLabel ? "img" : undefined}
+      aria-label={ariaLabel}
+      aria-hidden={ariaLabel ? undefined : true}
     >
       <Icon size={SIZE_MAP[size]} strokeWidth={strokeWidth} />
     </span>

@@ -102,7 +102,7 @@ export function WeeklyStreakBanner({
               <span
                 className={cn(
                   "flex h-7 w-7 items-center justify-center rounded-full text-[10px] font-bold",
-                  day.active ? "bg-[var(--ds-warning)] text-white" : "bg-[var(--ds-surface-raised)] text-[var(--ds-muted)]"
+                  day.active ? "bg-[var(--ds-warning)] text-[var(--ds-on-warning)]" : "bg-[var(--ds-surface-raised)] text-[var(--ds-muted)]"
                 )}
               >
                 {day.label}
@@ -393,7 +393,7 @@ export function MockTestProgressSection() {
     <ScrollReveal variant="fade-up" distance={12}>
       <div className={cn(cardBase, "p-6")}>
         <div className="mb-4 flex items-center gap-2">
-          <AppIcon icon={Award} size="sm" className="text-[var(--ds-primary)]" />
+          <AppIcon icon={Award} size="sm" className="text-[var(--ds-primary-text)]" />
           <h3 className="text-sm font-semibold text-[var(--ds-text)]">Mock Test Progress</h3>
         </div>
 

@@ -870,11 +870,27 @@ exports.withdrawApplication = asyncHandler(async (req, res) => {
   });
 });
 
+const OBJECT_ID_PATTERN = /^[0-9a-fA-F]{24}$/;
+
 exports.reportCompany = asyncHandler(async (req, res) => {
   const { companyId, reason, details = "", reportType = "other", evidenceUrls = [], internshipId = null, hrUserId = null } = req.body || {};
 
   if (!companyId || !reason) {
     throw new AppError("companyId and reason are required", 400);
+  }
+  if (!OBJECT_ID_PATTERN.test(companyId)) {
+    throw new AppError("Invalid company ID", 400);
+  }
+  if (internshipId && !OBJECT_ID_PATTERN.test(internshipId)) {
+    throw new AppError("Invalid internship ID", 400);
+  }
+  if (hrUserId && !OBJECT_ID_PATTERN.test(hrUserId)) {
+    throw new AppError("Invalid HR user ID", 400);
+  }
+
+  const company = await CompanyProfile.exists({ _id: companyId });
+  if (!company) {
+    throw new AppError("Company not found", 404);
   }
 
   const report = await ReportedCompany.create({

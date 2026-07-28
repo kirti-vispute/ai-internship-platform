@@ -86,7 +86,7 @@ function InitialsAvatar({ name }: { name: string }) {
       .join("") || "IN";
 
   return (
-    <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[var(--ds-primary)] to-[var(--ds-accent)] text-lg font-bold text-white shadow-sm">
+    <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[var(--ds-primary)] to-[var(--ds-accent)] text-lg font-bold text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.45)] shadow-sm">
       {initials}
     </span>
   );
@@ -114,7 +114,7 @@ export function DashboardHero({
   const careerTarget = analysis?.skillIntelligence?.targetRole;
 
   return (
-    <ScrollReveal variant="soft-scale" distance={10}>
+    <ScrollReveal variant="soft-scale" distance={10} once>
       <motion.div
         whileHover={{ y: -2 }}
         transition={{ duration: 0.2, ease: "easeOut" }}
@@ -124,13 +124,13 @@ export function DashboardHero({
           <div className="flex items-center gap-4">
             <InitialsAvatar name={fullName} />
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--ds-primary)]">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--ds-primary-text)]">
                 Welcome back
               </p>
               <h2 className="mt-1 text-2xl font-bold tracking-tight text-[var(--ds-text)]">{firstName}</h2>
               {careerTarget ? (
                 <p className="mt-1 text-sm text-[var(--ds-text-secondary)]">
-                  Targeting <span className="font-semibold text-[var(--ds-primary)]">{careerTarget}</span> roles
+                  Targeting <span className="font-semibold text-[var(--ds-primary-text)]">{careerTarget}</span> roles
                 </p>
               ) : (
                 <p className="mt-1 text-sm text-[var(--ds-text-secondary)]">
@@ -206,10 +206,10 @@ export function AtsReadinessCard({
   const health = resumeHealthBand(Math.round((resumeScore + atsScore) / 2));
 
   return (
-    <ScrollReveal variant="fade-up" distance={12}>
-      <HoverCard>
+    <ScrollReveal variant="fade-up" distance={12} once className="h-full">
+      <HoverCard className="flex h-full flex-col">
         <div className="mb-4 flex items-center gap-2">
-          <AppIcon icon={BarChart3} size="sm" className="text-[var(--ds-primary)]" />
+          <AppIcon icon={BarChart3} size="sm" className="text-[var(--ds-primary-text)]" />
           <h3 className="text-sm font-semibold text-[var(--ds-text)]">ATS Readiness</h3>
         </div>
         <div className="grid grid-cols-2 gap-3">
@@ -226,10 +226,12 @@ export function AtsReadinessCard({
           <span className="text-[11px] font-medium uppercase tracking-wide text-[var(--ds-muted)]">Overall Resume Health</span>
           <span className={cn("text-sm font-bold", health.className)}>{health.label}</span>
         </div>
-        <Button href="/dashboard/intern/resume/score" type="button" size="sm" variant="secondary" className="mt-4 w-full gap-1.5">
-          Improve Resume
-          <span aria-hidden>&rarr;</span>
-        </Button>
+        <div className="mt-auto pt-4">
+          <Button href="/dashboard/intern/resume/score" type="button" size="sm" variant="secondary" className="w-full gap-1.5">
+            Improve Resume
+            <span aria-hidden>&rarr;</span>
+          </Button>
+        </div>
       </HoverCard>
     </ScrollReveal>
   );
@@ -249,8 +251,8 @@ export function SkillGapCard({
   const matchPercent = skillIntel?.careerMatch?.matchPercent ?? skillIntel?.overview?.matchPercent ?? 0;
 
   return (
-    <ScrollReveal variant="fade-up" distance={12} delayMs={120}>
-      <HoverCard>
+    <ScrollReveal variant="fade-up" distance={12} delayMs={120} once className="h-full">
+      <HoverCard className="flex h-full flex-col">
         <div className="mb-4 flex items-center gap-2">
           <AppIcon icon={Target} size="sm" className="text-[var(--ds-info)]" />
           <h3 className="text-sm font-semibold text-[var(--ds-text)]">Skill Gap</h3>
@@ -296,9 +298,11 @@ export function SkillGapCard({
           </>
         )}
 
-        <Button href="/dashboard/intern/skill-gap" type="button" size="sm" variant="secondary" className="mt-4 w-full">
-          View Skill Gap Analysis
-        </Button>
+        <div className="mt-auto pt-4">
+          <Button href="/dashboard/intern/skill-gap" type="button" size="sm" variant="secondary" className="w-full">
+            View Skill Gap Analysis
+          </Button>
+        </div>
       </HoverCard>
     </ScrollReveal>
   );
@@ -342,8 +346,8 @@ export function PlacementReadinessCard({
   const reasons = buildReadinessReasons(analysis);
 
   return (
-    <ScrollReveal variant="fade-up" distance={12} delayMs={180}>
-      <HoverCard className="flex flex-col items-center text-center">
+    <ScrollReveal variant="fade-up" distance={12} delayMs={180} once className="h-full">
+      <HoverCard className="flex h-full flex-col items-center text-center">
         <div className="mb-4 flex items-center gap-2 self-start">
           <AppIcon icon={TrendingUp} size="sm" className="text-[var(--ds-success)]" />
           <h3 className="text-sm font-semibold text-[var(--ds-text)]">Placement Readiness</h3>

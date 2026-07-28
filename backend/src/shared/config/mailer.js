@@ -1,21 +1,25 @@
-﻿const nodemailer = require("nodemailer");
+const nodemailer = require("nodemailer");
+
+let cachedTransporter = null;
 
 function buildTransporter() {
-  const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS } = process.env;
+  const { EMAIL_USER, EMAIL_PASS } = process.env;
 
-  if (!SMTP_HOST || !SMTP_PORT || !SMTP_USER || !SMTP_PASS) {
+  if (!EMAIL_USER || !EMAIL_PASS) {
     return null;
   }
 
-  return nodemailer.createTransport({
-    host: SMTP_HOST,
-    port: Number(SMTP_PORT),
-    secure: Number(SMTP_PORT) === 465,
-    auth: {
-      user: SMTP_USER,
-      pass: SMTP_PASS
-    }
-  });
+  if (!cachedTransporter) {
+    cachedTransporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: EMAIL_USER,
+        pass: EMAIL_PASS
+      }
+    });
+  }
+
+  return cachedTransporter;
 }
 
 module.exports = buildTransporter;

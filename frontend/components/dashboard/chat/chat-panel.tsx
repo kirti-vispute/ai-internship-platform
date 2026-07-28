@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { memo, useEffect, useRef } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, CalendarClock, ExternalLink, Info, Loader2 } from "lucide-react";
@@ -72,7 +72,7 @@ function ChatHeader({
   return (
     <header className="flex h-16 shrink-0 items-center gap-2 border-b border-[var(--ds-border)] px-4">
       {showBackButton ? (
-        <Button type="button" size="sm" variant="ghost" onClick={onBack} className="shrink-0 px-2 lg:hidden">
+        <Button type="button" size="sm" variant="ghost" onClick={onBack} aria-label="Back to conversations" className="shrink-0 px-2 lg:hidden">
           <AppIcon icon={ArrowLeft} size="sm" />
         </Button>
       ) : null}
@@ -174,7 +174,7 @@ function ListSkeleton() {
 /* -------------------------------- MessageList -------------------------------- */
 /* flex:1, scrolls independently. Header and composer never scroll with it. */
 
-function MessageList({
+const MessageList = memo(function MessageList({
   role,
   conversationId,
   messages,
@@ -222,6 +222,10 @@ function MessageList({
     <div
       ref={scrollRef}
       data-chat-messages
+      role="log"
+      aria-label="Conversation messages"
+      aria-live="polite"
+      aria-relevant="additions"
       className="flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden overscroll-contain px-3 py-3 sm:px-4"
     >
       {hasMore ? (
@@ -240,7 +244,10 @@ function MessageList({
       ) : null}
 
       {loadingMessages ? (
-        <ListSkeleton />
+        <>
+          <span className="sr-only" role="status">Loading messages…</span>
+          <ListSkeleton />
+        </>
       ) : messages.length === 0 ? (
         <div className="flex flex-1 items-center justify-center py-8">
           <EmptyState
@@ -300,7 +307,7 @@ function MessageList({
       )}
     </div>
   );
-}
+});
 
 /* --------------------------------- ChatPanel --------------------------------- */
 /* <ChatPanel> = <ChatHeader/> + <MessageList/> + <MessageComposer/>, stacked

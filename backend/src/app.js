@@ -69,6 +69,12 @@ app.use(
     dnsPrefetchControl: { allow: false }
   })
 );
+// helmet v7+ dropped Permissions-Policy (formerly Feature-Policy) support —
+// set it directly. This is a pure JSON/file API, so every browser feature is denied.
+app.use((req, res, next) => {
+  res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()");
+  next();
+});
 app.use(
   cors({
     origin(origin, callback) {

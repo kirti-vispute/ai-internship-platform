@@ -38,12 +38,15 @@ export function ApplicationPipelineStepper({ status, compact = false }: Applicat
   }
 
   return (
-    <div className={cn("grid gap-2", compact ? "grid-cols-4 sm:grid-cols-7" : "grid-cols-2 sm:grid-cols-4 lg:grid-cols-7")}>
+    <div role="list" aria-label="Application pipeline progress" className={cn("grid gap-2", compact ? "grid-cols-4 sm:grid-cols-7" : "grid-cols-2 sm:grid-cols-4 lg:grid-cols-7")}>
       {PIPELINE_STEPS.map((step, idx) => {
         const done = idx <= resolvedIdx;
+        const isCurrent = idx === resolvedIdx;
         return (
           <div
             key={step.key}
+            role="listitem"
+            aria-current={isCurrent ? "step" : undefined}
             className={cn(
               "rounded-lg border px-2 py-2 text-center text-[11px] font-medium leading-tight",
               done
@@ -52,6 +55,7 @@ export function ApplicationPipelineStepper({ status, compact = false }: Applicat
             )}
           >
             {step.label}
+            <span className="sr-only">{done ? " (completed)" : ""}</span>
           </div>
         );
       })}

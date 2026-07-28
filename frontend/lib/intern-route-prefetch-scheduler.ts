@@ -1,4 +1,5 @@
 import type { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
+import { prefetchAdminRouteData } from "@/lib/admin-dashboard-prefetch";
 import { prefetchCompanyRouteData } from "@/lib/company-dashboard-prefetch";
 import { prefetchInternRouteData } from "@/lib/intern-dashboard-prefetch";
 import { INTERN_DASHBOARD_ROUTES } from "@/lib/intern-dashboard-routes";
@@ -42,6 +43,8 @@ function prefetchRouteData(href: string) {
     prefetchInternRouteData(href);
   } else if (href.startsWith("/dashboard/company")) {
     prefetchCompanyRouteData(href);
+  } else if (href.startsWith("/dashboard/admin")) {
+    prefetchAdminRouteData(href);
   }
 }
 

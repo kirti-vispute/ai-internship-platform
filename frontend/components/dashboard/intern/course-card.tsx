@@ -125,8 +125,8 @@ export function CourseCard({ course, showSkillTag = true }: Props) {
           className={cn(
             "flex items-center justify-center rounded-xl border p-2 text-xs transition active:scale-[0.97]",
             saved
-              ? "border-[var(--ds-primary)] bg-[var(--ds-info-bg)] text-[var(--ds-primary)]"
-              : "border-[var(--ds-border)] bg-[var(--ds-card)] text-[var(--ds-muted)] hover:border-[var(--ds-primary)] hover:bg-[var(--ds-info-bg)] hover:text-[var(--ds-primary)]"
+              ? "border-[var(--ds-primary)] bg-[var(--ds-info-bg)] text-[var(--ds-primary-text)]"
+              : "border-[var(--ds-border)] bg-[var(--ds-card)] text-[var(--ds-muted)] hover:border-[var(--ds-primary)] hover:bg-[var(--ds-info-bg)] hover:text-[var(--ds-primary-text)]"
           )}
         >
           <AppIcon icon={saved ? BookmarkCheck : Bookmark} size="xs" />

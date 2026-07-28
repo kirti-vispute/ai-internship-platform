@@ -39,7 +39,7 @@ const STATUS_MAP: Record<string, StatusConfig> = {
   escalated: { className: "bg-[var(--ds-secondary)]/12 text-[var(--ds-secondary)]", icon: Flag },
   resolved: { className: "bg-[var(--ds-success-bg)] text-[var(--ds-success)]", icon: BadgeCheck },
   dismissed: { className: "bg-[var(--ds-surface-raised)] text-[var(--ds-muted)]", icon: Ban },
-  admin: { className: "bg-[var(--ds-primary)]/10 text-[var(--ds-primary)]", icon: ShieldCheck },
+  admin: { className: "bg-[var(--ds-primary)]/10 text-[var(--ds-primary-text)]", icon: ShieldCheck },
   company: { className: "bg-[var(--ds-info-bg)] text-[var(--ds-info)]", icon: ShieldCheck },
   intern: { className: "bg-[var(--ds-surface-raised)] text-[var(--ds-muted)]", icon: UserCheck },
   reported: { className: "bg-[var(--ds-danger-bg)] text-[var(--ds-danger)]", icon: Flag }

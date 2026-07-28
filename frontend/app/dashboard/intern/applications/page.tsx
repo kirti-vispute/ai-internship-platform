@@ -189,7 +189,7 @@ export default function InternApplicationsPage() {
                       {selectedApplication.hrFeedback.map((item, idx) => (
                         <li key={idx} className="rounded-lg border border-[var(--ds-border)] bg-[var(--ds-card)] px-3 py-2 text-sm">
                           <p className="text-[var(--ds-text-secondary)]">{item.feedback}</p>
-                          {item.rating && <p className="mt-1 text-xs text-[var(--ds-primary)]">Rating: {item.rating}/5</p>}
+                          {item.rating && <p className="mt-1 text-xs text-[var(--ds-primary-text)]">Rating: {item.rating}/5</p>}
                         </li>
                       ))}
                     </ul>

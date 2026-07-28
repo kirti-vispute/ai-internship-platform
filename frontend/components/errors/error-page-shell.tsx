@@ -13,7 +13,7 @@ type ErrorPageShellProps = {
 export function ErrorPageShell({ children }: ErrorPageShellProps) {
   return (
     <PlatformLayout>
-      <main className="relative flex min-h-screen flex-col overflow-hidden">
+      <main id="main-content" tabIndex={-1} className="relative flex min-h-screen flex-col overflow-hidden focus:outline-none">
         <div aria-hidden className="pointer-events-none absolute inset-0">
           <div className="grid-pattern absolute inset-0 opacity-30 [mask-image:radial-gradient(ellipse_at_center,black_15%,transparent_70%)]" />
           <div className="absolute left-1/2 top-24 h-80 w-80 -translate-x-1/2 rounded-full bg-[var(--ds-primary)] opacity-[0.06] blur-3xl" />

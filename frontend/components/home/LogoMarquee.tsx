@@ -52,7 +52,7 @@ export function LogoMarquee({ logos = DEFAULT_LOGOS, className, tone = "light" }
                 "shrink-0 text-sm font-semibold tracking-wide transition-colors duration-300",
                 isDark
                   ? "text-internai-muted hover:text-internai-blue"
-                  : "text-[var(--ds-text-secondary)] hover:text-[var(--ds-primary)]"
+                  : "text-[var(--ds-text-secondary)] hover:text-[var(--ds-primary-text)]"
               )}
             >
               {name}

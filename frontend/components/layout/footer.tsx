@@ -66,6 +66,7 @@ export function Footer({ theme = "light" }: FooterProps) {
               <li key={link.label}>
                 <a href={link.href} target="_blank" rel="noreferrer" className="transition hover:text-[var(--ds-accent)]">
                   {link.label}
+                  <span className="sr-only"> (opens in new tab)</span>
                 </a>
               </li>
             ))}

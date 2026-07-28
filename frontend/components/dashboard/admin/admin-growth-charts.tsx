@@ -108,7 +108,7 @@ function AdminGrowthChartsInner({
         <ScrollReveal key={slot.key} variant="fade-up" distance={12} delayMs={index * 60}>
           <div className={cardBase}>
             <div className="mb-4 flex items-center gap-2">
-              <AppIcon icon={slot.icon} size="sm" className="text-[var(--ds-primary)]" />
+              <AppIcon icon={slot.icon} size="sm" className="text-[var(--ds-primary-text)]" />
               <h3 className="ds-h3">{slot.title}</h3>
             </div>
             <TrendAreaChart data={slot.data} valueLabel={slot.valueLabel} />

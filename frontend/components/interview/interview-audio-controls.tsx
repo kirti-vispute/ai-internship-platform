@@ -43,6 +43,8 @@ export function InterviewAudioControls({
     <div className="mx-auto mt-3 max-w-2xl space-y-2 px-4">
       <div className="flex flex-wrap items-center justify-center gap-2">
         <span
+          role="status"
+          aria-live="polite"
           className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium ${
             !micReady
               ? "bg-[var(--ds-warning-bg)] text-[var(--ds-warning)]"
@@ -122,7 +124,10 @@ export function InterviewAudioControls({
       </div>
 
       {mediaError ? (
-        <div className="flex flex-col items-center gap-2 rounded-xl border border-[var(--ds-warning)] bg-[var(--ds-warning-bg)] px-3 py-2 text-center">
+        <div
+          role="alert"
+          className="flex flex-col items-center gap-2 rounded-xl border border-[var(--ds-warning)] bg-[var(--ds-warning-bg)] px-3 py-2 text-center"
+        >
           <p className="text-xs text-[var(--ds-warning)]">{mediaError}</p>
           <Button type="button" size="sm" variant="secondary" onClick={onRetryMedia}>
             <RefreshCw className="h-3.5 w-3.5" />

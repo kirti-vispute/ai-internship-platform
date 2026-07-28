@@ -8,7 +8,7 @@ import { Badge, type BadgeTone } from "@/components/ui/badge";
 import { AppIcon } from "@/components/icons/app-icon";
 import { cn } from "@/lib/utils";
 import { CandidateCompareToggle } from "@/components/dashboard/company/candidate-compare-toggle";
-import { INTERVIEW_STATUS_TONE } from "@/components/dashboard/hiring/hiring-utils";
+import { INTERVIEW_STATUS_TONE, type HiringPipelineStageKey } from "@/components/dashboard/hiring/hiring-utils";
 import { initialsFirstLast as initialsFor, gradientForName as gradientFor } from "@/components/dashboard/shared/avatar-initials";
 
 type PriorityLevel = { label: string; tone: BadgeTone } | null;
@@ -40,6 +40,8 @@ type KanbanCandidateCardProps = {
   selected: boolean;
   saving?: boolean;
   draggable?: boolean;
+  stages: readonly { key: HiringPipelineStageKey; label: string }[];
+  currentStage: HiringPipelineStageKey;
   onToggleSelect: (applicationId: string) => void;
   onDragStart: (event: React.DragEvent, applicationId: string) => void;
   onOpenProfile: (applicationId: string) => void;
@@ -48,6 +50,7 @@ type KanbanCandidateCardProps = {
   onScheduleInterview: (applicationId: string, candidateName: string) => void;
   onShortlist: (applicationId: string) => void;
   onReject: (applicationId: string) => void;
+  onMoveToStage: (applicationId: string, stage: HiringPipelineStageKey) => void;
 };
 
 function KanbanCandidateCardImpl({
@@ -56,6 +59,8 @@ function KanbanCandidateCardImpl({
   selected,
   saving = false,
   draggable = true,
+  stages,
+  currentStage,
   onToggleSelect,
   onDragStart,
   onOpenProfile,
@@ -63,7 +68,8 @@ function KanbanCandidateCardImpl({
   onMessage,
   onScheduleInterview,
   onShortlist,
-  onReject
+  onReject,
+  onMoveToStage
 }: KanbanCandidateCardProps) {
   const name = application.intern?.fullName || "Candidate";
   const role = application.internship?.role || "Role";
@@ -169,6 +175,20 @@ function KanbanCandidateCardImpl({
         <CardIconAction icon={UserX} label={`Reject ${name}`} danger disabled={saving} onClick={() => onReject(application._id)} />
         <div className="ml-auto flex items-center gap-1">
           <CandidateCompareToggle applicationId={application._id} />
+          <select
+            aria-label={`Move ${name} to stage`}
+            value={currentStage}
+            disabled={saving}
+            onClick={(event) => event.stopPropagation()}
+            onChange={(event) => onMoveToStage(application._id, event.target.value as HiringPipelineStageKey)}
+            className="rounded-md border border-[var(--ds-border)] bg-[var(--ds-surface)] px-1.5 py-1 text-[11px] font-semibold text-[var(--ds-text)] transition hover:border-[var(--ds-border-strong)] disabled:opacity-50"
+          >
+            {stages.map((stage) => (
+              <option key={stage.key} value={stage.key}>
+                {stage.label}
+              </option>
+            ))}
+          </select>
           <button
             type="button"
             disabled={saving}
@@ -195,7 +215,9 @@ export const KanbanCandidateCard = memo(KanbanCandidateCardImpl, (prev, next) =>
     prev.ranked === next.ranked &&
     prev.selected === next.selected &&
     prev.saving === next.saving &&
-    prev.draggable === next.draggable
+    prev.draggable === next.draggable &&
+    prev.currentStage === next.currentStage &&
+    prev.stages === next.stages
   );
 });
 

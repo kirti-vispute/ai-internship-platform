@@ -11,7 +11,7 @@ export function ProjectInsightPanel({ insights, confidenceWarning }: ProjectInsi
   return (
     <div className="space-y-3">
       {confidenceWarning ? (
-        <div className="rounded-lg border border-[var(--ds-warning)]/40 bg-[var(--ds-warning-bg)] px-3.5 py-2.5 text-sm text-[var(--ds-warning)]">
+        <div role="status" className="rounded-lg border border-[var(--ds-warning)]/40 bg-[var(--ds-warning-bg)] px-3.5 py-2.5 text-sm text-[var(--ds-warning)]">
           {confidenceWarning}
         </div>
       ) : null}
@@ -22,7 +22,7 @@ export function ProjectInsightPanel({ insights, confidenceWarning }: ProjectInsi
         </div>
       ) : (
         <div className="space-y-2">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--ds-primary)]">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--ds-primary-text)]">
             Why This Project Matters
           </p>
           {insights.map((insight, index) => (

@@ -4,6 +4,7 @@ import type { AdminCompany } from "@/lib/admin-portal";
 import { fetchAdminCompanies, updateCompanyVerification } from "@/lib/admin-portal";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Pagination } from "@/components/ui/pagination";
 import { SearchInput } from "@/components/ui/search-input";
 import { EmptyState } from "@/components/dashboard/shared/empty-state";
 import { StatusBadge } from "@/components/icons/status-badge";
@@ -31,8 +32,9 @@ type AdminCompaniesViewProps = {
   setRejectingId: React.Dispatch<React.SetStateAction<string | null>>;
   rejectReason: string;
   setRejectReason: React.Dispatch<React.SetStateAction<string>>;
-  handleVerify: (company: AdminCompany, status: "verified" | "rejected" | "suspended", reason?: string) => void;
+  handleVerify: (company: AdminCompany, status: "verified" | "rejected" | "suspended" | "pending", reason?: string) => void;
   onSuspend: (company: AdminCompany) => void;
+  onUnverify: (company: AdminCompany) => void;
   loadData: (force?: boolean) => void;
 };
 
@@ -58,6 +60,7 @@ export function AdminCompaniesView({
   setRejectReason,
   handleVerify,
   onSuspend,
+  onUnverify,
   loadData
 }: AdminCompaniesViewProps) {
   return (
@@ -161,6 +164,16 @@ export function AdminCompaniesView({
                         {busyId === company._id ? "Saving…" : "Verify"}
                       </Button>
                     )}
+                    {company.verificationStatus === "verified" && (
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        disabled={busyId === company._id}
+                        onClick={() => onUnverify(company)}
+                      >
+                        Unverify
+                      </Button>
+                    )}
                     {company.verificationStatus !== "rejected" && (
                       <Button
                         size="sm"
@@ -190,8 +203,9 @@ export function AdminCompaniesView({
 
               {canVerifyCompanies && rejectingId === company._id && (
                 <div className="mt-4 rounded-xl border border-[var(--ds-border)] p-3">
-                  <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-[var(--ds-muted)]">Rejection reason</label>
+                  <label htmlFor="admin-company-reject-reason" className="mb-1 block text-xs font-semibold uppercase tracking-wide text-[var(--ds-muted)]">Rejection reason</label>
                   <textarea
+                    id="admin-company-reject-reason"
                     value={rejectReason}
                     onChange={(event) => setRejectReason(event.target.value)}
                     rows={2}
@@ -211,18 +225,11 @@ export function AdminCompaniesView({
               )}
             </Card>
           ))}
-          <div className="flex items-center justify-between pt-1 text-xs text-[var(--ds-muted)]">
+          <div className="flex flex-wrap items-center justify-between gap-3 pt-1 text-xs text-[var(--ds-muted)]">
             <span>
               Page {companyPage} of {companyTotalPages} · {visibleCompanies.length} compan{visibleCompanies.length === 1 ? "y" : "ies"}
             </span>
-            <div className="flex gap-2">
-              <Button size="sm" variant="secondary" disabled={companyPage <= 1} onClick={() => setCompanyPage((p) => Math.max(1, p - 1))}>
-                Previous
-              </Button>
-              <Button size="sm" variant="secondary" disabled={companyPage >= companyTotalPages} onClick={() => setCompanyPage((p) => Math.min(companyTotalPages, p + 1))}>
-                Next
-              </Button>
-            </div>
+            <Pagination page={companyPage} totalPages={companyTotalPages} onChange={(p) => setCompanyPage(p)} />
           </div>
         </>
       )}

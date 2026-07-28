@@ -7,6 +7,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import type { LucideIcon } from "lucide-react";
 import { ChevronRight, UserCircle2 } from "lucide-react";
 import { AppIcon } from "@/components/icons/app-icon";
+import { Tooltip } from "@/components/ui/tooltip";
 import { warmDashboardRoute } from "@/lib/intern-route-prefetch-scheduler";
 import { cn } from "@/lib/utils";
 
@@ -30,6 +31,8 @@ type DashboardSidebarNavProps = {
   sections: DashboardSidebarSection[];
   isItemActive: (pathname: string, href: string) => boolean;
   onNavigate?: () => void;
+  /** Icon-only rail mode. Collapsible sections flatten (no room for nested headers) and every item gets a hover/focus tooltip instead of an inline label. */
+  collapsed?: boolean;
 };
 
 function SidebarIcon({ icon }: { icon: LucideIcon | React.ReactNode }) {
@@ -50,7 +53,8 @@ function SidebarSectionItems({
   pendingHref,
   isItemActive,
   warmRoute,
-  onItemClick
+  onItemClick,
+  collapsed
 }: {
   items: DashboardSidebarItem[];
   pathname: string;
@@ -58,48 +62,60 @@ function SidebarSectionItems({
   isItemActive: (pathname: string, href: string) => boolean;
   warmRoute: (href: string, immediate?: boolean) => void;
   onItemClick: (href: string) => void;
+  collapsed?: boolean;
 }) {
   return (
-    <ul className="mt-2.5 space-y-1.5">
+    <ul className={cn("mt-2.5 space-y-1.5", collapsed && "flex flex-col items-center space-y-1")}>
       {items.map((item) => {
         const active = isItemActive(pathname, item.href) || pendingHref === item.href;
         const muted = item.navVariant === "muted";
-        return (
-          <li key={item.href}>
-            <Link
-              href={item.href}
-              prefetch
-              scroll
-              aria-current={active ? "page" : undefined}
-              onMouseEnter={() => warmRoute(item.href)}
-              onFocus={() => warmRoute(item.href)}
-              onPointerDown={() => warmRoute(item.href, true)}
-              onClick={() => onItemClick(item.href)}
+        const link = (
+          <Link
+            href={item.href}
+            prefetch
+            scroll
+            aria-current={active ? "page" : undefined}
+            aria-label={collapsed ? item.label : undefined}
+            onMouseEnter={() => warmRoute(item.href)}
+            onFocus={() => warmRoute(item.href)}
+            onPointerDown={() => warmRoute(item.href, true)}
+            onClick={() => onItemClick(item.href)}
+            className={cn(
+              "group relative flex items-center gap-2.5 rounded-xl py-2.5 pl-3.5 pr-3 text-sm font-medium transition-all duration-150 ease-out",
+              collapsed && "h-11 w-11 justify-center gap-0 p-0",
+              active
+                ? "bg-[var(--ds-surface-raised)] text-[var(--ds-accent)] shadow-[0_4px_14px_var(--ds-shadow)]"
+                : cn(
+                    "text-[var(--ds-muted)] hover:bg-[var(--ds-hover)] hover:text-[var(--ds-text)]",
+                    !collapsed && "hover:translate-x-0.5"
+                  ),
+              muted && "opacity-90"
+            )}
+          >
+            <span
               className={cn(
-                "group relative flex items-center gap-2.5 rounded-xl py-2.5 pl-3.5 pr-3 text-sm font-medium transition-all duration-150 ease-out",
-                active
-                  ? "bg-[var(--ds-surface-raised)] text-[var(--ds-accent)] shadow-[0_4px_14px_var(--ds-shadow)]"
-                  : "text-[var(--ds-muted)] hover:translate-x-0.5 hover:bg-[var(--ds-hover)] hover:text-[var(--ds-text)]",
-                muted && "opacity-90"
+                "absolute inset-y-1.5 left-0 w-[3px] rounded-full bg-[var(--ds-primary-text)] transition-all duration-150 dark:bg-[var(--ds-primary)]",
+                active ? "opacity-100" : "opacity-0"
               )}
-            >
+              aria-hidden
+            />
+            <SidebarIcon icon={item.icon} />
+            {!collapsed ? <span className="flex-1">{item.label}</span> : null}
+            {!collapsed && item.badge && item.badge > 0 ? (
+              <span className="rounded-full bg-[var(--ds-primary)] px-2 py-0.5 text-[10px] font-bold text-[var(--ds-on-primary)]">
+                {item.badge > 9 ? "9+" : item.badge}
+              </span>
+            ) : null}
+            {collapsed && item.badge && item.badge > 0 ? (
               <span
-                className={cn(
-                  "absolute inset-y-1.5 left-0 w-[3px] rounded-full bg-[var(--ds-primary)] transition-all duration-150",
-                  active ? "opacity-100" : "opacity-0"
-                )}
+                className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-[var(--ds-primary)]"
                 aria-hidden
               />
-              <SidebarIcon icon={item.icon} />
-              <span className="flex-1">{item.label}</span>
-              {item.badge && item.badge > 0 ? (
-                <span className="rounded-full bg-[var(--ds-primary)] px-2 py-0.5 text-[10px] font-bold text-[var(--ds-on-primary)]">
-                  {item.badge > 9 ? "9+" : item.badge}
-                </span>
-              ) : null}
-            </Link>
-          </li>
+            ) : null}
+          </Link>
         );
+
+        return <li key={item.href}>{collapsed ? <Tooltip content={item.label} side="right">{link}</Tooltip> : link}</li>;
       })}
     </ul>
   );
@@ -167,7 +183,7 @@ function CollapsibleSidebarSection({
           {section.title}
         </span>
         {hasActiveChild && !open ? (
-          <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--ds-primary)]" aria-hidden />
+          <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--ds-primary-text)] dark:bg-[var(--ds-primary)]" aria-hidden />
         ) : null}
         <motion.span
           animate={{ rotate: open ? 90 : 0 }}
@@ -203,7 +219,7 @@ function CollapsibleSidebarSection({
   );
 }
 
-function SidebarNavInner({ sections, isItemActive, onNavigate }: DashboardSidebarNavProps) {
+function SidebarNavInner({ sections, isItemActive, onNavigate, collapsed = false }: DashboardSidebarNavProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [pendingHref, setPendingHref] = useState<string | null>(null);
@@ -229,9 +245,18 @@ function SidebarNavInner({ sections, isItemActive, onNavigate }: DashboardSideba
   );
 
   return (
-    <nav aria-label="Primary" className="sidebar-nav-scroll mt-4 min-h-0 flex-1 space-y-4 pr-1 pb-3">
-      {sections.map((section) => {
-        if (section.collapsible) {
+    <nav
+      aria-label="Primary"
+      className={cn(
+        "sidebar-nav-scroll mt-4 min-h-0 flex-1 space-y-4 pr-1 pb-3",
+        collapsed && "flex flex-col items-center pr-0"
+      )}
+    >
+      {sections.map((section, index) => {
+        // A globally collapsed rail has no room for a nested collapsible
+        // header -- flatten every section (including collapsible ones) to a
+        // plain icon list, separated by a thin divider instead of a title.
+        if (section.collapsible && !collapsed) {
           return (
             <CollapsibleSidebarSection
               key={section.title}
@@ -246,10 +271,14 @@ function SidebarNavInner({ sections, isItemActive, onNavigate }: DashboardSideba
         }
 
         return (
-          <div key={section.title}>
-            <p className="px-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--ds-muted)]">
-              {section.title}
-            </p>
+          <div key={section.title} className={collapsed ? "w-full" : undefined}>
+            {collapsed ? (
+              index > 0 ? <div className="mx-auto mb-1 h-px w-8 bg-[var(--ds-border)]" aria-hidden /> : null
+            ) : (
+              <p className="px-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--ds-muted)]">
+                {section.title}
+              </p>
+            )}
             <SidebarSectionItems
               items={section.items}
               pathname={pathname}
@@ -257,6 +286,7 @@ function SidebarNavInner({ sections, isItemActive, onNavigate }: DashboardSideba
               isItemActive={isItemActive}
               warmRoute={warmRoute}
               onItemClick={onItemClick}
+              collapsed={collapsed}
             />
           </div>
         );

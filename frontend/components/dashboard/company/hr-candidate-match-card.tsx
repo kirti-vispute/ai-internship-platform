@@ -18,7 +18,11 @@ import { Badge, type BadgeTone } from "@/components/ui/badge";
 import { AppIcon } from "@/components/icons/app-icon";
 import { cn, isRejectionLanguage } from "@/lib/utils";
 import { normalizeToFlowStage, PIPELINE_STAGE_TONE } from "@/components/dashboard/hiring/hiring-utils";
-import { AiMatchInsightModal } from "./ai-match-insight-modal";
+import dynamic from "next/dynamic";
+
+const AiMatchInsightModal = dynamic(() => import("./ai-match-insight-modal").then((m) => m.AiMatchInsightModal), {
+  ssr: false
+});
 import { CompanyDashboardItemCard } from "./company-dashboard-layout";
 import { CandidateCompareToggle } from "./candidate-compare-toggle";
 import { initialsFirstLast as initialsFor, gradientForName as gradientFor } from "@/components/dashboard/shared/avatar-initials";

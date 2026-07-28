@@ -25,7 +25,7 @@ function HiringFunnelAnalyticsPanelInner({ applications, visibleStageKeys }: Hir
   const sectionActions = (
     <div className="company-dashboard-metric-tile min-w-[7.5rem] text-right">
       <p className="ds-label">Efficiency Score</p>
-      <p className="ds-stat-value mt-1 text-[var(--ds-primary)]">{analytics.efficiencyScore}</p>
+      <p className="ds-stat-value mt-1 text-[var(--ds-primary-text)]">{analytics.efficiencyScore}</p>
     </div>
   );
 
@@ -50,7 +50,7 @@ function HiringFunnelAnalyticsPanelInner({ applications, visibleStageKeys }: Hir
                   <span className="ds-caption font-medium">{stage.label}</span>
                   <div className="h-2 overflow-hidden rounded-full bg-[var(--ds-surface-raised)]">
                     <div
-                      className="h-full rounded-full bg-[var(--ds-primary)] transition-all"
+                      className="h-full rounded-full bg-[var(--ds-primary-text)] transition-all dark:bg-[var(--ds-primary)]"
                       style={{ width: `${Math.max(4, (stage.count / maxCount) * 100)}%` }}
                     />
                   </div>

@@ -16,7 +16,7 @@ export class DashboardErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="container-shell flex min-h-[50vh] flex-col items-center justify-center py-16 text-center">
+        <div role="alert" className="container-shell flex min-h-[50vh] flex-col items-center justify-center py-16 text-center">
           <p className="text-lg font-bold text-[var(--ds-text)]">Something went wrong</p>
           <p className="mt-2 max-w-md text-sm text-[var(--ds-muted)]">
             {this.state.message || "An unexpected error occurred in this dashboard view."}

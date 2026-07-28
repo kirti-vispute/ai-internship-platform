@@ -9,6 +9,7 @@ import type { ChatCompanyContact, ChatConversation, ChatInternContact } from "@/
 import { conversationTitle, type ChatRole } from "@/components/dashboard/chat/chat-utils";
 import { initialsFromWords as initialsFor } from "@/components/dashboard/shared/avatar-initials";
 import { AppIcon } from "@/components/icons/app-icon";
+import { useFocusTrap } from "@/lib/use-focus-trap";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -52,6 +53,8 @@ function DetailRow({ icon, label, value }: { icon: typeof Briefcase; label: stri
 }
 
 export function ChatDetailsModal({ role, conversation, contact, application, open, onClose }: Props) {
+  const dialogRef = useFocusTrap<HTMLDivElement>(open && Boolean(conversation));
+
   useEffect(() => {
     if (!open) return;
     function onKeyDown(event: KeyboardEvent) {
@@ -91,6 +94,7 @@ export function ChatDetailsModal({ role, conversation, contact, application, ope
           />
 
           <motion.div
+            ref={dialogRef}
             role="dialog"
             aria-modal="true"
             aria-labelledby="chat-details-title"

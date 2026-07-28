@@ -215,9 +215,18 @@ export function HiringPipelineKanban({
     const application = applications.find((item) => item._id === applicationId);
     if (!application) return;
     if (normalizeToPipelineStage(application.status) === stage) return;
+    const name = application.intern?.fullName || "Candidate";
+    const stageLabel = HIRING_PIPELINE_STAGES.find((item) => item.key === stage)?.label || stage;
     setMovingIds((prev) => [...prev, applicationId]);
     try {
       await onMoveStage(applicationId, PIPELINE_TARGET_STATUS[stage], note);
+      pushToast({ title: "Candidate moved", message: `${name} moved to ${stageLabel}.`, variant: "success" });
+    } catch (error) {
+      pushToast({
+        title: "Move failed",
+        message: error instanceof Error ? error.message : `Couldn't move ${name} to ${stageLabel}.`,
+        variant: "error"
+      });
     } finally {
       setMovingIds((prev) => prev.filter((id) => id !== applicationId));
     }
@@ -538,6 +547,9 @@ export function HiringPipelineKanban({
                         selected={selectedIds.includes(application._id)}
                         saving={saving || movingIds.includes(application._id)}
                         draggable={!TERMINAL_STAGES.includes(stage.key)}
+                        stages={HIRING_PIPELINE_STAGES}
+                        currentStage={stage.key}
+                        onMoveToStage={(applicationId, target) => void moveOne(applicationId, target, "Moved via stage selector")}
                         onToggleSelect={toggleSelect}
                         onDragStart={(event, applicationId) => {
                           event.dataTransfer.setData("text/internai-application", applicationId);

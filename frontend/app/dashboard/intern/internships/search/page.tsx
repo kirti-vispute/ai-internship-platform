@@ -4,8 +4,13 @@ import { useEffect, useDeferredValue, useLayoutEffect, useMemo, useRef, useState
 import { SectionPanel } from "@/components/dashboard/shared/section-panel";
 import { Button } from "@/components/ui/button";
 import { SearchInput } from "@/components/ui/search-input";
-import { InternApplicationModal } from "@/components/dashboard/intern/intern-application-modal";
+import dynamic from "next/dynamic";
 import { shouldBlockPageContent, appliedInternshipIdsFromApplications } from "@/lib/instant-load";
+
+const InternApplicationModal = dynamic(
+  () => import("@/components/dashboard/intern/intern-application-modal").then((m) => m.InternApplicationModal),
+  { ssr: false }
+);
 import {
   InternshipListing,
   InternProfile,
@@ -234,7 +239,7 @@ export default function SearchInternshipsPage() {
                           <div className="flex flex-wrap items-center gap-2">
                             <p className="text-sm font-semibold text-[var(--ds-text)]">{item.role}</p>
                             {typeof item.matchPercent === "number" && (
-                              <span className="rounded-full bg-[var(--ds-info-bg)] px-2 py-0.5 text-xs font-semibold text-[var(--ds-primary)]">
+                              <span className="rounded-full bg-[var(--ds-info-bg)] px-2 py-0.5 text-xs font-semibold text-[var(--ds-primary-text)]">
                                 {item.matchPercent}% match
                               </span>
                             )}

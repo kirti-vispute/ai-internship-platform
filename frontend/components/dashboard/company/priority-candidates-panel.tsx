@@ -126,6 +126,7 @@ export function PriorityCandidatesPanel({ matches, applications, internships, on
                 type="button"
                 role="tab"
                 aria-selected={active}
+                aria-controls="priority-candidates-results"
                 onClick={() => setBucket(item.key)}
                 className={cn(
                   "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ds-focus-ring)]",
@@ -145,7 +146,7 @@ export function PriorityCandidatesPanel({ matches, applications, internships, on
       {rows.length === 0 ? (
         <CompanyDashboardEmptyState title="Nothing here yet" description="This list fills in as candidates move through your pipeline." icon={Star} />
       ) : (
-        <div className={companyDashboardStyles.listStack}>
+        <div id="priority-candidates-results" role="tabpanel" className={companyDashboardStyles.listStack}>
           {rows.map((row) => (
             <CompanyDashboardItemCard key={row.applicationId} className="flex flex-row items-center justify-between gap-3 !p-3.5">
               <div className="min-w-0">

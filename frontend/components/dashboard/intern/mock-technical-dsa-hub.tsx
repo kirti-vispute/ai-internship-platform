@@ -53,7 +53,7 @@ function getCategoryQuestions(
 
 function EmptyState({ title, message }: { title: string; message: string }) {
   return (
-    <div className="flex min-h-[12rem] flex-col items-center justify-center rounded-xl border border-dashed border-[var(--ds-border)] bg-[var(--ds-surface)] px-6 py-12 text-center">
+    <div role="status" aria-live="polite" className="flex min-h-[12rem] flex-col items-center justify-center rounded-xl border border-dashed border-[var(--ds-border)] bg-[var(--ds-surface)] px-6 py-12 text-center">
       <p className="text-sm font-medium text-[var(--ds-text-secondary)]">{title}</p>
       <p className="mt-1 text-sm text-[var(--ds-muted)]">{message}</p>
     </div>
@@ -111,7 +111,7 @@ function CategoryNav({
             className={cn(
               "shrink-0 rounded-lg border-l-2 py-2.5 pl-3 pr-3 text-left text-sm font-medium transition-colors lg:w-full",
               active
-                ? "border-[var(--ds-primary)] bg-[var(--ds-surface-hover)] text-[var(--ds-text)]"
+                ? "border-[var(--ds-primary-text)] bg-[var(--ds-surface-hover)] text-[var(--ds-text)] dark:border-[var(--ds-primary)]"
                 : "border-transparent text-[var(--ds-muted)] hover:bg-[var(--ds-surface-hover)] hover:text-[var(--ds-text)]"
             )}
           >
@@ -173,7 +173,7 @@ function SummaryBar({
       </div>
       <div className="h-1 overflow-hidden rounded-full bg-[var(--ds-border)]">
         <div
-          className="h-full rounded-full bg-[var(--ds-primary)] transition-[width] duration-300 ease-out"
+          className="h-full rounded-full bg-[var(--ds-primary-text)] transition-[width] duration-300 ease-out dark:bg-[var(--ds-primary)]"
           style={{ width: `${progress}%` }}
           role="progressbar"
           aria-valuenow={progress}

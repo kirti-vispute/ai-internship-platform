@@ -36,7 +36,7 @@ export function PortfolioPublicPageClient({ slug }: Props) {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#050810] text-sm text-slate-400">
+      <div role="status" aria-live="polite" className="flex min-h-screen items-center justify-center bg-[#050810] text-sm text-slate-400">
         <span className="animate-pulse tracking-wide">Loading portfolio…</span>
       </div>
     );
@@ -44,7 +44,7 @@ export function PortfolioPublicPageClient({ slug }: Props) {
 
   if (error || !content) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#050810] px-4 text-center">
+      <div role="alert" className="flex min-h-screen items-center justify-center bg-[#050810] px-4 text-center">
         <div className="max-w-sm">
           <p className="text-lg font-semibold tracking-tight text-slate-100">Portfolio unavailable</p>
           <p className="mt-2 text-sm leading-relaxed text-slate-500">{error || "This portfolio is not published."}</p>
@@ -53,5 +53,9 @@ export function PortfolioPublicPageClient({ slug }: Props) {
     );
   }
 
-  return <Portfolio3DViewer content={content} theme={theme} slug={slug} />;
+  return (
+    <main id="main-content" tabIndex={-1} className="focus:outline-none">
+      <Portfolio3DViewer content={content} theme={theme} slug={slug} />
+    </main>
+  );
 }

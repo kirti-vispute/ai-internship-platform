@@ -308,7 +308,7 @@ export function SkillGapAnalysisPanel({
   if (!profile?.resumeUploaded) {
     return (
       <div className={cn(card, "px-8 py-16 text-center")}>
-        <AppIcon icon={Upload} size="md" className="mx-auto text-[var(--ds-primary)]" />
+        <AppIcon icon={Upload} size="md" className="mx-auto text-[var(--ds-primary-text)]" />
         <p className="mt-6 text-base leading-relaxed text-[var(--ds-text-secondary)]">
           Upload your resume to see skill gap insights.
         </p>
@@ -595,6 +595,7 @@ export function SkillGapAnalysisPanel({
                     <button
                       type="button"
                       onClick={() => setShowMoreBars((v) => !v)}
+                      aria-expanded={showMoreBars}
                       className="flex w-full items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-medium text-[var(--ds-text-secondary)] transition-colors hover:text-[var(--ds-text)]"
                     >
                       {showMoreBars ? (

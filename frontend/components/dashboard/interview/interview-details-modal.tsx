@@ -15,6 +15,7 @@ import { formatInterviewJoinHint, resolveInterviewJoinHref } from "@/lib/intervi
 import { InterviewStatusChip } from "./interview-status-chip";
 import { Button } from "@/components/ui/button";
 import { AppIcon } from "@/components/icons/app-icon";
+import { useFocusTrap } from "@/lib/use-focus-trap";
 import { requestInterviewReschedule } from "@/lib/intern-portal";
 
 type InterviewDetailsModalProps = {
@@ -41,6 +42,7 @@ export function InterviewDetailsModal({
   const [rescheduleSent, setRescheduleSent] = useState(false);
   const [rescheduleError, setRescheduleError] = useState<string | null>(null);
   const countdown = useInterviewCountdown(interview?.interviewDate, interview?.interviewTime);
+  const dialogRef = useFocusTrap<HTMLDivElement>(open && Boolean(interview));
 
   useEffect(() => {
     if (!open) return;
@@ -106,6 +108,7 @@ export function InterviewDetailsModal({
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4">
       <button type="button" className="absolute inset-0 bg-black/45 backdrop-blur-[2px]" onClick={onClose} aria-label="Close interview details" />
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="interview-details-title"
@@ -204,7 +207,7 @@ export function InterviewDetailsModal({
         {audience === "intern" && isOpenRound ? (
           <div className="mt-4 rounded-xl border border-[var(--ds-border)] bg-[var(--ds-surface)] p-4">
             {alreadyRequested || rescheduleSent ? (
-              <p className="flex items-center gap-2 text-xs font-medium text-[var(--ds-warning)]">
+              <p role="status" aria-live="polite" className="flex items-center gap-2 text-xs font-medium text-[var(--ds-warning)]">
                 <AppIcon icon={MessageCircleWarning} size="xs" className="text-[var(--ds-warning)]" />
                 Reschedule request sent — the team will follow up.
               </p>
@@ -221,7 +224,7 @@ export function InterviewDetailsModal({
                   className="w-full rounded-lg border border-[var(--ds-border)] bg-[var(--ds-input)] px-3 py-2 text-sm text-[var(--ds-text)] outline-none focus:border-[var(--ds-primary)] focus:ring-2 focus:ring-[var(--ds-focus-ring)]"
                   placeholder="e.g. conflicting commitment at that time"
                 />
-                {rescheduleError ? <p className="text-xs text-[var(--ds-danger)]">{rescheduleError}</p> : null}
+                {rescheduleError ? <p role="alert" className="text-xs text-[var(--ds-danger)]">{rescheduleError}</p> : null}
                 <div className="flex gap-2">
                   <Button type="button" size="sm" disabled={rescheduleSending} onClick={submitRescheduleRequest}>
                     {rescheduleSending ? "Sending…" : "Send Request"}
@@ -250,9 +253,9 @@ export function InterviewDetailsModal({
             Download .ics
           </Button>
           {joinHref ? (
-            <Button type="button" size="sm" variant="secondary" onClick={copyMeetingLink} aria-label="Copy meeting link">
+            <Button type="button" size="sm" variant="secondary" onClick={copyMeetingLink}>
               {copied ? <AppIcon icon={Check} size="xs" /> : <AppIcon icon={Copy} size="xs" />}
-              {copied ? "Copied" : "Copy Link"}
+              <span aria-live="polite">{copied ? "Copied" : "Copy Link"}</span>
             </Button>
           ) : null}
         </div>

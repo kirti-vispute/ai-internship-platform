@@ -21,7 +21,7 @@ function AdminRecentActivityPanelInner({ logs }: { logs: AdminActivityLog[] }) {
     <ScrollReveal variant="fade-up" distance={12}>
       <div className="ds-card p-6">
         <div className="mb-4 flex items-center gap-2">
-          <AppIcon icon={Activity} size="sm" className="text-[var(--ds-primary)]" />
+          <AppIcon icon={Activity} size="sm" className="text-[var(--ds-primary-text)]" />
           <h3 className="ds-h3">Recent Platform Activity</h3>
         </div>
 

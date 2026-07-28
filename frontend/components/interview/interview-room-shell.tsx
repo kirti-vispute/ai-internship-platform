@@ -471,7 +471,7 @@ export function InterviewRoomShell({ roomId }: InterviewRoomShellProps) {
             <Button
               type="button"
               size="sm"
-              className="bg-[var(--ds-danger)] text-white hover:brightness-110"
+              className="bg-[var(--ds-danger)] text-[var(--ds-on-danger)] hover:brightness-110"
               disabled={sessionEnded || ending}
               onClick={handleEndInterview}
             >
@@ -483,7 +483,7 @@ export function InterviewRoomShell({ roomId }: InterviewRoomShellProps) {
       </header>
 
       <div className="flex min-h-0 flex-1">
-        <main className="flex min-w-0 flex-1 flex-col">
+        <main id="main-content" tabIndex={-1} className="flex min-w-0 flex-1 flex-col focus:outline-none">
           <div className="relative flex-1 p-4">
             <div
               className="grid h-full min-h-[420px] gap-3"
@@ -607,7 +607,7 @@ export function InterviewRoomShell({ roomId }: InterviewRoomShellProps) {
           ) : null}
         </main>
 
-        <aside className={`border-l border-[var(--ds-border)] bg-[var(--ds-surface)] transition-all duration-200 ${sidebarOpen ? "w-full max-w-sm" : "w-12"}`}>
+        <aside className={`border-l border-[var(--ds-border)] bg-[var(--ds-surface)] transition-all duration-200 ${sidebarOpen ? "w-full max-w-[85vw] sm:max-w-sm" : "w-12"}`}>
           <div className="flex h-full flex-col">
             <div className="flex items-center justify-between border-b border-[var(--ds-border)] px-2 py-2">
               {sidebarOpen ? (
@@ -975,7 +975,7 @@ function ControlButton({
       onClick={onClick}
       disabled={disabled}
       className={`flex flex-col items-center gap-1 rounded-2xl px-4 py-2 text-xs disabled:cursor-not-allowed disabled:opacity-50 ${
-        active ? "bg-[var(--ds-danger)] text-white" : "bg-[var(--ds-surface-raised)] text-[var(--ds-text-secondary)] hover:bg-[var(--ds-hover)]"
+        active ? "bg-[var(--ds-danger)] text-[var(--ds-on-danger)]" : "bg-[var(--ds-surface-raised)] text-[var(--ds-text-secondary)] hover:bg-[var(--ds-hover)]"
       }`}
     >
       <Icon className="h-5 w-5" />
@@ -1021,9 +1021,9 @@ function OutcomeButton({
   onClick: () => void;
 }) {
   const tones = {
-    success: active ? "bg-[var(--ds-success)] text-white" : "border-[var(--ds-success)] text-[var(--ds-success)]",
-    warning: active ? "bg-[var(--ds-warning)] text-white" : "border-[var(--ds-warning)] text-[var(--ds-warning)]",
-    danger: active ? "bg-[var(--ds-danger)] text-white" : "border-[var(--ds-danger)] text-[var(--ds-danger)]"
+    success: active ? "bg-[var(--ds-success)] text-[var(--ds-on-success)]" : "border-[var(--ds-success)] text-[var(--ds-success)]",
+    warning: active ? "bg-[var(--ds-warning)] text-[var(--ds-on-warning)]" : "border-[var(--ds-warning)] text-[var(--ds-warning)]",
+    danger: active ? "bg-[var(--ds-danger)] text-[var(--ds-on-danger)]" : "border-[var(--ds-danger)] text-[var(--ds-danger)]"
   };
 
   return (

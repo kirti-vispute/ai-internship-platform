@@ -42,7 +42,7 @@ export function HiringInsightsSummary({ applications, shortlistedCount }: Hiring
           <CompanyDashboardMetricTile label="Applications" value={metrics.applications} />
           <CompanyDashboardMetricTile
             label="Shortlisted"
-            value={<span className="text-[var(--ds-primary)]">{metrics.shortlisted}</span>}
+            value={<span className="text-[var(--ds-primary-text)]">{metrics.shortlisted}</span>}
             className="ring-1 ring-[var(--ds-primary)]/30 bg-[color-mix(in_srgb,var(--ds-primary)_5%,transparent)]"
           />
           <CompanyDashboardMetricTile

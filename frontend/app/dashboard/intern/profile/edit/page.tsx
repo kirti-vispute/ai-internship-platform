@@ -220,7 +220,7 @@ export default function EditInternProfilePage() {
             eyebrow="My Profile"
             title="Edit Profile"
             subtitle="Manage your profile with structured sections for better clarity and recruiter readiness."
-            actions={<span className="rounded-full bg-[var(--ds-info-bg)] px-3 py-1 text-xs font-semibold text-[var(--ds-primary)]">{completionHint}% complete</span>}
+            actions={<span className="rounded-full bg-[var(--ds-info-bg)] px-3 py-1 text-xs font-semibold text-[var(--ds-primary-text)]">{completionHint}% complete</span>}
           />
 
           {loading ? (

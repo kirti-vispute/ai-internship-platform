@@ -63,6 +63,7 @@ function MilestoneChip({ milestone, index }: { milestone: Milestone; index: numb
         )}
       >
         {milestone.label}
+        <span className="sr-only">{milestone.done ? " (completed)" : " (not completed)"}</span>
       </span>
     </motion.div>
   );
@@ -82,11 +83,11 @@ function CareerProgressHubInner({
   const percent = Math.round((completedCount / milestones.length) * 100);
 
   return (
-    <ScrollReveal variant="fade-up" distance={12}>
+    <ScrollReveal variant="fade-up" distance={12} once>
       <div className={cn(cardBase, "p-6")}>
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <AppIcon icon={Rocket} size="sm" className="text-[var(--ds-primary)]" />
+            <AppIcon icon={Rocket} size="sm" className="text-[var(--ds-primary-text)]" />
             <h3 className="text-sm font-semibold text-[var(--ds-text)]">Career Progress</h3>
           </div>
           <span className="text-xs font-semibold tabular-nums text-[var(--ds-muted)]">

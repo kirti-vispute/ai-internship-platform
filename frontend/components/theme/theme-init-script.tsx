@@ -6,9 +6,9 @@ import Script from "next/script";
 // own storage-key contract in lib/theme/theme-config.ts.
 const INIT_SCRIPT = `(function(){try{var t=localStorage.getItem("internai.theme")||"ocean";var a=localStorage.getItem("internai.appearance")||"dark";var r=document.documentElement;r.setAttribute("data-theme",t);r.setAttribute("data-appearance",a);r.classList.toggle("dark",a==="dark");}catch(e){}})();`;
 
-export function ThemeInitScript() {
+export function ThemeInitScript({ nonce }: { nonce?: string }) {
   return (
-    <Script id="theme-init" strategy="beforeInteractive">
+    <Script id="theme-init" strategy="beforeInteractive" nonce={nonce}>
       {INIT_SCRIPT}
     </Script>
   );

@@ -12,6 +12,9 @@ type BeforeInstallPromptEvent = Event & {
 };
 
 const DISMISS_KEY = "internai-install-dismissed";
+// Cumulative time the tab must be visible/focused before we interrupt the user.
+const ACTIVE_USAGE_THRESHOLD_MS = 5 * 60 * 1000;
+const ACTIVE_USAGE_TICK_MS = 5000;
 
 function isStandalone(): boolean {
   if (typeof window === "undefined") return false;
@@ -48,18 +51,69 @@ export function InstallPrompt() {
     }
     if (dismissed) return;
 
-    let promptFired = false;
+    // Gate the popup on cumulative *active* (tab-visible) usage instead of
+    // showing it the instant an install path becomes available — otherwise it
+    // fires on effectively every tab focus, since beforeinstallprompt/iOS
+    // eligibility is typically already true within the first couple seconds.
+    let eligible = isIos() && !isStandalone();
+    if (eligible) setMode("ios");
+    let shown = false;
+    let thresholdReached = false;
+    let activeMs = 0;
+    let tickHandle: number | null = null;
+
+    const stopTicking = () => {
+      if (tickHandle !== null) {
+        window.clearInterval(tickHandle);
+        tickHandle = null;
+      }
+    };
+
+    const maybeShow = () => {
+      if (shown || !eligible || !thresholdReached) return;
+      shown = true;
+      stopTicking();
+      setVisible(true);
+    };
+
+    const tick = () => {
+      activeMs += ACTIVE_USAGE_TICK_MS;
+      if (activeMs >= ACTIVE_USAGE_THRESHOLD_MS) {
+        thresholdReached = true;
+        stopTicking();
+        maybeShow();
+      }
+    };
+
+    const startTicking = () => {
+      if (shown || thresholdReached || tickHandle !== null) return;
+      tickHandle = window.setInterval(tick, ACTIVE_USAGE_TICK_MS);
+    };
+
+    if (document.visibilityState === "visible") startTicking();
+
+    const onVisibilityChange = () => {
+      // Switching tabs pauses the clock; it resumes (never resets) on return,
+      // so a background tab doesn't rack up "active" time it never earned.
+      if (document.visibilityState === "visible") {
+        startTicking();
+      } else {
+        stopTicking();
+      }
+    };
 
     const onBeforeInstallPrompt = (event: Event) => {
       event.preventDefault(); // stop the mini-infobar; we drive our own UI
-      promptFired = true;
       deferredPrompt.current = event as BeforeInstallPromptEvent;
+      eligible = true;
       setMode("prompt");
-      setVisible(true);
+      maybeShow();
     };
 
     const onInstalled = () => {
       deferredPrompt.current = null;
+      shown = true;
+      stopTicking();
       setVisible(false);
       try {
         window.localStorage.setItem(DISMISS_KEY, "1");
@@ -70,19 +124,13 @@ export function InstallPrompt() {
 
     window.addEventListener("beforeinstallprompt", onBeforeInstallPrompt);
     window.addEventListener("appinstalled", onInstalled);
-
-    // iOS fallback: no beforeinstallprompt will ever fire there.
-    const iosTimer = window.setTimeout(() => {
-      if (!promptFired && isIos() && !isStandalone()) {
-        setMode("ios");
-        setVisible(true);
-      }
-    }, 2500);
+    document.addEventListener("visibilitychange", onVisibilityChange);
 
     return () => {
       window.removeEventListener("beforeinstallprompt", onBeforeInstallPrompt);
       window.removeEventListener("appinstalled", onInstalled);
-      window.clearTimeout(iosTimer);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      stopTicking();
     };
   }, []);
 
@@ -116,7 +164,7 @@ export function InstallPrompt() {
           transition={{ duration: 0.25, ease: "easeOut" }}
           className="fixed inset-x-4 bottom-4 z-[999] mx-auto flex max-w-sm items-start gap-3 rounded-2xl border border-[var(--ds-border)] bg-[var(--ds-surface-raised,var(--ds-card))] p-4 shadow-lg sm:left-4 sm:right-auto sm:mx-0"
         >
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--ds-info-bg)] text-[var(--ds-primary)]">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--ds-info-bg)] text-[var(--ds-primary-text)]">
             <AppIcon icon={mode === "ios" ? Share : Download} size="sm" className="text-current" />
           </span>
           <div className="min-w-0 flex-1">

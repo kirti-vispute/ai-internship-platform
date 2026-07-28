@@ -60,7 +60,7 @@ export function CompanyCandidateSearchView({
         <div className="mt-4">
           {searchLoading && <SkeletonList rows={3} />}
 
-          {!searchLoading && searchError && <div className="ds-alert ds-alert--error">{searchError}</div>}
+          {!searchLoading && searchError && <div role="alert" className="ds-alert ds-alert--error">{searchError}</div>}
 
           {!searchLoading && !searchError && !debouncedQuery && (
             <EmptyState
@@ -240,7 +240,7 @@ export function CompanyExportView({ isHrScoped, internships, apps, shortlisted, 
           <InfoTile
             icon={Bookmark}
             label="Shortlisted"
-            value={<span className="ds-stat-value text-[var(--ds-primary)]">{shortlisted.length}</span>}
+            value={<span className="ds-stat-value text-[var(--ds-primary-text)]">{shortlisted.length}</span>}
             className="ring-1 ring-[color-mix(in_srgb,var(--ds-primary)_40%,transparent)] bg-[color-mix(in_srgb,var(--ds-primary)_5%,transparent)]"
           />
         </div>

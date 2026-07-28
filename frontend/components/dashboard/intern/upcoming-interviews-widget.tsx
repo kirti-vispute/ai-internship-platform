@@ -55,7 +55,7 @@ export function UpcomingInterviewsWidget({ applications = [], interviewRecords }
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--ds-primary)]">
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--ds-primary-text)]">
                       {index === 0 ? "Next Interview" : `Interview ${index + 1}`}
                     </p>
                     <h3 className="mt-1 truncate text-base font-semibold text-[var(--ds-text)]">
@@ -72,7 +72,7 @@ export function UpcomingInterviewsWidget({ applications = [], interviewRecords }
 
                 {now !== null && countdown ? (
                   <div className="mt-4 rounded-xl border border-[var(--ds-primary)]/30 bg-[var(--ds-card)]/70 px-3 py-3">
-                    <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-[var(--ds-primary)]">
+                    <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-[var(--ds-primary-text)]">
                       <AppIcon icon={Timer} size="xs" className="text-current" />
                       Interview in
                     </div>

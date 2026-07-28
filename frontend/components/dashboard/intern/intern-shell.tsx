@@ -6,10 +6,12 @@ import { AnimatedBackground } from "@/components/dashboard/shared/AnimatedBackgr
 import { PortalBrandHeader } from "@/components/brand/portal-brand-header";
 import { DashboardShellHeader } from "@/components/dashboard/shared/dashboard-shell-header";
 import { DashboardSidebarNav } from "@/components/dashboard/shared/dashboard-sidebar-nav";
+import { SidebarCollapseToggle } from "@/components/dashboard/shared/sidebar-collapse-toggle";
 import { ROLE_WELCOME_LABEL, ROLE_WELCOME_TAGLINE } from "@/lib/auth-routes";
 import { getInternSidebarSections, isInternSidebarItemActive } from "@/lib/intern-sidebar-config";
 import { useMessagingUnread } from "@/lib/use-messaging-unread";
 import { useNotificationUnread } from "@/lib/use-notification-unread";
+import { useIsDesktopViewport, useSidebarCollapsed } from "@/lib/use-sidebar-collapsed";
 import { cn } from "@/lib/utils";
 
 type InternShellProps = {
@@ -21,10 +23,16 @@ type InternShellProps = {
 const InternShellSidebar = memo(function InternShellSidebar({
   mobileOpen,
   messageUnread,
+  collapsed,
+  railCollapsed,
+  onToggleCollapsed,
   onCloseMobile
 }: {
   mobileOpen: boolean;
   messageUnread: number;
+  collapsed: boolean;
+  railCollapsed: boolean;
+  onToggleCollapsed: () => void;
   onCloseMobile: () => void;
 }) {
   const sections = useMemo(() => getInternSidebarSections(messageUnread), [messageUnread]);
@@ -33,17 +41,22 @@ const InternShellSidebar = memo(function InternShellSidebar({
     <>
       <aside
         className={cn(
-          "sidebar-surface sidebar-shell fixed inset-y-0 left-0 z-40 w-72 p-5 shadow-[0_12px_36px_rgba(15,23,42,0.12)] transition-transform duration-300 lg:sticky lg:top-0 lg:translate-x-0 dark:shadow-[0_16px_44px_rgba(2,6,23,0.55)]",
-          mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+          "sidebar-surface sidebar-shell fixed inset-y-0 left-0 z-40 w-72 p-5 shadow-[0_12px_36px_rgba(15,23,42,0.12)] transition-[width,transform] duration-300 ease-in-out lg:sticky lg:top-0 lg:translate-x-0 dark:shadow-[0_16px_44px_rgba(2,6,23,0.55)]",
+          mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
+          collapsed ? "lg:w-20 lg:p-3" : "lg:w-72"
         )}
       >
         <div className="shrink-0">
-          <PortalBrandHeader portalLabel="Intern Portal" />
+          <PortalBrandHeader portalLabel="Intern Portal" collapsed={railCollapsed} />
+          <div className={cn("mb-4 hidden lg:flex", collapsed ? "justify-center" : "justify-start")}>
+            <SidebarCollapseToggle collapsed={collapsed} onToggle={onToggleCollapsed} />
+          </div>
         </div>
         <DashboardSidebarNav
           sections={sections}
           isItemActive={isInternSidebarItemActive}
           onNavigate={onCloseMobile}
+          collapsed={railCollapsed}
         />
       </aside>
       {mobileOpen ? (
@@ -90,6 +103,9 @@ const InternShellHeader = memo(function InternShellHeader({
 
 export function InternShell({ welcomeName, onLogout, children }: InternShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { collapsed, toggle: toggleCollapsed } = useSidebarCollapsed();
+  const isDesktop = useIsDesktopViewport();
+  const railCollapsed = collapsed && isDesktop;
   const { messageUnread } = useMessagingUnread();
   const { unreadCount: notificationUnread, setUnreadCount: setNotificationUnread } = useNotificationUnread("intern");
   const pathname = usePathname();
@@ -104,6 +120,9 @@ export function InternShell({ welcomeName, onLogout, children }: InternShellProp
         <InternShellSidebar
           mobileOpen={mobileOpen}
           messageUnread={messageUnread}
+          collapsed={collapsed}
+          railCollapsed={railCollapsed}
+          onToggleCollapsed={toggleCollapsed}
           onCloseMobile={onCloseMobile}
         />
 
@@ -119,8 +138,10 @@ export function InternShell({ welcomeName, onLogout, children }: InternShellProp
           />
 
           <main
+            id="main-content"
+            tabIndex={-1}
             className={cn(
-              "relative z-10 w-full p-4 lg:p-5",
+              "relative z-10 w-full p-4 lg:p-5 focus:outline-none",
               isMessagingRoute ? "mx-auto max-w-none" : "mx-auto max-w-[1240px]"
             )}
           >

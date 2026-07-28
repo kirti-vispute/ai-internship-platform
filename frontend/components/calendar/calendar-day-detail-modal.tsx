@@ -16,6 +16,7 @@ import { CalendarEmojiPicker } from "@/components/calendar/emoji-picker";
 import { Sticker3D } from "@/components/calendar/sticker-3d";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
+import { useFocusTrap } from "@/lib/use-focus-trap";
 import { cn } from "@/lib/utils";
 
 type CalendarDayDetailModalProps = {
@@ -36,6 +37,7 @@ export function CalendarDayDetailModal({
   onEntriesChange
 }: CalendarDayDetailModalProps) {
   const { pushToast } = useToast();
+  const dialogRef = useFocusTrap<HTMLDivElement>(open);
   const [busy, setBusy] = useState<string | null>(null);
   const [noteDraft, setNoteDraft] = useState("");
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
@@ -90,6 +92,7 @@ export function CalendarDayDetailModal({
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4">
       <button type="button" className="absolute inset-0 bg-black/45 backdrop-blur-[2px]" onClick={onClose} aria-label="Close day details" />
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="calendar-day-detail-title"
@@ -168,7 +171,7 @@ export function CalendarDayDetailModal({
             )}
 
             {editingStickerId ? (
-              <div className="mt-3 rounded-xl border border-[var(--ds-primary)] bg-[var(--ds-surface-raised)] p-3">
+              <div className="mt-3 rounded-xl border border-[var(--ds-primary-text)] bg-[var(--ds-surface-raised)] p-3 dark:border-[var(--ds-primary)]">
                 <p className="mb-2 text-xs font-medium text-[var(--ds-text-secondary)]">Choose a new emoji</p>
                 <CalendarEmojiPicker
                   selected={stickers.find((s) => s._id === editingStickerId)?.emoji}
@@ -221,6 +224,7 @@ export function CalendarDayDetailModal({
                         value={editingNoteDraft}
                         onChange={(event) => setEditingNoteDraft(event.target.value.slice(0, CALENDAR_NOTE_MAX_LENGTH))}
                         rows={3}
+                        aria-label="Edit note"
                         className="w-full resize-none rounded-lg border border-[var(--ds-border)] bg-[var(--ds-input)] px-3 py-2 text-sm text-[var(--ds-text)] outline-none ring-[var(--ds-focus-ring)] focus:ring-2"
                       />
                       <div className="mt-2 flex items-center justify-between gap-2">

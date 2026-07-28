@@ -41,7 +41,7 @@ export function LearningAssessmentPanel({ title, subtitle, emptyTitle, emptyHint
         </ul>
         <p className="mt-4 text-xs text-[var(--ds-muted)]">
           Need help? Visit{" "}
-          <Link href="/dashboard/intern/support" className="font-semibold text-[var(--ds-primary)] hover:underline">
+          <Link href="/dashboard/intern/support" className="font-semibold text-[var(--ds-primary-text)] hover:underline">
             Help / Support
           </Link>
           .

@@ -47,6 +47,7 @@ export function AiConfidenceBadge({
           className
         )}
         title={explanationTrace}
+        aria-label={explanationTrace ? `AI confidence ${confidenceScore} percent. ${explanationTrace}` : `AI confidence ${confidenceScore} percent`}
       >
         <AppIcon icon={Icon} size="xs" />
         AI {confidenceScore}%

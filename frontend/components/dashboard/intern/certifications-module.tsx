@@ -14,13 +14,17 @@ import {
 import { AppIcon } from "@/components/icons/app-icon";
 import { Button } from "@/components/ui/button";
 import {
+  CERTIFICATE_ACCEPT_ATTR,
+  CERTIFICATE_FORMAT_HINT,
+  CERTIFICATION_STATUS_STYLES,
   CertificationRecord,
   CertificationStats,
   SKILL_CATEGORY_OPTIONS,
   certificationStatusLabel,
   fetchCertificateBlob,
   fetchMyCertifications,
-  submitCertification
+  submitCertification,
+  validateCertificateFile
 } from "@/lib/certifications-portal";
 import { cn } from "@/lib/utils";
 import { EmptyState } from "@/components/dashboard/shared/empty-state";
@@ -28,12 +32,6 @@ import { SkeletonList } from "@/components/ui/skeleton";
 
 const card =
   "rounded-2xl border border-[var(--ds-border)] bg-[var(--ds-card)] shadow-[0_4px_24px_-10px_rgba(15,23,42,0.08)]";
-
-const STATUS_STYLES = {
-  pending_verification: "bg-[var(--ds-warning-bg)] text-[var(--ds-warning)] border-[var(--ds-warning)]",
-  verified: "bg-[var(--ds-success-bg)] text-[var(--ds-success)] border-[var(--ds-success)]",
-  rejected: "bg-[var(--ds-danger-bg)] text-[var(--ds-danger)] border-[var(--ds-danger)]"
-} as const;
 
 function StatTile({ label, value, icon }: { label: string; value: number; icon: React.ReactNode }) {
   return (
@@ -78,6 +76,7 @@ export function CertificationsModule() {
     skillCategory: SKILL_CATEGORY_OPTIONS[0] as string,
     provider: "",
     completionDate: "",
+    expiryDate: "",
     credentialUrl: "",
     credentialId: "",
     description: ""
@@ -128,6 +127,7 @@ export function CertificationsModule() {
       formData.append("skillCategory", form.skillCategory);
       formData.append("provider", form.provider);
       formData.append("completionDate", form.completionDate);
+      if (form.expiryDate) formData.append("expiryDate", form.expiryDate);
       if (form.credentialUrl) formData.append("credentialUrl", form.credentialUrl);
       if (form.credentialId) formData.append("credentialId", form.credentialId);
       if (form.description) formData.append("description", form.description);
@@ -140,6 +140,7 @@ export function CertificationsModule() {
         skillCategory: SKILL_CATEGORY_OPTIONS[0],
         provider: "",
         completionDate: "",
+        expiryDate: "",
         credentialUrl: "",
         credentialId: "",
         description: ""
@@ -151,6 +152,23 @@ export function CertificationsModule() {
     } finally {
       setSubmitting(false);
     }
+  }
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const selected = e.target.files?.[0] || null;
+    if (!selected) {
+      setFile(null);
+      return;
+    }
+    const validationError = validateCertificateFile(selected);
+    if (validationError) {
+      setError(validationError);
+      setFile(null);
+      e.target.value = "";
+      return;
+    }
+    setError("");
+    setFile(selected);
   }
 
   async function openPreview(item: CertificationRecord) {
@@ -197,7 +215,7 @@ export function CertificationsModule() {
       </div>
 
       {error ? (
-        <div className="rounded-xl border border-[var(--ds-danger)] bg-[var(--ds-danger-bg)] px-4 py-3 text-sm text-[var(--ds-danger)]">
+        <div role="alert" className="rounded-xl border border-[var(--ds-danger)] bg-[var(--ds-danger-bg)] px-4 py-3 text-sm text-[var(--ds-danger)]">
           {error}
         </div>
       ) : null}
@@ -258,6 +276,15 @@ export function CertificationsModule() {
               />
             </label>
             <label className="space-y-1 text-sm">
+              <span className="font-medium text-[var(--ds-text-secondary)]">Expiry Date</span>
+              <input
+                type="date"
+                className="ds-input w-full"
+                value={form.expiryDate}
+                onChange={(e) => setForm((f) => ({ ...f, expiryDate: e.target.value }))}
+              />
+            </label>
+            <label className="space-y-1 text-sm">
               <span className="font-medium text-[var(--ds-text-secondary)]">Credential URL</span>
               <input
                 className="ds-input w-full"
@@ -283,17 +310,24 @@ export function CertificationsModule() {
             />
           </label>
           <label className="block space-y-1 text-sm">
-            <span className="font-medium text-[var(--ds-text-secondary)]">Certificate File * (PDF, PNG, JPG)</span>
+            <span className="font-medium text-[var(--ds-text-secondary)]">Certificate File * ({CERTIFICATE_FORMAT_HINT})</span>
             <input
               required
               type="file"
-              accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg"
+              accept={CERTIFICATE_ACCEPT_ATTR}
               className="ds-input w-full"
-              onChange={(e) => setFile(e.target.files?.[0] || null)}
+              onChange={handleFileChange}
             />
+            {file ? (
+              <span className="block text-xs text-[var(--ds-muted)]">
+                Selected: {file.name} ({(file.size / (1024 * 1024)).toFixed(2)} MB)
+              </span>
+            ) : (
+              <span className="block text-xs text-[var(--ds-muted)]">Max size 10MB. A supporting document is required to submit.</span>
+            )}
           </label>
           <div className="flex gap-3">
-            <Button type="submit" disabled={submitting}>
+            <Button type="submit" disabled={submitting || !file}>
               {submitting ? "Submitting..." : "Submit for Verification"}
             </Button>
             <Button type="button" variant="secondary" onClick={() => setShowForm(false)}>
@@ -329,7 +363,7 @@ export function CertificationsModule() {
                     <span
                       className={cn(
                         "rounded-md border px-2 py-0.5 text-xs font-semibold",
-                        STATUS_STYLES[item.verificationStatus]
+                        CERTIFICATION_STATUS_STYLES[item.verificationStatus]
                       )}
                     >
                       {certificationStatusLabel(item.verificationStatus)}
@@ -341,6 +375,9 @@ export function CertificationsModule() {
                   <p className="text-sm text-[var(--ds-muted)]">Completed {formatDate(item.completionDate)}</p>
                   {item.verificationStatus === "rejected" && item.rejectionReason ? (
                     <p className="text-sm text-[var(--ds-danger)]">Reason: {item.rejectionReason}</p>
+                  ) : null}
+                  {item.reviewNotes ? (
+                    <p className="text-sm text-[var(--ds-muted)]">Note: {item.reviewNotes}</p>
                   ) : null}
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -378,9 +415,12 @@ export function CertificationsModule() {
             <div><dt className="text-[var(--ds-muted)]">Provider</dt><dd className="font-medium">{detailsItem.provider}</dd></div>
             <div><dt className="text-[var(--ds-muted)]">Category</dt><dd className="font-medium">{detailsItem.skillCategory}</dd></div>
             <div><dt className="text-[var(--ds-muted)]">Status</dt><dd className="font-medium">{certificationStatusLabel(detailsItem.verificationStatus)}</dd></div>
+            {detailsItem.expiryDate ? <div><dt className="text-[var(--ds-muted)]">Expires</dt><dd className="font-medium">{formatDate(detailsItem.expiryDate)}</dd></div> : null}
             {detailsItem.credentialUrl ? <div className="sm:col-span-2"><dt className="text-[var(--ds-muted)]">Credential URL</dt><dd className="break-all">{detailsItem.credentialUrl}</dd></div> : null}
             {detailsItem.credentialId ? <div><dt className="text-[var(--ds-muted)]">Credential ID</dt><dd>{detailsItem.credentialId}</dd></div> : null}
             {detailsItem.description ? <div className="sm:col-span-2"><dt className="text-[var(--ds-muted)]">Description</dt><dd>{detailsItem.description}</dd></div> : null}
+            {detailsItem.rejectionReason ? <div className="sm:col-span-2"><dt className="text-[var(--ds-muted)]">Rejection Reason</dt><dd className="text-[var(--ds-danger)]">{detailsItem.rejectionReason}</dd></div> : null}
+            {detailsItem.reviewNotes ? <div className="sm:col-span-2"><dt className="text-[var(--ds-muted)]">Reviewer Note</dt><dd>{detailsItem.reviewNotes}</dd></div> : null}
           </dl>
         </div>
       ) : null}
@@ -403,9 +443,13 @@ export function CertificationsModule() {
           </div>
           {preview.mimeType.includes("pdf") ? (
             <iframe title="Certificate preview" src={preview.objectUrl} className="h-[420px] w-full rounded-lg border border-[var(--ds-border)]" />
-          ) : (
+          ) : preview.mimeType.includes("image") ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={preview.objectUrl} alt="Certificate preview" className="max-h-[420px] w-full rounded-lg object-contain" />
+          ) : (
+            <p className="rounded-lg border border-[var(--ds-border)] px-4 py-6 text-center text-sm text-[var(--ds-text-secondary)]">
+              Preview not available for this file type. Use Download instead.
+            </p>
           )}
         </div>
       ) : null}

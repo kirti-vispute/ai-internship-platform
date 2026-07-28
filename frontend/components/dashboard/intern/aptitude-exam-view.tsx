@@ -114,6 +114,7 @@ export function AptitudeExamView({
     () => initialSession?.sectionRemainingSeconds ?? defaultSectionRemaining(test)
   );
   const [submitted, setSubmitted] = useState(false);
+  const [lowTimeAnnounced, setLowTimeAnnounced] = useState(false);
 
   const answersRef = useRef(answers);
   const sectionSpentRef = useRef(sectionSpent);
@@ -123,7 +124,8 @@ export function AptitudeExamView({
   const remainingSecondsRef = useRef(remainingSeconds);
   useEffect(() => {
     remainingSecondsRef.current = remainingSeconds;
-  }, [remainingSeconds]);
+    if (remainingSeconds < 300 && remainingSeconds > 0 && !lowTimeAnnounced) setLowTimeAnnounced(true);
+  }, [remainingSeconds, lowTimeAnnounced]);
 
   useEffect(() => {
     onSubmitRef.current = onSubmit;
@@ -290,11 +292,18 @@ export function AptitudeExamView({
       )}
     >
       {!examEnabled ? (
-        <div className="absolute inset-0 z-20 flex items-center justify-center bg-[var(--ds-card)]/90">
+        <div role="alert" className="absolute inset-0 z-20 flex items-center justify-center bg-[var(--ds-card)]/90">
           <p className="text-sm font-medium text-[var(--ds-text-secondary)]">Fullscreen required to continue</p>
         </div>
       ) : null}
-      <header className="sticky top-0 z-10 shrink-0 border-b border-[var(--ds-border)] bg-[var(--ds-card)] px-4 py-3 lg:static">
+      <span role="status" aria-live="polite" className="sr-only">
+        {lowTimeAnnounced ? "Less than 5 minutes remaining." : ""}
+      </span>
+      <header
+        aria-hidden={!examEnabled}
+        inert={!examEnabled ? true : undefined}
+        className="sticky top-0 z-10 shrink-0 border-b border-[var(--ds-border)] bg-[var(--ds-card)] px-4 py-3 lg:static"
+      >
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="min-w-0">
             <p className="text-xs font-medium uppercase tracking-wide text-[var(--ds-muted)]">
@@ -344,16 +353,18 @@ export function AptitudeExamView({
               <span className="text-[11px] font-medium text-[var(--ds-warning)]">Marked for review</span>
             ) : null}
           </div>
-          <p className="text-base font-medium leading-relaxed text-[var(--ds-text)]">
+          <p id="aptitude-question-text" className="text-base font-medium leading-relaxed text-[var(--ds-text)]">
             {currentQuestion.question}
           </p>
-          <div className="mt-4 space-y-2">
+          <div className="mt-4 space-y-2" role="radiogroup" aria-labelledby="aptitude-question-text">
             {currentQuestion.options.map((option, idx) => {
               const selected = answers[currentQuestion.id] === idx;
               return (
                 <button
                   key={idx}
                   type="button"
+                  role="radio"
+                  aria-checked={selected}
                   onClick={() => handleSelect(idx)}
                   disabled={submitted || !examEnabled}
                   className={cn(
@@ -399,6 +410,7 @@ export function AptitudeExamView({
               type="button"
               onClick={handleMarkReview}
               disabled={submitted || !examEnabled}
+              aria-pressed={isMarked}
               className={cn(
                 "inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium",
                 isMarked

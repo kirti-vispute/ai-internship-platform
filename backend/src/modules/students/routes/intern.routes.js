@@ -6,6 +6,7 @@ const authMiddleware = require("../../../shared/middleware/auth.middleware");
 const allowRoles = require("../../../shared/middleware/role.middleware");
 const upload = require("../../../shared/middleware/upload.middleware");
 const certificateUpload = require("../../../shared/middleware/certificate-upload.middleware");
+const uploadLimiter = require("../../../shared/middleware/upload-rate-limit.middleware");
 const certificationController = require("../../../controllers/certification.controller");
 const portfolioController = require("../../../controllers/portfolio.controller");
 const validateObjectId = require("../../../shared/middleware/validate-object-id.middleware");
@@ -16,7 +17,7 @@ router.use(authMiddleware, allowRoles("intern"));
 
 router.get("/profile", internController.getProfile);
 router.put("/profile", internController.updateProfile);
-router.post("/resume/upload", upload.single("resume"), internController.uploadResume);
+router.post("/resume/upload", uploadLimiter, upload.single("resume"), internController.uploadResume);
 router.get("/resume/score", internController.getResumeScore);
 router.post("/skill-gap", internController.getSkillGap);
 router.get("/internships/:internshipId/ai-insights", validateObjectId("internshipId"), internController.getApplicationAiInsights);
@@ -45,6 +46,7 @@ router.post("/report-company", internController.reportCompany);
 router.get("/certifications", certificationController.listMyCertifications);
 router.post(
   "/certifications",
+  uploadLimiter,
   certificateUpload.single("certificateFile"),
   certificationController.submitCertification
 );

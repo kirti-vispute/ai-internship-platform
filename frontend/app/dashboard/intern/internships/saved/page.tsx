@@ -5,8 +5,13 @@ import { SkeletonList } from "@/components/ui/skeleton";
 import { BRANDED_EMPTY_STATES } from "@/lib/brand";
 import { SectionPanel } from "@/components/dashboard/shared/section-panel";
 import { Button } from "@/components/ui/button";
-import { InternApplicationModal } from "@/components/dashboard/intern/intern-application-modal";
+import dynamic from "next/dynamic";
 import { useEffect, useLayoutEffect, useState } from "react";
+
+const InternApplicationModal = dynamic(
+  () => import("@/components/dashboard/intern/intern-application-modal").then((m) => m.InternApplicationModal),
+  { ssr: false }
+);
 import { shouldBlockPageContent, appliedInternshipIdsFromApplications } from "@/lib/instant-load";
 import {
   InternshipListing,

@@ -25,7 +25,7 @@ export function PasswordStrength({ password }: PasswordStrengthProps) {
           />
         ))}
       </div>
-      <p className="text-xs text-[var(--ds-muted)]">Password strength: {label}</p>
+      <p role="status" aria-live="polite" className="text-xs text-[var(--ds-muted)]">Password strength: {label}</p>
     </div>
   );
 }

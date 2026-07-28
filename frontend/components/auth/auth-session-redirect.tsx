@@ -28,7 +28,7 @@ export function AuthSessionRedirect({ expectedRole, children }: AuthSessionRedir
   if (!ready) {
     return (
       <section className="container-shell py-12">
-        <div className="ds-card p-6 text-sm text-[var(--ds-muted)]">Loading...</div>
+        <div role="status" aria-live="polite" className="ds-card p-6 text-sm text-[var(--ds-muted)]">Loading...</div>
       </section>
     );
   }

@@ -55,6 +55,7 @@ export function MessageComposer({
           value={value}
           onChange={(event) => onChange(event.target.value)}
           placeholder={placeholder}
+          aria-label="Message"
           rows={1}
           disabled={disabled || sending}
           className={cn(

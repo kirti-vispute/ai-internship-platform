@@ -36,7 +36,12 @@ export type StatusGroup = "applied" | "interviewing" | "offered" | "rejected";
 
 export const STATUS_GROUP_META: Record<StatusGroup, { label: string; barClass: string; dotClass: string; colorVar: string }> = {
   applied: { label: "Applied", barClass: "bg-[var(--ds-info)]", dotClass: "bg-[var(--ds-info)]", colorVar: "var(--ds-info)" },
-  interviewing: { label: "Interviewing", barClass: "bg-[var(--ds-primary)]", dotClass: "bg-[var(--ds-primary)]", colorVar: "var(--ds-primary)" },
+  interviewing: {
+    label: "Interviewing",
+    barClass: "bg-[var(--ds-primary-text)] dark:bg-[var(--ds-primary)]",
+    dotClass: "bg-[var(--ds-primary-text)] dark:bg-[var(--ds-primary)]",
+    colorVar: "var(--ds-primary)"
+  },
   offered: { label: "Offered", barClass: "bg-[var(--ds-success)]", dotClass: "bg-[var(--ds-success)]", colorVar: "var(--ds-success)" },
   rejected: { label: "Rejected/Withdrawn", barClass: "bg-[var(--ds-danger)]", dotClass: "bg-[var(--ds-danger)]", colorVar: "var(--ds-danger)" }
 };
@@ -75,7 +80,7 @@ export function RecommendationsCard({
   const top = recommendations.slice(0, 3);
 
   return (
-    <ScrollReveal variant="fade-up" distance={12}>
+    <ScrollReveal variant="fade-up" distance={12} once>
       <HoverCard>
         <div className="mb-4 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
@@ -191,7 +196,7 @@ export function StatisticsCards({
   return (
     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
       {stats.map((stat, idx) => (
-        <ScrollReveal key={stat.label} variant="fade-up" distance={10} delayMs={idx * 40}>
+        <ScrollReveal key={stat.label} variant="fade-up" distance={10} delayMs={idx * 40} once>
           <motion.div whileHover={{ y: -3 }} transition={{ duration: 0.2 }} className={cn(cardBase, "p-4")}>
             <div className="flex items-center gap-3">
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--ds-surface-raised)] text-[var(--ds-accent)]">
@@ -221,7 +226,7 @@ export function QuickActions() {
   ];
 
   return (
-    <ScrollReveal variant="fade-up" distance={12}>
+    <ScrollReveal variant="fade-up" distance={12} once>
       <div className={cn(cardBase, "p-6")}>
         <h3 className="mb-4 text-sm font-semibold text-[var(--ds-text)]">Quick Actions</h3>
         <div className="flex flex-wrap gap-2.5">
@@ -316,7 +321,7 @@ export function ActivityTimeline({
   const events = buildTimelineEvents(applications, interviewRecords, notifications);
 
   return (
-    <ScrollReveal variant="fade-up" distance={12}>
+    <ScrollReveal variant="fade-up" distance={12} once>
       <div className={cn(cardBase, "p-6")}>
         <h3 className="mb-4 text-sm font-semibold text-[var(--ds-text)]">Activity Timeline</h3>
         {events.length === 0 ? (
@@ -493,14 +498,14 @@ export function DashboardCharts({
 
   return (
     <div className="grid gap-4 lg:grid-cols-2">
-      <ScrollReveal variant="fade-up" distance={12}>
-        <div className={cn(cardBase, "p-6")}>
+      <ScrollReveal variant="fade-up" distance={12} once className="h-full">
+        <div className={cn(cardBase, "flex h-full flex-col p-6")}>
           <h3 className="mb-4 text-sm font-semibold text-[var(--ds-text)]">Applications Timeline</h3>
           <ApplicationsTimelineChart applications={applications} />
         </div>
       </ScrollReveal>
-      <ScrollReveal variant="fade-up" distance={12} delayMs={60}>
-        <div className={cn(cardBase, "p-6")}>
+      <ScrollReveal variant="fade-up" distance={12} delayMs={60} once className="h-full">
+        <div className={cn(cardBase, "flex h-full flex-col p-6")}>
           <h3 className="mb-4 text-sm font-semibold text-[var(--ds-text)]">Skills Distribution</h3>
           <SkillsDistributionChart analysis={analysis} />
         </div>

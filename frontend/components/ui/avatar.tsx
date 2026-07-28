@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 const SIZE_CLASSES = {
@@ -6,6 +7,13 @@ const SIZE_CLASSES = {
   md: "h-10 w-10 text-sm",
   lg: "h-12 w-12 text-base"
 } as const;
+
+const SIZE_PX: Record<keyof typeof SIZE_CLASSES, number> = {
+  xs: 24,
+  sm: 32,
+  md: 40,
+  lg: 48
+};
 
 const GRADIENTS = [
   "from-[var(--ds-chart-1)] to-[var(--ds-chart-6)]",
@@ -39,10 +47,12 @@ type AvatarProps = {
 export function Avatar({ name, src, size = "md", className }: AvatarProps) {
   if (src) {
     return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
+      <Image
         src={src}
         alt={name || "Avatar"}
+        width={SIZE_PX[size]}
+        height={SIZE_PX[size]}
+        unoptimized
         className={cn("shrink-0 rounded-full border border-[var(--ds-border)] object-cover", SIZE_CLASSES[size], className)}
       />
     );
@@ -51,7 +61,7 @@ export function Avatar({ name, src, size = "md", className }: AvatarProps) {
   return (
     <span
       className={cn(
-        "inline-flex shrink-0 items-center justify-center rounded-full bg-gradient-to-br font-bold text-white",
+        "inline-flex shrink-0 items-center justify-center rounded-full bg-gradient-to-br font-bold text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.45)]",
         gradientFor(name),
         SIZE_CLASSES[size],
         className

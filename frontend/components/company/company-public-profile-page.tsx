@@ -66,7 +66,7 @@ export function CompanyPublicProfilePage({ companyId }: Props) {
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-4xl space-y-4 px-4 py-10">
+      <div role="status" aria-live="polite" aria-label="Loading company profile" className="mx-auto max-w-4xl space-y-4 px-4 py-10">
         <Skeleton className="h-32 w-full rounded-2xl" />
         <Skeleton className="h-64 w-full rounded-2xl" />
       </div>
@@ -75,7 +75,7 @@ export function CompanyPublicProfilePage({ companyId }: Props) {
 
   if (error || !profile) {
     return (
-      <div className="mx-auto max-w-4xl px-4 py-16 text-center">
+      <div role="alert" className="mx-auto max-w-4xl px-4 py-16 text-center">
         <p className="ds-h3">Company profile unavailable</p>
         <p className="ds-caption mt-2">{error || "This company could not be found."}</p>
       </div>
@@ -86,7 +86,7 @@ export function CompanyPublicProfilePage({ companyId }: Props) {
   const openPositions = profile.openPositions || [];
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6 px-4 py-10">
+    <main id="main-content" tabIndex={-1} className="mx-auto max-w-4xl space-y-6 px-4 py-10 focus:outline-none">
       <Card className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex items-start gap-4">
           {profile.logoUrl ? (
@@ -202,6 +202,6 @@ export function CompanyPublicProfilePage({ companyId }: Props) {
       </Card>
 
       {!profile.website && <p className="ds-caption text-center">No official website on file for this company yet.</p>}
-    </div>
+    </main>
   );
 }

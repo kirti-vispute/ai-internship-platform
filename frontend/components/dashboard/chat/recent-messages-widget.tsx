@@ -93,9 +93,9 @@ export function RecentMessagesWidget({ role, chatHref }: RecentMessagesWidgetPro
                 >
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <AppIcon icon={MessageSquare} size="xs" className="text-[var(--ds-primary)]" />
+                      <AppIcon icon={MessageSquare} size="xs" className="text-[var(--ds-primary-text)]" />
                       <p className="truncate text-sm font-semibold text-[var(--ds-text)]">{titleFor(conversation, role)}</p>
-                      {unread > 0 ? <span className="h-2 w-2 shrink-0 rounded-full bg-[var(--ds-primary)]" /> : null}
+                      {unread > 0 ? <span className="h-2 w-2 shrink-0 rounded-full bg-[var(--ds-primary-text)] dark:bg-[var(--ds-primary)]" /> : null}
                     </div>
                     <p className="mt-1 line-clamp-1 text-xs text-[var(--ds-text-secondary)]">
                       {conversation.lastMessageText || "No messages yet"}
