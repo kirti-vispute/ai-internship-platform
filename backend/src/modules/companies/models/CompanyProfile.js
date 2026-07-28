@@ -14,6 +14,7 @@ const companyProfileSchema = new mongoose.Schema(
     gst: { type: String, required: true, trim: true, uppercase: true },
     contactName: { type: String, required: true, trim: true },
     phone: { type: String, required: true, trim: true },
+    landline: { type: String, default: "", trim: true },
     website: { type: String, trim: true },
     address: { type: String, required: true, trim: true },
     description: { type: String, required: true, trim: true },

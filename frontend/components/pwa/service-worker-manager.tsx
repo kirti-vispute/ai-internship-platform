@@ -178,7 +178,7 @@ export function ServiceWorkerManager() {
           transition={{ duration: 0.25, ease: "easeOut" }}
           className="fixed inset-x-4 bottom-4 z-[1000] mx-auto flex max-w-sm items-center gap-3 rounded-2xl border border-[var(--ds-border)] bg-[var(--ds-surface-raised,var(--ds-card))] p-4 shadow-lg sm:left-auto sm:right-4 sm:mx-0"
         >
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--ds-info-bg)] text-[var(--ds-primary)]">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--ds-info-bg)] text-[var(--ds-primary-text)]">
             <AppIcon icon={RefreshCw} size="sm" className="text-current" />
           </span>
           <div className="min-w-0 flex-1">

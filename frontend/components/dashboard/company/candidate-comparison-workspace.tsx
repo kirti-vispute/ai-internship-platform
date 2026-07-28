@@ -162,6 +162,8 @@ function ScoreCell({
       <span className="ds-label text-[10px] leading-none">{label}</span>
       <span className={cn("text-sm font-bold leading-none", highest && "text-[var(--ds-success)]")}>
         {typeof value === "number" ? `${Math.round(value)}%` : "—"}
+        {highest ? <span className="sr-only"> (highest)</span> : null}
+        {lowest ? <span className="sr-only"> (lowest)</span> : null}
       </span>
     </div>
   );
@@ -295,7 +297,7 @@ export function CandidateComparisonWorkspace({
                 >
                   <span
                     className={cn(
-                      "flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-sm font-bold text-white shadow-soft",
+                      "flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-sm font-bold text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.45)] shadow-soft",
                       gradient
                     )}
                   >
@@ -390,11 +392,13 @@ export function CandidateComparisonWorkspace({
                   {commonSkills.slice(0, 4).map((skill) => (
                     <span key={`common-${skill}`} className="rounded-md bg-[var(--ds-info-bg)] px-2 py-0.5 text-[11px] font-medium text-[var(--ds-info)]" title="Common skill">
                       {skill}
+                      <span className="sr-only"> (common skill)</span>
                     </span>
                   ))}
                   {uniqueSkills.slice(0, 4).map((skill) => (
                     <span key={`unique-${skill}`} className="rounded-md bg-[var(--ds-success-bg)] px-2 py-0.5 text-[11px] font-medium text-[var(--ds-success)]" title="Unique to this candidate">
                       {skill}
+                      <span className="sr-only"> (unique to this candidate)</span>
                     </span>
                   ))}
                   {entry.skills
@@ -411,6 +415,7 @@ export function CandidateComparisonWorkspace({
                     {entry.missingSkills.slice(0, 4).map((skill) => (
                       <span key={`missing-${skill}`} className="rounded-md bg-[var(--ds-danger-bg)] px-2 py-0.5 text-[11px] font-medium text-[var(--ds-danger)]" title="Missing skill">
                         {skill}
+                        <span className="sr-only"> (missing skill)</span>
                       </span>
                     ))}
                   </div>
@@ -447,6 +452,7 @@ export function CandidateComparisonWorkspace({
                       className="text-link mt-1 inline-block truncate text-xs"
                     >
                       View portfolio
+                      <span className="sr-only"> (opens in new tab)</span>
                     </a>
                   ) : (
                     <p className="ds-caption mt-1 text-xs">Not published</p>

@@ -119,7 +119,7 @@ export function PersonalPhotoUploadField({ photoUrl, displayName, uploading, err
           }}
         />
       </div>
-      {combinedError ? <p className="text-xs font-medium text-[var(--ds-danger)]">{combinedError}</p> : null}
+      {combinedError ? <p role="alert" className="text-xs font-medium text-[var(--ds-danger)]">{combinedError}</p> : null}
     </div>
   );
 }

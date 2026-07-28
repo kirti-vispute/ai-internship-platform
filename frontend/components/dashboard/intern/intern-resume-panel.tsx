@@ -169,8 +169,8 @@ export function InternResumePanel() {
   return (
     <div className="dashboard-stack">
       <SectionPanel title="Resume" subtitle="Upload and manage your resume file.">
-        {error && <div className="mb-3 rounded-lg border border-[var(--ds-danger)] bg-[var(--ds-danger-bg)] px-3 py-2 text-sm text-[var(--ds-danger)]">{error}</div>}
-        {message && <div className="mb-3 rounded-lg border border-[var(--ds-success)] bg-[var(--ds-success-bg)] px-3 py-2 text-sm text-[var(--ds-success)]">{message}</div>}
+        {error && <div role="alert" className="mb-3 rounded-lg border border-[var(--ds-danger)] bg-[var(--ds-danger-bg)] px-3 py-2 text-sm text-[var(--ds-danger)]">{error}</div>}
+        {message && <div role="status" aria-live="polite" className="mb-3 rounded-lg border border-[var(--ds-success)] bg-[var(--ds-success-bg)] px-3 py-2 text-sm text-[var(--ds-success)]">{message}</div>}
 
         <div className="grid gap-3 text-sm text-[var(--ds-text-secondary)] sm:grid-cols-2">
           <p>
@@ -277,7 +277,8 @@ export function InternResumePanel() {
                           {isLong ? (
                             <button
                               type="button"
-                              className="mt-1 text-xs font-semibold text-[var(--ds-primary)] underline"
+                              aria-expanded={expanded}
+                              className="mt-1 text-xs font-semibold text-[var(--ds-primary-text)] underline"
                               onClick={() => setExpandedProjects((prev) => ({ ...prev, [idx]: !expanded }))}
                             >
                               {expanded ? "Collapse" : "Read More"}

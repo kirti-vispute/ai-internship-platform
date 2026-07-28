@@ -104,12 +104,12 @@ export function NotificationBell({ role, href, unreadCount, onUnreadCountChange 
       </button>
 
       {open ? (
-        <div className="absolute right-0 z-50 mt-2 w-[min(92vw,22rem)] rounded-2xl border border-[var(--ds-border)] bg-[var(--ds-card)] p-3 shadow-xl">
+        <div role="region" aria-label="Notifications" className="absolute right-0 z-50 mt-2 w-[min(92vw,22rem)] rounded-2xl border border-[var(--ds-border)] bg-[var(--ds-card)] p-3 shadow-xl">
           <div className="mb-2 flex items-center justify-between gap-2">
             <p className="text-sm font-semibold text-[var(--ds-text)]">Notifications</p>
             <Link
               href={href}
-              className="text-xs font-semibold text-[var(--ds-primary)] hover:underline"
+              className="text-xs font-semibold text-[var(--ds-primary-text)] hover:underline"
               onClick={() => setOpen(false)}
             >
               View all
@@ -147,7 +147,7 @@ export function NotificationBell({ role, href, unreadCount, onUnreadCountChange 
                     {itemHref ? (
                       <Link
                         href={itemHref}
-                        className="mt-2 inline-block text-xs font-semibold text-[var(--ds-primary)] hover:underline"
+                        className="mt-2 inline-block text-xs font-semibold text-[var(--ds-primary-text)] hover:underline"
                         onClick={() => setOpen(false)}
                       >
                         Open

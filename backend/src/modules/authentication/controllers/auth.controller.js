@@ -97,14 +97,11 @@ function validateEmail(email) {
   return otpVerification.validateEmail(email);
 }
 
-function buildOtpSendResponse(res, { message, result, delivery }) {
-  const data = {
-    retryAfterSeconds: otpVerification.RESEND_COOLDOWN_SECONDS
-  };
-  if (process.env.NODE_ENV !== "production" && delivery?.devMode && result?.otp) {
-    data.devOtp = result.otp;
-  }
-  return sendSuccess(res, { message, data });
+function buildOtpSendResponse(res, { message }) {
+  return sendSuccess(res, {
+    message,
+    data: { retryAfterSeconds: otpVerification.RESEND_COOLDOWN_SECONDS }
+  });
 }
 
 exports.sendInternOtp = asyncHandler(async (req, res) => {
@@ -113,8 +110,8 @@ exports.sendInternOtp = asyncHandler(async (req, res) => {
     purpose: "intern_signup",
     checkRegistered: true
   });
-  const delivery = await sendOtpEmail({ to: result.email, otp: result.otp });
-  buildOtpSendResponse(res, { message: "OTP sent successfully", result, delivery });
+  await sendOtpEmail({ to: result.email, otp: result.otp });
+  buildOtpSendResponse(res, { message: "OTP sent successfully" });
 });
 
 exports.verifyInternOtp = asyncHandler(async (req, res) => {
@@ -205,7 +202,7 @@ exports.companySignup = asyncHandler(async (req, res) => {
     email: normalizedEmail,
     passwordHash: await hashPassword(password),
     role: USER_ROLES.COMPANY,
-    emailVerified: false
+    emailVerified: true
   });
 
   await CompanyProfile.create({
@@ -225,7 +222,7 @@ exports.companySignup = asyncHandler(async (req, res) => {
 
   sendSuccess(res, {
     statusCode: 201,
-    message: "Company signup successful. Verification pending.",
+    message: "Company signup successful.",
     data: { ...session, verificationStatus: COMPANY_VERIFICATION_STATUS.PENDING }
   });
 });
@@ -403,8 +400,8 @@ exports.sendPasswordResetOtp = asyncHandler(async (req, res) => {
     purpose: "password_reset",
     checkRegistered: false
   });
-  const delivery = await sendOtpEmail({ to: result.email, otp: result.otp });
-  buildOtpSendResponse(res, { message: "Password reset OTP sent", result, delivery });
+  await sendOtpEmail({ to: result.email, otp: result.otp });
+  buildOtpSendResponse(res, { message: "Password reset OTP sent" });
 });
 
 exports.resetPasswordWithOtp = asyncHandler(async (req, res) => {

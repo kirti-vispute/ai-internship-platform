@@ -60,7 +60,7 @@ function MetricTile({
 }) {
   return (
     <div className="surface-subtle flex items-start gap-3 px-4 py-3">
-      <AppIcon icon={icon} className="mt-0.5 text-[var(--ds-primary)]" />
+      <AppIcon icon={icon} className="mt-0.5 text-[var(--ds-primary-text)]" />
       <div className="min-w-0">
         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--ds-muted)]">{label}</p>
         <p className="mt-1 text-base font-semibold text-[var(--ds-text)]">{value}</p>
@@ -197,7 +197,7 @@ export function WeaknessAnalysisPanel({ profile, options, loading = false, error
         {loading ? (
           <PanelSkeleton />
         ) : error ? (
-          <div className="rounded-2xl border border-[var(--ds-danger)]/30 bg-[var(--ds-danger-bg)] px-6 py-10 text-center">
+          <div role="alert" className="rounded-2xl border border-[var(--ds-danger)]/30 bg-[var(--ds-danger-bg)] px-6 py-10 text-center">
             <AppIcon icon={AlertTriangle} size="md" className="mx-auto text-[var(--ds-danger)]" />
             <p className="mt-4 text-base font-semibold text-[var(--ds-text)]">
               Couldn&apos;t load weakness analysis
@@ -212,7 +212,7 @@ export function WeaknessAnalysisPanel({ profile, options, loading = false, error
           </div>
         ) : options.length === 0 || !analysis ? (
           <div className="rounded-2xl border border-[var(--ds-border)] bg-[var(--ds-surface-raised)] px-6 py-12 text-center">
-            <AppIcon icon={Target} size="md" className="mx-auto text-[var(--ds-primary)]" />
+            <AppIcon icon={Target} size="md" className="mx-auto text-[var(--ds-primary-text)]" />
             <p className="mt-4 text-base font-semibold text-[var(--ds-text)]">No internship selected yet</p>
             <p className="mt-1 text-sm text-[var(--ds-text-secondary)]">
               Apply to internships or explore recommendations to see role-specific weaknesses.

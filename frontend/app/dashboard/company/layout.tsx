@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useLayoutEffect, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { CompanyShell } from "@/components/dashboard/company/company-shell";
 import { RoleDashboardGuard } from "@/components/ui/role-dashboard-guard";
@@ -81,6 +81,15 @@ export default function CompanyDashboardLayout({ children }: { children: React.R
     await logoutAuthSession();
     router.push("/auth/company");
   }, [router]);
+
+  const isFirstRender = useRef(true);
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    document.getElementById("main-content")?.focus();
+  }, [pathname]);
 
   return (
     <RoleDashboardGuard expectedRole="company">

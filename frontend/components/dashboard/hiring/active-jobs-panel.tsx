@@ -105,6 +105,7 @@ export function ActiveJobsPanel({
                     {canAssign && recruiters.length > 0 && onRecruiterChange && onAssignRecruiter ? (
                       <>
                         <Select
+                          aria-label={`Assign recruiter to ${job.role}`}
                           wrapperClassName="min-w-[10rem]"
                           className="h-9 text-sm"
                           value={selectedRecruiterByInternship[job._id] || ""}

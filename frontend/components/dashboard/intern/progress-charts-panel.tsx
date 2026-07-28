@@ -77,8 +77,8 @@ function ProgressChartsPanelInner({
 
   return (
     <div className="grid gap-4 lg:grid-cols-2">
-      <ScrollReveal variant="fade-up" distance={12}>
-        <div className={cn(cardBase, "p-6")}>
+      <ScrollReveal variant="fade-up" distance={12} once className="h-full">
+        <div className={cn(cardBase, "flex h-full flex-col p-6")}>
           <div className="mb-4 flex items-center gap-2">
             <AppIcon icon={CalendarCheck2} size="sm" className="text-[var(--ds-accent)]" />
             <h3 className="text-sm font-semibold text-[var(--ds-text)]">Interview Progress</h3>
@@ -91,8 +91,8 @@ function ProgressChartsPanelInner({
         </div>
       </ScrollReveal>
 
-      <ScrollReveal variant="fade-up" distance={12} delayMs={60}>
-        <div className={cn(cardBase, "p-6")}>
+      <ScrollReveal variant="fade-up" distance={12} delayMs={60} once className="h-full">
+        <div className={cn(cardBase, "flex h-full flex-col p-6")}>
           <div className="mb-4 flex items-center gap-2">
             <AppIcon icon={Milestone} size="sm" className="text-[var(--ds-success)]" />
             <h3 className="text-sm font-semibold text-[var(--ds-text)]">Placement Progress</h3>

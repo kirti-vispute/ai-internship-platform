@@ -33,6 +33,7 @@ const ThemeCard = memo(function ThemeCard({ palette, selected, onSelect }: Theme
     >
       {/* Mini dashboard mockup rendered in the CARD'S OWN palette, independent of the app's currently active theme */}
       <div
+        aria-hidden
         className="relative flex h-24 w-full overflow-hidden rounded-lg border"
         style={{ borderColor: `${palette.text}1a`, background: palette.neutral }}
       >
@@ -80,10 +81,15 @@ const ThemeCard = memo(function ThemeCard({ palette, selected, onSelect }: Theme
         {selected ? (
           <motion.div
             layoutId="theme-card-selected-check"
-            className="absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-full"
+            className="absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-full ring-1 ring-black/10"
             style={{ background: palette.primary }}
           >
-            <AppIcon icon={Check} size="xs" style={{ color: palette.neutral }} />
+            <AppIcon
+              icon={Check}
+              size="xs"
+              style={{ color: palette.neutral }}
+              className="drop-shadow-[0_0_1.5px_rgba(0,0,0,0.7)]"
+            />
           </motion.div>
         ) : null}
       </div>

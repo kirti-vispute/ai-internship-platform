@@ -26,7 +26,7 @@ export function CalendarEmojiPicker({ selected, onSelect, className }: CalendarE
               onClick={() => onSelect(emoji)}
               className={cn(
                 "flex items-center justify-center rounded-xl p-0.5 transition",
-                isSelected && "ring-2 ring-[var(--ds-primary)] ring-offset-2 ring-offset-[var(--ds-surface)]"
+                isSelected && "ring-2 ring-[var(--ds-primary-text)] ring-offset-2 ring-offset-[var(--ds-surface)] dark:ring-[var(--ds-primary)]"
               )}
               aria-label={`Add ${emoji} sticker`}
               title={`Add ${emoji}`}

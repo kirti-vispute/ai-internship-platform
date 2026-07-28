@@ -388,7 +388,7 @@ export function MockAptitudeHub() {
           </div>
 
           {blockMessage ? (
-            <p className="rounded-lg border border-[var(--ds-warning)]/40 bg-[var(--ds-warning-bg)] px-3 py-2 text-sm text-[var(--ds-warning)]">
+            <p role="alert" className="rounded-lg border border-[var(--ds-warning)]/40 bg-[var(--ds-warning-bg)] px-3 py-2 text-sm text-[var(--ds-warning)]">
               {blockMessage}
             </p>
           ) : null}
@@ -453,7 +453,7 @@ export function MockAptitudeHub() {
         >
           {view === "entering_fullscreen" ? (
             <div className="flex flex-1 flex-col items-center justify-center gap-4 px-6 text-center">
-              <AppIcon icon={Maximize2} size="lg" className="text-[var(--ds-primary)]" />
+              <AppIcon icon={Maximize2} size="lg" className="text-[var(--ds-primary-text)]" />
               <p className="text-lg font-semibold text-[var(--ds-text)]">Entering fullscreen exam mode</p>
               <p className="max-w-md text-sm text-[var(--ds-muted)]">
                 Allow fullscreen in your browser to begin. Questions load only after fullscreen is active.

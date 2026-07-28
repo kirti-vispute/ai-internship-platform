@@ -102,6 +102,7 @@ export function TodaysInterviewsPanel({ applications, onViewProfile, onScheduleI
         <CompanyDashboardPanelCard className="!p-0 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left">
+              <caption className="sr-only">Today&apos;s scheduled interviews</caption>
               <thead>
                 <tr className="border-b border-[var(--ds-border)] text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--ds-muted)]">
                   <th className="px-4 py-3">Candidate</th>

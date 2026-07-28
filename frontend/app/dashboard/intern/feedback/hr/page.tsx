@@ -82,7 +82,7 @@ export default function HrFeedbackPage() {
                           {item.internship} · {item.company}
                         </p>
                         {item.rating && (
-                          <span className="rounded-full bg-[var(--ds-info-bg)] px-2 py-0.5 text-xs font-semibold text-[var(--ds-primary)]">
+                          <span className="rounded-full bg-[var(--ds-info-bg)] px-2 py-0.5 text-xs font-semibold text-[var(--ds-primary-text)]">
                             {item.rating}/5
                           </span>
                         )}

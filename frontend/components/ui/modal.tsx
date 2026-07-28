@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useId } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { X } from "lucide-react";
@@ -56,6 +56,7 @@ export function Modal({
 }: ModalProps) {
   const reducedMotion = useReducedMotion();
   const dialogRef = useFocusTrap<HTMLDivElement>(open);
+  const titleId = useId();
 
   useEffect(() => {
     if (!open) return;
@@ -96,7 +97,7 @@ export function Modal({
             ref={dialogRef}
             role="dialog"
             aria-modal="true"
-            aria-labelledby={title ? "ds-modal-title" : undefined}
+            aria-labelledby={title ? titleId : undefined}
             className={cn(
               "ds-card relative z-10 flex w-full flex-col overflow-hidden !p-0 shadow-2xl",
               variant === "drawer"
@@ -129,7 +130,7 @@ export function Modal({
                     </span>
                   ) : null}
                   <div className="min-w-0">
-                    <h2 id="ds-modal-title" className="ds-h3">
+                    <h2 id={titleId} className="ds-h3">
                       {title}
                     </h2>
                     {subtitle ? <p className="ds-caption mt-0.5 truncate">{subtitle}</p> : null}

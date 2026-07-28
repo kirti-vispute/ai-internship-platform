@@ -1,5 +1,6 @@
 const fs = require("fs");
 const path = require("path");
+const crypto = require("crypto");
 
 const UPLOAD_DIRECTORIES = Object.freeze({
   RESUMES: "resumes",
@@ -25,7 +26,11 @@ function buildStoredFilename(originalName = "") {
     .basename(baseName, path.extname(baseName))
     .replace(/[^a-zA-Z0-9_-]/g, "_")
     .slice(0, 100) || "file";
-  return `${Date.now()}_${stem}${ext}`;
+  // Random suffix (not just Date.now()) so two uploads landing in the same
+  // millisecond — across different users, since this directory is shared —
+  // can never collide and silently overwrite one another's stored file.
+  const uniqueSuffix = crypto.randomBytes(8).toString("hex");
+  return `${Date.now()}_${uniqueSuffix}_${stem}${ext}`;
 }
 
 module.exports = { UPLOAD_DIRECTORIES, resolveUploadDirectory, buildStoredFilename };

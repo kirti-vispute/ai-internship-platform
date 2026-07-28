@@ -177,7 +177,8 @@ export function ResumePreviewModal({
 
             <div className={cn("min-h-0 flex-1 bg-[var(--ds-deep)]")}>
               {status === "loading" ? (
-                <div className="flex h-full items-center justify-center p-8">
+                <div role="status" aria-live="polite" className="flex h-full items-center justify-center p-8">
+                  <span className="sr-only">Loading resume…</span>
                   <div className="w-full max-w-md space-y-3">
                     <Skeleton className="h-4 w-2/3" />
                     <Skeleton className="h-3 w-full" />
@@ -191,7 +192,7 @@ export function ResumePreviewModal({
               ) : null}
 
               {status === "empty" ? (
-                <div className="flex h-full flex-col items-center justify-center gap-2 px-6 text-center">
+                <div role="status" className="flex h-full flex-col items-center justify-center gap-2 px-6 text-center">
                   <span className="flex h-12 w-12 items-center justify-center rounded-full border border-[var(--ds-border)] bg-[var(--ds-surface-raised)]">
                     <AppIcon icon={FileX2} size="lg" />
                   </span>
@@ -203,7 +204,7 @@ export function ResumePreviewModal({
               ) : null}
 
               {status === "error" ? (
-                <div className="flex h-full flex-col items-center justify-center gap-2 px-6 text-center">
+                <div role="alert" className="flex h-full flex-col items-center justify-center gap-2 px-6 text-center">
                   <span className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--ds-warning)]/25 bg-[var(--ds-warning)]/10">
                     <AppIcon icon={FileX2} size="md" className="text-[var(--ds-warning)]" />
                   </span>

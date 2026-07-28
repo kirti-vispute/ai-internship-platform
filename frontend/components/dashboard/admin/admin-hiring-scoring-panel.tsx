@@ -121,7 +121,7 @@ export function AdminHiringScoringPanel() {
                 onClick={() => selectTemplate(template.roleKey)}
                 className={`w-full rounded-lg border px-3 py-2 text-left text-sm transition ${
                   selectedKey === template.roleKey
-                    ? "border-[var(--ds-primary)] bg-[var(--ds-info-bg)] text-[var(--ds-primary)]"
+                    ? "border-[var(--ds-primary)] bg-[var(--ds-info-bg)] text-[var(--ds-primary-text)]"
                     : "border-[var(--ds-border)] hover:border-[var(--ds-border-strong)]"
                 }`}
               >
@@ -174,6 +174,7 @@ export function AdminHiringScoringPanel() {
                     type="number"
                     min={0}
                     max={100}
+                    aria-label={`${factor} weight`}
                     className="surface-subtle w-full rounded-lg px-3 py-2"
                     value={draft.weights[factor]}
                     onChange={(event) =>
@@ -188,12 +189,12 @@ export function AdminHiringScoringPanel() {
             </div>
 
             <div className="flex flex-wrap items-center gap-3">
-              <p className={`text-sm ${validation.valid ? "text-[var(--ds-success)]" : "text-[var(--ds-danger)]"}`}>{validation.message}</p>
+              <p role="status" aria-live="polite" className={`text-sm ${validation.valid ? "text-[var(--ds-success)]" : "text-[var(--ds-danger)]"}`}>{validation.message}</p>
               {previewScore !== null ? <p className="ds-caption">Preview overall score (sample candidate): {previewScore}%</p> : null}
             </div>
 
-            {error ? <p className="text-sm text-[var(--ds-danger)]">{error}</p> : null}
-            {message ? <p className="text-sm text-[var(--ds-success)]">{message}</p> : null}
+            {error ? <p role="alert" className="text-sm text-[var(--ds-danger)]">{error}</p> : null}
+            {message ? <p role="status" aria-live="polite" className="text-sm text-[var(--ds-success)]">{message}</p> : null}
 
             <Button type="button" onClick={() => void handleSave()} disabled={saving || !validation.valid}>
               {saving ? "Saving..." : "Save Template"}

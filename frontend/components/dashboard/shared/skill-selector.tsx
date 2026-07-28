@@ -78,7 +78,12 @@ export function SkillSelector({ selected, onChange }: SkillSelectorProps) {
           Add
         </button>
       </div>
-      {loading ? <p className="text-xs text-[var(--ds-text-secondary)]">Searching...</p> : null}
+      {loading ? <p role="status" className="text-xs text-[var(--ds-text-secondary)]">Searching...</p> : null}
+      {!loading && options.length > 0 ? (
+        <div role="status" aria-live="polite" className="sr-only">
+          {options.length} skill{options.length === 1 ? "" : "s"} found
+        </div>
+      ) : null}
       {!loading && options.length > 0 ? (
         <div className="max-h-36 overflow-auto rounded-lg border border-[var(--ds-border)] bg-[var(--ds-card)]">
           {options.map((option) => (

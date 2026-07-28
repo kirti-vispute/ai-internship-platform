@@ -12,6 +12,7 @@ type InterviewerComboboxProps = {
   placeholder?: string;
   className?: string;
   fieldClassName?: string;
+  id?: string;
 };
 
 /**
@@ -25,7 +26,8 @@ export function InterviewerCombobox({
   suggestions = [],
   placeholder = "Search or type a name…",
   className,
-  fieldClassName
+  fieldClassName,
+  id
 }: InterviewerComboboxProps) {
   const [open, setOpen] = useState(false);
   const [highlighted, setHighlighted] = useState(0);
@@ -80,6 +82,7 @@ export function InterviewerCombobox({
       <div className="relative">
         <AppIcon icon={Search} size="xs" className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2" />
         <input
+          id={id}
           type="text"
           role="combobox"
           aria-expanded={open}
@@ -119,7 +122,7 @@ export function InterviewerCombobox({
               onMouseEnter={() => setHighlighted(index)}
               className={cn(
                 "flex cursor-pointer items-center gap-2 px-3 py-1.5 text-sm text-[var(--ds-text-secondary)]",
-                index === highlighted && "bg-[var(--ds-info-bg)] text-[var(--ds-primary)]"
+                index === highlighted && "bg-[var(--ds-info-bg)] text-[var(--ds-primary-text)]"
               )}
             >
               <AppIcon icon={UserRound} size="xs" />

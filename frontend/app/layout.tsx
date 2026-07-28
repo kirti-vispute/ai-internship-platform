@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { headers } from "next/headers";
 import { Inter } from "next/font/google";
 import { MotionConfig } from "framer-motion";
 import { CursorMount } from "@/components/cursor-mount";
@@ -106,13 +107,14 @@ function jsonLdScript(data: unknown) {
   return JSON.stringify(data).replace(/</g, "\\u003c");
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children
 }: Readonly<{ children: React.ReactNode }>) {
+  const nonce = (await headers()).get("x-nonce") || undefined;
   return (
     <html lang="en" className="dark" data-scroll-behavior="smooth" suppressHydrationWarning>
       <head>
-        <ThemeInitScript />
+        <ThemeInitScript nonce={nonce} />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: jsonLdScript(organizationJsonLd) }}
@@ -130,6 +132,12 @@ export default function RootLayout({
         className={`internai-platform ${inter.variable} font-sans text-[var(--ds-text,#e5e7eb)] antialiased [text-rendering:optimizeLegibility]`}
         suppressHydrationWarning
       >
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[1000] focus:rounded-lg focus:bg-[var(--ds-primary)] focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-[var(--ds-on-primary)] focus:shadow-lg"
+        >
+          Skip to main content
+        </a>
         <ThemeProvider>
           {/* Makes every framer-motion animation in the app respect OS-level
               prefers-reduced-motion automatically, without per-component checks. */}

@@ -151,7 +151,7 @@ export default function CompanyNotificationsPage() {
 
       <p className="text-xs text-[var(--ds-muted)]">
         View conversations in{" "}
-        <Link href="/dashboard/company/chat" className="font-semibold text-[var(--ds-primary)] hover:underline">
+        <Link href="/dashboard/company/chat" className="font-semibold text-[var(--ds-primary-text)] hover:underline">
           Messages
         </Link>
         .

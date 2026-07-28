@@ -24,6 +24,7 @@ export function ExternalLink({ href, children, className, icon, showIcon = true 
       className={cn("text-link", className)}
     >
       <span>{children}</span>
+      <span className="sr-only"> (opens in new tab)</span>
       {showIcon ? <AppIcon icon={Icon} size="xs" className="shrink-0 opacity-90" aria-hidden /> : null}
     </a>
   );

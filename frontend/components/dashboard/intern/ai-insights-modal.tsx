@@ -7,6 +7,7 @@ import { Sparkles, X } from "lucide-react";
 import { fetchApplicationAiInsights } from "@/lib/intern-portal";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AppIcon } from "@/components/icons/app-icon";
+import { useFocusTrap } from "@/lib/use-focus-trap";
 import { cn } from "@/lib/utils";
 
 type AiInsightsModalProps = {
@@ -22,10 +23,20 @@ export function AiInsightsModal({ open, internshipId, role, companyName, onClose
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [bullets, setBullets] = useState<string[]>([]);
   const [errorMessage, setErrorMessage] = useState("");
+  const dialogRef = useFocusTrap<HTMLDivElement>(open);
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") onClose();
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [open, onClose]);
 
   useEffect(() => {
     if (!open || !internshipId) return;
@@ -69,6 +80,7 @@ export function AiInsightsModal({ open, internshipId, role, companyName, onClose
             aria-label="Close AI insights dialog"
           />
           <motion.div
+            ref={dialogRef}
             role="dialog"
             aria-modal="true"
             aria-labelledby="ai-insights-title"
@@ -81,7 +93,7 @@ export function AiInsightsModal({ open, internshipId, role, companyName, onClose
             <div className="flex items-start justify-between gap-3 border-b border-[var(--ds-border)] bg-gradient-to-r from-[var(--ds-primary)]/10 via-[var(--ds-accent)]/10 to-transparent px-5 py-4">
               <div className="flex min-w-0 flex-1 items-start gap-3">
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--ds-primary)]/10">
-                  <AppIcon icon={Sparkles} size="md" className="text-[var(--ds-primary)]" />
+                  <AppIcon icon={Sparkles} size="md" className="text-[var(--ds-primary-text)]" />
                 </span>
                 <div className="min-w-0 flex-1">
                   <h2 id="ai-insights-title" className="truncate text-base font-semibold text-[var(--ds-text)]">
@@ -105,7 +117,7 @@ export function AiInsightsModal({ open, internshipId, role, companyName, onClose
 
             <div className="min-h-0 flex-1 overflow-y-auto p-5">
               {status === "loading" ? (
-                <div className="space-y-3">
+                <div role="status" aria-live="polite" aria-label="Loading AI insights" className="space-y-3">
                   {["w-[88%]", "w-[72%]", "w-[80%]", "w-[65%]"].map((width, idx) => (
                     <div key={idx} className="flex gap-2.5 rounded-xl border border-[var(--ds-border)] bg-[var(--ds-surface)] px-4 py-3">
                       <Skeleton className="mt-0.5 h-4 w-4 shrink-0 rounded-full" />
@@ -116,14 +128,14 @@ export function AiInsightsModal({ open, internshipId, role, companyName, onClose
               ) : null}
 
               {status === "error" ? (
-                <p className="text-sm text-[var(--ds-text-secondary)]">{errorMessage}</p>
+                <p role="alert" className="text-sm text-[var(--ds-text-secondary)]">{errorMessage}</p>
               ) : null}
 
               {status === "ready" ? (
                 <ul className="space-y-3">
                   {bullets.map((bullet, idx) => (
                     <li key={idx} className="flex gap-2.5 rounded-xl border border-[var(--ds-border)] bg-[var(--ds-surface)] px-4 py-3 text-sm leading-relaxed text-[var(--ds-text-secondary)]">
-                      <AppIcon icon={Sparkles} size="sm" className="mt-0.5 text-[var(--ds-primary)]" />
+                      <AppIcon icon={Sparkles} size="sm" className="mt-0.5 text-[var(--ds-primary-text)]" />
                       <span>{bullet}</span>
                     </li>
                   ))}

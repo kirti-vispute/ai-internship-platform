@@ -83,6 +83,24 @@ function accessibleSubtleTone(textPrimary, bg, backdrops, startRatio, minRatio =
   return tone;
 }
 
+// Many components use the raw primary hue as a text/icon color on neutral
+// surfaces (labels, stat values, link text) rather than as a button fill.
+// Some palettes' primary is too light (or, for "midnight", too dark) to read
+// there — nudge toward black/white, preserving hue as long as possible,
+// instead of swapping to a different token (which would change the color shown).
+function accessibleHueOnSurfaces(hex, backdrops, minRatio = 4.5) {
+  const worst = (tone) => Math.min(...backdrops.map((b) => contrastRatio(tone, b)));
+  if (worst(hex) >= minRatio) return hex;
+  const pole = worst(mix(hex, "#000000", 0.5)) > worst(mix(hex, "#FFFFFF", 0.5)) ? "#000000" : "#FFFFFF";
+  let ratio = 0;
+  let tone = hex;
+  while (ratio < 1 && worst(tone) < minRatio) {
+    ratio = Math.min(1, ratio + 0.02);
+    tone = mix(hex, pole, ratio);
+  }
+  return tone;
+}
+
 function hexToRgbTriplet(hex) {
   const { r, g, b } = hexToRgb(hex);
   return `${r}, ${g}, ${b}`;
@@ -118,11 +136,19 @@ function buildTokens(palette, mode) {
   const secondary = mix(primary, accent, 0.5);
   const onPrimary = ensureContrast("#FFFFFF", primary, 4.5);
   const onAccent = ensureContrast("#FFFFFF", accent, 4.5);
+  const primaryText = accessibleHueOnSurfaces(primary, subtleBackdrops, 4.5);
 
   const successBase = isDark ? "#4ADE80" : "#15803D";
   const warningBase = isDark ? "#FBBF24" : "#B45309";
   const dangerBase = isDark ? "#F87171" : "#B91C1C";
   const infoBase = isDark ? "#38BDF8" : "#0369A1";
+  // Text color for solid status-colored surfaces (e.g. a filled danger button).
+  // successBase/warningBase/infoBase skew light even in dark mode, so white
+  // text on them fails contrast — mirror onPrimary/onAccent's black-or-white fallback.
+  const onSuccess = ensureContrast("#FFFFFF", successBase, 4.5);
+  const onWarning = ensureContrast("#FFFFFF", warningBase, 4.5);
+  const onDanger = ensureContrast("#FFFFFF", dangerBase, 4.5);
+  const onInfo = ensureContrast("#FFFFFF", infoBase, 4.5);
 
   const shadow = isDark ? "rgba(0, 0, 0, 0.45)" : "rgba(15, 23, 42, 0.1)";
   const glass = isDark ? `rgba(${hexToRgbTriplet(surface)}, 0.6)` : `rgba(${hexToRgbTriplet(surface)}, 0.65)`;
@@ -149,17 +175,22 @@ function buildTokens(palette, mode) {
     "ds-primary": primary,
     "ds-primary-hover": primaryHover,
     "ds-on-primary": onPrimary,
+    "ds-primary-text": primaryText,
     "ds-secondary": secondary,
     "ds-accent": accent,
     "ds-on-accent": onAccent,
     "ds-success": successBase,
     "ds-success-bg": isDark ? "rgba(74, 222, 128, 0.16)" : "rgba(21, 128, 61, 0.12)",
+    "ds-on-success": onSuccess,
     "ds-warning": warningBase,
     "ds-warning-bg": isDark ? "rgba(251, 191, 36, 0.16)" : "rgba(180, 83, 9, 0.12)",
+    "ds-on-warning": onWarning,
     "ds-danger": dangerBase,
     "ds-danger-bg": isDark ? "rgba(248, 113, 113, 0.16)" : "rgba(185, 28, 28, 0.12)",
+    "ds-on-danger": onDanger,
     "ds-info": infoBase,
     "ds-info-bg": isDark ? "rgba(56, 189, 248, 0.16)" : "rgba(3, 105, 161, 0.12)",
+    "ds-on-info": onInfo,
     "ds-chart-1": primary,
     "ds-chart-2": accent,
     "ds-chart-3": secondary,

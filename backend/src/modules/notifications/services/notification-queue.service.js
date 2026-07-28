@@ -1,25 +1,11 @@
 const { isEnabled } = require("../../../shared/config/feature-flags");
-const buildTransporter = require("../../../shared/config/mailer");
-const { buildEmailFromText } = require("../../../services/email-template.service");
+const { sendEmail } = require("../../../shared/services/mailer.service");
 
 const pendingJobs = [];
 let processing = false;
 
 async function processJob(job) {
-  const transporter = buildTransporter();
-  if (!transporter) {
-    // eslint-disable-next-line no-console
-    console.log(`[NOTIFICATION_DEV_MODE] ${job.to} :: ${job.subject} :: ${job.text}`);
-    return;
-  }
-  const branded = buildEmailFromText({ subject: job.subject, text: job.text, type: job.type });
-  await transporter.sendMail({
-    from: process.env.SMTP_USER,
-    to: job.to,
-    subject: job.subject,
-    text: branded.text,
-    html: branded.html
-  });
+  await sendEmail({ to: job.to, subject: job.subject, text: job.text, type: job.type });
 }
 
 async function flushQueue() {

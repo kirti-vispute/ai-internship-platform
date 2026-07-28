@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { memo, useCallback, useMemo, useRef, useState } from "react";
 import {
   AlertCircle,
   Ban,
@@ -139,7 +139,7 @@ function platformInfo(item: ScheduledInterviewRecord): { label: string; classNam
   return { label: "Platform room", className: "bg-[var(--ds-info-bg)] text-[var(--ds-info)]" };
 }
 
-function InterviewCard({
+const InterviewCard = memo(function InterviewCard({
   item,
   saving,
   onViewDetails,
@@ -268,9 +268,9 @@ function InterviewCard({
           Candidate Profile
         </Button>
         {isOnline && joinHref ? (
-          <Button type="button" size="sm" variant="ghost" onClick={copyLink} aria-label="Copy meeting link">
+          <Button type="button" size="sm" variant="ghost" onClick={copyLink}>
             {copied ? <AppIcon icon={Check} size="xs" /> : <AppIcon icon={Copy} size="xs" />}
-            {copied ? "Copied" : "Copy Link"}
+            <span aria-live="polite">{copied ? "Copied" : "Copy Link"}</span>
           </Button>
         ) : null}
 
@@ -326,7 +326,7 @@ function InterviewCard({
       </div>
     </CompanyDashboardItemCard>
   );
-}
+});
 
 function candidateInitials(name?: string) {
   return (
@@ -363,7 +363,7 @@ function AwaitingCandidateCard({
   return (
     <CompanyDashboardItemCard className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex min-w-0 items-start gap-3">
-        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[var(--ds-gradient-from)]/30 to-[var(--ds-gradient-to)]/30 text-sm font-bold text-[var(--ds-primary)] ring-2 ring-[var(--ds-border)]">
+        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[var(--ds-gradient-from)]/30 to-[var(--ds-gradient-to)]/30 text-sm font-bold text-[var(--ds-primary-text)] ring-2 ring-[var(--ds-border)]">
           {candidateInitials(name)}
         </span>
         <div className="min-w-0">
@@ -559,24 +559,37 @@ export function InterviewSchedulingPanel({
     setPage(1);
   }
 
-  function handleReschedule(item: ScheduledInterviewRecord) {
-    onScheduleInterview({
-      applicationId: item.applicationId,
-      candidateName: item.candidateName || item.role,
-      roundId: item.interviewId,
-      initialSlot: {
-        roundType: item.interviewType,
-        interviewDate: normalizeInterviewDateInput(item.interviewDate),
-        interviewTime: item.interviewTime,
-        durationMinutes: resolveRoundDurationMinutes(item),
-        interviewers: resolveRoundInterviewers(item),
-        mode: item.mode,
-        meetingLink: item.mode === "offline" ? "" : item.meetingLink,
-        location: item.mode === "offline" ? item.location : "",
-        notes: item.notes
-      }
-    });
-  }
+  const handleReschedule = useCallback(
+    (item: ScheduledInterviewRecord) => {
+      onScheduleInterview({
+        applicationId: item.applicationId,
+        candidateName: item.candidateName || item.role,
+        roundId: item.interviewId,
+        initialSlot: {
+          roundType: item.interviewType,
+          interviewDate: normalizeInterviewDateInput(item.interviewDate),
+          interviewTime: item.interviewTime,
+          durationMinutes: resolveRoundDurationMinutes(item),
+          interviewers: resolveRoundInterviewers(item),
+          mode: item.mode,
+          meetingLink: item.mode === "offline" ? "" : item.meetingLink,
+          location: item.mode === "offline" ? item.location : "",
+          notes: item.notes
+        }
+      });
+    },
+    [onScheduleInterview]
+  );
+
+  const handleCancelRequest = useCallback(
+    (target: ScheduledInterviewRecord) => setActionTarget({ item: target, action: "cancelled" }),
+    []
+  );
+
+  const handleUpdateStatusRequest = useCallback(
+    (target: ScheduledInterviewRecord, action: RoundAction) => setActionTarget({ item: target, action }),
+    []
+  );
 
   async function confirmAction() {
     if (!actionTarget) return;
@@ -633,7 +646,7 @@ export function InterviewSchedulingPanel({
           </div>
         ) : error ? (
           /* Error + retry */
-          <div className="flex flex-col items-center gap-3 rounded-xl border border-[var(--ds-danger)]/40 bg-[var(--ds-danger-bg)] px-6 py-8 text-center">
+          <div role="alert" className="flex flex-col items-center gap-3 rounded-xl border border-[var(--ds-danger)]/40 bg-[var(--ds-danger-bg)] px-6 py-8 text-center">
             <AppIcon icon={AlertCircle} size="lg" className="text-[var(--ds-danger)]" />
             <div>
               <p className="text-sm font-semibold text-[var(--ds-danger)]">Couldn&apos;t load interview data</p>
@@ -666,6 +679,7 @@ export function InterviewSchedulingPanel({
                       type="button"
                       role="tab"
                       aria-selected={active}
+                      aria-controls="interview-scheduling-results"
                       onClick={() => applyFilter(value)}
                       className={cn(
                         "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ds-focus-ring)]",
@@ -731,7 +745,7 @@ export function InterviewSchedulingPanel({
 
             {/* Scheduled interview cards */}
             {filtered.length > 0 ? (
-              <div className={companyDashboardStyles.cardGridTwo}>
+              <div id="interview-scheduling-results" role="tabpanel" className={companyDashboardStyles.cardGridTwo}>
                 {visible.map((item) => (
                   <InterviewCard
                     key={item.interviewId}
@@ -740,8 +754,8 @@ export function InterviewSchedulingPanel({
                     onViewDetails={setSelected}
                     onViewProfile={onViewProfile}
                     onReschedule={handleReschedule}
-                    onCancel={onCancelInterview ? (target) => setActionTarget({ item: target, action: "cancelled" }) : undefined}
-                    onUpdateStatus={onUpdateRoundStatus ? (target, action) => setActionTarget({ item: target, action }) : undefined}
+                    onCancel={onCancelInterview ? handleCancelRequest : undefined}
+                    onUpdateStatus={onUpdateRoundStatus ? handleUpdateStatusRequest : undefined}
                   />
                 ))}
               </div>

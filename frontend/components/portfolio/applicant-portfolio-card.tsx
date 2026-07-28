@@ -29,7 +29,7 @@ export function ApplicantPortfolioCard({ portfolio, internName, compact = false 
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_0%_0%,rgba(59,130,246,0.18),transparent_55%)]" aria-hidden />
       <div className="relative flex items-start justify-between gap-3">
         <div>
-          <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--ds-primary)]">
+          <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--ds-primary-text)]">
             <AppIcon icon={Sparkles} size="xs" className="text-current" />
             3D Portfolio
           </p>

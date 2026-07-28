@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { Brain, Briefcase, ChevronDown, ChevronUp, Sparkles } from "lucide-react";
 import type { CompanyApplication, CompanyInternship, CompanyMatchedCandidate } from "@/lib/company-portal";
 import { hiringAIEngine, type RankedCandidate } from "@/lib/ai-hiring";
@@ -14,10 +15,15 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AppIcon } from "@/components/icons/app-icon";
 import { isRejectionLanguage } from "@/lib/utils";
-import { AiMatchInsightModal } from "./ai-match-insight-modal";
 import { HrCandidateMatchCard } from "./hr-candidate-match-card";
-import { ResumePreviewModal } from "./resume-preview-modal";
 import { CandidateCompareToggle } from "./candidate-compare-toggle";
+
+const AiMatchInsightModal = dynamic(() => import("./ai-match-insight-modal").then((m) => m.AiMatchInsightModal), {
+  ssr: false
+});
+const ResumePreviewModal = dynamic(() => import("./resume-preview-modal").then((m) => m.ResumePreviewModal), {
+  ssr: false
+});
 
 const DEFAULT_TOP_LIMIT = 10;
 

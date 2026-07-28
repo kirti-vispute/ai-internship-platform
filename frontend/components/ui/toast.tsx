@@ -49,12 +49,16 @@ const DEFAULT_DURATION: Record<ToastVariant, number | null> = {
   loading: null
 };
 
-const VARIANT_META: Record<ToastVariant, { icon: LucideIcon; accent: string; iconClass: string }> = {
-  success: { icon: CheckCircle2, accent: "var(--ds-success)", iconClass: "text-[var(--ds-success)]" },
-  error: { icon: XCircle, accent: "var(--ds-danger)", iconClass: "text-[var(--ds-danger)]" },
-  warning: { icon: AlertTriangle, accent: "var(--ds-warning)", iconClass: "text-[var(--ds-warning)]" },
-  info: { icon: Info, accent: "var(--ds-info)", iconClass: "text-[var(--ds-info)]" },
-  loading: { icon: Loader2, accent: "var(--ds-primary)", iconClass: "text-[var(--ds-primary)] animate-spin" }
+const VARIANT_META: Record<ToastVariant, { icon: LucideIcon; accentClass: string; iconClass: string }> = {
+  success: { icon: CheckCircle2, accentClass: "bg-[var(--ds-success)]", iconClass: "text-[var(--ds-success)]" },
+  error: { icon: XCircle, accentClass: "bg-[var(--ds-danger)]", iconClass: "text-[var(--ds-danger)]" },
+  warning: { icon: AlertTriangle, accentClass: "bg-[var(--ds-warning)]", iconClass: "text-[var(--ds-warning)]" },
+  info: { icon: Info, accentClass: "bg-[var(--ds-info)]", iconClass: "text-[var(--ds-info)]" },
+  loading: {
+    icon: Loader2,
+    accentClass: "bg-[var(--ds-primary-text)] dark:bg-[var(--ds-primary)]",
+    iconClass: "text-[var(--ds-primary-text)] animate-spin"
+  }
 };
 
 const MAX_VISIBLE_TOASTS = 4;
@@ -98,7 +102,7 @@ function ToastCard({ toast, onDismiss }: { toast: ToastItem; onDismiss: (id: str
       onFocusCapture={() => setPaused(true)}
       onBlurCapture={() => setPaused(false)}
     >
-      <span aria-hidden className="absolute inset-y-0 left-0 w-1" style={{ backgroundColor: meta.accent }} />
+      <span aria-hidden className={cn("absolute inset-y-0 left-0 w-1", meta.accentClass)} />
       <div className="flex items-start gap-3 py-3 pl-4 pr-9">
         <AppIcon icon={meta.icon} size="md" className={cn("mt-0.5", meta.iconClass)} />
         <div className="min-w-0">
@@ -120,9 +124,8 @@ function ToastCard({ toast, onDismiss }: { toast: ToastItem; onDismiss: (id: str
         <span
           key={`${toast.variant}-${toast.duration}`}
           aria-hidden
-          className="toast-progress absolute bottom-0 left-0 h-0.5 w-full origin-left motion-reduce:hidden"
+          className={cn("toast-progress absolute bottom-0 left-0 h-0.5 w-full origin-left motion-reduce:hidden", meta.accentClass)}
           style={{
-            backgroundColor: meta.accent,
             animationDuration: `${toast.duration}ms`,
             animationPlayState: paused ? "paused" : "running"
           }}

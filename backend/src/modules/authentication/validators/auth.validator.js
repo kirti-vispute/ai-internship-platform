@@ -7,6 +7,17 @@ function requireEmail(req) {
   return { valid, message: valid ? "" : "Valid email is required" };
 }
 
+function passwordStrengthError(password) {
+  const value = String(password || "");
+  if (value.length < 8) return "Password must be at least 8 characters";
+  if (value.length > 128) return "Password must be at most 128 characters";
+  return "";
+}
+
+function maxLengthError(label, value, max) {
+  return String(value || "").trim().length > max ? `${label} must be at most ${max} characters` : "";
+}
+
 function requireInternSignup(req) {
   const { fullName, email, mobile, password } = req.body || {};
   if (!fullName || !email || !mobile || !password) {
@@ -15,6 +26,10 @@ function requireInternSignup(req) {
   if (!PHONE_PATTERN.test(String(mobile).trim())) {
     return { valid: false, message: "Enter a valid 10-digit mobile number" };
   }
+  const passwordError = passwordStrengthError(password);
+  if (passwordError) return { valid: false, message: passwordError };
+  const nameError = maxLengthError("fullName", fullName, 120);
+  if (nameError) return { valid: false, message: nameError };
   return { valid: true, message: "" };
 }
 
@@ -29,6 +44,14 @@ function requireCompanySignup(req) {
   if (!GST_PATTERN.test(String(gst).trim().toUpperCase())) {
     return { valid: false, message: "Enter a valid GSTIN" };
   }
+  const passwordError = passwordStrengthError(password);
+  if (passwordError) return { valid: false, message: passwordError };
+  const lengthError =
+    maxLengthError("companyName", companyName, 150) ||
+    maxLengthError("contactName", contactName, 120) ||
+    maxLengthError("address", address, 500) ||
+    maxLengthError("description", description, 2000);
+  if (lengthError) return { valid: false, message: lengthError };
   return { valid: true, message: "" };
 }
 

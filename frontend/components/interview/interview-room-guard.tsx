@@ -59,7 +59,11 @@ export function InterviewRoomGuard({ children }: InterviewRoomGuardProps) {
 
   if (!allowed) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[var(--ds-bg)] text-sm text-[var(--ds-text-secondary)]">
+      <div
+        role="status"
+        aria-live="polite"
+        className="flex min-h-screen items-center justify-center bg-[var(--ds-bg)] text-sm text-[var(--ds-text-secondary)]"
+      >
         {statusMessage}
       </div>
     );

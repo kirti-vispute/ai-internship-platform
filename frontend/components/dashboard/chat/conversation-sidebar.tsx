@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { memo, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { SearchX } from "lucide-react";
 import type { ChatCompanyContact, ChatConversation, ChatInternContact } from "@/lib/chat-portal";
@@ -68,7 +68,7 @@ function ListSkeleton() {
   );
 }
 
-export function ConversationSidebar({
+export const ConversationSidebar = memo(function ConversationSidebar({
   role,
   conversations,
   selectedId,
@@ -105,7 +105,10 @@ export function ConversationSidebar({
         <div className="flex items-center gap-2">
           <p className="text-sm font-semibold text-[var(--ds-text)]">Conversations</p>
           {unreadTotal > 0 ? (
-            <span className="rounded-full bg-[var(--ds-primary)] px-1.5 py-0.5 text-[10px] font-bold text-[var(--ds-on-primary)]">
+            <span
+              className="rounded-full bg-[var(--ds-primary)] px-1.5 py-0.5 text-[10px] font-bold text-[var(--ds-on-primary)]"
+              aria-label={`${unreadTotal} unread conversation${unreadTotal === 1 ? "" : "s"}`}
+            >
               {unreadTotal}
             </span>
           ) : null}
@@ -151,7 +154,7 @@ export function ConversationSidebar({
               >
                 <span
                   className={cn(
-                    "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white",
+                    "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.45)]",
                     toneForName(label)
                   )}
                 >
@@ -214,6 +217,7 @@ export function ConversationSidebar({
                 <motion.button
                   type="button"
                   onClick={() => onSelectConversation(conversation._id)}
+                  aria-current={active ? "true" : undefined}
                   whileHover={active ? undefined : { x: 2 }}
                   transition={{ duration: 0.15 }}
                   className={cn(
@@ -227,7 +231,7 @@ export function ConversationSidebar({
                 >
                   <span
                     className={cn(
-                      "flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white",
+                      "flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.45)]",
                       toneForName(title)
                     )}
                   >
@@ -292,4 +296,4 @@ export function ConversationSidebar({
       </ul>
     </aside>
   );
-}
+});

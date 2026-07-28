@@ -34,6 +34,7 @@ export function InterviewJoinButton({ interview, size = "sm", className }: Inter
       >
         <AppIcon icon={ExternalLink} size="xs" />
         Join Interview
+        <span className="sr-only"> (opens in new tab)</span>
       </a>
     );
   }

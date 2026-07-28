@@ -1,16 +1,27 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useMemo, useState } from "react";
+import { Download, Eye, X } from "lucide-react";
 import { SectionPanel } from "@/components/dashboard/shared/section-panel";
 import { SkillChips } from "@/components/dashboard/shared/skill-chips";
 import { ExternalLink } from "@/components/ui/external-link";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AppIcon } from "@/components/icons/app-icon";
 import { InternProfile, fetchInternProfile, peekInternProfile } from "@/lib/intern-portal";
+import { CertificationRecord, fetchCertificateBlob, fetchMyCertifications } from "@/lib/certifications-portal";
 import { SectionTabButton } from "@/components/icons/section-tab-button";
 import { PROFILE_TAB_ICONS } from "@/components/icons/section-tab-icons";
 import { ThemeSettingsPanel } from "@/components/theme/theme-settings-panel";
 
 type ProfileSectionKey = "overview" | "skills" | "education" | "projects" | "achievements" | "learning" | "theme";
+
+function formatCertDate(value?: string | null) {
+  if (!value) return "—";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+}
 
 const PROFILE_SECTIONS: Array<{ key: ProfileSectionKey; label: string }> = [
   { key: "overview", label: "Overview" },
@@ -27,6 +38,15 @@ export default function InternProfilePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState<ProfileSectionKey>("overview");
+  const [verifiedCertifications, setVerifiedCertifications] = useState<CertificationRecord[]>([]);
+  const [certLoading, setCertLoading] = useState(true);
+  const [certError, setCertError] = useState("");
+  const [certPreview, setCertPreview] = useState<{
+    certificationId: string;
+    courseName: string;
+    mimeType: string;
+    objectUrl: string;
+  } | null>(null);
 
   useLayoutEffect(() => {
     const cached = peekInternProfile();
@@ -49,6 +69,56 @@ export default function InternProfilePage() {
     }
     load();
   }, []);
+
+  useEffect(() => {
+    async function loadCertifications() {
+      try {
+        const data = await fetchMyCertifications();
+        setVerifiedCertifications(data.certifications.filter((item) => item.verificationStatus === "verified"));
+      } catch (err) {
+        setCertError((err as Error).message || "Failed to load certifications.");
+      } finally {
+        setCertLoading(false);
+      }
+    }
+    loadCertifications();
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (certPreview?.objectUrl) URL.revokeObjectURL(certPreview.objectUrl);
+    };
+  }, [certPreview]);
+
+  async function openCertPreview(item: CertificationRecord) {
+    try {
+      const blob = await fetchCertificateBlob(item._id, false);
+      if (certPreview?.objectUrl) URL.revokeObjectURL(certPreview.objectUrl);
+      setCertError("");
+      setCertPreview({
+        certificationId: item._id,
+        courseName: item.courseName,
+        mimeType: item.certificateFile?.mimeType || blob.type,
+        objectUrl: URL.createObjectURL(blob)
+      });
+    } catch (err) {
+      setCertError((err as Error).message || "Could not preview certificate");
+    }
+  }
+
+  async function downloadCertFile(item: CertificationRecord) {
+    try {
+      const blob = await fetchCertificateBlob(item._id, true);
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = item.certificateFile?.originalName || `${item.courseName}-certificate`;
+      anchor.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setCertError((err as Error).message || "Could not download certificate");
+    }
+  }
 
   const parsed = profile?.resume?.parsed;
   // `profileSections.projects` is the durable, cross-upload synced list;
@@ -296,24 +366,73 @@ export default function InternProfilePage() {
                   </div>
 
                   <div>
-                    <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--ds-muted)]">Certifications</p>
-                    {certificationList.length === 0 ? (
+                    <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--ds-muted)]">Verified Certificates</p>
+                    {certError ? <p className="mb-2 text-sm text-[var(--ds-danger)]">{certError}</p> : null}
+                    {certLoading ? (
+                      <Skeleton className="h-20 w-full" />
+                    ) : verifiedCertifications.length === 0 ? (
                       <p className="text-sm text-[var(--ds-text-secondary)]">
                         No verified certifications yet. Submit course proof in Certifications after completion.
                       </p>
                     ) : (
-                      <ul className="space-y-2">
-                        {certificationList.map((item, idx) => (
-                          <li key={`${item.certificationId || item.name || "cert"}-${idx}`} className="surface-subtle break-words px-3 py-2 text-sm leading-relaxed text-[var(--ds-text-secondary)]">
-                            <span className="font-medium text-[var(--ds-text)]">{item.name || "Certification"}</span>
-                            {(item.issuer || item.year) ? ` · ${[item.issuer, item.year].filter(Boolean).join(" | ")}` : ""}
-                            <span className="ml-2 rounded bg-[var(--ds-success-bg)] px-1.5 py-0.5 text-[10px] font-semibold uppercase text-[var(--ds-success)]">
-                              Verified
-                            </span>
-                          </li>
+                      <div className="space-y-2">
+                        {verifiedCertifications.map((item) => (
+                          <div key={item._id} className="surface-subtle break-words p-3.5">
+                            <div className="flex flex-wrap items-start justify-between gap-3">
+                              <div className="min-w-0">
+                                <p className="text-sm font-semibold leading-snug text-[var(--ds-text)]">
+                                  {item.courseName}
+                                  <span className="ml-2 rounded bg-[var(--ds-success-bg)] px-1.5 py-0.5 text-[10px] font-semibold uppercase text-[var(--ds-success)]">
+                                    Verified
+                                  </span>
+                                </p>
+                                <p className="mt-0.5 text-xs leading-relaxed text-[var(--ds-text-secondary)]">{item.provider}</p>
+                                <p className="mt-1 text-xs leading-relaxed text-[var(--ds-muted)]">
+                                  Issued {formatCertDate(item.completionDate)}
+                                  {item.expiryDate ? ` · Expires ${formatCertDate(item.expiryDate)}` : ""}
+                                </p>
+                              </div>
+                              <div className="flex shrink-0 gap-1.5">
+                                <Button type="button" size="sm" variant="secondary" onClick={() => openCertPreview(item)}>
+                                  <AppIcon icon={Eye} size="xs" /> View
+                                </Button>
+                                <Button type="button" size="sm" variant="secondary" onClick={() => downloadCertFile(item)}>
+                                  <AppIcon icon={Download} size="xs" /> Download
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
                         ))}
-                      </ul>
+                      </div>
                     )}
+                    {certPreview ? (
+                      <div className="surface-subtle mt-3 space-y-2 p-4">
+                        <div className="flex items-center justify-between">
+                          <p className="text-xs font-semibold text-[var(--ds-text)]">Preview: {certPreview.courseName}</p>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              URL.revokeObjectURL(certPreview.objectUrl);
+                              setCertPreview(null);
+                            }}
+                            aria-label="Close preview"
+                            className="rounded-md p-1 text-[var(--ds-muted)] transition-colors hover:bg-[var(--ds-hover)] hover:text-[var(--ds-text)]"
+                          >
+                            <AppIcon icon={X} size="sm" className="text-current" />
+                          </button>
+                        </div>
+                        {certPreview.mimeType.includes("pdf") ? (
+                          <iframe title="Certificate preview" src={certPreview.objectUrl} className="h-[360px] w-full rounded-lg border border-[var(--ds-border)]" />
+                        ) : certPreview.mimeType.includes("image") ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={certPreview.objectUrl} alt="Certificate preview" className="max-h-[360px] w-full rounded-lg object-contain" />
+                        ) : (
+                          <p className="rounded-lg border border-[var(--ds-border)] px-4 py-6 text-center text-sm text-[var(--ds-text-secondary)]">
+                            Preview not available for this file type. Use Download instead.
+                          </p>
+                        )}
+                      </div>
+                    ) : null}
                   </div>
 
                   {languages.length > 0 && (

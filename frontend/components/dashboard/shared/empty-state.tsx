@@ -54,6 +54,8 @@ export function EmptyState({
   return (
     <ScrollReveal variant="fade-up" distance={8}>
       <div
+        role="status"
+        aria-live="polite"
         className={cn(
           "ds-card relative overflow-hidden border-dashed text-center",
           paddingBySize,
@@ -80,7 +82,7 @@ export function EmptyState({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           transition={{ duration: 0.35, ease: "easeOut" }}
         >
-          <AppIcon icon={IconComponent} size="lg" className="text-[var(--ds-primary)]" />
+          <AppIcon icon={IconComponent} size="lg" className="text-[var(--ds-primary-text)]" />
         </motion.div>
 
         <p className="relative text-sm font-semibold text-[var(--ds-text)]">{title}</p>

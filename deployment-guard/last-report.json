@@ -16,12 +16,20 @@
   "performanceScore": 100,
   "aiReliabilityScore": 63,
   "uiStabilityScore": 70,
-  "passedCount": 30,
+  "passedCount": 29,
   "failedCount": 6,
   "warningCount": 3,
-  "target": "backend",
-  "durationMs": 2490,
+  "target": "frontend",
+  "durationMs": 6168,
   "checks": [
+    {
+      "id": "func.tsc",
+      "category": "functionality",
+      "name": "TypeScript compile",
+      "status": "PASS",
+      "message": "Frontend typecheck passed",
+      "blocking": false
+    },
     {
       "id": "func.routes",
       "category": "functionality",
@@ -36,14 +44,6 @@
       "name": "Branded empty-state CTAs",
       "status": "PASS",
       "message": "No known dead CTAs in brand presets",
-      "blocking": false
-    },
-    {
-      "id": "func.backend-load",
-      "category": "functionality",
-      "name": "Backend bootstrap",
-      "status": "PASS",
-      "message": "Backend app module loads",
       "blocking": false
     },
     {
@@ -239,6 +239,14 @@
       "blocking": false
     },
     {
+      "id": "perf.next-config",
+      "category": "performance",
+      "name": "Next.js config present",
+      "status": "PASS",
+      "message": "Next.js configuration file found",
+      "blocking": false
+    },
+    {
       "id": "perf.api-health-latency",
       "category": "performance",
       "name": "API health latency",
@@ -316,22 +324,6 @@
       "name": "Chat API auth",
       "status": "PASS",
       "message": "Chat REST routes require authentication",
-      "blocking": false
-    },
-    {
-      "id": "sec.rate-limit",
-      "category": "security",
-      "name": "API rate limiting",
-      "status": "PASS",
-      "message": "Express rate limiter mounted on /api",
-      "blocking": false
-    },
-    {
-      "id": "sec.env-secrets",
-      "category": "security",
-      "name": "Production secrets template",
-      "status": "PASS",
-      "message": ".env.example documents JWT secrets placeholder",
       "blocking": false
     },
     {

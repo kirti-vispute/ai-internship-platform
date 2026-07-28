@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { X } from "lucide-react";
 import { AppIcon } from "@/components/icons/app-icon";
 import { COMPANY_TECHNOLOGY_SUGGESTIONS } from "@/lib/company-portal";
@@ -11,12 +11,17 @@ type TechnologiesInputProps = {
   onChange: (next: string[]) => void;
   error?: string | null;
   disabled?: boolean;
+  /** id of an external <label>/heading this field should be announced with */
+  labelledBy?: string;
 };
 
-export function TechnologiesInput({ value, onChange, error, disabled }: TechnologiesInputProps) {
+export function TechnologiesInput({ value, onChange, error, disabled, labelledBy }: TechnologiesInputProps) {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
+  const [highlighted, setHighlighted] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
+  const listboxId = useId();
+  const errorId = useId();
 
   const selectedKeys = useMemo(() => new Set(value.map((t) => t.toLowerCase())), [value]);
 
@@ -26,6 +31,10 @@ export function TechnologiesInput({ value, onChange, error, disabled }: Technolo
       q ? tech.toLowerCase().includes(q) : true
     ).slice(0, 8);
   }, [query, selectedKeys]);
+
+  useEffect(() => {
+    setHighlighted(0);
+  }, [query, open]);
 
   function addTechnology(raw: string) {
     const tech = raw.trim();
@@ -43,9 +52,25 @@ export function TechnologiesInput({ value, onChange, error, disabled }: Technolo
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (open && suggestions.length > 0 && e.key === "ArrowDown") {
+      e.preventDefault();
+      setHighlighted((prev) => (prev + 1) % suggestions.length);
+      return;
+    }
+    if (open && suggestions.length > 0 && e.key === "ArrowUp") {
+      e.preventDefault();
+      setHighlighted((prev) => (prev - 1 + suggestions.length) % suggestions.length);
+      return;
+    }
     if (e.key === "Enter" || e.key === ",") {
       e.preventDefault();
-      addTechnology(query);
+      if (open && suggestions.length > 0 && suggestions[highlighted]) {
+        addTechnology(suggestions[highlighted]);
+      } else {
+        addTechnology(query);
+      }
+    } else if (e.key === "Escape") {
+      setOpen(false);
     } else if (e.key === "Backspace" && !query && value.length > 0) {
       removeTechnology(value[value.length - 1]);
     }
@@ -83,6 +108,14 @@ export function TechnologiesInput({ value, onChange, error, disabled }: Technolo
         ))}
         <input
           ref={inputRef}
+          role="combobox"
+          aria-expanded={open && suggestions.length > 0}
+          aria-controls={listboxId}
+          aria-autocomplete="list"
+          aria-activedescendant={open && suggestions[highlighted] ? `${listboxId}-${highlighted}` : undefined}
+          aria-labelledby={labelledBy}
+          aria-invalid={error ? "true" : undefined}
+          aria-describedby={error ? errorId : undefined}
           value={query}
           disabled={disabled}
           onChange={(e) => setQuery(e.target.value)}
@@ -96,23 +129,33 @@ export function TechnologiesInput({ value, onChange, error, disabled }: Technolo
 
       {open && suggestions.length > 0 && (
         <div className="relative">
-          <div className="ds-card absolute z-20 mt-1 w-full max-h-56 overflow-y-auto !p-1.5">
-            {suggestions.map((tech) => (
-              <button
+          <ul id={listboxId} role="listbox" className="ds-card absolute z-20 mt-1 w-full max-h-56 overflow-y-auto !p-1.5">
+            {suggestions.map((tech, index) => (
+              <li
                 key={tech}
-                type="button"
+                id={`${listboxId}-${index}`}
+                role="option"
+                aria-selected={index === highlighted}
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => addTechnology(tech)}
-                className="block w-full rounded-[var(--ds-radius-sm)] px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-[var(--ds-surface-raised)]"
+                onMouseEnter={() => setHighlighted(index)}
+                className={cn(
+                  "block w-full cursor-pointer rounded-[var(--ds-radius-sm)] px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-[var(--ds-surface-raised)]",
+                  index === highlighted && "bg-[var(--ds-surface-raised)]"
+                )}
               >
                 {tech}
-              </button>
+              </li>
             ))}
-          </div>
+          </ul>
         </div>
       )}
 
-      {error ? <p className="text-xs font-medium text-[var(--ds-danger)]">{error}</p> : null}
+      {error ? (
+        <p id={errorId} role="alert" className="text-xs font-medium text-[var(--ds-danger)]">
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }

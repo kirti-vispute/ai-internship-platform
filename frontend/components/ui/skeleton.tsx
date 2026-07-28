@@ -26,7 +26,7 @@ function shimmerVariants(delay = 0) {
 
 export function SkeletonText({ lines = 3, className }: { lines?: number; className?: string }) {
   return (
-    <div className={cn("space-y-2", className)}>
+    <div role="status" aria-live="polite" aria-label="Loading" className={cn("space-y-2", className)}>
       {Array.from({ length: lines }).map((_, i) => (
         <motion.div
           key={i}
@@ -41,7 +41,7 @@ export function SkeletonText({ lines = 3, className }: { lines?: number; classNa
 
 export function SkeletonCard({ className }: { className?: string }) {
   return (
-    <div className={cn("ds-card space-y-4", className)}>
+    <div role="status" aria-live="polite" aria-label="Loading" className={cn("ds-card space-y-4", className)}>
       <div className="flex items-center gap-3">
         <motion.div className="h-10 w-10 shrink-0 rounded-xl bg-[var(--ds-surface-raised)]" {...shimmerVariants()} />
         <div className="flex-1 space-y-2">
@@ -56,7 +56,7 @@ export function SkeletonCard({ className }: { className?: string }) {
 
 export function SkeletonList({ rows = 4, className }: { rows?: number; className?: string }) {
   return (
-    <div className={cn("space-y-3", className)}>
+    <div role="status" aria-live="polite" aria-label="Loading" className={cn("space-y-3", className)}>
       {Array.from({ length: rows }).map((_, i) => (
         <div key={i} className="flex items-center gap-3 rounded-xl border border-[var(--ds-border)] p-3">
           <motion.div className="h-9 w-9 shrink-0 rounded-full bg-[var(--ds-surface-raised)]" {...shimmerVariants(i * 0.06)} />
@@ -72,7 +72,7 @@ export function SkeletonList({ rows = 4, className }: { rows?: number; className
 
 export function SkeletonChat({ rows = 5, className }: { rows?: number; className?: string }) {
   return (
-    <div className={cn("space-y-3", className)}>
+    <div role="status" aria-live="polite" aria-label="Loading messages" className={cn("space-y-3", className)}>
       {Array.from({ length: rows }).map((_, i) => {
         const mine = i % 3 === 1;
         return (
@@ -91,7 +91,7 @@ export function SkeletonChat({ rows = 5, className }: { rows?: number; className
 
 export function SkeletonTable({ rows = 5, columns = 4, className }: { rows?: number; columns?: number; className?: string }) {
   return (
-    <div className={cn("overflow-hidden rounded-xl border border-[var(--ds-border)]", className)}>
+    <div role="status" aria-live="polite" aria-label="Loading table" className={cn("overflow-hidden rounded-xl border border-[var(--ds-border)]", className)}>
       <div className="flex gap-4 border-b border-[var(--ds-border)] bg-[var(--ds-surface-raised)] px-4 py-3">
         {Array.from({ length: columns }).map((_, i) => (
           <div key={i} className="h-2.5 flex-1 rounded-full bg-[var(--ds-border)]" />
@@ -116,7 +116,7 @@ export function SkeletonTable({ rows = 5, columns = 4, className }: { rows?: num
 
 export function SkeletonPage({ className }: { className?: string }) {
   return (
-    <div className={cn("space-y-4", className)}>
+    <div role="status" aria-live="polite" aria-label="Loading page" className={cn("space-y-4", className)}>
       <div className="grid gap-4 sm:grid-cols-3">
         {Array.from({ length: 3 }).map((_, i) => (
           <SkeletonCard key={i} />

@@ -16,15 +16,15 @@ export function HiringManagerInsightsPanel({ evaluation, className }: HiringMana
     <div className={className}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--ds-muted)]">
+          <h3 className="text-[11px] font-semibold uppercase tracking-wide text-[var(--ds-muted)]">
             Hiring Intelligence Breakdown
-          </p>
+          </h3>
           <p className="mt-0.5 text-xs text-[var(--ds-muted)]">
             {evaluation.roleTemplateLabel} weight model · {evaluation.confidenceTier}
           </p>
         </div>
         <div className="shrink-0 text-right">
-          <p className="text-2xl font-bold leading-none text-[var(--ds-primary)]">
+          <p className="text-2xl font-bold leading-none text-[var(--ds-primary-text)]">
             {evaluation.overallScore}%
           </p>
           <p className="mt-1 text-xs text-[var(--ds-muted)]">

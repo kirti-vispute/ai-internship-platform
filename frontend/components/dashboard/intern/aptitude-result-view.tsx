@@ -12,7 +12,7 @@ const READINESS_STYLES: Record<AptitudeTestResult["readinessLabel"], string> = {
   "Not Ready": "text-[var(--ds-danger)] bg-[var(--ds-danger-bg)]",
   "Needs Improvement": "text-[var(--ds-warning)] bg-[var(--ds-warning-bg)]",
   "Interview Ready (Moderate)": "text-[var(--ds-success)] bg-[var(--ds-success-bg)]",
-  "Highly Interview Ready": "text-[var(--ds-primary)] bg-[var(--ds-info-bg)]"
+  "Highly Interview Ready": "text-[var(--ds-primary-text)] bg-[var(--ds-info-bg)]"
 };
 
 const RISK_STYLES = {

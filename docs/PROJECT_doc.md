@@ -1490,7 +1490,7 @@ For the optional LLM paths, the defences are: constrained system prompts ("Retur
 - `shared/config/env.schema.js` documents every variable, grouped by concern.
 - `platform.config.js` is a single frozen object — the only place `process.env` is read for configuration, so there is one audit point.
 - Startup fails loudly on missing critical variables; a missing `CLIENT_URL` in production logs an explicit CORS warning.
-- Dev-only OTP echo (`devOtp` in the response) is gated on `NODE_ENV !== "production"`.
+- OTP and email-verification codes/tokens are never included in any API response, in any environment — they are delivered only via email (Gmail SMTP). A misconfigured mailer fails the request with a clear error instead of echoing the code.
 
 ## 9.12 Security scorecard
 
@@ -1696,7 +1696,7 @@ CRASH     unhandledRejection / uncaughtException → log with stack → exit(1)
 | Logging | `morgan("dev")` | `morgan("combined")` |
 | Seeding | auto-seed if empty | disabled |
 | Error payload | includes stack | message + code only |
-| OTP | `devOtp` echoed in response | email only |
+| OTP | email only (Gmail SMTP) | email only (Gmail SMTP) |
 | Cookies | `secure:false`, `SameSite=lax` | `secure:true`, `SameSite=none` |
 | AI | configurable | local-heuristics-first |
 

@@ -73,7 +73,7 @@ export function CareerReadinessSection({
   );
 
   return (
-    <ScrollReveal variant="fade-up" distance={12}>
+    <ScrollReveal variant="fade-up" distance={12} once>
       <div className={cn(cardBase, "p-6")}>
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
@@ -167,18 +167,18 @@ export function TodaysFocusSection({
   missingSkills: string[];
   loading?: boolean;
 }) {
-  if (loading) return <Skeleton className="h-48 w-full rounded-2xl" />;
-
   const items = useMemo(
     () => buildTodaysFocus(profile, analysis, topWeakness, missingSkills),
     [profile, analysis, topWeakness, missingSkills]
   );
 
+  if (loading) return <Skeleton className="h-48 w-full rounded-2xl" />;
+
   return (
-    <ScrollReveal variant="fade-up" distance={12} delayMs={60}>
+    <ScrollReveal variant="fade-up" distance={12} delayMs={60} once>
       <div className={cn(cardBase, "p-6")}>
         <div className="mb-4 flex items-center gap-2">
-          <AppIcon icon={Target} size="sm" className="text-[var(--ds-primary)]" />
+          <AppIcon icon={Target} size="sm" className="text-[var(--ds-primary-text)]" />
           <h3 className="text-sm font-semibold text-[var(--ds-text)]">Today&apos;s Focus</h3>
         </div>
         <ul className="space-y-2">
@@ -188,7 +188,7 @@ export function TodaysFocusSection({
                 href={item.href}
                 className="flex items-center gap-3 rounded-xl border border-[var(--ds-border)] bg-[var(--ds-surface-raised)] px-4 py-3 text-sm transition-colors hover:border-[var(--ds-border-strong)] hover:bg-[var(--ds-hover)]"
               >
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--ds-primary)]/10 text-xs font-bold text-[var(--ds-primary)]">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--ds-primary)]/10 text-xs font-bold text-[var(--ds-primary-text)]">
                   {idx + 1}
                 </span>
                 <span className="min-w-0 flex-1 font-medium text-[var(--ds-text)]">{item.label}</span>
@@ -266,7 +266,7 @@ export function WeeklyProgressSection({
   }
 
   return (
-    <ScrollReveal variant="fade-up" distance={12} delayMs={100}>
+    <ScrollReveal variant="fade-up" distance={12} delayMs={100} once>
       <div>
         <h3 className="mb-3 text-sm font-semibold text-[var(--ds-text)]">Weekly Progress</h3>
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
@@ -319,7 +319,7 @@ export function PriorityRoadmapSection({
   const top3 = gap.quickWins.slice(0, 3);
 
   return (
-    <ScrollReveal variant="fade-up" distance={12} delayMs={140}>
+    <ScrollReveal variant="fade-up" distance={12} delayMs={140} once>
       <div className={cn(cardBase, "p-6")}>
         <div className="mb-4 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
@@ -340,7 +340,7 @@ export function PriorityRoadmapSection({
         ) : (
           <div className="grid gap-3 sm:grid-cols-3">
             {top3.map((item) => (
-              <div key={item.skill} className="rounded-xl border border-[var(--ds-border)] bg-[var(--ds-surface-raised)] p-4">
+              <div key={item.skill} className="flex h-full flex-col rounded-xl border border-[var(--ds-border)] bg-[var(--ds-surface-raised)] p-4">
                 <p className="text-sm font-semibold text-[var(--ds-text)]">{item.displayName}</p>
                 <p className="mt-1 text-xs leading-relaxed text-[var(--ds-text-secondary)]">{item.why}</p>
                 <div className="mt-3">
@@ -348,7 +348,7 @@ export function PriorityRoadmapSection({
                     {item.impact} priority
                   </span>
                 </div>
-                <a href={item.courseSearchUrl} target="_blank" rel="noreferrer noopener" className="text-link mt-3 inline-block text-xs">
+                <a href={item.courseSearchUrl} target="_blank" rel="noreferrer noopener" className="text-link mt-auto inline-block pt-3 text-xs">
                   {item.action}
                 </a>
               </div>
@@ -382,7 +382,7 @@ export function PlacementReadinessTiersSection({ readiness, loading }: { readine
   if (loading) return <Skeleton className="h-64 w-full rounded-2xl" />;
 
   return (
-    <ScrollReveal variant="fade-up" distance={12} delayMs={180}>
+    <ScrollReveal variant="fade-up" distance={12} delayMs={180} once>
       <div className={cn(cardBase, "p-6")}>
         <div className="mb-4 flex items-center gap-2">
           <AppIcon icon={Trophy} size="sm" className="text-[var(--ds-success)]" />
@@ -456,7 +456,7 @@ export function AchievementsSection({
   ];
 
   return (
-    <ScrollReveal variant="fade-up" distance={12} delayMs={220}>
+    <ScrollReveal variant="fade-up" distance={12} delayMs={220} once>
       <div className={cn(cardBase, "p-6")}>
         <h3 className="mb-4 text-sm font-semibold text-[var(--ds-text)]">Achievements</h3>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">

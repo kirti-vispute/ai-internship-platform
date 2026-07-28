@@ -92,6 +92,15 @@ export function Navbar({ theme = "light" }: NavbarProps) {
     return () => window.removeEventListener("hashchange", syncHash);
   }, [isHome, scrollHashOnLoad, pathname]);
 
+  useEffect(() => {
+    if (!mobileOpen) return;
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setMobileOpen(false);
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [mobileOpen]);
+
   const handleHomepageSectionClick = (
     event: React.MouseEvent<HTMLAnchorElement>,
     hash: string
@@ -139,13 +148,13 @@ export function Navbar({ theme = "light" }: NavbarProps) {
             </>
           ) : loggedIn && role ? (
             <>
-              <Link href={dashboardHref} className={linkClass(pathname.startsWith(dashboardHref))}>
+              <Link href={dashboardHref} aria-current={pathname.startsWith(dashboardHref) ? "page" : undefined} className={linkClass(pathname.startsWith(dashboardHref))}>
                 <span className="inline-flex items-center gap-1.5">
                   <AppIcon icon={LayoutDashboard} size="xs" />
                   Dashboard
                 </span>
               </Link>
-              <Link href={profileHref} className={linkClass(pathname.startsWith(profileHref))}>
+              <Link href={profileHref} aria-current={pathname.startsWith(profileHref) ? "page" : undefined} className={linkClass(pathname.startsWith(profileHref))}>
                 <span className="inline-flex items-center gap-1.5">
                   <AppIcon icon={User} size="xs" />
                   Profile
@@ -202,6 +211,7 @@ export function Navbar({ theme = "light" }: NavbarProps) {
             className="rounded-lg border border-[var(--ds-border)] bg-[var(--ds-surface)] px-2 py-1 text-[var(--ds-muted)] transition hover:bg-[var(--ds-surface-raised)] md:hidden"
             aria-label={mobileOpen ? "Close navigation menu" : "Open navigation menu"}
             aria-expanded={mobileOpen}
+            aria-controls="navbar-mobile-menu"
           >
             <AppIcon icon={Menu} size="md" />
           </button>
@@ -209,7 +219,7 @@ export function Navbar({ theme = "light" }: NavbarProps) {
       </nav>
 
       {mobileOpen && (
-        <div className="border-t border-[var(--ds-border)] bg-[var(--ds-navbar)] px-4 py-3 md:hidden">
+        <div id="navbar-mobile-menu" className="border-t border-[var(--ds-border)] bg-[var(--ds-navbar)] px-4 py-3 md:hidden">
           <ul className="space-y-1">
             {isHome ? (
               <>

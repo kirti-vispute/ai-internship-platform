@@ -26,12 +26,14 @@ import { AnimatedBackground } from "@/components/dashboard/shared/AnimatedBackgr
 import { PortalBrandHeader } from "@/components/brand/portal-brand-header";
 import { DashboardShellHeader } from "@/components/dashboard/shared/dashboard-shell-header";
 import { DashboardSidebarNav, type DashboardSidebarSection } from "@/components/dashboard/shared/dashboard-sidebar-nav";
+import { SidebarCollapseToggle } from "@/components/dashboard/shared/sidebar-collapse-toggle";
 import { ROLE_WELCOME_LABEL, ROLE_WELCOME_TAGLINE, getCompanyDashboardPath } from "@/lib/auth-routes";
 import { hasSidebarModule, SIDEBAR_MODULE_KEYS, type SidebarModuleKey } from "@/lib/company-portal";
 import { AppIcon } from "@/components/icons/app-icon";
 import { FEATURE_FLAGS } from "@/constants/featureFlags";
 import { useMessagingUnread } from "@/lib/use-messaging-unread";
 import { useNotificationUnread } from "@/lib/use-notification-unread";
+import { useIsDesktopViewport, useSidebarCollapsed } from "@/lib/use-sidebar-collapsed";
 import { cn } from "@/lib/utils";
 
 type SidebarSection = DashboardSidebarSection;
@@ -182,6 +184,9 @@ function isItemActive(pathname: string, href: string) {
 
 export function CompanyShell({ welcomeName, companyAccountType, permissions, sidebarModules, onLogout, children }: CompanyShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { collapsed, toggle: toggleCollapsed } = useSidebarCollapsed();
+  const isDesktop = useIsDesktopViewport();
+  const railCollapsed = collapsed && isDesktop;
   const { messageUnread } = useMessagingUnread();
   const { unreadCount: notificationUnread, setUnreadCount: setNotificationUnread } = useNotificationUnread("company");
   const sections = useMemo(
@@ -195,15 +200,24 @@ export function CompanyShell({ welcomeName, companyAccountType, permissions, sid
       <div className="mx-auto flex max-w-[1600px]">
         <aside
           className={cn(
-            "sidebar-surface sidebar-shell fixed inset-y-0 left-0 z-40 w-72 p-5 shadow-[0_12px_36px_rgba(15,23,42,0.12)] transition-transform duration-300 lg:sticky lg:top-0 lg:translate-x-0 dark:shadow-[0_16px_44px_rgba(2,6,23,0.55)]",
-            mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+            "sidebar-surface sidebar-shell fixed inset-y-0 left-0 z-40 w-72 p-5 shadow-[0_12px_36px_rgba(15,23,42,0.12)] transition-[width,transform] duration-300 ease-in-out lg:sticky lg:top-0 lg:translate-x-0 dark:shadow-[0_16px_44px_rgba(2,6,23,0.55)]",
+            mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
+            collapsed ? "lg:w-20 lg:p-3" : "lg:w-72"
           )}
         >
           <div className="shrink-0">
-            <PortalBrandHeader portalLabel="Company Portal" />
+            <PortalBrandHeader portalLabel="Company Portal" collapsed={railCollapsed} />
+            <div className={cn("mb-4 hidden lg:flex", collapsed ? "justify-center" : "justify-start")}>
+              <SidebarCollapseToggle collapsed={collapsed} onToggle={toggleCollapsed} />
+            </div>
           </div>
 
-          <DashboardSidebarNav sections={sections} isItemActive={isItemActive} onNavigate={() => setMobileOpen(false)} />
+          <DashboardSidebarNav
+            sections={sections}
+            isItemActive={isItemActive}
+            onNavigate={() => setMobileOpen(false)}
+            collapsed={railCollapsed}
+          />
         </aside>
 
         {mobileOpen && <button aria-label="Close menu" className="fixed inset-0 z-30 bg-slate-900/40 lg:hidden" onClick={() => setMobileOpen(false)} />}
@@ -222,7 +236,7 @@ export function CompanyShell({ welcomeName, companyAccountType, permissions, sid
             onNotificationUnreadCountChange={setNotificationUnread}
           />
 
-          <main className="relative z-10 mx-auto w-full max-w-[1240px] p-4 lg:p-5">{children}</main>
+          <main id="main-content" tabIndex={-1} className="relative z-10 mx-auto w-full max-w-[1240px] p-4 lg:p-5 focus:outline-none">{children}</main>
         </div>
       </div>
     </div>

@@ -36,6 +36,69 @@ body:has(.internai-home) {
   box-shadow: inset 0 -1px 0 var(--hp-border);
 }
 
+/* The navbar's background is pinned dark above (it sits on the permanent starfield),
+   but its foreground (logo wordmark, links, logout/menu buttons) reads the app-wide
+   --ds-* tokens, which flip to light-appropriate (dark) colors in light appearance —
+   dark-on-dark against this fixed-dark header. Repin those tokens to the same fixed
+   --hp-* values the rest of the homepage already uses so text stays readable. Scoped
+   to light appearance only: in dark appearance --ds-* already resolves to the same
+   near-white/near-dark pairing --hp-* uses, so this rule never engages there. */
+:root[data-appearance="light"] .internai-home-content > header {
+  --ds-text: var(--hp-text);
+  --ds-text-secondary: var(--hp-muted);
+  --ds-muted: var(--hp-muted);
+  --ds-accent: var(--hp-accent);
+  --ds-accent-strong: var(--hp-accent);
+  --ds-hover: var(--hp-surface-raised);
+  --ds-surface-raised: var(--hp-surface-raised);
+  --ds-surface: var(--hp-surface);
+  --ds-navbar: var(--hp-surface);
+  --ds-border: var(--hp-border);
+}
+
+/* readability.css also repaints several hp-* surfaces/labels/buttons with the
+   app-wide --ds-* tokens, at higher selector specificity than this file's own
+   rules below (e.g. `.internai-home .hp-surface` beats `.hp-surface`). That's
+   fine in dark appearance, where --ds-* already lines up with these fixed
+   --hp-* values — but in light appearance it repaints every card a pale
+   surface while the fixed --hp-text/--hp-muted foreground riding on top of it
+   stays near-white, i.e. white-on-white. Re-pin to the original fixed --hp-*
+   design, gated to light appearance only so dark stays byte-identical. */
+:root[data-appearance="light"] .internai-home .hp-label {
+  color: var(--hp-muted);
+}
+
+:root[data-appearance="light"] .internai-home .hp-sub,
+:root[data-appearance="light"] .internai-home .hp-trust li,
+:root[data-appearance="light"] .internai-home .hp-preview-score-label,
+:root[data-appearance="light"] .internai-home .hp-preview-block-label,
+:root[data-appearance="light"] .internai-home .hp-cap-desc {
+  color: var(--hp-muted);
+}
+
+:root[data-appearance="light"] .internai-home .hp-surface,
+:root[data-appearance="light"] .internai-home .hp-surface--interactive:hover {
+  background: var(--hp-surface);
+}
+
+:root[data-appearance="light"] .internai-home .hp-surface--interactive:hover {
+  background: var(--hp-surface-raised);
+}
+
+:root[data-appearance="light"] .internai-home .hp-btn-primary {
+  background: var(--hp-surface-raised);
+  border-color: var(--hp-border-strong);
+}
+
+:root[data-appearance="light"] .internai-home .hp-btn-primary,
+:root[data-appearance="light"] .internai-home .hp-btn-primary:hover {
+  color: var(--hp-accent) !important;
+}
+
+:root[data-appearance="light"] .internai-home .hp-btn-ghost {
+  color: var(--hp-text) !important;
+}
+
 .hp-main {
   position: relative;
   z-index: 1;

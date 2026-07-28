@@ -139,6 +139,7 @@ exports.updateProfile = asyncHandler(async (req, res) => {
     "companyName",
     "contactName",
     "phone",
+    "landline",
     "website",
     "address",
     "description",
@@ -151,6 +152,22 @@ exports.updateProfile = asyncHandler(async (req, res) => {
   allowed.forEach((field) => {
     if (req.body[field] !== undefined) profile[field] = req.body[field];
   });
+
+  if (req.body.landline !== undefined) {
+    const landline = String(req.body.landline || "").trim();
+    if (landline && !/^[0-9()+\-.\s]{6,20}$/.test(landline)) {
+      throw new AppError("landline must be a valid phone number (6-20 digits, may include +, -, (), spaces)", 400);
+    }
+    profile.landline = landline;
+  }
+
+  if (req.body.website !== undefined) {
+    const website = String(req.body.website || "").trim();
+    if (website && !/^https?:\/\/[^\s]+$/i.test(website)) {
+      throw new AppError("website must be a valid http(s) URL", 400);
+    }
+    profile.website = website;
+  }
 
   if (req.body.foundedYear !== undefined) {
     const year = Number(req.body.foundedYear);

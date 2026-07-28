@@ -265,9 +265,10 @@ export function InterviewScheduleModal({
                 className={cn(fieldClass, touched && errors.date && "border-[var(--ds-danger)] focus:border-[var(--ds-danger)] focus:ring-[var(--ds-danger)]/30")}
                 value={interviewDate}
                 aria-invalid={Boolean(touched && errors.date)}
+                aria-describedby={touched && errors.date ? "interview-date-error" : undefined}
                 onChange={(event) => setInterviewDate(event.target.value)}
               />
-              {touched && errors.date ? <p className="mt-1 text-xs text-[var(--ds-danger)]">{errors.date}</p> : null}
+              {touched && errors.date ? <p id="interview-date-error" role="alert" className="mt-1 text-xs text-[var(--ds-danger)]">{errors.date}</p> : null}
             </div>
             <div>
               <label htmlFor="interview-time" className="mb-1 flex items-center gap-1.5 text-xs font-semibold text-[var(--ds-muted)]">
@@ -279,9 +280,10 @@ export function InterviewScheduleModal({
                 className={cn(fieldClass, touched && errors.time && "border-[var(--ds-danger)] focus:border-[var(--ds-danger)] focus:ring-[var(--ds-danger)]/30")}
                 value={interviewTime}
                 aria-invalid={Boolean(touched && errors.time)}
+                aria-describedby={touched && errors.time ? "interview-time-error" : undefined}
                 onChange={(event) => setInterviewTime(event.target.value)}
               />
-              {touched && errors.time ? <p className="mt-1 text-xs text-[var(--ds-danger)]">{errors.time}</p> : null}
+              {touched && errors.time ? <p id="interview-time-error" role="alert" className="mt-1 text-xs text-[var(--ds-danger)]">{errors.time}</p> : null}
             </div>
           </div>
 
@@ -322,6 +324,7 @@ export function InterviewScheduleModal({
               <AppIcon icon={UserSearch} size="xs" /> Interviewer <span className="font-normal text-[var(--ds-muted)]">(optional)</span>
             </label>
             <InterviewerCombobox
+              id="interview-interviewer"
               value={interviewer}
               onChange={setInterviewer}
               suggestions={interviewerSuggestions}

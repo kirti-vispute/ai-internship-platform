@@ -7,7 +7,7 @@ type AuthPageShellProps = {
 
 export function AuthPageShell({ children }: AuthPageShellProps) {
   return (
-    <main className="min-h-screen">
+    <main id="main-content" tabIndex={-1} className="min-h-screen focus:outline-none">
       <Navbar theme="dark" />
       <section className="container-shell ds-page-section">
         <div className="mx-auto max-w-2xl ds-animate-in">{children}</div>

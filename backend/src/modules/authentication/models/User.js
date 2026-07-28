@@ -30,9 +30,30 @@ const userSchema = new mongoose.Schema(
       type: [String],
       default: []
     },
+    // Email verification feature rolled back (temporary). Fields kept for backward
+    // compatibility with existing user records and possible future re-implementation
+    // with a production email provider. Nothing reads/writes these currently.
     emailVerified: {
       type: Boolean,
-      default: false
+      default: true
+    },
+    // No `default` here (deliberately, unlike the sibling fields above): a
+    // unique+sparse index only excludes documents where the field is truly
+    // absent. An explicit `default: null` would still get indexed (MongoDB
+    // treats stored null as a value, not "missing"), so the very second user
+    // ever created — with this field left unset — would collide on the
+    // unique constraint and fail to save. Leaving it with no default keeps
+    // the field genuinely absent until something explicitly sets it.
+    verificationTokenHash: {
+      type: String
+    },
+    verificationTokenExpiresAt: {
+      type: Date,
+      default: null
+    },
+    verificationEmailLastSentAt: {
+      type: Date,
+      default: null
     },
     isActive: {
       type: Boolean,
@@ -171,5 +192,6 @@ userSchema.pre("save", function userPermissionsSync(next) {
 
 userSchema.index({ role: 1, isDeleted: 1, createdAt: -1 });
 userSchema.index({ companyProfileRef: 1, companyAccountType: 1, isDeleted: 1 });
+userSchema.index({ verificationTokenHash: 1 }, { unique: true, sparse: true });
 
 module.exports = mongoose.model("User", userSchema);

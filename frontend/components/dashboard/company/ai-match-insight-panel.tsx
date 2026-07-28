@@ -12,7 +12,7 @@ type AiMatchInsightPanelProps = {
 export function AiMatchInsightPanel({ explanation, evaluation }: AiMatchInsightPanelProps) {
   if (!explanation.sufficient) {
     return (
-      <div className="rounded-lg border border-[var(--ds-warning)]/40 bg-[var(--ds-warning-bg)] px-3.5 py-2.5 text-sm text-[var(--ds-warning)]">
+      <div role="status" className="rounded-lg border border-[var(--ds-warning)]/40 bg-[var(--ds-warning-bg)] px-3.5 py-2.5 text-sm text-[var(--ds-warning)]">
         Insufficient data for AI analysis.
       </div>
     );
@@ -37,9 +37,9 @@ export function AiMatchInsightPanel({ explanation, evaluation }: AiMatchInsightP
 
   return (
     <div className="space-y-4 text-sm">
-      <p className="text-xs font-semibold uppercase tracking-wide text-[var(--ds-primary)]">
+      <h3 className="text-xs font-semibold uppercase tracking-wide text-[var(--ds-primary-text)]">
         Why This Candidate Was Ranked
-      </p>
+      </h3>
 
       {evaluation ? <HiringManagerInsightsPanel evaluation={evaluation} /> : null}
 

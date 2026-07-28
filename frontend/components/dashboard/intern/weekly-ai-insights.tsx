@@ -22,7 +22,7 @@ type InsightCard = {
 };
 
 const TONE_STYLES: Record<InsightCard["tone"], string> = {
-  primary: "bg-[var(--ds-info-bg)] text-[var(--ds-primary)]",
+  primary: "bg-[var(--ds-info-bg)] text-[var(--ds-primary-text)]",
   violet: "bg-[var(--ds-accent)]/10 text-[var(--ds-accent)]",
   emerald: "bg-[var(--ds-success-bg)] text-[var(--ds-success)]",
   sky: "bg-[var(--ds-info-bg)] text-[var(--ds-info)]"
@@ -115,10 +115,10 @@ function WeeklyAiInsightsInner({
 
   if (cards.length === 0) {
     return (
-      <ScrollReveal variant="fade-up" distance={12}>
+      <ScrollReveal variant="fade-up" distance={12} once>
         <div className={cn(cardBase, "p-6")}>
           <div className="mb-4 flex items-center gap-2">
-            <AppIcon icon={Sparkles} size="sm" className="text-[var(--ds-primary)]" />
+            <AppIcon icon={Sparkles} size="sm" className="text-[var(--ds-primary-text)]" />
             <h3 className="text-sm font-semibold text-[var(--ds-text)]">Weekly AI Insights</h3>
           </div>
           <EmptyState title="No insights yet" hint="Upload a resume and apply to internships to unlock weekly AI insights." icon={Sparkles} />
@@ -130,7 +130,7 @@ function WeeklyAiInsightsInner({
   const [lead, ...rest] = cards;
 
   return (
-    <ScrollReveal variant="fade-up" distance={12}>
+    <ScrollReveal variant="fade-up" distance={12} once>
       <div className={cn(cardBase, "p-6")}>
         <div className="mb-4 flex items-center gap-2">
           <AppIcon icon={Sparkles} size="sm" className="text-[var(--ds-accent)]" />
@@ -145,7 +145,7 @@ function WeeklyAiInsightsInner({
               type="button"
               onClick={() => setOpen((prev) => !prev)}
               aria-expanded={open}
-              className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--ds-primary)] transition-opacity hover:opacity-80"
+              className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--ds-primary-text)] transition-opacity hover:opacity-80"
             >
               {open ? "Show less" : `See Full Analysis (${rest.length})`}
               <AppIcon

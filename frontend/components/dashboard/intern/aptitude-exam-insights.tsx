@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { APTITUDE_SECTIONS } from "@/lib/data/aptitude-tests";
 import { formatDuration, getQuestionsForSection, MARKS, type AptitudeSectionKey } from "@/lib/aptitude-test-engine";
 import type { AptitudeTestSet } from "@/lib/data/aptitude-tests";
@@ -36,8 +37,19 @@ export function AptitudeExamInsights({
   collapsed,
   onToggle
 }: Props) {
-  const score = liveScore(test, answers);
-  const maxScore = test.questions.reduce((s, q) => s + (q.marks ?? MARKS[q.difficulty]), 0);
+  const score = useMemo(() => liveScore(test, answers), [test, answers]);
+  const maxScore = useMemo(
+    () => test.questions.reduce((s, q) => s + (q.marks ?? MARKS[q.difficulty]), 0),
+    [test]
+  );
+  const sectionStats = useMemo(
+    () =>
+      APTITUDE_SECTIONS.map((section) => {
+        const qs = getQuestionsForSection(test, section.key);
+        return { section, total: qs.length, done: qs.filter((q) => answers[q.id] != null).length };
+      }),
+    [test, answers]
+  );
   const timeUsed = test.durationMinutes * 60 - remainingSeconds;
 
   return (
@@ -50,6 +62,8 @@ export function AptitudeExamInsights({
           <button
             type="button"
             onClick={onToggle}
+            aria-expanded={!collapsed}
+            aria-controls="aptitude-exam-insights-body"
             className="text-[11px] font-medium text-[var(--ds-muted)] lg:hidden"
           >
             {collapsed ? "Show" : "Hide"}
@@ -57,7 +71,7 @@ export function AptitudeExamInsights({
         ) : null}
       </div>
 
-      <div className={cn(collapsed && "hidden md:max-lg:hidden", "space-y-4")}>
+      <div id="aptitude-exam-insights-body" className={cn(collapsed && "hidden md:max-lg:hidden", "space-y-4")}>
         <div className="rounded-lg border border-[var(--ds-border)] px-3 py-2">
           <p className="text-[11px] text-[var(--ds-muted)]">Live score</p>
           <p className="text-lg font-semibold tabular-nums text-[var(--ds-text)]">
@@ -74,9 +88,7 @@ export function AptitudeExamInsights({
 
         <div className="space-y-2">
           <p className="text-[11px] font-medium text-[var(--ds-muted)]">Sections</p>
-          {APTITUDE_SECTIONS.map((section) => {
-            const qs = getQuestionsForSection(test, section.key);
-            const done = qs.filter((q) => answers[q.id] != null).length;
+          {sectionStats.map(({ section, total, done }) => {
             const active = section.key === currentSection;
             return (
               <div
@@ -88,7 +100,7 @@ export function AptitudeExamInsights({
               >
                 <span className="font-medium text-[var(--ds-text-secondary)]">{section.shortLabel}</span>
                 <span className="tabular-nums text-[var(--ds-muted)]">
-                  {done}/{qs.length}
+                  {done}/{total}
                 </span>
               </div>
             );

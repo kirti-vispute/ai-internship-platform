@@ -191,7 +191,7 @@ export function ApplicantParsedResume({ intern }: { intern?: InternLike }) {
           <ul className="space-y-1.5">
             {linkList.map((href, idx) => (
               <li key={`${href}-${idx}`}>
-                <a href={safeUrl(href)} target="_blank" rel="noreferrer" className="text-sm font-medium text-[var(--ds-primary)] hover:underline">
+                <a href={safeUrl(href)} target="_blank" rel="noreferrer" className="text-sm font-medium text-[var(--ds-primary-text)] hover:underline">
                   {String(href).toLowerCase().includes("linkedin.com") ? "LinkedIn Profile" : href}
                 </a>
               </li>

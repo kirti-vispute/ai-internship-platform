@@ -7,6 +7,9 @@ import dynamic from "next/dynamic";
 import { AdminShell } from "@/components/dashboard/admin/admin-shell";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Table, TableHead, TableBody, TableRow, TableCell } from "@/components/ui/table";
+import { Select } from "@/components/ui/select";
+import { Pagination } from "@/components/ui/pagination";
 import { Skeleton, SkeletonTable } from "@/components/ui/skeleton";
 import { SummaryStatCard } from "@/components/dashboard/shared/summary-stat-card";
 import { RoleDashboardGuard } from "@/components/ui/role-dashboard-guard";
@@ -41,27 +44,35 @@ import { ReportDownloadButton } from "@/components/reports/report-download-butto
 import { EmptyState } from "@/components/dashboard/shared/empty-state";
 import { StatusBadge } from "@/components/icons/status-badge";
 import { BRANDED_EMPTY_STATES } from "@/lib/brand";
-import { AdminGrowthCharts } from "@/components/dashboard/admin/admin-growth-charts";
-import { AdminRecentActivityPanel } from "@/components/dashboard/admin/admin-recent-activity-panel";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { SearchInput } from "@/components/ui/search-input";
 import { useDebouncedValue } from "@/lib/use-debounced-value";
 import { DashboardErrorState, LoadingRows, formatDate } from "@/components/dashboard/admin/admin-dashboard-shared";
-import { AdminCompaniesView } from "@/components/dashboard/admin/views/admin-companies-view";
 
-// View-gated surfaces (certification review / hiring scoring / theme settings) never
-// appear on the default "overview" view — split them into their own chunks.
+// View-gated surfaces never appear on every view — split them into their own chunks.
+const AdminGrowthCharts = dynamic(
+  () => import("@/components/dashboard/admin/admin-growth-charts").then((m) => m.AdminGrowthCharts),
+  { ssr: false, loading: () => <SkeletonTable /> }
+);
+const AdminRecentActivityPanel = dynamic(
+  () => import("@/components/dashboard/admin/admin-recent-activity-panel").then((m) => m.AdminRecentActivityPanel),
+  { ssr: false, loading: () => <SkeletonTable /> }
+);
+const AdminCompaniesView = dynamic(
+  () => import("@/components/dashboard/admin/views/admin-companies-view").then((m) => m.AdminCompaniesView),
+  { ssr: false, loading: () => <SkeletonTable /> }
+);
 const AdminCertificationReview = dynamic(
   () => import("@/components/dashboard/admin/admin-certification-review").then((m) => m.AdminCertificationReview),
-  { ssr: false }
+  { ssr: false, loading: () => <SkeletonTable rows={3} columns={3} /> }
 );
 const AdminHiringScoringPanel = dynamic(
   () => import("@/components/dashboard/admin/admin-hiring-scoring-panel").then((m) => m.AdminHiringScoringPanel),
-  { ssr: false }
+  { ssr: false, loading: () => <Skeleton className="h-72 w-full" /> }
 );
 const ThemeSettingsPanel = dynamic(
   () => import("@/components/theme/theme-settings-panel").then((m) => m.ThemeSettingsPanel),
-  { ssr: false }
+  { ssr: false, loading: () => <Skeleton className="h-48 w-full" /> }
 );
 
 export type AdminDashboardView =
@@ -148,6 +159,7 @@ function AdminDashboardInner({ view }: { view: AdminDashboardView }) {
   const [confirmAction, setConfirmAction] = useState<
     | { type: "delete-user"; user: AdminUser }
     | { type: "suspend-company"; company: AdminCompany }
+    | { type: "unverify-company"; company: AdminCompany }
     | { type: "remove-internship"; internship: AdminInternship }
     | null
   >(null);
@@ -185,9 +197,17 @@ function AdminDashboardInner({ view }: { view: AdminDashboardView }) {
           setUsers(response.users);
           setUserTotal(response.total);
         } else if (view === "analytics") {
-          setMetrics(await fetchAdminMetrics(force));
-          setCompanies(await fetchAdminCompanies({ force }));
-          setInternships(await fetchAdminInternships(force));
+          const [m, u, c, i] = await Promise.all([
+            fetchAdminMetrics(force),
+            fetchAdminUsers({ limit: 100, force }),
+            fetchAdminCompanies({ force }),
+            fetchAdminInternships(force)
+          ]);
+          setMetrics(m);
+          setUsers(u.users);
+          setUserTotal(u.total);
+          setCompanies(c);
+          setInternships(i);
         } else if (view === "companies") {
           setCompanies(await fetchAdminCompanies({ q: debouncedCompanySearch, force }));
         } else if (view === "verification") {
@@ -234,7 +254,7 @@ function AdminDashboardInner({ view }: { view: AdminDashboardView }) {
   }, [router]);
 
   const handleVerify = useCallback(
-    async (company: AdminCompany, status: "verified" | "rejected" | "suspended", reason = "") => {
+    async (company: AdminCompany, status: "verified" | "rejected" | "suspended" | "pending", reason = "") => {
       if (!canVerifyCompanies) return;
       setBusyId(company._id);
       try {
@@ -352,6 +372,8 @@ function AdminDashboardInner({ view }: { view: AdminDashboardView }) {
         await handleSoftDeleteUser(confirmAction.user);
       } else if (confirmAction.type === "suspend-company") {
         await handleVerify(confirmAction.company, "suspended", "Suspended by admin");
+      } else if (confirmAction.type === "unverify-company") {
+        await handleVerify(confirmAction.company, "pending", "Verification revoked by admin");
       } else if (confirmAction.type === "remove-internship") {
         await moderateAdminInternship(confirmAction.internship._id, { removePost: true });
         await loadData(true);
@@ -415,7 +437,6 @@ function AdminDashboardInner({ view }: { view: AdminDashboardView }) {
     () => companies.filter((c) => c.verificationStatus === "pending"),
     [companies]
   );
-  const filteredUsers = users;
 
   const visibleCompanies = view === "verification" ? pendingCompanies : companies;
   const companyTotalPages = Math.max(1, Math.ceil(visibleCompanies.length / PAGE_SIZE));
@@ -435,6 +456,9 @@ function AdminDashboardInner({ view }: { view: AdminDashboardView }) {
     () => reports.slice((reportPage - 1) * PAGE_SIZE, reportPage * PAGE_SIZE),
     [reports, reportPage]
   );
+
+  const userTotalPages = Math.max(1, Math.ceil(userTotal / 50));
+  const logsTotalPages = Math.max(1, Math.ceil(logsTotal / 30));
 
   if (!canAccessAdminView(view, permissions)) {
     return null;
@@ -487,15 +511,7 @@ function AdminDashboardInner({ view }: { view: AdminDashboardView }) {
                 <SummaryStatCard title="Total Students" value={stats.totalStudents} hint="Registered intern accounts" icon={GraduationCap} />
                 <SummaryStatCard title="Total Companies" value={stats.totalCompanies} hint={`${stats.pending} pending verification`} icon={Building2} />
                 <SummaryStatCard title="Active Internships" value={stats.activeInternships} hint="Active postings on platform" icon={ClipboardList} />
-                <SummaryStatCard
-                  title="Total Applications"
-                  value="—"
-                  hint="Not exposed by the admin API yet"
-                  icon={Users}
-                />
-              </div>
-
-              <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <SummaryStatCard title="Total Applications" value="—" hint="Available in a future release" icon={Users} />
                 <SummaryStatCard title="Interviews" value={stats.activeInterviews} hint="Ongoing interview pipeline" icon={Calendar} />
                 <SummaryStatCard title="Offers" value={stats.totalHires} hint="Selected or offered applications" icon={UserCheck} />
                 <SummaryStatCard title="Pending Verifications" value={stats.pending} hint="Companies awaiting approval" icon={Building2} />
@@ -575,20 +591,19 @@ function AdminDashboardInner({ view }: { view: AdminDashboardView }) {
                 loading={loading && Boolean(debouncedSearch)}
                 placeholder="Search by email..."
               />
-              <select
+              <Select
                 value={roleFilter}
                 aria-label="Filter by role"
                 onChange={(event) => {
                   setRoleFilter(event.target.value);
                   setUserPage(1);
                 }}
-                className="rounded-lg border border-[var(--ds-border)] bg-[var(--ds-input)] px-3 py-2 text-sm "
               >
                 <option value="">All roles</option>
                 <option value="intern">Intern</option>
                 <option value="company">Company</option>
                 <option value="admin">Admin</option>
-              </select>
+              </Select>
               <Button size="sm" variant="secondary" onClick={() => loadData(true)}>
                 Apply filters
               </Button>
@@ -622,7 +637,7 @@ function AdminDashboardInner({ view }: { view: AdminDashboardView }) {
 
               {canUpdateUsers && selectedUserIds.size > 0 && (
                 <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[var(--ds-primary)]/30 bg-[var(--ds-info-bg)] px-3 py-2.5">
-                  <span className="text-sm font-semibold text-[var(--ds-primary)]">
+                  <span className="text-sm font-semibold text-[var(--ds-primary-text)]">
                     {selectedUserIds.size} user{selectedUserIds.size > 1 ? "s" : ""} selected
                   </span>
                   <div className="flex gap-2">
@@ -639,73 +654,72 @@ function AdminDashboardInner({ view }: { view: AdminDashboardView }) {
                 </div>
               )}
 
-              <div className="overflow-x-auto">
-              <table className="w-full min-w-[760px] text-left text-sm">
-                <thead>
-                  <tr className="border-b border-[var(--ds-border)] text-xs uppercase tracking-wide text-[var(--ds-muted)] ">
-                    {canUpdateUsers && (
-                      <th className="w-10 px-3 py-2.5">
-                        <input
-                          type="checkbox"
-                          aria-label="Select all users on this page"
-                          checked={filteredUsers.length > 0 && filteredUsers.every((u) => selectedUserIds.has(u._id))}
-                          onChange={(event) => {
-                            setSelectedUserIds(event.target.checked ? new Set(filteredUsers.map((u) => u._id)) : new Set());
-                          }}
-                        />
-                      </th>
-                    )}
-                    <th className="px-3 py-2.5">Email</th>
-                    <th className="px-3 py-2.5">Role</th>
-                    <th className="px-3 py-2.5">Admin Role</th>
-                    <th className="px-3 py-2.5">Status</th>
-                    <th className="px-3 py-2.5">Joined</th>
-                    <th className="px-3 py-2.5">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredUsers.map((user) => (
-                    <tr key={user._id} className="border-b border-[var(--ds-border)]">
+              <Table className="min-w-[760px]">
+                <TableHead>
+                  {canUpdateUsers && (
+                    <TableCell as="th" className="w-10">
+                      <input
+                        type="checkbox"
+                        aria-label="Select all users on this page"
+                        checked={users.length > 0 && users.every((u) => selectedUserIds.has(u._id))}
+                        onChange={(event) => {
+                          setSelectedUserIds(event.target.checked ? new Set(users.map((u) => u._id)) : new Set());
+                        }}
+                      />
+                    </TableCell>
+                  )}
+                  <TableCell as="th">Email</TableCell>
+                  <TableCell as="th">Role</TableCell>
+                  <TableCell as="th">Admin Role</TableCell>
+                  <TableCell as="th">Status</TableCell>
+                  <TableCell as="th">Joined</TableCell>
+                  <TableCell as="th">Actions</TableCell>
+                </TableHead>
+                <TableBody>
+                  {users.map((user) => (
+                    <TableRow key={user._id}>
                       {canUpdateUsers && (
-                        <td className="px-3 py-3">
+                        <TableCell>
                           <input
                             type="checkbox"
                             aria-label={`Select ${user.email}`}
                             checked={selectedUserIds.has(user._id)}
                             onChange={() => toggleUserSelection(user._id)}
                           />
-                        </td>
+                        </TableCell>
                       )}
-                      <td className="px-3 py-3 font-medium text-[var(--ds-text)]">{user.email}</td>
-                      <td className="px-3 py-3">
+                      <TableCell className="font-medium text-[var(--ds-text)]">{user.email}</TableCell>
+                      <TableCell>
                         <StatusBadge status={user.role} />
-                      </td>
-                      <td className="px-3 py-3">
+                      </TableCell>
+                      <TableCell>
                         {user.role === "admin" ? (
                           canUpdateUsers ? (
-                            <select
+                            <Select
                               value={user.adminRole || "super_admin"}
+                              aria-label={`Change admin role for ${user.email}`}
                               disabled={busyId === user._id}
                               onChange={(event) => handleAdminRoleChange(user, event.target.value as AdminRole)}
-                              className="rounded-lg border border-[var(--ds-border)] bg-[var(--ds-input)] px-2 py-1 text-xs "
+                              className="h-8 py-1 text-xs"
+                              wrapperClassName="w-44"
                             >
                               <option value="super_admin">Super Admin</option>
                               <option value="verification_admin">Verification Admin</option>
                               <option value="moderation_admin">Moderation Admin</option>
                               <option value="support_admin">Support Admin</option>
-                            </select>
+                            </Select>
                           ) : (
                             <span className="text-xs capitalize text-[var(--ds-text-secondary)]">{user.adminRole?.replace(/_/g, " ") || "—"}</span>
                           )
                         ) : (
                           <span className="text-xs text-[var(--ds-muted)]">—</span>
                         )}
-                      </td>
-                      <td className="px-3 py-3 text-[var(--ds-text-secondary)]">
+                      </TableCell>
+                      <TableCell className="text-[var(--ds-text-secondary)]">
                         {user.isActive === false ? "Inactive" : "Active"}
-                      </td>
-                      <td className="px-3 py-3 text-[var(--ds-muted)]">{formatDate(user.createdAt)}</td>
-                      <td className="px-3 py-3">
+                      </TableCell>
+                      <TableCell className="text-[var(--ds-muted)]">{formatDate(user.createdAt)}</TableCell>
+                      <TableCell>
                         <div className="flex flex-wrap gap-2">
                           {canUpdateUsers && (
                             <>
@@ -725,24 +739,16 @@ function AdminDashboardInner({ view }: { view: AdminDashboardView }) {
                             </Button>
                           )}
                         </div>
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
-              </div>
-              <div className="flex items-center justify-between pt-2 text-xs text-[var(--ds-muted)]">
+                </TableBody>
+              </Table>
+              <div className="flex flex-wrap items-center justify-between gap-3 pt-3 text-xs text-[var(--ds-muted)]">
                 <span>
                   Page {userPage} · {users.length} of {userTotal} users
                 </span>
-                <div className="flex gap-2">
-                  <Button size="sm" variant="secondary" disabled={userPage <= 1 || loading} onClick={() => setUserPage((p) => Math.max(1, p - 1))}>
-                    Previous
-                  </Button>
-                  <Button size="sm" variant="secondary" disabled={userPage * 50 >= userTotal || loading} onClick={() => setUserPage((p) => p + 1)}>
-                    Next
-                  </Button>
-                </div>
+                <Pagination page={userPage} totalPages={userTotalPages} onChange={(p) => setUserPage(p)} />
               </div>
             </div>
           )}
@@ -773,6 +779,7 @@ function AdminDashboardInner({ view }: { view: AdminDashboardView }) {
           setRejectReason={setRejectReason}
           handleVerify={handleVerify}
           onSuspend={(company) => setConfirmAction({ type: "suspend-company", company })}
+          onUnverify={(company) => setConfirmAction({ type: "unverify-company", company })}
           loadData={loadData}
         />
       )}
@@ -784,31 +791,29 @@ function AdminDashboardInner({ view }: { view: AdminDashboardView }) {
           ) : internships.length === 0 ? (
             <EmptyState title="No internships posted yet" presetKey="internships" />
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[680px] text-left text-sm">
-                <thead>
-                  <tr className="border-b border-[var(--ds-border)] text-xs uppercase tracking-wide text-[var(--ds-muted)] ">
-                    <th className="px-3 py-2.5">Role</th>
-                    <th className="px-3 py-2.5">Company</th>
-                    <th className="px-3 py-2.5">Location</th>
-                    <th className="px-3 py-2.5">Stipend</th>
-                    <th className="px-3 py-2.5">Status</th>
-                    <th className="px-3 py-2.5">Posted</th>
-                    <th className="px-3 py-2.5">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
+            <div className="space-y-3">
+              <Table className="min-w-[680px]">
+                <TableHead>
+                  <TableCell as="th">Role</TableCell>
+                  <TableCell as="th">Company</TableCell>
+                  <TableCell as="th">Location</TableCell>
+                  <TableCell as="th">Stipend</TableCell>
+                  <TableCell as="th">Status</TableCell>
+                  <TableCell as="th">Posted</TableCell>
+                  <TableCell as="th">Actions</TableCell>
+                </TableHead>
+                <TableBody>
                   {pagedInternships.map((internship) => (
-                    <tr key={internship._id} className="border-b border-[var(--ds-border)]">
-                      <td className="px-3 py-3 font-medium text-[var(--ds-text)]">{internship.role}</td>
-                      <td className="px-3 py-3 text-[var(--ds-text-secondary)]">{internship.company?.companyName || "—"}</td>
-                      <td className="px-3 py-3 text-[var(--ds-text-secondary)]">{internship.location || "—"}</td>
-                      <td className="px-3 py-3 text-[var(--ds-text-secondary)]">{internship.stipend || "—"}</td>
-                      <td className="px-3 py-3">
+                    <TableRow key={internship._id}>
+                      <TableCell className="font-medium text-[var(--ds-text)]">{internship.role}</TableCell>
+                      <TableCell className="text-[var(--ds-text-secondary)]">{internship.company?.companyName || "—"}</TableCell>
+                      <TableCell className="text-[var(--ds-text-secondary)]">{internship.location || "—"}</TableCell>
+                      <TableCell className="text-[var(--ds-text-secondary)]">{internship.stipend || "—"}</TableCell>
+                      <TableCell>
                         <StatusBadge status={internship.isActive === false ? "rejected" : "verified"} />
-                      </td>
-                      <td className="px-3 py-3 text-[var(--ds-muted)]">{formatDate(internship.createdAt)}</td>
-                      <td className="px-3 py-3">
+                      </TableCell>
+                      <TableCell className="text-[var(--ds-muted)]">{formatDate(internship.createdAt)}</TableCell>
+                      <TableCell>
                         <div className="flex flex-wrap gap-2">
                           <Button
                             size="sm"
@@ -832,23 +837,16 @@ function AdminDashboardInner({ view }: { view: AdminDashboardView }) {
                             Remove
                           </Button>
                         </div>
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
-              <div className="flex items-center justify-between pt-3 text-xs text-[var(--ds-muted)]">
+                </TableBody>
+              </Table>
+              <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-[var(--ds-muted)]">
                 <span>
                   Page {internshipPage} of {internshipTotalPages} · {internships.length} internships
                 </span>
-                <div className="flex gap-2">
-                  <Button size="sm" variant="secondary" disabled={internshipPage <= 1} onClick={() => setInternshipPage((p) => Math.max(1, p - 1))}>
-                    Previous
-                  </Button>
-                  <Button size="sm" variant="secondary" disabled={internshipPage >= internshipTotalPages} onClick={() => setInternshipPage((p) => Math.min(internshipTotalPages, p + 1))}>
-                    Next
-                  </Button>
-                </div>
+                <Pagination page={internshipPage} totalPages={internshipTotalPages} onChange={(p) => setInternshipPage(p)} />
               </div>
             </div>
           )}
@@ -933,18 +931,11 @@ function AdminDashboardInner({ view }: { view: AdminDashboardView }) {
                 </div>
               </Card>
             ))}
-            <div className="flex items-center justify-between pt-1 text-xs text-[var(--ds-muted)]">
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-1 text-xs text-[var(--ds-muted)]">
               <span>
                 Page {reportPage} of {reportTotalPages} · {reports.length} reports
               </span>
-              <div className="flex gap-2">
-                <Button size="sm" variant="secondary" disabled={reportPage <= 1} onClick={() => setReportPage((p) => Math.max(1, p - 1))}>
-                  Previous
-                </Button>
-                <Button size="sm" variant="secondary" disabled={reportPage >= reportTotalPages} onClick={() => setReportPage((p) => Math.min(reportTotalPages, p + 1))}>
-                  Next
-                </Button>
-              </div>
+              <Pagination page={reportPage} totalPages={reportTotalPages} onChange={(p) => setReportPage(p)} />
             </div>
             </>
           )}
@@ -1012,18 +1003,11 @@ function AdminDashboardInner({ view }: { view: AdminDashboardView }) {
                 </li>
               ))}
             </ul>
-            <div className="mt-4 flex items-center justify-between text-xs text-[var(--ds-muted)]">
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs text-[var(--ds-muted)]">
               <span>
                 Page {logsPage} · {logs.length} of {logsTotal} entries
               </span>
-              <div className="flex gap-2">
-                <Button size="sm" variant="secondary" disabled={logsPage <= 1 || loading} onClick={() => setLogsPage((p) => Math.max(1, p - 1))}>
-                  Previous
-                </Button>
-                <Button size="sm" variant="secondary" disabled={logsPage * 30 >= logsTotal || loading} onClick={() => setLogsPage((p) => p + 1)}>
-                  Next
-                </Button>
-              </div>
+              <Pagination page={logsPage} totalPages={logsTotalPages} onChange={(p) => setLogsPage(p)} />
             </div>
             </>
           )}
@@ -1038,6 +1022,7 @@ function AdminDashboardInner({ view }: { view: AdminDashboardView }) {
             <SummaryStatCard title="Total Hires" value={stats.totalHires} hint="Applications marked selected/offered" icon={UserCheck} />
             <SummaryStatCard title="Active Interviews" value={stats.activeInterviews} hint="Ongoing interview pipeline" icon={Calendar} />
           </div>
+          <AdminGrowthCharts users={users} companies={companies} internships={internships} />
           <Card title="Operational Mix" subtitle="Current platform workload distribution">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="rounded-xl border border-[var(--ds-border)] p-3">
@@ -1118,20 +1103,32 @@ function AdminDashboardInner({ view }: { view: AdminDashboardView }) {
             ? `Soft delete ${confirmAction.user.email}?`
             : confirmAction?.type === "suspend-company"
               ? `Suspend ${confirmAction.company.companyName}?`
-              : confirmAction?.type === "remove-internship"
-                ? `Remove "${confirmAction.internship.role}" posting?`
-                : ""
+              : confirmAction?.type === "unverify-company"
+                ? `Unverify ${confirmAction.company.companyName}?`
+                : confirmAction?.type === "remove-internship"
+                  ? `Remove "${confirmAction.internship.role}" posting?`
+                  : ""
         }
         description={
           confirmAction?.type === "delete-user"
             ? "The account is deactivated and marked deleted. This can be reversed by reactivating the user."
             : confirmAction?.type === "suspend-company"
               ? "The company loses platform access until reinstated by an admin."
-              : confirmAction?.type === "remove-internship"
-                ? "This internship posting will be removed from the platform."
-                : undefined
+              : confirmAction?.type === "unverify-company"
+                ? "This revokes their verified badge and returns them to Pending review. They will need to be re-verified before regaining verified-company features."
+                : confirmAction?.type === "remove-internship"
+                  ? "This internship posting will be removed from the platform."
+                  : undefined
         }
-        confirmLabel={confirmAction?.type === "delete-user" ? "Soft Delete" : confirmAction?.type === "suspend-company" ? "Suspend" : "Remove"}
+        confirmLabel={
+          confirmAction?.type === "delete-user"
+            ? "Soft Delete"
+            : confirmAction?.type === "suspend-company"
+              ? "Suspend"
+              : confirmAction?.type === "unverify-company"
+                ? "Unverify"
+                : "Remove"
+        }
         busy={bulkBusy}
         onConfirm={runConfirmedAction}
         onCancel={() => setConfirmAction(null)}

@@ -13,6 +13,7 @@ import type { InterviewScheduleTarget } from "@/components/dashboard/company/int
 import { ApplicantParsedResume } from "@/components/dashboard/company/applicant-parsed-resume";
 import { ApplicantPortfolioCard } from "@/components/portfolio/applicant-portfolio-card";
 import { FEATURE_FLAGS } from "@/constants/featureFlags";
+import { useFocusTrap } from "@/lib/use-focus-trap";
 
 function fmtDate(value?: string) {
   if (!value) return "-";
@@ -75,6 +76,7 @@ export function ApplicantDetailsModal({
   const interviewRecords = extractAllFromApplication(a);
   const matchPct = a.relevanceScore ?? a.matchScore ?? 0;
   const resumeScore = a.intern?.resume?.score ?? 0;
+  const dialogRef = useFocusTrap<HTMLDivElement>(true);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -87,9 +89,15 @@ export function ApplicantDetailsModal({
   const node =
     typeof document !== "undefined"
       ? createPortal(
-          <div className="fixed inset-0 z-[100] flex items-end justify-center sm:items-center" role="dialog" aria-modal="true" aria-labelledby="applicant-details-title">
+          <div className="fixed inset-0 z-[100] flex items-end justify-center sm:items-center">
             <button type="button" className="absolute inset-0 bg-slate-950/65 backdrop-blur-sm" aria-label="Close details" onClick={onClose} />
-            <div className="ds-card relative z-[101] mb-0 flex max-h-[min(92vh,900px)] w-full max-w-3xl flex-col overflow-hidden !p-0 shadow-2xl rounded-t-2xl sm:mb-0 sm:rounded-2xl">
+            <div
+              ref={dialogRef}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="applicant-details-title"
+              className="ds-card relative z-[101] mb-0 flex max-h-[min(92vh,900px)] w-full max-w-3xl flex-col overflow-hidden !p-0 shadow-2xl rounded-t-2xl sm:mb-0 sm:rounded-2xl"
+            >
               <div className="flex shrink-0 items-start justify-between gap-3 border-b border-[var(--ds-border)] bg-gradient-to-r from-white/[0.03] via-transparent to-transparent px-5 py-4">
                 <div>
                   <h2 id="applicant-details-title" className="ds-h3 !text-lg">
@@ -148,7 +156,7 @@ export function ApplicantDetailsModal({
                   <section className="space-y-3 ds-card">
                     <p className="ds-label">Hiring workflow</p>
                     <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-                      <select className={`${field} w-full min-w-0 sm:min-w-[220px] sm:flex-1`} value={statusDraft} onChange={(e) => onStatusDraftChange(e.target.value)}>
+                      <select aria-label="Application stage" className={`${field} w-full min-w-0 sm:min-w-[220px] sm:flex-1`} value={statusDraft} onChange={(e) => onStatusDraftChange(e.target.value)}>
                         <option value="applied">Applied</option>
                         <option value="under_review">Under Review</option>
                         <option value="shortlisted">Shortlisted</option>
@@ -206,6 +214,7 @@ export function ApplicantDetailsModal({
                     <textarea
                       className="ds-textarea min-h-20"
                       placeholder="Share candidate feedback"
+                      aria-label="Candidate feedback"
                       value={feedbackDraft.feedback}
                       onChange={(e) => onFeedbackDraftChange({ feedback: e.target.value })}
                     />
@@ -215,11 +224,13 @@ export function ApplicantDetailsModal({
                         min={1}
                         max={5}
                         className={field}
+                        aria-label="Rating (1-5)"
                         value={feedbackDraft.rating}
                         onChange={(e) => onFeedbackDraftChange({ rating: Number(e.target.value || 1) })}
                       />
                       <select
                         className={field}
+                        aria-label="Feedback visibility"
                         value={feedbackDraft.visibility}
                         onChange={(e) => onFeedbackDraftChange({ visibility: e.target.value as "internal" | "candidate" })}
                       >

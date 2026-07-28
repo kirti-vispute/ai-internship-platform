@@ -12,7 +12,7 @@ import "./homepage.css";
 
 export default function HomePage() {
   return (
-    <main className="internai-home min-h-screen overflow-x-clip">
+    <main id="main-content" tabIndex={-1} className="internai-home min-h-screen overflow-x-clip focus:outline-none">
       <HomepageBackground />
 
       <div className="internai-home-content">

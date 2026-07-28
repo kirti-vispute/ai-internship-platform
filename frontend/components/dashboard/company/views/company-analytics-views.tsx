@@ -33,7 +33,7 @@ export function CompanyAnalyticsOverviewView({ analytics, hrInsights }: CompanyA
               <InfoTile
                 icon={Award}
                 label="Total Hires"
-                value={<span className="ds-stat-value text-[var(--ds-primary)]">{hiringAnalytics.totalHires}</span>}
+                value={<span className="ds-stat-value text-[var(--ds-primary-text)]">{hiringAnalytics.totalHires}</span>}
                 className="ring-1 ring-[var(--ds-primary)]/30 bg-[color-mix(in_srgb,var(--ds-primary)_5%,transparent)]"
               />
               <InfoTile icon={Users} label="Total Applications" value={<span className="ds-stat-value">{hiringAnalytics.totalApplications}</span>} />
@@ -141,7 +141,7 @@ export function CompanySalaryAnalyticsView({ analytics, canViewSalary, currentUs
           <InfoTile label="Min" value={formatCurrency(distStats.min)} className="opacity-90" />
           <InfoTile
             label={centralTendencyLabel}
-            value={<span className="text-[var(--ds-primary)]">{formatCurrency(central)}</span>}
+            value={<span className="text-[var(--ds-primary-text)]">{formatCurrency(central)}</span>}
             className="ring-1 ring-[var(--ds-primary)]/30 bg-[color-mix(in_srgb,var(--ds-primary)_5%,transparent)]"
           />
           <InfoTile label="Max" value={formatCurrency(distStats.max)} className="opacity-90" />
@@ -153,7 +153,7 @@ export function CompanySalaryAnalyticsView({ analytics, canViewSalary, currentUs
             aria-label={`${centralTendencyLabel} sits at ${formatCurrency(central)}, between a range of ${formatCurrency(distStats.min)} and ${formatCurrency(distStats.max)}`}
           >
             <span
-              className="absolute top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-[var(--ds-surface)] bg-[var(--ds-primary)] shadow-sm"
+              className="absolute top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-[var(--ds-surface)] bg-[var(--ds-primary-text)] shadow-sm dark:bg-[var(--ds-primary)]"
               style={{ left: `${markerPct}%` }}
               aria-hidden
             />
@@ -180,7 +180,7 @@ export function CompanySalaryAnalyticsView({ analytics, canViewSalary, currentUs
             <InfoTile
               icon={DollarSign}
               label="Average Package"
-              value={<span className="ds-stat-value text-[var(--ds-primary)]">{formatCurrency(analytics.salaryAnalytics.averagePackage)}</span>}
+              value={<span className="ds-stat-value text-[var(--ds-primary-text)]">{formatCurrency(analytics.salaryAnalytics.averagePackage)}</span>}
               className="ring-1 ring-[var(--ds-primary)]/30 bg-[color-mix(in_srgb,var(--ds-primary)_5%,transparent)]"
             />
             <InfoTile

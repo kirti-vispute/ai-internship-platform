@@ -171,8 +171,9 @@ export function InterviewLobby({
                 type="button"
                 onClick={onToggleMute}
                 disabled={!micReady}
+                aria-label={muted ? "Unmute microphone" : "Mute microphone"}
                 className={`flex h-10 w-10 items-center justify-center rounded-full disabled:cursor-not-allowed disabled:opacity-50 ${
-                  muted ? "bg-[var(--ds-danger)] text-white" : "bg-black/60 text-white"
+                  muted ? "bg-[var(--ds-danger)] text-[var(--ds-on-danger)]" : "bg-black/60 text-white"
                 }`}
               >
                 {muted ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
@@ -180,8 +181,9 @@ export function InterviewLobby({
               <button
                 type="button"
                 onClick={onToggleCamera}
+                aria-label={cameraOff ? "Turn camera on" : "Turn camera off"}
                 className={`flex h-10 w-10 items-center justify-center rounded-full ${
-                  cameraOff ? "bg-[var(--ds-danger)] text-white" : "bg-black/60 text-white"
+                  cameraOff ? "bg-[var(--ds-danger)] text-[var(--ds-on-danger)]" : "bg-black/60 text-white"
                 }`}
               >
                 {cameraOff ? <CameraOff className="h-4 w-4" /> : <Camera className="h-4 w-4" />}

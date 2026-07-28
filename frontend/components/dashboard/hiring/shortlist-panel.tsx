@@ -105,7 +105,7 @@ export function ShortlistPanel({
                     </div>
                     {evaluation ? (
                       <div className="text-right">
-                        <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-[var(--ds-gradient-from)]/20 to-[var(--ds-gradient-to)]/20 text-sm font-bold text-[var(--ds-primary)] ring-1 ring-[var(--ds-primary)]/30">
+                        <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-[var(--ds-gradient-from)]/20 to-[var(--ds-gradient-to)]/20 text-sm font-bold text-[var(--ds-primary-text)] ring-1 ring-[var(--ds-primary)]/30">
                           {evaluation.overallScore}
                         </div>
                         <p className="mt-1 text-[10px] text-[var(--ds-muted)]">Conf. {evaluation.confidenceScore}%</p>

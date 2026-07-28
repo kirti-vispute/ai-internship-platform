@@ -167,6 +167,7 @@ export function ErrorState({
 
   return (
     <div
+      role="alert"
       className={cn(
         "flex flex-col items-center text-center",
         isPage ? "min-h-[50vh] justify-center px-6 py-8 sm:py-10" : "ds-card border-dashed px-6 py-10",

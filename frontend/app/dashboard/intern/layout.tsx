@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useLayoutEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { InternShell } from "@/components/dashboard/intern/intern-shell";
 import { RoleDashboardGuard } from "@/components/ui/role-dashboard-guard";
 import { scheduleInitialInternPrefetch } from "@/lib/intern-route-prefetch-scheduler";
@@ -13,22 +13,25 @@ import {
   PROFILE_UPDATED_EVENT
 } from "@/lib/intern-portal";
 import { logoutAuthSession } from "@/lib/api-client";
-import { getAuthSession } from "@/lib/session";
 
 export default function InternDashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   // Must stay undefined on the first render so SSR and client hydration match.
   // Session/profile data lives in localStorage and is read after mount.
   const [welcomeName, setWelcomeName] = useState<string | undefined>(undefined);
 
   useLayoutEffect(() => {
+    // Deliberately no email-derived fallback here: showing "forstudyuse01"
+    // (the local-part of the account email) as a stand-in name would itself
+    // be an inconsistent-name bug the instant fetchInternProfile resolves
+    // and replaces it with the real fullName. Every other surface in the
+    // dashboard treats a not-yet-loaded name as absent (falls back to
+    // "Intern"), not as an email guess — this matches that.
     const cached = peekInternProfile();
     if (cached?.fullName) {
       setWelcomeName(cached.fullName);
-      return;
     }
-    const email = getAuthSession().email;
-    if (email) setWelcomeName(email.split("@")[0]);
   }, []);
 
   useEffect(() => {
@@ -67,6 +70,15 @@ export default function InternDashboardLayout({ children }: { children: React.Re
     await logoutAuthSession();
     router.push("/auth/intern");
   }, [router]);
+
+  const isFirstRender = useRef(true);
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    document.getElementById("main-content")?.focus();
+  }, [pathname]);
 
   return (
     <RoleDashboardGuard expectedRole="intern">

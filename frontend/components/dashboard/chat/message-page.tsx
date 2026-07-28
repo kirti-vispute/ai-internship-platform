@@ -2,7 +2,12 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { ChatDetailsModal } from "@/components/dashboard/chat/chat-details-modal";
+import dynamic from "next/dynamic";
+
+const ChatDetailsModal = dynamic(
+  () => import("@/components/dashboard/chat/chat-details-modal").then((m) => m.ChatDetailsModal),
+  { ssr: false }
+);
 import { ConversationSidebar } from "@/components/dashboard/chat/conversation-sidebar";
 import { ChatPanel } from "@/components/dashboard/chat/chat-panel";
 import {
@@ -220,21 +225,24 @@ export function MessagePage({ role }: MessagePageProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deepLinkConversationId]);
 
-  async function handleSelectConversation(conversationId: string) {
-    try {
-      setSelectedId(conversationId);
-      setMobileView("thread");
-      setLoadingMessages(true);
-      setMessages([]);
-      await loadConversationMessages(conversationId);
-    } catch (err) {
-      pushToast({ title: "Chat error", message: (err as Error).message, variant: "error" });
-    } finally {
-      setLoadingMessages(false);
-    }
-  }
+  const handleSelectConversation = useCallback(
+    async (conversationId: string) => {
+      try {
+        setSelectedId(conversationId);
+        setMobileView("thread");
+        setLoadingMessages(true);
+        setMessages([]);
+        await loadConversationMessages(conversationId);
+      } catch (err) {
+        pushToast({ title: "Chat error", message: (err as Error).message, variant: "error" });
+      } finally {
+        setLoadingMessages(false);
+      }
+    },
+    [loadConversationMessages, pushToast]
+  );
 
-  async function handleLoadMore() {
+  const handleLoadMore = useCallback(async () => {
     if (!selectedId || loadingMore || !hasMore) return;
     const oldest = messages[0];
     if (!oldest) return;
@@ -246,27 +254,30 @@ export function MessagePage({ role }: MessagePageProps) {
     } finally {
       setLoadingMore(false);
     }
-  }
+  }, [selectedId, loadingMore, hasMore, messages, loadConversationMessages, pushToast]);
 
-  async function handleStartChat(contact: ChatInternContact | ChatCompanyContact) {
-    try {
-      const payload =
-        role === "intern"
-          ? { companyId: (contact as ChatInternContact).companyId }
-          : { internProfileId: (contact as ChatCompanyContact).internProfileId };
-      const conversation = await openChatConversation(payload);
-      setShowNewChat(false);
-      const list = await refreshConversations();
-      if (!list.some((item) => item._id === conversation._id)) {
-        setConversations((prev) => [conversation, ...prev]);
+  const handleStartChat = useCallback(
+    async (contact: ChatInternContact | ChatCompanyContact) => {
+      try {
+        const payload =
+          role === "intern"
+            ? { companyId: (contact as ChatInternContact).companyId }
+            : { internProfileId: (contact as ChatCompanyContact).internProfileId };
+        const conversation = await openChatConversation(payload);
+        setShowNewChat(false);
+        const list = await refreshConversations();
+        if (!list.some((item) => item._id === conversation._id)) {
+          setConversations((prev) => [conversation, ...prev]);
+        }
+        await handleSelectConversation(conversation._id);
+      } catch (err) {
+        pushToast({ title: "Unable to start chat", message: (err as Error).message, variant: "error" });
       }
-      await handleSelectConversation(conversation._id);
-    } catch (err) {
-      pushToast({ title: "Unable to start chat", message: (err as Error).message, variant: "error" });
-    }
-  }
+    },
+    [role, refreshConversations, handleSelectConversation, pushToast]
+  );
 
-  async function handleSendMessage() {
+  const handleSendMessage = useCallback(async () => {
     if (!selectedId || !draft.trim()) return;
     const body = draft.trim();
     const optimistic = createOptimisticMessage(selectedId, role, body);
@@ -300,7 +311,22 @@ export function MessagePage({ role }: MessagePageProps) {
     } finally {
       setSending(false);
     }
-  }
+  }, [selectedId, draft, role, sendSocketMessage, pushToast]);
+
+  const handleToggleNewChat = useCallback(() => setShowNewChat((v) => !v), []);
+  const handleSelectConversationVoid = useCallback(
+    (id: string) => void handleSelectConversation(id),
+    [handleSelectConversation]
+  );
+  const handleStartChatVoid = useCallback(
+    (contact: ChatInternContact | ChatCompanyContact) => void handleStartChat(contact),
+    [handleStartChat]
+  );
+  const handleBackToList = useCallback(() => setMobileView("list"), []);
+  const handleOpenDetails = useCallback(() => setDetailsOpen(true), []);
+  const handleCloseDetails = useCallback(() => setDetailsOpen(false), []);
+  const handleSendMessageVoid = useCallback(() => void handleSendMessage(), [handleSendMessage]);
+  const handleLoadMoreVoid = useCallback(() => void handleLoadMore(), [handleLoadMore]);
 
   if (!FEATURE_FLAGS.ENABLE_CHAT) {
     return (
@@ -313,7 +339,10 @@ export function MessagePage({ role }: MessagePageProps) {
   return (
     <div className="flex h-[calc(100dvh-4.5rem)] min-h-[32rem] flex-col gap-2.5" data-chat-workspace>
       {error ? (
-        <div className="shrink-0 rounded-xl border border-[var(--ds-danger)] bg-[var(--ds-danger-bg)] px-4 py-3 text-sm text-[var(--ds-danger)]">
+        <div
+          role="alert"
+          className="shrink-0 rounded-xl border border-[var(--ds-danger)] bg-[var(--ds-danger-bg)] px-4 py-3 text-sm text-[var(--ds-danger)]"
+        >
           {error}
         </div>
       ) : null}
@@ -335,9 +364,9 @@ export function MessagePage({ role }: MessagePageProps) {
               showNewChat={showNewChat}
               loading={loading}
               unreadTotal={unreadTotal}
-              onToggleNewChat={() => setShowNewChat((v) => !v)}
-              onSelectConversation={(id) => void handleSelectConversation(id)}
-              onStartChat={(contact) => void handleStartChat(contact)}
+              onToggleNewChat={handleToggleNewChat}
+              onSelectConversation={handleSelectConversationVoid}
+              onStartChat={handleStartChatVoid}
               className="h-full min-h-0"
             />
           </div>
@@ -354,11 +383,11 @@ export function MessagePage({ role }: MessagePageProps) {
               loadingMore={loadingMore}
               hasMore={hasMore}
               showBackButton
-              onBack={() => setMobileView("list")}
-              onOpenDetails={() => setDetailsOpen(true)}
+              onBack={handleBackToList}
+              onOpenDetails={handleOpenDetails}
               onDraftChange={setDraft}
-              onSend={() => void handleSendMessage()}
-              onLoadMore={() => void handleLoadMore()}
+              onSend={handleSendMessageVoid}
+              onLoadMore={handleLoadMoreVoid}
               className="h-full min-h-0"
             />
           </div>
@@ -371,7 +400,7 @@ export function MessagePage({ role }: MessagePageProps) {
         contact={activeContact}
         application={activeApplication}
         open={detailsOpen && Boolean(selectedConversation)}
-        onClose={() => setDetailsOpen(false)}
+        onClose={handleCloseDetails}
       />
     </div>
   );

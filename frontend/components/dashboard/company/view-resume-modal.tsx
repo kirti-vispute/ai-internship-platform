@@ -128,7 +128,8 @@ export function ViewResumeModal({ open, applicationId, candidateName, role, onCl
 
             <div className="min-h-0 flex-1 bg-[var(--ds-deep)]">
               {status === "loading" ? (
-                <div className="flex h-full items-center justify-center p-8">
+                <div role="status" aria-live="polite" className="flex h-full items-center justify-center p-8">
+                  <span className="sr-only">Loading resume…</span>
                   <div className="w-full max-w-md space-y-3">
                     <Skeleton className="h-4 w-2/3" />
                     <Skeleton className="h-3 w-full" />
@@ -142,7 +143,7 @@ export function ViewResumeModal({ open, applicationId, candidateName, role, onCl
               ) : null}
 
               {status === "error" ? (
-                <div className="flex h-full flex-col items-center justify-center gap-2 px-6 text-center">
+                <div role="alert" className="flex h-full flex-col items-center justify-center gap-2 px-6 text-center">
                   <span className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--ds-warning)]/25 bg-[var(--ds-warning)]/10">
                     <AppIcon icon={AlertTriangle} size="md" className="text-[var(--ds-warning)]" />
                   </span>

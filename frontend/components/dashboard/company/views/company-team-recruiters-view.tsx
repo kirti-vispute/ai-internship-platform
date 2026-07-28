@@ -80,7 +80,7 @@ export function CompanyTeamRecruitersView({
               <InfoTile
                 icon={Award}
                 label="Total Hires"
-                value={<span className="ds-stat-value text-[var(--ds-primary)]">{hrInsights.summary.totalHires}</span>}
+                value={<span className="ds-stat-value text-[var(--ds-primary-text)]">{hrInsights.summary.totalHires}</span>}
                 className="ring-1 ring-[color-mix(in_srgb,var(--ds-primary)_40%,transparent)] bg-[color-mix(in_srgb,var(--ds-primary)_5%,transparent)]"
               />
               <InfoTile icon={Percent} label="Avg Conversion" value={<span className="ds-stat-value">{hrInsights.summary.averageConversionRate}%</span>} />
@@ -90,9 +90,9 @@ export function CompanyTeamRecruitersView({
           <Card title="Add HR User" titleIcon={UserPlus}>
             <div className="space-y-4">
               <div className="grid gap-3 sm:grid-cols-3">
-                <input className={field} placeholder="Full name" value={hrForm.name} onChange={(e) => setHrForm((p) => ({ ...p, name: e.target.value }))} />
-                <input className={field} placeholder="Email" type="email" value={hrForm.email} onChange={(e) => setHrForm((p) => ({ ...p, email: e.target.value }))} />
-                <input className={field} placeholder="Password (min 8 chars)" type="password" value={hrForm.password} onChange={(e) => setHrForm((p) => ({ ...p, password: e.target.value }))} />
+                <input aria-label="Full name" className={field} placeholder="Full name" value={hrForm.name} onChange={(e) => setHrForm((p) => ({ ...p, name: e.target.value }))} />
+                <input aria-label="Email" className={field} placeholder="Email" type="email" value={hrForm.email} onChange={(e) => setHrForm((p) => ({ ...p, email: e.target.value }))} />
+                <input aria-label="Password (min 8 chars)" className={field} placeholder="Password (min 8 chars)" type="password" value={hrForm.password} onChange={(e) => setHrForm((p) => ({ ...p, password: e.target.value }))} />
               </div>
               <div>
                 <p className="ds-label mb-2">Permissions</p>
@@ -162,7 +162,15 @@ export function CompanyTeamRecruitersView({
                     </div>
 
                     <div className={companyDashboardStyles.actionsFooter}>
-                      <Button type="button" size="sm" variant="secondary" onClick={() => openHrInsights(hr)} disabled={hrActionLoading}>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => openHrInsights(hr)}
+                        disabled={hrActionLoading}
+                        aria-expanded={expanded}
+                        aria-controls={`hr-insights-${hr.id}`}
+                      >
                         <AppIcon icon={expanded ? ChevronUp : ChevronDown} size="xs" className="text-current" />
                         Insights
                       </Button>
@@ -173,7 +181,7 @@ export function CompanyTeamRecruitersView({
                     </div>
 
                     {expanded && (
-                      <div className="mt-4 space-y-4 border-t border-[var(--ds-border)] pt-4">
+                      <div id={`hr-insights-${hr.id}`} className="mt-4 space-y-4 border-t border-[var(--ds-border)] pt-4">
                         <div>
                           <p className="ds-label mb-2">Performance</p>
                           <div className="grid gap-2 sm:grid-cols-3">

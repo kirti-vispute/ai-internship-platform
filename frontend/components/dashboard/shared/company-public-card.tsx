@@ -34,7 +34,7 @@ export function CompanyPublicCard({ companyId }: CompanyPublicCardProps) {
 
   if (loading) {
     return (
-      <div className="surface-subtle mt-3 grid gap-2 px-3 py-3 sm:grid-cols-2">
+      <div role="status" aria-live="polite" aria-label="Loading company profile" className="surface-subtle mt-3 grid gap-2 px-3 py-3 sm:grid-cols-2">
         {Array.from({ length: 4 }).map((_, i) => (
           <Skeleton key={i} className="h-3.5 w-3/4" />
         ))}
@@ -71,6 +71,7 @@ export function CompanyPublicCard({ companyId }: CompanyPublicCardProps) {
       <p>
         <Link href={`/company/${companyId}`} className="text-link" target="_blank" rel="noreferrer noopener">
           View full company profile
+          <span className="sr-only"> (opens in new tab)</span>
         </Link>
       </p>
     </div>

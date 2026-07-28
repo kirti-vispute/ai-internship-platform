@@ -123,16 +123,16 @@ function AuthPortalLinks({ role }: { role: AuthRole }) {
       <p className="ds-label">Other portals</p>
       <div className="flex flex-wrap gap-x-4 gap-y-1">
         {role !== "intern" && (
-          <Link href="/auth/intern" className="font-semibold text-[var(--ds-primary)] hover:text-[var(--ds-primary-hover)]" data-cursor="link">
+          <Link href="/auth/intern" className="font-semibold text-[var(--ds-primary-text)] hover:text-[var(--ds-primary-hover)]" data-cursor="link">
             Intern login
           </Link>
         )}
         {role !== "company" && (
-          <Link href="/auth/company" className="font-semibold text-[var(--ds-primary)] hover:text-[var(--ds-primary-hover)]" data-cursor="link">
+          <Link href="/auth/company" className="font-semibold text-[var(--ds-primary-text)] hover:text-[var(--ds-primary-hover)]" data-cursor="link">
             Company login
           </Link>
         )}
-        <Link href="/auth/admin" className="font-semibold text-[var(--ds-primary)] hover:text-[var(--ds-primary-hover)]" data-cursor="link">
+        <Link href="/auth/admin" className="font-semibold text-[var(--ds-primary-text)] hover:text-[var(--ds-primary-hover)]" data-cursor="link">
           Admin login
         </Link>
       </div>
@@ -149,7 +149,6 @@ export function RoleAuthForm({ role }: { role: AuthRole }) {
   const [companyData, setCompanyData] = useState<CompanySignupData>(initialCompanyData);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [verificationPending, setVerificationPending] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [otp, setOtp] = useState("");
@@ -208,7 +207,7 @@ export function RoleAuthForm({ role }: { role: AuthRole }) {
       try {
         setOtpSending(true);
         setFeedback(null);
-        const response = await apiRequest<{ message: string; retryAfterSeconds?: number; devOtp?: string }>(
+        const response = await apiRequest<{ message: string; retryAfterSeconds?: number }>(
           "/api/auth/intern/send-otp",
           {
             method: "POST",
@@ -219,10 +218,7 @@ export function RoleAuthForm({ role }: { role: AuthRole }) {
         setOtpVerified(false);
         setOtp("");
         startOtpResendCountdown(response.retryAfterSeconds ?? OTP_RESEND_DEFAULT_SECONDS);
-        let message = isResend ? "OTP resent to your email." : "OTP sent to your email.";
-        if (response.devOtp) {
-          message += ` Dev code: ${response.devOtp}`;
-        }
+        const message = isResend ? "OTP resent to your email." : "OTP sent to your email.";
         setFeedback({ type: "success", message });
       } catch (error) {
         if (error instanceof ApiRequestError && error.details?.retryAfterSeconds) {
@@ -277,7 +273,7 @@ export function RoleAuthForm({ role }: { role: AuthRole }) {
       try {
         setResetOtpSending(true);
         setFeedback(null);
-        const response = await apiRequest<{ message: string; retryAfterSeconds?: number; devOtp?: string }>(
+        const response = await apiRequest<{ message: string; retryAfterSeconds?: number }>(
           "/api/auth/password/send-otp",
           {
             method: "POST",
@@ -287,10 +283,7 @@ export function RoleAuthForm({ role }: { role: AuthRole }) {
         setResetOtpSent(true);
         setResetOtp("");
         startResetResendCountdown(response.retryAfterSeconds ?? OTP_RESEND_DEFAULT_SECONDS);
-        let message = response.message || (isResend ? "Password reset OTP resent." : "Password reset OTP sent.");
-        if (response.devOtp) {
-          message += ` Dev code: ${response.devOtp}`;
-        }
+        const message = response.message || (isResend ? "Password reset OTP resent." : "Password reset OTP sent.");
         setFeedback({ type: "success", message });
       } catch (error) {
         if (error instanceof ApiRequestError && error.details?.retryAfterSeconds) {
@@ -491,7 +484,14 @@ export function RoleAuthForm({ role }: { role: AuthRole }) {
           return;
         }
 
-        const response = await apiRequest<{ message: string; verificationStatus: string }>("/api/auth/company/signup", {
+        const response = await apiRequest<{
+          message: string;
+          token: string;
+          refreshToken?: string;
+          role: AuthRole;
+          companyAccountType?: string;
+          verificationStatus: string;
+        }>("/api/auth/company/signup", {
           method: "POST",
           body: JSON.stringify({
             companyName: companyData.companyName,
@@ -506,8 +506,13 @@ export function RoleAuthForm({ role }: { role: AuthRole }) {
           })
         });
 
-        setVerificationPending(true);
-        setFeedback({ type: "success", message: `${response.message} (${response.verificationStatus})` });
+        setAuthSession(response.role, response.token, {
+          refreshToken: response.refreshToken,
+          email: companyData.companyEmail.trim().toLowerCase(),
+          companyAccountType: response.companyAccountType || null
+        });
+        setFeedback({ type: "success", message: response.message });
+        router.push(resolvePostLoginRedirect(response.role, searchParams.get("next"), response.companyAccountType));
       } catch (error) {
         setFeedback({ type: "error", message: (error as Error).message });
       } finally {
@@ -529,6 +534,7 @@ export function RoleAuthForm({ role }: { role: AuthRole }) {
           type="button"
           onClick={() => setModeWithReset("signup")}
           data-cursor="button"
+          aria-pressed={mode === "signup"}
           className={`rounded-lg px-3 py-2 text-sm font-semibold transition-all duration-200 ${
             mode === "signup"
               ? "bg-[var(--ds-card)] text-[var(--ds-text)] shadow-soft"
@@ -544,6 +550,7 @@ export function RoleAuthForm({ role }: { role: AuthRole }) {
             if (role === "intern") applyInternLoginPreset(internLoginType);
           }}
           data-cursor="button"
+          aria-pressed={mode === "login"}
           className={`rounded-lg px-3 py-2 text-sm font-semibold transition-all duration-200 ${
             mode === "login"
               ? "bg-[var(--ds-card)] text-[var(--ds-text)] shadow-soft"
@@ -558,7 +565,7 @@ export function RoleAuthForm({ role }: { role: AuthRole }) {
         {role === "intern" ? "Looking for company access?" : "Looking for intern access?"}{" "}
         <Link
           href={role === "intern" ? "/auth/company" : "/auth/intern"}
-          className="font-semibold text-[var(--ds-primary)] hover:text-[var(--ds-primary-hover)]"
+          className="font-semibold text-[var(--ds-primary-text)] hover:text-[var(--ds-primary-hover)]"
           data-cursor="link"
         >
           Switch to {role === "intern" ? "Company" : "Intern"}
@@ -583,6 +590,7 @@ export function RoleAuthForm({ role }: { role: AuthRole }) {
                       key={type}
                       type="button"
                       data-cursor="button"
+                      aria-pressed={active}
                       onClick={() => applyInternLoginPreset(type)}
                       className={`rounded-xl border px-3 py-3 text-left transition ${
                         active
@@ -606,7 +614,7 @@ export function RoleAuthForm({ role }: { role: AuthRole }) {
                 </p>
                 <button
                   type="button"
-                  className="mt-2 font-semibold text-[var(--ds-primary)] hover:text-[var(--ds-primary-hover)]"
+                  className="mt-2 font-semibold text-[var(--ds-primary-text)] hover:text-[var(--ds-primary-hover)]"
                   onClick={() => applyInternLoginPreset(internLoginType)}
                 >
                   Use these credentials
@@ -628,6 +636,7 @@ export function RoleAuthForm({ role }: { role: AuthRole }) {
                       key={type}
                       type="button"
                       data-cursor="button"
+                      aria-pressed={active}
                       onClick={() => applyCompanyLoginPreset(type)}
                       className={`rounded-xl border px-3 py-3 text-left transition ${
                         active
@@ -656,7 +665,7 @@ export function RoleAuthForm({ role }: { role: AuthRole }) {
                 </p>
                 <button
                   type="button"
-                  className="mt-2 font-semibold text-[var(--ds-primary)] hover:text-[var(--ds-primary-hover)]"
+                  className="mt-2 font-semibold text-[var(--ds-primary-text)] hover:text-[var(--ds-primary-hover)]"
                   onClick={() => applyCompanyLoginPreset(companyLoginType)}
                 >
                   Use these credentials
@@ -684,7 +693,8 @@ export function RoleAuthForm({ role }: { role: AuthRole }) {
             <button
               type="button"
               data-cursor="button"
-              className="font-medium text-[var(--ds-primary)] hover:text-[var(--ds-primary-hover)]"
+              aria-pressed={showPassword}
+              className="font-medium text-[var(--ds-primary-text)] hover:text-[var(--ds-primary-hover)]"
               onClick={() => setShowPassword((prev) => !prev)}
             >
               {showPassword ? "Hide Password" : "Show Password"}
@@ -692,6 +702,8 @@ export function RoleAuthForm({ role }: { role: AuthRole }) {
             <button
               type="button"
               data-cursor="button"
+              aria-expanded={resetOtpMode}
+              aria-controls="reset-password-panel"
               className="text-[var(--ds-muted)] hover:text-[var(--ds-text-secondary)]"
               onClick={() => setResetOtpMode((prev) => !prev)}
             >
@@ -699,7 +711,7 @@ export function RoleAuthForm({ role }: { role: AuthRole }) {
             </button>
           </div>
           {resetOtpMode && (
-            <div className="space-y-2 rounded-xl border border-[var(--ds-border)] p-3">
+            <div id="reset-password-panel" className="space-y-2 rounded-xl border border-[var(--ds-border)] p-3">
               {!resetOtpSent ? (
                 <Button type="button" size="sm" disabled={resetOtpSending} onClick={() => handleSendPasswordResetOtp(false)}>
                   {resetOtpSending ? (
@@ -873,7 +885,8 @@ export function RoleAuthForm({ role }: { role: AuthRole }) {
                 <button
                   type="button"
                   data-cursor="button"
-                  className="font-medium text-[var(--ds-primary)] hover:text-[var(--ds-primary-hover)]"
+                  aria-pressed={showPassword}
+                  className="font-medium text-[var(--ds-primary-text)] hover:text-[var(--ds-primary-hover)]"
                   onClick={() => setShowPassword((prev) => !prev)}
                 >
                   {showPassword ? "Hide Password" : "Show Password"}
@@ -939,7 +952,8 @@ export function RoleAuthForm({ role }: { role: AuthRole }) {
                 <button
                   type="button"
                   data-cursor="button"
-                  className="font-medium text-[var(--ds-primary)] hover:text-[var(--ds-primary-hover)]"
+                  aria-pressed={showPassword}
+                  className="font-medium text-[var(--ds-primary-text)] hover:text-[var(--ds-primary-hover)]"
                   onClick={() => setShowPassword((prev) => !prev)}
                 >
                   {showPassword ? "Hide Password" : "Show Password"}
@@ -950,12 +964,6 @@ export function RoleAuthForm({ role }: { role: AuthRole }) {
               <p className="rounded-xl border border-[var(--ds-warning)]/40 bg-[var(--ds-warning-bg)] px-3 py-2 text-xs text-[var(--ds-warning)]">
                 Verification info: Company accounts are reviewed before posting internships.
               </p>
-
-              {verificationPending && (
-                <p className="rounded-xl border border-[var(--ds-primary)]/40 bg-[var(--ds-info-bg)] px-3 py-2 text-sm text-[var(--ds-primary)]">
-                  Verification pending: Your company profile is under review.
-                </p>
-              )}
             </>
           )}
 

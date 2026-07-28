@@ -7,10 +7,10 @@ import { BrandedEmptyState, EmptyState } from "@/components/dashboard/shared/emp
 import { ErrorState, classifyErrorMessage } from "@/components/errors/error-state";
 import { BRANDED_EMPTY_STATES } from "@/lib/brand";
 import { BarChart3, ClipboardList, LayoutGrid, Pencil, Sparkles } from "lucide-react";
-import { RecentMessagesWidget } from "@/components/dashboard/chat/recent-messages-widget";
+import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import { AppIcon } from "@/components/icons/app-icon";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton, SkeletonCard, SkeletonList, SkeletonPage } from "@/components/ui/skeleton";
 import { shouldBlockPageContent } from "@/lib/instant-load";
 import {
   Application,
@@ -31,34 +31,78 @@ import {
   PROFILE_UPDATED_EVENT
 } from "@/lib/intern-portal";
 import { mapApiInterviewsToRecords, type ScheduledInterviewRecord } from "@/lib/interview-workflow";
-import { UpcomingInterviewsWidget } from "@/components/dashboard/intern/upcoming-interviews-widget";
-import { WeaknessAnalysisPanel } from "@/components/dashboard/intern/weakness-analysis-panel";
 import { buildWeaknessOptions, analyzeInternshipWeaknesses } from "@/lib/intern-weakness-analysis";
-import {
-  AtsReadinessCard,
-  DashboardHero,
-  PlacementReadinessCard,
-  SkillGapCard,
-  getPlacementReadiness
-} from "@/components/dashboard/intern/dashboard-overview-cards";
-import {
-  ActivityTimeline,
-  DashboardCharts,
-  QuickActions,
-  RecommendationsCard,
-  StatisticsCards
-} from "@/components/dashboard/intern/dashboard-overview-extras";
-import { CareerProgressHub } from "@/components/dashboard/intern/career-progress-hub";
-import { WeeklyAiInsights } from "@/components/dashboard/intern/weekly-ai-insights";
-import { ProgressChartsPanel } from "@/components/dashboard/intern/progress-charts-panel";
+import { DashboardHero, getPlacementReadiness } from "@/components/dashboard/intern/dashboard-overview-cards";
+import { QuickActions } from "@/components/dashboard/intern/dashboard-overview-extras";
 import { DashboardTabs, type DashboardTabItem } from "@/components/dashboard/shared/dashboard-tabs";
 import {
-  AchievementsSection,
   CareerReadinessSection,
-  PlacementReadinessTiersSection,
   PriorityRoadmapSection,
   TodaysFocusSection
 } from "@/components/dashboard/intern/career-coach-dashboard";
+
+// Non-default-tab content: never needed on first paint (Overview tab shows first),
+// only loaded once the user actually switches to the tab that renders it.
+const RecentMessagesWidget = dynamic(
+  () => import("@/components/dashboard/chat/recent-messages-widget").then((m) => m.RecentMessagesWidget),
+  { ssr: false, loading: () => <SkeletonList /> }
+);
+const UpcomingInterviewsWidget = dynamic(
+  () => import("@/components/dashboard/intern/upcoming-interviews-widget").then((m) => m.UpcomingInterviewsWidget),
+  { ssr: false, loading: () => <SkeletonList /> }
+);
+const WeaknessAnalysisPanel = dynamic(
+  () => import("@/components/dashboard/intern/weakness-analysis-panel").then((m) => m.WeaknessAnalysisPanel),
+  { ssr: false, loading: () => <SkeletonCard /> }
+);
+const AtsReadinessCard = dynamic(
+  () => import("@/components/dashboard/intern/dashboard-overview-cards").then((m) => m.AtsReadinessCard),
+  { ssr: false, loading: () => <SkeletonCard /> }
+);
+const PlacementReadinessCard = dynamic(
+  () => import("@/components/dashboard/intern/dashboard-overview-cards").then((m) => m.PlacementReadinessCard),
+  { ssr: false, loading: () => <SkeletonCard /> }
+);
+const SkillGapCard = dynamic(
+  () => import("@/components/dashboard/intern/dashboard-overview-cards").then((m) => m.SkillGapCard),
+  { ssr: false, loading: () => <SkeletonCard /> }
+);
+const ActivityTimeline = dynamic(
+  () => import("@/components/dashboard/intern/dashboard-overview-extras").then((m) => m.ActivityTimeline),
+  { ssr: false, loading: () => <SkeletonList /> }
+);
+const DashboardCharts = dynamic(
+  () => import("@/components/dashboard/intern/dashboard-overview-extras").then((m) => m.DashboardCharts),
+  { ssr: false, loading: () => <SkeletonPage /> }
+);
+const RecommendationsCard = dynamic(
+  () => import("@/components/dashboard/intern/dashboard-overview-extras").then((m) => m.RecommendationsCard),
+  { ssr: false, loading: () => <SkeletonCard /> }
+);
+const StatisticsCards = dynamic(
+  () => import("@/components/dashboard/intern/dashboard-overview-extras").then((m) => m.StatisticsCards),
+  { ssr: false, loading: () => <SkeletonCard /> }
+);
+const CareerProgressHub = dynamic(
+  () => import("@/components/dashboard/intern/career-progress-hub").then((m) => m.CareerProgressHub),
+  { ssr: false, loading: () => <SkeletonCard /> }
+);
+const WeeklyAiInsights = dynamic(
+  () => import("@/components/dashboard/intern/weekly-ai-insights").then((m) => m.WeeklyAiInsights),
+  { ssr: false, loading: () => <SkeletonCard /> }
+);
+const ProgressChartsPanel = dynamic(
+  () => import("@/components/dashboard/intern/progress-charts-panel").then((m) => m.ProgressChartsPanel),
+  { ssr: false, loading: () => <SkeletonPage /> }
+);
+const AchievementsSection = dynamic(
+  () => import("@/components/dashboard/intern/career-coach-dashboard").then((m) => m.AchievementsSection),
+  { ssr: false, loading: () => <SkeletonCard /> }
+);
+const PlacementReadinessTiersSection = dynamic(
+  () => import("@/components/dashboard/intern/career-coach-dashboard").then((m) => m.PlacementReadinessTiersSection),
+  { ssr: false, loading: () => <SkeletonCard /> }
+);
 
 export default function InternDashboardOverviewPage() {
   const [profile, setProfile] = useState<InternProfile | null>(null);
@@ -259,7 +303,7 @@ export default function InternDashboardOverviewPage() {
                             {app.appliedAt ? new Date(app.appliedAt).toLocaleDateString() : "—"}
                           </td>
                           <td className="py-2.5">
-                            <span className="inline-flex rounded-full bg-[var(--ds-primary)]/10 px-2.5 py-1 text-xs font-semibold capitalize text-[var(--ds-primary)]">
+                            <span className="inline-flex rounded-full bg-[var(--ds-primary)]/10 px-2.5 py-1 text-xs font-semibold capitalize text-[var(--ds-primary-text)]">
                               {(app.status || "pending").replace(/_/g, " ")}
                             </span>
                           </td>

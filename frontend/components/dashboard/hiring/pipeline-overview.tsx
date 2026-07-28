@@ -65,7 +65,11 @@ export function PipelineOverview({ applications, variant = "standard", onStageCl
         <CompanyDashboardEmptyState title="Pipeline fills in once applications arrive." />
       ) : (
         <CompanyDashboardPanelCard>
-          <div className="mb-5 flex h-2.5 overflow-hidden rounded-full bg-[var(--ds-border)]">
+          <div
+            className="mb-5 flex h-2.5 overflow-hidden rounded-full bg-[var(--ds-border)]"
+            role="img"
+            aria-label={`Funnel: ${stages.map((stage) => `${stage.label} ${stageCounts[stage.key as keyof typeof stageCounts] || 0}`).join(", ")}`}
+          >
             {stages.map((stage) => {
               const value = stageCounts[stage.key as keyof typeof stageCounts] || 0;
               const width = (value / total) * 100;

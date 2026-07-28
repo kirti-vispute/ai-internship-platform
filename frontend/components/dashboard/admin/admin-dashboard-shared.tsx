@@ -14,7 +14,7 @@ export function formatDate(value?: string) {
 
 export function LoadingRows({ rows = 4 }: { rows?: number }) {
   return (
-    <div className="space-y-3">
+    <div role="status" aria-live="polite" aria-label="Loading" className="space-y-3">
       {Array.from({ length: rows }).map((_, index) => (
         <Skeleton key={index} className="h-14 w-full" />
       ))}
@@ -51,7 +51,7 @@ export function DocumentLinks({ company }: { company: AdminCompany }) {
           href={safeUrl(item.url)}
           target="_blank"
           rel="noopener noreferrer"
-          className="rounded-lg border border-[var(--ds-border)] bg-[var(--ds-surface)] px-2.5 py-1 text-xs font-semibold text-[var(--ds-primary)] transition hover:bg-[var(--ds-info-bg)]"
+          className="rounded-lg border border-[var(--ds-border)] bg-[var(--ds-surface)] px-2.5 py-1 text-xs font-semibold text-[var(--ds-primary-text)] transition hover:bg-[var(--ds-info-bg)]"
         >
           {item.label}
         </a>

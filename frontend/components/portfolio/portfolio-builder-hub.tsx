@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { Copy, ExternalLink, Loader2, RefreshCw, Sparkles } from "lucide-react";
-import { Portfolio3DViewer } from "@/components/portfolio/portfolio-3d-viewer";
 import { DashboardPageHeader } from "@/components/dashboard/shared/dashboard-page-header";
 import { SectionPanel } from "@/components/dashboard/shared/section-panel";
 import { Button } from "@/components/ui/button";
@@ -18,7 +18,14 @@ import {
 } from "@/lib/portfolio-portal";
 import type { InternPortfolioRecord, PortfolioTheme } from "@/lib/portfolio-types";
 import { cn } from "@/lib/utils";
-import { SkeletonText } from "@/components/ui/skeleton";
+import { SkeletonText, SkeletonPage } from "@/components/ui/skeleton";
+
+// Only mounts once generated content exists (see render below) — never needed
+// for a first-time visitor who hasn't generated a portfolio yet.
+const Portfolio3DViewer = dynamic(
+  () => import("@/components/portfolio/portfolio-3d-viewer").then((m) => m.Portfolio3DViewer),
+  { ssr: false, loading: () => <SkeletonPage /> }
+);
 
 export function PortfolioBuilderHub() {
   const { pushToast } = useToast();
@@ -181,11 +188,12 @@ export function PortfolioBuilderHub() {
 
             {portfolio?.slug ? (
               <div className="flex flex-wrap items-center gap-2 rounded-xl border border-[var(--ds-primary)]/30 bg-[var(--ds-info-bg)] px-3 py-2 text-sm">
-                <span className="font-medium text-[var(--ds-primary)]">{portfolioAbsoluteUrl(portfolio.slug)}</span>
+                <span className="font-medium text-[var(--ds-primary-text)]">{portfolioAbsoluteUrl(portfolio.slug)}</span>
                 <Button
                   type="button"
                   size="sm"
                   variant="ghost"
+                  aria-label="Copy portfolio link"
                   onClick={() => {
                     void navigator.clipboard.writeText(portfolioAbsoluteUrl(portfolio.slug));
                     pushToast({ title: "Portfolio link copied", variant: "success" });

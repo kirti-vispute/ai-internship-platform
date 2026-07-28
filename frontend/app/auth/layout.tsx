@@ -8,6 +8,7 @@ import type { AuthRole } from "@/lib/session";
 
 function AuthLayoutInner({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+
   const role: AuthRole = pathname.includes("/auth/company")
     ? "company"
     : pathname.includes("/auth/admin")

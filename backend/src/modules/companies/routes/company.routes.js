@@ -20,6 +20,7 @@ const { SIDEBAR_MODULE_KEYS } = require("../../../constants/sidebar-modules");
 const validateObjectId = require("../../../shared/middleware/validate-object-id.middleware");
 const logoUpload = require("../../../shared/middleware/logo-upload.middleware");
 const personalPhotoUpload = require("../../../shared/middleware/personal-photo-upload.middleware");
+const uploadLimiter = require("../../../shared/middleware/upload-rate-limit.middleware");
 
 const router = express.Router();
 
@@ -27,11 +28,11 @@ router.use(authMiddleware, allowRoles("company"));
 
 router.get("/profile", companyController.getProfile);
 router.put("/profile", requireCanUpdateCompanyProfile(), companyController.updateProfile);
-router.post("/profile/logo", requireCanUpdateCompanyProfile(), logoUpload.single("logo"), companyController.uploadLogo);
+router.post("/profile/logo", uploadLimiter, requireCanUpdateCompanyProfile(), logoUpload.single("logo"), companyController.uploadLogo);
 
 router.get("/personal-profile", companyController.getPersonalProfile);
 router.put("/personal-profile", companyController.updatePersonalProfile);
-router.post("/personal-profile/photo", personalPhotoUpload.single("photo"), companyController.uploadPersonalPhoto);
+router.post("/personal-profile/photo", uploadLimiter, personalPhotoUpload.single("photo"), companyController.uploadPersonalPhoto);
 
 router.post("/internships", requireCanPostInternship(), companyController.postInternship);
 router.get("/internships", requireSidebarModule(SIDEBAR_MODULE_KEYS.INTERNSHIPS), companyController.getMyInternships);

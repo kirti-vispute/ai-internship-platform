@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { memo } from "react";
 import { ExternalLink } from "lucide-react";
 import { parseChatMessageBody } from "@/components/dashboard/chat/chat-utils";
 import { AppIcon } from "@/components/icons/app-icon";
@@ -11,7 +12,7 @@ type ChatMessageBodyProps = {
   mine?: boolean;
 };
 
-export function ChatMessageBody({ body, mine = false }: ChatMessageBodyProps) {
+export const ChatMessageBody = memo(function ChatMessageBody({ body, mine = false }: ChatMessageBodyProps) {
   const segments = parseChatMessageBody(body);
 
   return (
@@ -57,4 +58,4 @@ export function ChatMessageBody({ body, mine = false }: ChatMessageBodyProps) {
       })}
     </div>
   );
-}
+});

@@ -19,7 +19,11 @@ const chipVariants = {
 
 function SkillChipsComponent({ skills, variant = "default" }: SkillChipsProps) {
   if (!skills || skills.length === 0) {
-    return <p className="text-sm text-[var(--ds-text-secondary)]">No skills extracted yet.</p>;
+    return (
+      <p role="status" aria-live="polite" className="text-sm text-[var(--ds-text-secondary)]">
+        No skills extracted yet.
+      </p>
+    );
   }
 
   return (

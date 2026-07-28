@@ -92,10 +92,12 @@ export function RoleHiringIntelligencePanel({
         title="AI Recommendation Insights"
         description="Concise, prioritized hiring recommendations per role."
       >
-        <div className={companyDashboardStyles.cardGridTwo} aria-hidden>
-          {Array.from({ length: 4 }).map((_, index) => (
-            <RecommendationCardSkeleton key={index} />
-          ))}
+        <div role="status" aria-live="polite" aria-label="Loading recommendations" className={companyDashboardStyles.cardGridTwo}>
+          <div aria-hidden className="contents">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <RecommendationCardSkeleton key={index} />
+            ))}
+          </div>
         </div>
       </CompanyDashboardSection>
     );
@@ -237,7 +239,7 @@ function RecommendationCard({ prediction, recommended, onOpenProfile }: Recommen
       <div className="rounded-lg border border-[var(--ds-border)] bg-[var(--ds-glass)] px-3.5 py-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex min-w-0 items-center gap-1.5">
-            <AppIcon icon={Sparkles} size="xs" className="text-[var(--ds-primary)]" />
+            <AppIcon icon={Sparkles} size="xs" className="text-[var(--ds-primary-text)]" />
             <p className="ds-body truncate font-medium">{insight.mainRecommendation}</p>
           </div>
           {recommended && confidence ? (
