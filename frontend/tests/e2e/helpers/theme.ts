@@ -26,3 +26,18 @@ export async function readAppliedTheme(page: Page) {
     storedAppearance: window.localStorage.getItem("internai.appearance")
   }));
 }
+
+// Reads a resolved CSS custom property (or any computed style property) off
+// an element -- proves a `--ds-*` token actually repainted with the theme
+// change, rather than just checking the data-theme/data-appearance attribute
+// flipped. Defaults to <body> since every page has one.
+export async function readComputedStyle(page: Page, selector: string, property: string): Promise<string> {
+  return page.evaluate(
+    ({ selector, property }) => {
+      const el = document.querySelector(selector);
+      if (!el) throw new Error(`readComputedStyle: no element matched "${selector}"`);
+      return getComputedStyle(el).getPropertyValue(property);
+    },
+    { selector, property }
+  );
+}

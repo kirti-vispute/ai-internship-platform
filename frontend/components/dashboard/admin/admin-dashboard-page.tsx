@@ -11,6 +11,8 @@ import { Table, TableHead, TableBody, TableRow, TableCell } from "@/components/u
 import { Select } from "@/components/ui/select";
 import { Pagination } from "@/components/ui/pagination";
 import { Skeleton, SkeletonTable } from "@/components/ui/skeleton";
+import { Avatar } from "@/components/ui/avatar";
+import { Modal } from "@/components/ui/modal";
 import { SummaryStatCard } from "@/components/dashboard/shared/summary-stat-card";
 import { RoleDashboardGuard } from "@/components/ui/role-dashboard-guard";
 import { ErrorState as SharedErrorState, classifyErrorMessage } from "@/components/errors/error-state";
@@ -25,6 +27,7 @@ import {
   fetchAdminMetrics,
   fetchAdminReports,
   fetchAdminUsers,
+  fetchAdminUserById,
   invalidateAdminPortalCache,
   resolveReport,
   softDeleteAdminUser,
@@ -37,7 +40,9 @@ import {
   type AdminInternship,
   type AdminMetrics,
   type AdminReport,
-  type AdminUser
+  type AdminUser,
+  type AdminUserDetail,
+  type AdminInternProfileSummary
 } from "@/lib/admin-portal";
 import { Building2, Calendar, ClipboardList, Flag, GraduationCap, UserCheck, Users } from "lucide-react";
 import { ReportDownloadButton } from "@/components/reports/report-download-button";
@@ -46,6 +51,7 @@ import { StatusBadge } from "@/components/icons/status-badge";
 import { BRANDED_EMPTY_STATES } from "@/lib/brand";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { SearchInput } from "@/components/ui/search-input";
+import { useToast } from "@/components/ui/toast";
 import { useDebouncedValue } from "@/lib/use-debounced-value";
 import { DashboardErrorState, LoadingRows, formatDate } from "@/components/dashboard/admin/admin-dashboard-shared";
 
@@ -117,6 +123,7 @@ function AdminDashboardInner({ view }: { view: AdminDashboardView }) {
   const permissions = session.permissions;
   const adminRole = session.adminRole;
   const welcomeName = session.email || "Administrator";
+  const { pushToast } = useToast();
 
   const canUpdateUsers = hasAdminPermission(permissions, ADMIN_PERMISSIONS.USER_UPDATE);
   const canDeleteUsers = hasAdminPermission(permissions, ADMIN_PERMISSIONS.USER_DELETE);
@@ -135,6 +142,7 @@ function AdminDashboardInner({ view }: { view: AdminDashboardView }) {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
   const [companySearch, setCompanySearch] = useState("");
   const [userPage, setUserPage] = useState(1);
   const [userTotal, setUserTotal] = useState(0);
@@ -155,6 +163,11 @@ function AdminDashboardInner({ view }: { view: AdminDashboardView }) {
 
   const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
+
+  const [viewingUserId, setViewingUserId] = useState<string | null>(null);
+  const [userDetail, setUserDetail] = useState<{ user: AdminUserDetail; internProfile: AdminInternProfileSummary | null } | null>(null);
+  const [userDetailLoading, setUserDetailLoading] = useState(false);
+  const [userDetailError, setUserDetailError] = useState<string | null>(null);
 
   const [confirmAction, setConfirmAction] = useState<
     | { type: "delete-user"; user: AdminUser }
@@ -193,7 +206,7 @@ function AdminDashboardInner({ view }: { view: AdminDashboardView }) {
           setReports(r);
           setLogs(l.logs || []);
         } else if (view === "users") {
-          const response = await fetchAdminUsers({ page: userPage, limit: 50, q: debouncedSearch, role: roleFilter, force });
+          const response = await fetchAdminUsers({ page: userPage, limit: 50, q: debouncedSearch, role: roleFilter, isActive: statusFilter, force });
           setUsers(response.users);
           setUserTotal(response.total);
         } else if (view === "analytics") {
@@ -233,7 +246,7 @@ function AdminDashboardInner({ view }: { view: AdminDashboardView }) {
         setLoading(false);
       }
     },
-    [view, userPage, debouncedSearch, roleFilter, debouncedCompanySearch, logsPage, debouncedLogSearch]
+    [view, userPage, debouncedSearch, roleFilter, statusFilter, debouncedCompanySearch, logsPage, debouncedLogSearch]
   );
 
   useEffect(() => {
@@ -282,72 +295,77 @@ function AdminDashboardInner({ view }: { view: AdminDashboardView }) {
       await resolveReport(report._id, "Resolved by admin");
       const refreshed = await fetchAdminReports(true);
       setReports(refreshed);
+      pushToast({ title: "Report resolved", message: report.company?.companyName || "Report", variant: "success" });
     } catch (err) {
       setError((err as Error).message || "Action failed");
     } finally {
       setBusyId(null);
     }
-  }, []);
+  }, [pushToast]);
 
   const handleUserActivation = useCallback(async (user: AdminUser, isActive: boolean) => {
     if (!canUpdateUsers) return;
     setBusyId(user._id);
     try {
       await updateAdminUser(user._id, { isActive });
-      const response = await fetchAdminUsers({ page: userPage, limit: 50, q: search, role: roleFilter, force: true });
+      const response = await fetchAdminUsers({ page: userPage, limit: 50, q: search, role: roleFilter, isActive: statusFilter, force: true });
       setUsers(response.users);
       setUserTotal(response.total);
+      pushToast({ title: isActive ? "User activated" : "User deactivated", message: user.email, variant: "success" });
     } catch (err) {
       setError((err as Error).message || "Failed to update user");
     } finally {
       setBusyId(null);
     }
-  }, [canUpdateUsers, userPage, search, roleFilter]);
+  }, [canUpdateUsers, userPage, search, roleFilter, statusFilter, pushToast]);
 
   const handleUserRole = useCallback(async (user: AdminUser, role: AdminUser["role"]) => {
     if (!canUpdateUsers) return;
     setBusyId(user._id);
     try {
       await updateAdminUser(user._id, { role });
-      const response = await fetchAdminUsers({ page: userPage, limit: 50, q: search, role: roleFilter, force: true });
+      const response = await fetchAdminUsers({ page: userPage, limit: 50, q: search, role: roleFilter, isActive: statusFilter, force: true });
       setUsers(response.users);
       setUserTotal(response.total);
+      pushToast({ title: "Role updated", message: `${user.email} is now ${role}`, variant: "success" });
     } catch (err) {
       setError((err as Error).message || "Failed to update role");
     } finally {
       setBusyId(null);
     }
-  }, [canUpdateUsers, userPage, search, roleFilter]);
+  }, [canUpdateUsers, userPage, search, roleFilter, statusFilter, pushToast]);
 
   const handleAdminRoleChange = useCallback(async (user: AdminUser, nextAdminRole: AdminRole) => {
     if (!canUpdateUsers) return;
     setBusyId(user._id);
     try {
       await updateAdminUser(user._id, { adminRole: nextAdminRole });
-      const response = await fetchAdminUsers({ page: userPage, limit: 50, q: search, role: roleFilter, force: true });
+      const response = await fetchAdminUsers({ page: userPage, limit: 50, q: search, role: roleFilter, isActive: statusFilter, force: true });
       setUsers(response.users);
       setUserTotal(response.total);
+      pushToast({ title: "Admin role updated", message: `${user.email} is now ${nextAdminRole.replace(/_/g, " ")}`, variant: "success" });
     } catch (err) {
       setError((err as Error).message || "Failed to update admin role");
     } finally {
       setBusyId(null);
     }
-  }, [canUpdateUsers, userPage, search, roleFilter]);
+  }, [canUpdateUsers, userPage, search, roleFilter, statusFilter, pushToast]);
 
   const handleSoftDeleteUser = useCallback(async (user: AdminUser) => {
     if (!canDeleteUsers) return;
     setBusyId(user._id);
     try {
       await softDeleteAdminUser(user._id);
-      const response = await fetchAdminUsers({ page: userPage, limit: 50, q: search, role: roleFilter, force: true });
+      const response = await fetchAdminUsers({ page: userPage, limit: 50, q: search, role: roleFilter, isActive: statusFilter, force: true });
       setUsers(response.users);
       setUserTotal(response.total);
+      pushToast({ title: "User deleted", message: user.email, variant: "success" });
     } catch (err) {
       setError((err as Error).message || "Failed to delete user");
     } finally {
       setBusyId(null);
     }
-  }, [canDeleteUsers, userPage, search, roleFilter]);
+  }, [canDeleteUsers, userPage, search, roleFilter, statusFilter, pushToast]);
 
   const handleReportStatus = useCallback(async (report: AdminReport, status: "in_review" | "escalated" | "resolved" | "dismissed") => {
     setBusyId(report._id);
@@ -357,12 +375,13 @@ function AdminDashboardInner({ view }: { view: AdminDashboardView }) {
         resolutionNote: status === "resolved" ? "Resolved by admin" : status === "dismissed" ? "Dismissed by admin" : ""
       });
       setReports(await fetchAdminReports(true));
+      pushToast({ title: "Report updated", message: `${report.company?.companyName || "Report"} marked ${status.replace(/_/g, " ")}`, variant: "success" });
     } catch (err) {
       setError((err as Error).message || "Failed to update report");
     } finally {
       setBusyId(null);
     }
-  }, []);
+  }, [pushToast]);
 
   const runConfirmedAction = useCallback(async () => {
     if (!confirmAction) return;
@@ -402,18 +421,38 @@ function AdminDashboardInner({ view }: { view: AdminDashboardView }) {
         for (const user of targets) {
           await updateAdminUser(user._id, { isActive });
         }
-        const response = await fetchAdminUsers({ page: userPage, limit: 50, q: debouncedSearch, role: roleFilter, force: true });
+        const response = await fetchAdminUsers({ page: userPage, limit: 50, q: debouncedSearch, role: roleFilter, isActive: statusFilter, force: true });
         setUsers(response.users);
         setUserTotal(response.total);
         setSelectedUserIds(new Set());
+        pushToast({
+          title: isActive ? "Users activated" : "Users deactivated",
+          message: `${targets.length} user${targets.length > 1 ? "s" : ""}`,
+          variant: "success"
+        });
       } catch (err) {
         setError((err as Error).message || "Bulk action failed");
       } finally {
         setBulkBusy(false);
       }
     },
-    [canUpdateUsers, selectedUserIds, users, userPage, debouncedSearch, roleFilter]
+    [canUpdateUsers, selectedUserIds, users, userPage, debouncedSearch, roleFilter, statusFilter, pushToast]
   );
+
+  const openUserDetail = useCallback(async (userId: string) => {
+    setViewingUserId(userId);
+    setUserDetail(null);
+    setUserDetailError(null);
+    setUserDetailLoading(true);
+    try {
+      const detail = await fetchAdminUserById(userId);
+      setUserDetail(detail);
+    } catch (err) {
+      setUserDetailError((err as Error).message || "Failed to load user details");
+    } finally {
+      setUserDetailLoading(false);
+    }
+  }, []);
 
   const stats = useMemo(() => {
     const interns = users.filter((u) => u.role === "intern").length;
@@ -488,7 +527,7 @@ function AdminDashboardInner({ view }: { view: AdminDashboardView }) {
             <ReportDownloadButton reportKey="platform-statistics" label="Download Platform Statistics PDF" />
           </div>
           {loading ? (
-            <div className="space-y-4">
+            <div role="status" aria-live="polite" aria-label="Loading platform statistics" className="space-y-4">
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 {Array.from({ length: 4 }).map((_, i) => (
                   <Skeleton key={`row1-${i}`} className="h-28 w-full" />
@@ -581,7 +620,7 @@ function AdminDashboardInner({ view }: { view: AdminDashboardView }) {
       {view === "users" && (
         <Card>
           <div className="space-y-3">
-            <div className="grid gap-2 sm:grid-cols-3">
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
               <SearchInput
                 value={search}
                 onValueChange={(next) => {
@@ -604,6 +643,18 @@ function AdminDashboardInner({ view }: { view: AdminDashboardView }) {
                 <option value="company">Company</option>
                 <option value="admin">Admin</option>
               </Select>
+              <Select
+                value={statusFilter}
+                aria-label="Filter by status"
+                onChange={(event) => {
+                  setStatusFilter(event.target.value);
+                  setUserPage(1);
+                }}
+              >
+                <option value="">All statuses</option>
+                <option value="true">Active</option>
+                <option value="false">Inactive</option>
+              </Select>
               <Button size="sm" variant="secondary" onClick={() => loadData(true)}>
                 Apply filters
               </Button>
@@ -614,16 +665,17 @@ function AdminDashboardInner({ view }: { view: AdminDashboardView }) {
           ) : users.length === 0 ? (
             <EmptyState
               title="No users found"
-              description={search || roleFilter ? "No users match the current search or role filter." : undefined}
+              description={search || roleFilter || statusFilter ? "No users match the current search, role, or status filter." : undefined}
               presetKey="users"
               action={
-                search || roleFilter ? (
+                search || roleFilter || statusFilter ? (
                   <Button
                     size="sm"
                     variant="secondary"
                     onClick={() => {
                       setSearch("");
                       setRoleFilter("");
+                      setStatusFilter("");
                       setUserPage(1);
                     }}
                   >
@@ -721,6 +773,9 @@ function AdminDashboardInner({ view }: { view: AdminDashboardView }) {
                       <TableCell className="text-[var(--ds-muted)]">{formatDate(user.createdAt)}</TableCell>
                       <TableCell>
                         <div className="flex flex-wrap gap-2">
+                          <Button size="sm" variant="ghost" onClick={() => openUserDetail(user._id)}>
+                            View
+                          </Button>
                           {canUpdateUsers && (
                             <>
                               <Button size="sm" variant="secondary" disabled={busyId === user._id} onClick={() => handleUserActivation(user, user.isActive === false)}>
@@ -755,6 +810,131 @@ function AdminDashboardInner({ view }: { view: AdminDashboardView }) {
           </div>
         </Card>
       )}
+
+      <Modal
+        open={Boolean(viewingUserId)}
+        onClose={() => setViewingUserId(null)}
+        title={
+          userDetail?.user.displayName ||
+          userDetail?.internProfile?.fullName ||
+          userDetail?.user.companyProfileRef?.companyName ||
+          userDetail?.user.email ||
+          "User details"
+        }
+        subtitle={userDetail?.user.email}
+        icon={Users}
+        size="md"
+      >
+        {userDetailLoading ? (
+          <div className="space-y-3">
+            <div className="flex items-center gap-3">
+              <Skeleton className="h-12 w-12 rounded-full" />
+              <Skeleton className="h-4 w-40" />
+            </div>
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-2/3" />
+          </div>
+        ) : userDetailError ? (
+          <DashboardErrorState message={userDetailError} onRetry={() => viewingUserId && openUserDetail(viewingUserId)} />
+        ) : userDetail ? (
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <Avatar
+                size="lg"
+                src={userDetail.user.photoUrl}
+                name={
+                  userDetail.user.displayName ||
+                  userDetail.internProfile?.fullName ||
+                  userDetail.user.companyProfileRef?.companyName ||
+                  userDetail.user.email
+                }
+              />
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold text-[var(--ds-text)]">
+                  {userDetail.user.displayName ||
+                    userDetail.internProfile?.fullName ||
+                    userDetail.user.companyProfileRef?.companyName ||
+                    userDetail.user.email}
+                </p>
+                <p className="truncate text-xs text-[var(--ds-muted)]">{userDetail.user.email}</p>
+              </div>
+            </div>
+
+            <dl className="grid grid-cols-2 gap-3 text-sm">
+              <div>
+                <dt className="text-xs text-[var(--ds-muted)]">Role</dt>
+                <dd className="capitalize text-[var(--ds-text)]">{userDetail.user.role}</dd>
+              </div>
+              <div>
+                <dt className="text-xs text-[var(--ds-muted)]">Status</dt>
+                <dd className="text-[var(--ds-text)]">{userDetail.user.isActive === false ? "Inactive" : "Active"}</dd>
+              </div>
+              {userDetail.user.phone && (
+                <div>
+                  <dt className="text-xs text-[var(--ds-muted)]">Phone</dt>
+                  <dd className="text-[var(--ds-text)]">{userDetail.user.phone}</dd>
+                </div>
+              )}
+              <div>
+                <dt className="text-xs text-[var(--ds-muted)]">Joined</dt>
+                <dd className="text-[var(--ds-text)]">{formatDate(userDetail.user.createdAt)}</dd>
+              </div>
+            </dl>
+
+            {userDetail.user.bio && <p className="text-sm text-[var(--ds-text-secondary)]">{userDetail.user.bio}</p>}
+
+            {userDetail.user.role === "admin" && (
+              <div>
+                <p className="text-xs font-semibold text-[var(--ds-muted)]">Admin privileges</p>
+                <p className="mt-1 text-sm capitalize text-[var(--ds-text)]">
+                  {userDetail.user.adminRole?.replace(/_/g, " ") || "—"}
+                </p>
+                {userDetail.user.permissions && userDetail.user.permissions.length > 0 && (
+                  <p className="mt-1 text-xs text-[var(--ds-muted)]">{userDetail.user.permissions.join(", ")}</p>
+                )}
+              </div>
+            )}
+
+            {userDetail.user.role === "company" && (
+              <div>
+                <p className="text-xs font-semibold text-[var(--ds-muted)]">Company</p>
+                {userDetail.user.companyProfileRef ? (
+                  <div className="mt-1 space-y-0.5 text-sm text-[var(--ds-text)]">
+                    <p className="font-medium">{userDetail.user.companyProfileRef.companyName}</p>
+                    <p className="text-[var(--ds-text-secondary)]">{userDetail.user.companyProfileRef.companyEmail}</p>
+                    {userDetail.user.companyProfileRef.industry && (
+                      <p className="text-[var(--ds-text-secondary)]">{userDetail.user.companyProfileRef.industry}</p>
+                    )}
+                    <p className="text-xs capitalize text-[var(--ds-muted)]">
+                      {userDetail.user.companyProfileRef.verificationStatus}
+                    </p>
+                  </div>
+                ) : (
+                  <p className="mt-1 text-sm text-[var(--ds-muted)]">No company profile linked.</p>
+                )}
+              </div>
+            )}
+
+            {userDetail.user.role === "intern" && (
+              <div>
+                <p className="text-xs font-semibold text-[var(--ds-muted)]">Academic</p>
+                {userDetail.internProfile?.educationDetails && userDetail.internProfile.educationDetails.length > 0 ? (
+                  <div className="mt-1 space-y-1 text-sm text-[var(--ds-text)]">
+                    {userDetail.internProfile.educationDetails.map((edu, i) => (
+                      <p key={i}>{[edu.degree, edu.branch, edu.college, edu.passingYear].filter(Boolean).join(" · ")}</p>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="mt-1 text-sm text-[var(--ds-muted)]">No academic details on file.</p>
+                )}
+                {userDetail.internProfile?.mobile && (
+                  <p className="mt-1 text-xs text-[var(--ds-muted)]">Mobile: {userDetail.internProfile.mobile}</p>
+                )}
+              </div>
+            )}
+          </div>
+        ) : null}
+      </Modal>
 
       {(view === "companies" || view === "verification") && (
         <AdminCompaniesView

@@ -1,0 +1,26 @@
+John Carter
+Aspiring Full Stack Developer
+Email: e2e.intern@internai-test.local
+Phone: 9999900001
+LinkedIn: https://linkedin.com/in/john-carter-dev
+GitHub: https://github.com/john-carter-dev
+
+Professional Summary
+Motivated software engineer with hands-on experience building full-stack web applications using modern JavaScript frameworks.
+
+Education
+B.Tech in Computer Science, XYZ Institute of Technology, 2024
+
+Skills
+JavaScript, TypeScript, React, Node.js, MongoDB, Docker, AWS, Git
+
+Experience
+Software Engineering Intern, Acme Corp, 2023
+Developed and deployed a customer-facing dashboard using React and Node.js, improving load times by 30 percent.
+
+Projects
+Task Manager App
+Built a full-stack task management application using React, Node.js, and MongoDB with real-time updates. https://github.com/john-carter-dev/task-manager
+
+Certifications
+AWS Certified Cloud Practitioner, Amazon Web Services, 2023

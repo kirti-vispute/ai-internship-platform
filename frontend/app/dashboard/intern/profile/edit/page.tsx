@@ -167,7 +167,21 @@ export default function EditInternProfilePage() {
           linkedinUrl,
           githubUrl,
           portfolioUrl,
-          educationDetails: [{ college, degree, branch, cgpa, passingYear }],
+          // This form only exposes a single education/course/certification
+          // entry for editing (entry [0]) -- entries beyond that (e.g. from
+          // resume parsing) must be preserved from the loaded profile rather
+          // than replaced wholesale, or saving any unrelated field here would
+          // silently delete them.
+          // Same guard as courseEntries/certificationEntries below: an
+          // all-blank entry [0] means "no education entered", not "save an
+          // empty education record" -- without it every save of an
+          // education-less profile fabricated a phantom empty entry (and the
+          // admin user-details modal then showed a blank academic row instead
+          // of its "No academic details on file." empty state).
+          educationDetails:
+            college || degree || branch || cgpa || passingYear
+              ? [{ college, degree, branch, cgpa, passingYear }, ...(profile?.educationDetails?.slice(1) || [])]
+              : profile?.educationDetails?.slice(1) || [],
           courseEntries: courseName
             ? [
                 {
@@ -176,9 +190,10 @@ export default function EditInternProfilePage() {
                   completionDate: courseCompletionDate,
                   certificateUrl: courseCertificateUrl,
                   verificationLink: courseVerificationLink
-                }
+                },
+                ...(profile?.courseEntries?.slice(1) || [])
               ]
-            : [],
+            : profile?.courseEntries?.slice(1) || [],
           certificationEntries: certName
             ? [
                 {
@@ -187,9 +202,10 @@ export default function EditInternProfilePage() {
                   year: certYear,
                   certificateUrl: certCertificateUrl,
                   verificationLink: certVerificationLink
-                }
+                },
+                ...(profile?.certificationEntries?.slice(1) || [])
               ]
-            : [],
+            : profile?.certificationEntries?.slice(1) || [],
           profileSections: {
             personalInformation: {
               location: address,

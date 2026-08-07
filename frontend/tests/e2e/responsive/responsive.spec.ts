@@ -64,6 +64,33 @@ test.describe("Laptop/Desktop (1366x768, 1920x1080): collapsible rail", () => {
           expect(scrollWidth).toBeLessThanOrEqual(clientWidth + 1);
         }
       });
+
+      // Admin's sidebar has its own grouped-heading content (Main/Management/
+      // Moderation/Secondary) that intern's doesn't -- the collapse mechanism
+      // itself is shared and already covered above via internPage, but that
+      // extra grouping is admin-specific and worth its own confirmation.
+      test("admin sidebar collapse toggle shrinks to an icon rail and back", async ({ adminSuperPage }) => {
+        await adminSuperPage.goto("/dashboard/admin");
+        const toggle = adminSuperPage.getByRole("button", { name: /collapse sidebar/i });
+        await expect(toggle).toBeVisible();
+        await toggle.click();
+        await expect(adminSuperPage.getByRole("button", { name: /expand sidebar/i })).toBeVisible();
+        await expect(adminSuperPage.getByRole("link", { name: /dashboard overview/i })).toBeVisible();
+        // Revert -- leave the shared localStorage preference as found.
+        await adminSuperPage.getByRole("button", { name: /expand sidebar/i }).click();
+        await expect(adminSuperPage.getByRole("button", { name: /collapse sidebar/i })).toBeVisible();
+      });
     });
   }
+});
+
+test.describe("Mobile (375x812): admin off-canvas drawer", () => {
+  test.use({ viewport: { width: 375, height: 812 } });
+
+  test("admin sidebar is hidden by default and opens via the header menu button", async ({ adminSuperPage }) => {
+    await adminSuperPage.goto("/dashboard/admin");
+    await expect(adminSuperPage.getByRole("button", { name: /collapse sidebar|expand sidebar/i })).toBeHidden();
+    await adminSuperPage.getByRole("button", { name: /open menu/i }).click();
+    await expect(adminSuperPage.getByRole("link", { name: /dashboard overview/i })).toBeVisible();
+  });
 });

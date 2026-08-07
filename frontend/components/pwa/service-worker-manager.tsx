@@ -87,6 +87,13 @@ export function ServiceWorkerManager() {
     channel?.addEventListener("message", onChannelMessage);
 
     let reloading = false;
+    // Whether a SW controls the page right now. sw.js calls clients.claim()
+    // on activate, so the very FIRST install also fires controllerchange --
+    // reloading then would yank a page the user just loaded (and abort any
+    // in-flight navigation). A forced reload is only correct when an
+    // EXISTING controller is replaced via the user-approved SKIP_WAITING
+    // update flow below.
+    let hasController = !!navigator.serviceWorker.controller;
     const promoteWaiting = (registration: ServiceWorkerRegistration) => {
       // A worker is waiting only when one already controls the page (i.e. an
       // update, not the very first install).
@@ -96,6 +103,9 @@ export function ServiceWorkerManager() {
     };
 
     const onControllerChange = () => {
+      const isFirstClaim = !hasController;
+      hasController = true;
+      if (isFirstClaim) return;
       if (reloading) return;
       reloading = true;
       window.location.reload();

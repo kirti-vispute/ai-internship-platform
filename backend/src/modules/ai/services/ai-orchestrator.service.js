@@ -204,49 +204,8 @@ function validateResumeExtraction({ parsed = {}, intelligenceV2 = {}, quality = 
   };
 }
 
-/**
- * Validate skill gap between weighted score and evidence-backed exact match.
- */
-function validateSkillGap({ weightedMatch, exactMatch, backendMatch = null, hasResumeData = true, roleSkillsPresent = true }) {
-  const grounding = {
-    sources: hasResumeData ? ["resume", "role_requirements"] : ["role_requirements"],
-    sufficient: hasResumeData && roleSkillsPresent,
-    missingFields: [
-      ...(hasResumeData ? [] : ["resume_upload"]),
-      ...(roleSkillsPresent ? [] : ["role_skill_map"])
-    ],
-    signalCount: hasResumeData ? 1 : 0
-  };
-
-  if (!grounding.sufficient) {
-    return {
-      ...finalizeValidation({
-        validations: [],
-        grounding,
-        baseConfidence: 35,
-        insufficientTrace: "insufficient data"
-      }),
-      confidenceTier: getConfidenceTier(35)
-    };
-  }
-
-  validateScoreBoundaries([weightedMatch, exactMatch, backendMatch ?? weightedMatch].filter((v) => typeof v === "number"), "skill-gap");
-
-  const validations = [crossValidate(weightedMatch, exactMatch, 75, "weighted-vs-exact", 12)];
-  if (typeof backendMatch === "number") {
-    validations.push(crossValidate(weightedMatch, backendMatch, 72, "client-vs-backend", 10));
-  }
-
-  const result = finalizeValidation({ validations, grounding, baseConfidence: 75 });
-  return {
-    ...result,
-    confidenceTier: getConfidenceTier(result.confidenceScore)
-  };
-}
-
 module.exports = {
   validateResumeExtraction,
-  validateSkillGap,
   crossValidate,
   getConfidenceTier,
   toReliabilityLevel

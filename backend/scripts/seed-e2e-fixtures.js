@@ -12,6 +12,7 @@ const E2E_COMPANY_HR_EMAIL = "e2e.company.hr@internai-test.local";
 const E2E_COMPANY_HR_PASSWORD = "E2eCompanyHr@123";
 const E2E_COMPANY_CEO_EMAIL = "e2e.company.ceo@internai-test.local";
 const E2E_COMPANY_CEO_PASSWORD = "E2eCompanyCeo@123";
+const E2E_INTERNSHIP_ROLE = "E2E Fixture Frontend Intern";
 
 // A ceo@novatech.example account exists in seedData.js, but every account
 // there except admin@internai.com only survives until someone runs
@@ -54,7 +55,24 @@ async function main() {
     });
     console.log("Created E2E intern fixture:", E2E_INTERN_EMAIL);
   } else {
-    console.log("E2E intern fixture already exists:", E2E_INTERN_EMAIL);
+    // Resume-upload E2E tests merge parsed resume data (including the
+    // candidate's name) straight onto this shared profile; a run that dies
+    // between upload and its finally-restore leaves the drift permanent,
+    // and later name-dependent specs (admin user-details modal, pipeline
+    // card labels) then fail. Re-seeding re-pins the identity fields.
+    const drifted = await InternProfile.findOne({ user: internUser._id });
+    const hasDriftedEducation = Boolean(drifted && (drifted.educationDetails || []).length > 0);
+    if (drifted && (drifted.fullName !== "E2E Test Intern" || drifted.mobile !== "9999900001" || hasDriftedEducation)) {
+      drifted.fullName = "E2E Test Intern";
+      drifted.mobile = "9999900001";
+      // Canonical fixture has no academic entries -- the admin user-details
+      // modal E2E asserts its "No academic details on file." empty state.
+      drifted.educationDetails = [];
+      await drifted.save();
+      console.log("Reset E2E intern fixture identity fields (fullName/mobile/educationDetails)");
+    } else {
+      console.log("E2E intern fixture already exists:", E2E_INTERN_EMAIL);
+    }
   }
 
   let ownerUser = await User.findOne({ email: E2E_COMPANY_OWNER_EMAIL });
@@ -141,6 +159,95 @@ async function main() {
     } else {
       console.log("E2E admin fixture already exists:", spec.email, spec.adminRole);
     }
+  }
+
+  // A reported-company fixture against the E2E test company, so the admin
+  // Reports (moderation queue) E2E specs have a deterministic card to act
+  // on instead of depending on whatever real reports happen to exist in
+  // this shared dev DB. The status-transition tests drive it through
+  // in_review -> escalated -> resolved and restore it to "open" in a
+  // `finally`, but re-seeding also self-heals it here if a run dies mid-test.
+  const ReportedCompany = require("../src/modules/admin/models/ReportedCompany");
+  const E2E_REPORT_REASON = "E2E fixture abuse report for automated moderation-queue coverage.";
+  let reportFixture = await ReportedCompany.findOne({ company: companyProfile._id, reason: E2E_REPORT_REASON });
+  if (!reportFixture) {
+    await ReportedCompany.create({
+      company: companyProfile._id,
+      reportedBy: internUser._id,
+      reason: E2E_REPORT_REASON,
+      reportType: "other",
+      details: "Created by seed-e2e-fixtures.js for Playwright coverage.",
+      status: "open"
+    });
+    console.log("Created E2E reported-company fixture");
+  } else if (reportFixture.status !== "open" || reportFixture.resolutionNote) {
+    reportFixture.status = "open";
+    reportFixture.resolutionNote = "";
+    reportFixture.reviewedBy = null;
+    reportFixture.reviewedAt = null;
+    await reportFixture.save();
+    console.log("Reset E2E reported-company fixture status to 'open'");
+  } else {
+    console.log("E2E reported-company fixture already exists");
+  }
+
+  // A posted internship plus one application from the E2E intern. Without
+  // these, the company dashboard has no matched candidates at all, so the
+  // AI Insight modal has nothing to open and its E2E coverage silently
+  // skips instead of verifying anything.
+  const Internship = require("../src/modules/internships/models/Internship");
+  const Application = require("../src/modules/applications/models/Application");
+
+  const internProfile = await InternProfile.findOne({ user: internUser._id });
+
+  let internship = await Internship.findOne({ company: companyProfile._id, role: E2E_INTERNSHIP_ROLE });
+  if (!internship) {
+    internship = await Internship.create({
+      company: companyProfile._id,
+      role: E2E_INTERNSHIP_ROLE,
+      description: "Fixture internship for automated E2E tests.",
+      skillsRequired: ["React", "Node.js", "MongoDB"],
+      prioritySkills: ["React"],
+      location: "Remote",
+      mode: "remote",
+      stipend: "10000",
+      duration: "6 months"
+    });
+    console.log("Created E2E internship fixture:", E2E_INTERNSHIP_ROLE);
+  } else {
+    console.log("E2E internship fixture already exists:", E2E_INTERNSHIP_ROLE);
+  }
+
+  const existingApplication = await Application.findOne({
+    internship: internship._id,
+    intern: internProfile._id
+  });
+  if (!existingApplication) {
+    await Application.create({
+      internId: internProfile._id,
+      intern: internProfile._id,
+      internshipId: internship._id,
+      internship: internship._id,
+      companyId: companyProfile._id,
+      company: companyProfile._id,
+      status: "applied",
+      attachedResumePath: "uploads/resumes/e2e-fixture-resume.txt",
+      availabilityStatus: "yes",
+      matchScore: 78,
+      relevanceScore: 78
+    });
+    console.log("Created E2E application fixture for:", E2E_INTERNSHIP_ROLE);
+  } else if (!["applied", "under_review", "shortlisted"].includes(existingApplication.status)) {
+    // The pipeline E2E test moves this application forward through the
+    // one-way hiring transition graph (pipeline.service.js) -- backward
+    // moves are rejected by the API, so once it drifts past "shortlisted"
+    // the test has nothing legally movable left. Re-seeding resets it to a
+    // forward-movable state instead of leaving the fixture stuck.
+    existingApplication.status = "applied";
+    await existingApplication.save();
+    console.log("Reset E2E application fixture status to 'applied' for:", E2E_INTERNSHIP_ROLE);
+  } else {
+    console.log("E2E application fixture already exists for:", E2E_INTERNSHIP_ROLE);
   }
 
   await mongoose.connection.close();

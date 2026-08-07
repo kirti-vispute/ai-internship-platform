@@ -27,10 +27,6 @@ function isCompanyAdminUser(user = {}) {
   );
 }
 
-function isCeoOrOwnerUser(user = {}) {
-  return isCompanyAdminUser(user);
-}
-
 function canManageHrAccounts(user = {}) {
   return (
     user?.companyAccountType === COMPANY_ACCOUNT_TYPES.CEO ||
@@ -99,12 +95,6 @@ function applicantsQueryForInternship(internshipId, companyId, user = {}) {
     $or: [{ internshipId }, { internship: internshipId }],
     ...applicationScopeFilter(companyId, user)
   };
-}
-
-function assertExecutiveAccess(user, message = "Executive company access required") {
-  if (isHrScopedUser(user)) {
-    throw new AppError(message, 403);
-  }
 }
 
 function assertCanPostInternships(user) {
@@ -179,7 +169,6 @@ module.exports = {
   getAccessTier,
   isHrScopedUser,
   isCompanyAdminUser,
-  isCeoOrOwnerUser,
   canManageHrAccounts,
   hasPermission,
   canManageRecruiters,
@@ -192,7 +181,6 @@ module.exports = {
   internshipScopeFilter,
   applicationScopeFilter,
   applicantsQueryForInternship,
-  assertExecutiveAccess,
   assertCanPostInternships,
   assertCanUpdateCompanyProfile,
   buildListMeta,

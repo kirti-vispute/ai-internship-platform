@@ -50,10 +50,21 @@ function readInitial(): { theme: ThemeId; appearance: Appearance } {
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [{ theme, appearance }, setState] = useState(readInitial);
 
+  // theme-init-script.tsx writes the RAW (unvalidated) localStorage value to
+  // <html> before React mounts, to avoid a flash of the wrong theme. If that
+  // value was invalid, readInitial() above already corrected the in-memory
+  // state, but the DOM attributes/class are still the raw, uncorrected value
+  // -- reconcile them once so Tailwind's `dark:` variant (keyed off the
+  // "dark" class, not the CSS-variable tokens) doesn't drift from React state.
+  useEffect(() => {
+    applyToDocument(theme, appearance);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // First load on a fresh device for a logged-in user with no local
   // preference yet: pull their saved theme from the server so it follows
   // them across devices, then apply + cache it locally.
-  useEffect(() => {
+  const syncServerTheme = useCallback(() => {
     const hadLocalTheme = typeof window !== "undefined" && !!window.localStorage.getItem(THEME_STORAGE_KEY);
     if (hadLocalTheme || !getAuthSession().loggedIn) return;
 
@@ -67,8 +78,22 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         window.localStorage.setItem(APPEARANCE_STORAGE_KEY, nextAppearance);
       })
       .catch(() => undefined);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Login happens via a client-side router.push (see role-auth-form.tsx /
+  // admin-auth-form.tsx), which never remounts this provider -- so the
+  // mount-only effect above would only ever see the pre-login (logged-out)
+  // state and permanently skip the fetch. Re-run the same sync on the same
+  // "internai-auth-change" event setAuthSession() dispatches (the established
+  // pattern every other auth-reactive module in this app already follows --
+  // see lib/use-auth-session.ts, role-dashboard-guard.tsx, *-portal.ts cache
+  // invalidation) so a fresh login without a local theme cache still picks up
+  // the account's saved preference immediately, not just after a reload.
+  useEffect(() => {
+    syncServerTheme();
+    window.addEventListener("internai-auth-change", syncServerTheme);
+    return () => window.removeEventListener("internai-auth-change", syncServerTheme);
+  }, [syncServerTheme]);
 
   const persist = useCallback((nextTheme: ThemeId, nextAppearance: Appearance) => {
     if (typeof window === "undefined") return;

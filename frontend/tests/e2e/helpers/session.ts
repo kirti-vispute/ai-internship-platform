@@ -10,7 +10,18 @@ type CachedSession = {
   permissions?: string[];
   email?: string;
   companyAccountType?: string | null;
+  mintedAt: number;
 };
+
+// Access tokens expire after 15 minutes. A full-suite run takes ~25 minutes,
+// so a token cached at run start goes stale mid-run: every test that then
+// injects it starts with an expired token, and the app's silent-refresh
+// redirect races the test's own goto()/reload()/evaluate() calls
+// (net::ERR_ABORTED, "execution context was destroyed"). Re-minting before
+// expiry keeps injected sessions always-fresh at the cost of a handful of
+// extra logins per run -- well within the AUTH_RATE_LIMIT=300 E2E budget
+// (see playwright.config.ts).
+const SESSION_MAX_AGE_MS = 10 * 60 * 1000;
 
 // The login endpoint is rate-limited (authLimiter — intentionally, not
 // something this test suite should touch or work around by weakening it).
@@ -30,7 +41,7 @@ async function fetchSession(
 ): Promise<CachedSession> {
   const cacheKey = `${role}:${email}`;
   const cached = sessionCache.get(cacheKey);
-  if (cached) return cached;
+  if (cached && Date.now() - cached.mintedAt < SESSION_MAX_AGE_MS) return cached;
 
   const res = await request.post(`${BACKEND_URL}/api/auth/${role}/login`, {
     data: { email, password }
@@ -46,7 +57,8 @@ async function fetchSession(
     adminRole: body.data.adminRole || null,
     permissions: body.data.permissions || [],
     email,
-    companyAccountType: body.data.companyAccountType || null
+    companyAccountType: body.data.companyAccountType || null,
+    mintedAt: Date.now()
   };
   sessionCache.set(cacheKey, session);
   return session;

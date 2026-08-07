@@ -35,6 +35,7 @@ type MatchedCandidatesPanelProps = {
   showViewAllLink?: boolean;
   saving?: boolean;
   isHrScoped?: boolean;
+  hideTitle?: boolean;
   onOpenProfile: (applicationId: string) => void;
   onMessage: (match: CompanyMatchedCandidate, applicationId: string) => void;
   onShortlist: (applicationId: string) => void;
@@ -50,6 +51,7 @@ export function MatchedCandidatesPanel({
   showViewAllLink = false,
   saving = false,
   isHrScoped = false,
+  hideTitle = false,
   onOpenProfile,
   onMessage,
   onShortlist,
@@ -75,7 +77,10 @@ export function MatchedCandidatesPanel({
     return rankedCandidates.slice(0, defaultLimit);
   }, [rankedCandidates, expanded, defaultLimit]);
 
-  const canExpand = rankedCandidates.length > defaultLimit;
+  // defaultLimit <= 0 means "show all" (see visibleCandidates above) -- the
+  // expand/collapse toggle is meaningless in that mode and would otherwise
+  // render a nonsensical "Show Top 0" label.
+  const canExpand = defaultLimit > 0 && rankedCandidates.length > defaultLimit;
 
   const sectionActions = (
     <>
@@ -108,8 +113,13 @@ export function MatchedCandidatesPanel({
         id="dashboard-matched-candidates"
         icon={Sparkles}
         title="AI Matched Candidates"
-        description={`Top ${defaultLimit} AI-ranked shortlist with explainable match and scheduling intelligence.`}
+        description={
+          defaultLimit > 0
+            ? `Top ${defaultLimit} AI-ranked shortlist with explainable match and scheduling intelligence.`
+            : "Full AI-ranked shortlist with explainable match and scheduling intelligence."
+        }
         actions={sectionActions}
+        hideTitle={hideTitle}
       >
         {visibleCandidates.length === 0 ? (
           <CompanyDashboardEmptyState title="No matched candidates available yet." icon={Sparkles} />

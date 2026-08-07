@@ -8,8 +8,7 @@ const {
   buildHrInsights,
   createHrAccount,
   deleteHrAccount,
-  updateHrPermissions,
-  listCompanyHrUsers
+  updateHrPermissions
 } = require("../../../services/company-hr.service");
 const { HR_ASSIGNABLE_PERMISSIONS } = require("../../../constants/hr-permissions");
 const { SIDEBAR_MODULE_REGISTRY } = require("../../../constants/sidebar-modules");
@@ -65,23 +64,6 @@ exports.patchHrPermissions = asyncHandler(async (req, res) => {
   return sendSuccess(res, {
     message: "HR permissions updated",
     data: { hrUser, assignablePermissions: HR_ASSIGNABLE_PERMISSIONS, sidebarModuleRegistry: SIDEBAR_MODULE_REGISTRY },
-    meta: buildListMeta(req.user)
-  });
-});
-
-exports.listHr = asyncHandler(async (req, res) => {
-  const company = await getCompanyProfileByUserId(req.user._id);
-  const hrUsers = await listCompanyHrUsers(company._id);
-  return sendSuccess(res, {
-    data: {
-      hrUsers: hrUsers.map((hr) => ({
-        id: hr._id,
-        name: hr.displayName || hr.email.split("@")[0],
-        email: hr.email,
-        isActive: hr.isActive,
-        permissions: hr.permissions || []
-      }))
-    },
     meta: buildListMeta(req.user)
   });
 });

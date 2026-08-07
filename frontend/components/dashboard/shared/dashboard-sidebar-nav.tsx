@@ -81,7 +81,7 @@ function SidebarSectionItems({
             onPointerDown={() => warmRoute(item.href, true)}
             onClick={() => onItemClick(item.href)}
             className={cn(
-              "group relative flex items-center gap-2.5 rounded-xl py-2.5 pl-3.5 pr-3 text-sm font-medium transition-all duration-150 ease-out",
+              "group relative flex items-center gap-2.5 rounded-xl py-2.5 pl-3.5 pr-3 text-sm font-medium transition-all duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ds-focus-ring)]",
               collapsed && "h-11 w-11 justify-center gap-0 p-0",
               active
                 ? "bg-[var(--ds-surface-raised)] text-[var(--ds-accent)] shadow-[0_4px_14px_var(--ds-shadow)]"
@@ -169,7 +169,7 @@ function CollapsibleSidebarSection({
         aria-expanded={open}
         aria-controls={panelId}
         className={cn(
-          "flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left transition-colors duration-100 hover:bg-[var(--ds-hover)]",
+          "flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left transition-colors duration-100 hover:bg-[var(--ds-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ds-focus-ring)]",
           hasActiveChild && !open && "bg-[var(--ds-hover)]"
         )}
       >

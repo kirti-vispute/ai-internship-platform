@@ -59,9 +59,3 @@ export async function withTemporaryHrPermissions(
     });
   }
 }
-
-export async function fetchHrSidebarModules(request: APIRequestContext): Promise<string[]> {
-  const headers = await ownerAuthHeader(request);
-  const hr = await fetchHrUser(request, headers);
-  return hr.sidebarModules;
-}

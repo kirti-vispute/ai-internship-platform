@@ -1,6 +1,7 @@
 const User = require("../../../models/User");
 const Internship = require("../../../models/Internship");
 const CompanyProfile = require("../../../models/CompanyProfile");
+const InternProfile = require("../../../models/InternProfile");
 const ReportedCompany = require("../../../models/ReportedCompany");
 const ActivityLog = require("../../../models/ActivityLog");
 const Application = require("../../../models/Application");
@@ -16,11 +17,18 @@ function softDeleteFilter(query) {
   return { ...query, isDeleted: false };
 }
 
+// Search terms are user input, not regex source: an unescaped "(" makes
+// MongoDB reject the whole query as an invalid regex (500 instead of an
+// empty result set). Same convention as candidate.controller.js.
+function escapeRegex(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 function buildUserFilter({ q = "", role = "", isActive }) {
   const filter = { isDeleted: false };
   const normalizedQuery = String(q || "").trim();
   if (normalizedQuery) {
-    filter.email = { $regex: normalizedQuery, $options: "i" };
+    filter.email = { $regex: escapeRegex(normalizedQuery), $options: "i" };
   }
   if (role && Object.values(USER_ROLES).includes(role)) {
     filter.role = role;
@@ -42,8 +50,8 @@ function buildReportFilter({ status = "", type = "", q = "" }) {
   const normalizedQuery = String(q || "").trim();
   if (normalizedQuery) {
     filter.$or = [
-      { reason: { $regex: normalizedQuery, $options: "i" } },
-      { details: { $regex: normalizedQuery, $options: "i" } }
+      { reason: { $regex: escapeRegex(normalizedQuery), $options: "i" } },
+      { details: { $regex: escapeRegex(normalizedQuery), $options: "i" } }
     ];
   }
   return filter;
@@ -100,12 +108,23 @@ exports.getAllUsers = asyncHandler(async (req, res) => {
 
 exports.getUserById = asyncHandler(async (req, res) => {
   const user = await User.findOne({ _id: req.params.userId, isDeleted: false })
-    .select("email role adminRole permissions isActive createdAt updatedAt lastLoginAt lastLoginIp")
+    .select(
+      "email role adminRole permissions isActive createdAt updatedAt lastLoginAt lastLoginIp displayName phone photoUrl designation linkedInUrl personalWebsite bio companyAccountType companyProfileRef"
+    )
+    .populate("companyProfileRef", "companyName companyEmail industry website address description verificationStatus")
     .lean();
   if (!user) {
     throw new AppError("User not found", 404);
   }
-  return sendSuccess(res, { data: { user } });
+
+  let internProfile = null;
+  if (user.role === USER_ROLES.INTERN) {
+    internProfile = await InternProfile.findOne({ user: user._id })
+      .select("fullName mobile address bio educationDetails skills linkedinUrl githubUrl portfolioUrl")
+      .lean();
+  }
+
+  return sendSuccess(res, { data: { user, internProfile } });
 });
 
 exports.updateUser = asyncHandler(async (req, res) => {
@@ -228,9 +247,9 @@ exports.getCompanies = asyncHandler(async (req, res) => {
   }
   if (q) {
     filter.$or = [
-      { companyName: { $regex: q, $options: "i" } },
-      { companyEmail: { $regex: q, $options: "i" } },
-      { contactName: { $regex: q, $options: "i" } }
+      { companyName: { $regex: escapeRegex(q), $options: "i" } },
+      { companyEmail: { $regex: escapeRegex(q), $options: "i" } },
+      { contactName: { $regex: escapeRegex(q), $options: "i" } }
     ];
   }
 
@@ -370,9 +389,9 @@ exports.getActivityLogs = asyncHandler(async (req, res) => {
   if (req.query.actorUserId) query.actorUser = req.query.actorUserId;
   if (req.query.q) {
     query.$or = [
-      { action: { $regex: req.query.q, $options: "i" } },
-      { entityType: { $regex: req.query.q, $options: "i" } },
-      { ipAddress: { $regex: req.query.q, $options: "i" } }
+      { action: { $regex: escapeRegex(req.query.q), $options: "i" } },
+      { entityType: { $regex: escapeRegex(req.query.q), $options: "i" } },
+      { ipAddress: { $regex: escapeRegex(req.query.q), $options: "i" } }
     ];
   }
 

@@ -574,8 +574,13 @@ export function RoleAuthForm({ role }: { role: AuthRole }) {
 
       {feedback && <Alert type={feedback.type} message={feedback.message} />}
 
+      {/* Both forms are noValidate: native constraint validation on
+          type="email" aborts submit before our handler runs, so the user gets
+          a transient browser tooltip and none of the form's own inline field
+          errors. Our validators cover every field, so they stay the single
+          source of truth. */}
       {mode === "login" ? (
-        <form className="mt-5 space-y-4" onSubmit={handleLoginSubmit}>
+        <form className="mt-5 space-y-4" onSubmit={handleLoginSubmit} noValidate>
           {role === "intern" && (
             <div className="space-y-3">
               <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--ds-muted)]">
@@ -777,7 +782,7 @@ export function RoleAuthForm({ role }: { role: AuthRole }) {
           </Button>
         </form>
       ) : (
-        <form className="mt-5 space-y-4" onSubmit={handleSignupSubmit}>
+        <form className="mt-5 space-y-4" onSubmit={handleSignupSubmit} noValidate>
           {role === "intern" ? (
             <>
               <Input
