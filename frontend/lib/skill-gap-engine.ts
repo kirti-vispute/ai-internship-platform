@@ -1243,15 +1243,3 @@ function buildChartDatasets(
     progressBarsValid: barsValidation.valid
   };
 }
-
-/** @deprecated use buildChartDatasets pipeline */
-export function generateProgressBarData(assessments: SkillAssessment[]): ProgressBarItem[] {
-  const structured = structureSkillData(assessments);
-  return validateProgressBarChartData(aggregateProgressBarDataset(structured, 10)).data;
-}
-
-/** @deprecated use buildChartDatasets pipeline */
-export function generateCategorySummary(assessments: SkillAssessment[]): CategorySummaryBar[] {
-  const structured = structureSkillData(assessments);
-  return validateCategorySummaryData(aggregateCategorySummary(structured)).data;
-}

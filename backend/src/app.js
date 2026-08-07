@@ -91,7 +91,15 @@ app.use(
       }
       return callback(new Error("CORS origin denied"));
     },
-    credentials: true
+    credentials: true,
+    // Frontend and API are always different origins (different ports even
+    // in local dev) -- without this, the browser's fetch() strips
+    // X-Report-Number from every cross-origin response before JS ever sees
+    // it (it's not on the CORS-safelisted response header list), so
+    // reports-portal.ts's response.headers.get("X-Report-Number") is always
+    // null and every downloaded report PDF silently falls back to the same
+    // generic "InternAI-Report.pdf" filename.
+    exposedHeaders: ["X-Report-Number"]
   })
 );
 app.use(express.json({ limit: "2mb" }));
@@ -116,7 +124,11 @@ app.use(
   "/api",
   rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 400,
+    // Env-tunable for the same reason as AUTH_RATE_LIMIT in
+    // otp-rate-limit.middleware.js: the serial E2E suite drives every request
+    // from one IP and legitimately exceeds the per-user production ceiling.
+    // Production keeps the 400 default unless the env var is set.
+    max: Number(process.env.API_RATE_LIMIT || 400),
     standardHeaders: true,
     legacyHeaders: false
   })

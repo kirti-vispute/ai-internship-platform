@@ -1234,7 +1234,7 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
               title="Calendar"
               subtitle="Every scheduled interview across your pipeline, at a glance."
             />
-            <InterviewCalendar applications={apps} audience="company" onViewProfile={openApplicantProfile} />
+            <InterviewCalendar applications={apps} audience="company" onViewProfile={openApplicantProfile} hideTitle />
           </div>
         );
       }
@@ -1252,6 +1252,7 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
               defaultLimit={0}
               saving={saving}
               isHrScoped={isHrScoped}
+              hideTitle
               onOpenProfile={openApplicantProfile}
               onMessage={handleMatchedMessage}
               onShortlist={handleMatchedShortlist}

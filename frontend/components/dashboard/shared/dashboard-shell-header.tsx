@@ -12,6 +12,8 @@ type DashboardShellHeaderProps = {
   welcomeName?: string;
   meta?: string;
   compact?: boolean;
+  /** Whether the mobile off-canvas drawer this button opens is currently open. */
+  mobileMenuOpen?: boolean;
   onOpenMenu: () => void;
   onLogout: () => void;
   notificationHref?: string;
@@ -26,6 +28,7 @@ export function DashboardShellHeader({
   welcomeName,
   meta,
   compact = false,
+  mobileMenuOpen = false,
   onOpenMenu,
   onLogout,
   notificationHref,
@@ -57,6 +60,7 @@ export function DashboardShellHeader({
             onClick={onOpenMenu}
             className="rounded-lg border border-[var(--ds-border)] bg-[var(--ds-surface)] px-2 py-1 text-[var(--ds-muted)] transition hover:bg-[var(--ds-surface-raised)] lg:hidden"
             aria-label="Open menu"
+            aria-expanded={mobileMenuOpen}
           >
             <AppIcon icon={Menu} size="md" />
           </button>

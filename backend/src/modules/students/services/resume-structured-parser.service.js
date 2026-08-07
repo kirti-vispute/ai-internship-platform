@@ -161,7 +161,7 @@ const KNOWN_SKILLS = new Set([
   "cloud architecture", "cost optimization", "monitoring", "vs code"
 ]);
 
-const DEGREE_REGEX = /\b(?:b\.?\s?tech|m\.?\s?tech|b\.?\s?e|m\.?\s?e|bca|mca|bsc|msc|mba|ph\.?d|diploma|bachelor[^,|;]*|master[^,|;]*|higher secondary|secondary school)\b/i;
+const DEGREE_REGEX = /\b(?:b\.?\s?tech|m\.?\s?tech|b\.?\s?e|m\.?\s?e|b\.?\s?c\.?\s?a|m\.?\s?c\.?\s?a|b\.?\s?sc|m\.?\s?sc|mba|ph\.?d|diploma|bachelor[^,|;]*|master[^,|;]*|higher secondary|secondary school)\b/i;
 const INSTITUTE_REGEX = /(university|college|institute|school|academy|polytechnic|vidyalankar|mahavidyalaya)/i;
 const PROJECT_ACTION_REGEX = /(developed|built|designed|implemented|deployed|trained|created|engineered|simulated|optimized)/i;
 const SOFT_SKILL_SET = new Set([
@@ -225,7 +225,21 @@ function isLikelyHeading(line = "") {
   if (words.length === 0 || words.length > 6) return false;
 
   const upperRatio = (trimmed.match(/[A-Z]/g) || []).length / Math.max(trimmed.replace(/[^a-zA-Z]/g, "").length, 1);
-  return upperRatio > 0.65 || /:$/.test(trimmed);
+
+  // Title Case ("Work Experience", "Education") is the most common real-world
+  // heading style -- far more common than ALL CAPS or a trailing colon, which
+  // were previously the only accepted signals. Every alphabetic word starting
+  // with a capital, with no sentence-ending punctuation, distinguishes a
+  // genuine heading from an ordinary sentence that merely contains a section
+  // keyword as a substring (those fail this check, or are already excluded
+  // above by the 6-word cap).
+  const rawWords = trimmed.split(/\s+/).filter(Boolean);
+  const isTitleCase =
+    rawWords.length > 0 &&
+    rawWords.every((word) => !/[a-zA-Z]/.test(word) || /^[A-Z]/.test(word)) &&
+    !/[.!?,;]$/.test(trimmed);
+
+  return upperRatio > 0.65 || /:$/.test(trimmed) || isTitleCase;
 }
 
 function detectSection(line = "") {

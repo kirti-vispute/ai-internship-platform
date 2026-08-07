@@ -8,7 +8,6 @@ const InternProfile = require("../../../models/InternProfile");
 const asyncHandler = require("../../../shared/utils/asyncHandler");
 const AppError = require("../../../shared/utils/AppError");
 const { sendSuccess } = require("../../../shared/utils/api-response");
-const { VALIDATION_RULES } = require("../../../shared/constants/validation-rules");
 const { rankApplicantsForInternship } = require("../../../services/ai.service");
 const { computeApplicationRelevance } = require("../../../services/application-relevance.service");
 const { normalizeSkillList, toDisplaySkillList } = require("../../../shared/utils/skill-normalizer");
@@ -20,9 +19,7 @@ const { logActivity } = require("../../../services/activity-log.service");
 const { sendNotificationEmail } = require("../../../services/notification.service");
 const { notifyInternByProfileId } = require("../../../services/in-app-notification.service");
 const { NOTIFICATION_TYPES } = require("../../../constants/notification-types");
-const { hashPassword } = require("../../../shared/utils/password");
 const {
-  canManageRecruiters,
   canAssignRecruiters,
   buildListMeta,
   applicantsQueryForInternship,
@@ -1059,53 +1056,6 @@ exports.getRecruiters = asyncHandler(async (req, res) => {
       isActive: hr.isActive
     }));
   return sendSuccess(res, { data: { recruiters }, meta: buildListMeta(req.user) });
-});
-
-exports.createRecruiter = asyncHandler(async (req, res) => {
-  const company = await getCompanyProfileByUserId(req.user._id);
-  if (!canManageRecruiters(req.user)) {
-    throw new AppError("Insufficient permission to manage recruiters", 403);
-  }
-  const { email, password } = req.body || {};
-  if (!email || !password) throw new AppError("email and password are required", 400);
-  if (String(password).length < VALIDATION_RULES.PASSWORD_MIN_LENGTH) {
-    throw new AppError(`password must be at least ${VALIDATION_RULES.PASSWORD_MIN_LENGTH} characters`, 400);
-  }
-  const existing = await User.findOne({ email: String(email).toLowerCase().trim() });
-  if (existing) throw new AppError("Email already exists", 409);
-
-  const user = await User.create({
-    email: String(email).toLowerCase().trim(),
-    passwordHash: await hashPassword(password),
-    role: "company",
-    companyAccountType: "hr",
-    companyProfileRef: company._id
-  });
-  return sendSuccess(res, {
-    statusCode: 201,
-    message: "Recruiter account created",
-    data: { user: { _id: user._id, email: user.email, companyAccountType: user.companyAccountType } },
-    meta: buildListMeta(req.user)
-  });
-});
-
-exports.deactivateRecruiter = asyncHandler(async (req, res) => {
-  const company = await getCompanyProfileByUserId(req.user._id);
-  if (!canManageRecruiters(req.user)) {
-    throw new AppError("Insufficient permission to manage recruiters", 403);
-  }
-
-  const recruiter = await User.findOne({
-    _id: req.params.userId,
-    role: "company",
-    companyProfileRef: company._id,
-    companyAccountType: "hr",
-    isDeleted: false
-  });
-  if (!recruiter) throw new AppError("Recruiter not found", 404);
-  recruiter.isActive = false;
-  await recruiter.save();
-  return sendSuccess(res, { message: "Recruiter deactivated", meta: buildListMeta(req.user) });
 });
 
 exports.getCompanyAnalytics = asyncHandler(async (req, res) => {

@@ -37,6 +37,19 @@ export function ApplicationPipelineStepper({ status, compact = false }: Applicat
     );
   }
 
+  // "on_hold" has no PIPELINE_STEPS entry (it's a pause, not a stage), and
+  // this component only receives the current status -- not stageHistory --
+  // so there's no reliable prior stage to resume the grid at. Showing a
+  // banner (like the rejected/withdrawn cases above) avoids the alternative
+  // of silently resetting the visible progress to just "Applied".
+  if (normalized === "on_hold") {
+    return (
+      <div className="rounded-lg border border-[var(--ds-warning)] bg-[var(--ds-warning-bg)] px-3 py-2 text-center text-xs font-semibold text-[var(--ds-warning)]">
+        Application On Hold
+      </div>
+    );
+  }
+
   return (
     <div role="list" aria-label="Application pipeline progress" className={cn("grid gap-2", compact ? "grid-cols-4 sm:grid-cols-7" : "grid-cols-2 sm:grid-cols-4 lg:grid-cols-7")}>
       {PIPELINE_STEPS.map((step, idx) => {

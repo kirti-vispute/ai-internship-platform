@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { waitForAuthFormHydration } from "./helpers/hydration";
 
 const ADMIN_EMAIL = "admin@internai.com";
 const ADMIN_PASSWORD = "Admin@123";
@@ -6,6 +7,7 @@ const ADMIN_PASSWORD = "Admin@123";
 test.describe("Admin end-to-end journey", () => {
   test("logs in, lands on dashboard, navigates core sections, and logs out", async ({ page }) => {
     await page.goto("/auth/admin");
+    await waitForAuthFormHydration(page);
 
     await page.getByLabel("Admin Email", { exact: true }).fill(ADMIN_EMAIL);
     await page.getByLabel("Password", { exact: true }).fill(ADMIN_PASSWORD);
@@ -39,6 +41,7 @@ test.describe("Admin end-to-end journey", () => {
 
   test("rejects an incorrect password with an inline error", async ({ page }) => {
     await page.goto("/auth/admin");
+    await waitForAuthFormHydration(page);
     await page.getByLabel("Admin Email", { exact: true }).fill(ADMIN_EMAIL);
     await page.getByLabel("Password", { exact: true }).fill("WrongPassword!123");
     await page.locator('button[type="submit"]').click();
@@ -49,6 +52,7 @@ test.describe("Admin end-to-end journey", () => {
 
   test("a student credential is rejected on the admin login route (role isolation)", async ({ page }) => {
     await page.goto("/auth/admin");
+    await waitForAuthFormHydration(page);
     await page.getByLabel("Admin Email", { exact: true }).fill("intern1@example.com");
     await page.getByLabel("Password", { exact: true }).fill("Intern@123");
     await page.locator('button[type="submit"]').click();

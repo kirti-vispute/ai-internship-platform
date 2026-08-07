@@ -4,7 +4,6 @@ const AppError = require("../../../shared/utils/AppError");
 const {
   internshipScopeFilter,
   applicationScopeFilter,
-  applicantsQueryForInternship,
   isHrScopedUser,
   buildListMeta
 } = require("../../../services/company-access.service");
@@ -39,15 +38,6 @@ async function findInternshipById(companyId, internshipId, user) {
   return internship;
 }
 
-async function findApplications(companyId, user, queryExtras = {}, options = {}) {
-  const query = {
-    ...applicationScopeFilter(companyId, user),
-    ...queryExtras
-  };
-  const sort = options.sort || { createdAt: -1 };
-  return Application.find(query).sort(sort).populate(options.populate || []);
-}
-
 async function findApplicationById(companyId, applicationId, user, populate = "internship") {
   const application = await Application.findOne({
     _id: applicationId,
@@ -73,39 +63,6 @@ async function findApplicationById(companyId, applicationId, user, populate = "i
   }
 
   return application;
-}
-
-async function findApplicantsForInternship(companyId, internshipId, user, { page = 1, limit = 10, status = "" } = {}) {
-  await findInternshipById(companyId, internshipId, user);
-
-  const query = applicantsQueryForInternship(internshipId, companyId, user);
-  if (status) query.status = status;
-
-  const { page: safePage, limit: safeLimit, skip } = resolvePagination({ page, limit }, { defaultLimit: 10, maxLimit: 100 });
-
-  const [applications, total] = await Promise.all([
-    Application.find(query)
-      .populate("intern", "fullName email mobile skills resume.score education projects summary")
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(safeLimit),
-    Application.countDocuments(query)
-  ]);
-
-  return {
-    applications,
-    page: safePage,
-    limit: safeLimit,
-    total,
-    meta: buildListMeta(user)
-  };
-}
-
-async function countScopedApplications(companyId, user, queryExtras = {}) {
-  return Application.countDocuments({
-    ...applicationScopeFilter(companyId, user),
-    ...queryExtras
-  });
 }
 
 async function findAllApplications(companyId, user, { page = 1, limit = 100, status = "" } = {}) {
@@ -136,9 +93,6 @@ async function findAllApplications(companyId, user, { page = 1, limit = 100, sta
 module.exports = {
   findInternships,
   findInternshipById,
-  findApplications,
   findApplicationById,
-  findApplicantsForInternship,
-  findAllApplications,
-  countScopedApplications
+  findAllApplications
 };

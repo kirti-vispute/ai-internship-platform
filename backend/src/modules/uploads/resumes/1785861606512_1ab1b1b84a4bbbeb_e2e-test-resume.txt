@@ -1,0 +1,6 @@
+Aarav Sharma
+Aspiring Software Engineer
+
+Skills: React, Node.js, TypeScript, MongoDB
+
+Education: B.Tech Computer Science

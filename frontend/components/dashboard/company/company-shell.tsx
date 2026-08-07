@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   BarChart3,
   Bell,
@@ -31,6 +31,7 @@ import { ROLE_WELCOME_LABEL, ROLE_WELCOME_TAGLINE, getCompanyDashboardPath } fro
 import { hasSidebarModule, SIDEBAR_MODULE_KEYS, type SidebarModuleKey } from "@/lib/company-portal";
 import { AppIcon } from "@/components/icons/app-icon";
 import { FEATURE_FLAGS } from "@/constants/featureFlags";
+import { useFocusTrap } from "@/lib/use-focus-trap";
 import { useMessagingUnread } from "@/lib/use-messaging-unread";
 import { useNotificationUnread } from "@/lib/use-notification-unread";
 import { useIsDesktopViewport, useSidebarCollapsed } from "@/lib/use-sidebar-collapsed";
@@ -194,11 +195,31 @@ export function CompanyShell({ welcomeName, companyAccountType, permissions, sid
     [companyAccountType, permissions, sidebarModules, messageUnread]
   );
   const notificationHref = `${getCompanyDashboardPath(companyAccountType)}/notifications`;
+  // Same background-blocking overlay as Modal -- same Escape/scroll-lock/
+  // focus-trap treatment. Gated on isDesktop too: mobileOpen can stay
+  // stale-true if the viewport is widened without closing the drawer first,
+  // and the aside is always visible on lg regardless of mobileOpen there.
+  const mobileDrawerActive = mobileOpen && !isDesktop;
+  const dialogRef = useFocusTrap<HTMLElement>(mobileDrawerActive);
+
+  useEffect(() => {
+    if (!mobileDrawerActive) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMobileOpen(false);
+    };
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.body.style.overflow = "";
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [mobileDrawerActive]);
 
   return (
     <div className="min-h-screen bg-[var(--ds-bg)] transition-colors duration-300">
       <div className="mx-auto flex max-w-[1600px]">
         <aside
+          ref={dialogRef}
           className={cn(
             "sidebar-surface sidebar-shell fixed inset-y-0 left-0 z-40 w-72 p-5 shadow-[0_12px_36px_rgba(15,23,42,0.12)] transition-[width,transform] duration-300 ease-in-out lg:sticky lg:top-0 lg:translate-x-0 dark:shadow-[0_16px_44px_rgba(2,6,23,0.55)]",
             mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
@@ -228,6 +249,7 @@ export function CompanyShell({ welcomeName, companyAccountType, permissions, sid
             welcomeLabel={ROLE_WELCOME_LABEL.company}
             welcomeTagline={ROLE_WELCOME_TAGLINE.company}
             welcomeName={welcomeName || "Company"}
+            mobileMenuOpen={mobileOpen}
             onOpenMenu={() => setMobileOpen(true)}
             onLogout={onLogout}
             notificationHref={notificationHref}

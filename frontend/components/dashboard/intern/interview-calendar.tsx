@@ -69,6 +69,7 @@ type InterviewCalendarProps = {
   interviewRecords?: ScheduledInterviewRecord[];
   audience?: Audience;
   onViewProfile?: (applicationId: string) => void;
+  hideTitle?: boolean;
 };
 
 const calendarSlideVariants = {
@@ -378,7 +379,13 @@ function CalendarSkeleton() {
 
 /* ---------- Main component ---------- */
 
-export function InterviewCalendar({ applications = [], interviewRecords, audience = "intern", onViewProfile }: InterviewCalendarProps) {
+export function InterviewCalendar({
+  applications = [],
+  interviewRecords,
+  audience = "intern",
+  onViewProfile,
+  hideTitle = false
+}: InterviewCalendarProps) {
   const [view, setView] = useState<CalendarView>("month");
   const viewTablistRef = useRef<HTMLDivElement>(null);
   useTablistKeyboard(viewTablistRef);
@@ -517,7 +524,7 @@ const directionRef = useRef<1 | -1>(1);
 
   return (
     <>
-      <SectionPanel title="Calendar" subtitle={subtitle} titleIcon={CalendarDays}>
+      <SectionPanel title="Calendar" subtitle={subtitle} titleIcon={CalendarDays} hideTitle={hideTitle}>
         {/* Toolbar */}
         <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           {/* View switcher */}

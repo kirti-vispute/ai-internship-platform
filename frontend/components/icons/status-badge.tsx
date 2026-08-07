@@ -31,6 +31,7 @@ const STATUS_MAP: Record<string, StatusConfig> = {
   offered: { className: "bg-[var(--ds-success-bg)] text-[var(--ds-success)]", icon: BadgeCheck },
   rejected: { className: "bg-[var(--ds-danger-bg)] text-[var(--ds-danger)]", icon: UserX },
   withdrawn: { className: "bg-[var(--ds-surface-raised)] text-[var(--ds-muted)]", icon: Ban },
+  on_hold: { className: "bg-[var(--ds-warning-bg)] text-[var(--ds-warning)]", icon: Clock },
   verified: { className: "bg-[var(--ds-success-bg)] text-[var(--ds-success)]", icon: ShieldCheck },
   pending: { className: "bg-[var(--ds-warning-bg)] text-[var(--ds-warning)]", icon: Clock },
   suspended: { className: "bg-[var(--ds-warning-bg)] text-[var(--ds-warning)]", icon: Ban },

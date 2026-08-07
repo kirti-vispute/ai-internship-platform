@@ -12,6 +12,40 @@ export type AdminUser = {
   lastLoginIp?: string;
 };
 
+export type AdminUserDetail = AdminUser & {
+  updatedAt?: string;
+  displayName?: string;
+  phone?: string;
+  photoUrl?: string;
+  designation?: string;
+  linkedInUrl?: string;
+  personalWebsite?: string;
+  bio?: string;
+  companyAccountType?: "owner" | "hr" | "ceo" | null;
+  companyProfileRef?: {
+    _id?: string;
+    companyName?: string;
+    companyEmail?: string;
+    industry?: string;
+    website?: string;
+    address?: string;
+    description?: string;
+    verificationStatus?: string;
+  } | null;
+};
+
+export type AdminInternProfileSummary = {
+  fullName?: string;
+  mobile?: string;
+  address?: string;
+  bio?: string;
+  skills?: string[];
+  educationDetails?: Array<{ college?: string; degree?: string; branch?: string; cgpa?: string; passingYear?: string }>;
+  linkedinUrl?: string;
+  githubUrl?: string;
+  portfolioUrl?: string;
+};
+
 export type AdminCompany = {
   _id: string;
   companyName: string;
@@ -148,6 +182,15 @@ export function invalidateAdminPortalCache() {
   inFlightStore.clear();
 }
 
+// Users/companies cache keys embed their query params ("admin:users:page=1..."),
+// so deleting the bare prefix string matches nothing -- every cached variant
+// (other pages, other filters, the overview's limit=100 slice) must go.
+function invalidateCachePrefix(prefix: string) {
+  for (const key of Array.from(cacheStore.keys())) {
+    if (key.startsWith(prefix)) cacheStore.delete(key);
+  }
+}
+
 export type PaginatedUsers = {
   users: AdminUser[];
   page: number;
@@ -265,7 +308,7 @@ export async function updateCompanyVerification(
       body: JSON.stringify({ status, rejectionReason, verifiedBadge })
     }
   );
-  cacheStore.delete("admin:companies");
+  invalidateCachePrefix("admin:companies:");
   return response.company;
 }
 
@@ -324,6 +367,12 @@ export async function previewAdminHiringScoringTemplate(payload: {
   });
 }
 
+export async function fetchAdminUserById(userId: string) {
+  return apiRequest<{ user: AdminUserDetail; internProfile: AdminInternProfileSummary | null }>(
+    `/api/admin/users/${userId}`
+  );
+}
+
 export async function updateAdminUser(
   userId: string,
   payload: { isActive?: boolean; role?: "intern" | "company" | "admin"; adminRole?: "super_admin" | "verification_admin" | "moderation_admin" | "support_admin" }
@@ -332,7 +381,7 @@ export async function updateAdminUser(
     method: "PATCH",
     body: JSON.stringify(payload)
   });
-  cacheStore.delete("admin:users");
+  invalidateCachePrefix("admin:users:");
   return response.user;
 }
 
@@ -340,7 +389,7 @@ export async function softDeleteAdminUser(userId: string) {
   const response = await apiRequest<{ message: string }>(`/api/admin/users/${userId}`, {
     method: "DELETE"
   });
-  cacheStore.delete("admin:users");
+  invalidateCachePrefix("admin:users:");
   return response.message;
 }
 

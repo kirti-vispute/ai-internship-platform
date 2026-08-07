@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Activity,
   Award,
@@ -22,6 +22,7 @@ import { SidebarCollapseToggle } from "@/components/dashboard/shared/sidebar-col
 import { ROLE_WELCOME_LABEL, ROLE_WELCOME_TAGLINE } from "@/lib/auth-routes";
 import { AppIcon } from "@/components/icons/app-icon";
 import { ADMIN_PERMISSIONS, hasAdminPermission } from "@/constants/admin-permissions";
+import { useFocusTrap } from "@/lib/use-focus-trap";
 import { useIsDesktopViewport, useSidebarCollapsed } from "@/lib/use-sidebar-collapsed";
 import { cn } from "@/lib/utils";
 import type { AdminRole } from "@/lib/session";
@@ -121,11 +122,31 @@ export function AdminShell({ welcomeName, adminRole, permissions = [], onLogout,
   const railCollapsed = collapsed && isDesktop;
   const sections = useMemo(() => buildSections(permissions), [permissions]);
   const roleLabel = adminRole ? adminRole.replace(/_/g, " ") : "administrator";
+  // Same background-blocking overlay as Modal -- same Escape/scroll-lock/
+  // focus-trap treatment. Gated on isDesktop too: mobileOpen can stay
+  // stale-true if the viewport is widened without closing the drawer first,
+  // and the aside is always visible on lg regardless of mobileOpen there.
+  const mobileDrawerActive = mobileOpen && !isDesktop;
+  const dialogRef = useFocusTrap<HTMLElement>(mobileDrawerActive);
+
+  useEffect(() => {
+    if (!mobileDrawerActive) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMobileOpen(false);
+    };
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.body.style.overflow = "";
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [mobileDrawerActive]);
 
   return (
     <div className="min-h-screen bg-[var(--ds-bg)] transition-colors duration-300">
       <div className="mx-auto flex max-w-[1600px]">
         <aside
+          ref={dialogRef}
           className={cn(
             "sidebar-surface sidebar-shell fixed inset-y-0 left-0 z-40 w-72 p-5 shadow-[0_12px_36px_rgba(15,23,42,0.12)] transition-[width,transform] duration-300 ease-in-out lg:sticky lg:top-0 lg:translate-x-0 dark:shadow-[0_16px_44px_rgba(2,6,23,0.55)]",
             mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
@@ -156,6 +177,7 @@ export function AdminShell({ welcomeName, adminRole, permissions = [], onLogout,
             welcomeTagline={ROLE_WELCOME_TAGLINE.admin}
             welcomeName={welcomeName || "Administrator"}
             meta={roleLabel}
+            mobileMenuOpen={mobileOpen}
             onOpenMenu={() => setMobileOpen(true)}
             onLogout={onLogout}
           />

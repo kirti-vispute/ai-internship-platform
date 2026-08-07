@@ -1,4 +1,4 @@
-const { routeCompletion, batchRouteCompletions } = require("../../../shared/infrastructure/ai/ai-provider.router");
+const { routeCompletion } = require("../../../shared/infrastructure/ai/ai-provider.router");
 const { hashPayload, remember } = require("../../../shared/infrastructure/cache/cache.service");
 const { PLATFORM_CONFIG } = require("../../../shared/config/platform.config");
 const {
@@ -85,29 +85,11 @@ async function rankApplicantsCached(internship, applicants, userId) {
   return cached.payload;
 }
 
-async function explainMatchBatch(matches, userId) {
-  return batchRouteCompletions(matches, (match) =>
-    routeCompletion({
-      operation: "match-explanation",
-      payload: match,
-      userId,
-      systemPrompt: "Explain candidate-internship fit in 2 short sentences.",
-      userPrompt: JSON.stringify(match),
-      skipRateLimit: true,
-      localFallback: async () => ({
-        provider: "local-heuristics",
-        content: match.reason || "Candidate skills align with role requirements."
-      })
-    })
-  );
-}
-
 module.exports = {
   parseResumeEnhanced,
   computeResumeScoreCached,
   computeSkillGapCached,
   recommendInternshipsCached,
   rankApplicantsCached,
-  explainMatchBatch,
   PLATFORM_CONFIG
 };

@@ -68,6 +68,11 @@ type CompanyDashboardSectionProps = {
   actions?: React.ReactNode;
   children: React.ReactNode;
   className?: string;
+  // Some callers embed this section directly under a page header that
+  // already renders `title` as the page's <h1> -- repeating it here as an
+  // <h2> is a literal duplicate heading. Set this when this section IS the
+  // page (not one of several sections on a shared/tabbed view).
+  hideTitle?: boolean;
 };
 
 export function CompanyDashboardSection({
@@ -77,16 +82,23 @@ export function CompanyDashboardSection({
   icon,
   actions,
   children,
-  className
+  className,
+  hideTitle = false
 }: CompanyDashboardSectionProps) {
   return (
-    <section id={id} className={cn(companyDashboardStyles.section, className)}>
+    <section
+      id={id}
+      className={cn(companyDashboardStyles.section, className)}
+      aria-label={hideTitle ? title : undefined}
+    >
       <div className={companyDashboardStyles.sectionHeader}>
         <div className="min-w-0">
-          <h2 className="ds-h2 flex items-center gap-2">
-            {icon ? <AppIcon icon={icon} size="sm" className="shrink-0 text-[var(--ds-accent)]" /> : null}
-            <span>{title}</span>
-          </h2>
+          {hideTitle ? null : (
+            <h2 className="ds-h2 flex items-center gap-2">
+              {icon ? <AppIcon icon={icon} size="sm" className="shrink-0 text-[var(--ds-accent)]" /> : null}
+              <span>{title}</span>
+            </h2>
+          )}
           {description ? <p className="ds-caption mt-1 max-w-2xl">{description}</p> : null}
         </div>
         {actions ? <div className={companyDashboardStyles.sectionActions}>{actions}</div> : null}
