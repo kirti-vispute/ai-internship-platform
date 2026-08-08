@@ -60,7 +60,7 @@ export async function runAiChecks() {
     })
   );
 
-  const skillGapPanel = readText("frontend/components/dashboard/skill-gap-analysis-panel.tsx");
+  const skillGapPanel = readText("frontend/components/dashboard/intern/skill-gap-analysis-panel.tsx");
   checks.push(
     makeCheck({
       id: "ai.skill-gap-confidence",
@@ -72,7 +72,7 @@ export async function runAiChecks() {
     })
   );
 
-  const resumeDash = readText("frontend/components/dashboard/resume-intelligence-dashboard.tsx");
+  const resumeDash = readText("frontend/components/dashboard/intern/resume-intelligence-dashboard.tsx");
   checks.push(
     makeCheck({
       id: "ai.resume-nan-guard",

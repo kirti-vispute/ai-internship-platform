@@ -9,6 +9,10 @@ const ADMIN_EMAIL = "admin@internai.com";
 const ADMIN_PASSWORD = "Admin@123";
 const ADMIN_VERIFICATION_EMAIL = "e2e.admin.verification@internai-test.local";
 const ADMIN_VERIFICATION_PASSWORD = "E2eAdminVerification@123";
+const ADMIN_MODERATION_EMAIL = "e2e.admin.moderation@internai-test.local";
+const ADMIN_MODERATION_PASSWORD = "E2eAdminModeration@123";
+const ADMIN_SUPPORT_EMAIL = "e2e.admin.support@internai-test.local";
+const ADMIN_SUPPORT_PASSWORD = "E2eAdminSupport@123";
 const COMPANY_OWNER_EMAIL = "e2e.company.owner@internai-test.local";
 const COMPANY_OWNER_PASSWORD = "E2eCompanyOwner@123";
 const BACKEND_URL = "http://localhost:5000";
@@ -1807,6 +1811,39 @@ test.describe("Admin User Management module", () => {
   });
 });
 
+test.describe("Admin User Management module -- Support Admin action-level coverage", () => {
+  test.beforeEach(async ({ page }) => {
+    await loginAsRoleViaApi(page, "admin", ADMIN_SUPPORT_EMAIL, ADMIN_SUPPORT_PASSWORD);
+  });
+
+  // Support Admin owns admin:user:update (ROLE_PERMISSIONS, roles.js) -- every
+  // Deactivate/Activate test elsewhere in this file runs as Super Admin only,
+  // which never proves Support Admin's own grant works. Same non-fixture
+  // target (studentmail.example) and round-trip-then-revert convention as the
+  // Super Admin version above, so the shared dev DB is left as found.
+  test("Support Admin deactivates and reactivates a non-fixture user, and it survives a reload", async ({ page }) => {
+    await page.goto("/dashboard/admin/users");
+    const search = page.getByPlaceholder(/search by email/i);
+    await search.fill("studentmail.example");
+    const row = page.getByRole("row", { name: /studentmail\.example/ }).first();
+    test.skip((await row.count()) === 0, "No non-fixture seeded student found to safely toggle.");
+
+    await row.getByRole("button", { name: "Deactivate", exact: true }).click();
+    await expect(row.getByRole("button", { name: "Activate", exact: true })).toBeVisible();
+    await expect(page.getByText("User deactivated")).toBeVisible();
+
+    // Reload -- the flip must be a real DB write, not just client-side state.
+    await page.reload();
+    await search.fill("studentmail.example");
+    await expect(page.getByRole("row", { name: /studentmail\.example/ }).first().getByRole("button", { name: "Activate", exact: true })).toBeVisible();
+
+    // Revert -- leave the seeded account active as found.
+    await page.getByRole("row", { name: /studentmail\.example/ }).first().getByRole("button", { name: "Activate", exact: true }).click();
+    await expect(page.getByRole("row", { name: /studentmail\.example/ }).first().getByRole("button", { name: "Deactivate", exact: true })).toBeVisible();
+    await expect(page.getByText("User activated")).toBeVisible();
+  });
+});
+
 test.describe("Admin Reports (moderation queue) module", () => {
   test.beforeEach(async ({ page }) => {
     await loginAsRoleViaApi(page, "admin", ADMIN_EMAIL, ADMIN_PASSWORD);
@@ -2161,6 +2198,47 @@ test.describe("Admin Reports (moderation queue) module", () => {
       const scrollWidth = await page.evaluate(() => document.documentElement.scrollWidth);
       const clientWidth = await page.evaluate(() => document.documentElement.clientWidth);
       expect(scrollWidth).toBeLessThanOrEqual(clientWidth + 1);
+    }
+  });
+});
+
+test.describe("Admin Reports (moderation queue) module -- Moderation Admin action-level coverage", () => {
+  test.beforeEach(async ({ page }) => {
+    await loginAsRoleViaApi(page, "admin", ADMIN_MODERATION_EMAIL, ADMIN_MODERATION_PASSWORD);
+  });
+
+  // Moderation Admin owns admin:report:review (ROLE_PERMISSIONS, roles.js) --
+  // the full In Review -> Escalate -> Resolve round trip earlier in this file
+  // is Super Admin only, which never proves Moderation Admin's own grant
+  // works. Same seeded fixture report and restore-to-"open" safety net, one
+  // transition (Escalate) is enough to prove the real action + outcome.
+  test("Moderation Admin escalates a report and it persists to the database", async ({ page }) => {
+    const FIXTURE_REASON = "E2E fixture abuse report for automated moderation-queue coverage.";
+    await page.goto("/dashboard/admin/reports");
+    await expect(page.getByRole("status", { name: "Loading", exact: true })).toBeHidden({ timeout: 15000 });
+    const card = page.locator(".ds-card").filter({ hasText: FIXTURE_REASON });
+    test.skip((await card.count()) === 0, "E2E fixture report not visible -- run seed-e2e-fixtures.js.");
+
+    try {
+      await card.getByRole("button", { name: "Escalate", exact: true }).click();
+      await expect(page.getByText("Report updated")).toBeVisible();
+      await expect(card.getByText("escalated", { exact: true })).toBeVisible();
+
+      await page.reload();
+      const reloadedCard = page.locator(".ds-card").filter({ hasText: FIXTURE_REASON });
+      await expect(reloadedCard.getByText("escalated", { exact: true })).toBeVisible();
+    } finally {
+      const token = await page.evaluate(() => window.localStorage.getItem("internai.auth.token"));
+      const listRes = await page.request.get(`${BACKEND_URL}/api/admin/reports`, { headers: { Authorization: `Bearer ${token}` } });
+      const listBody = await listRes.json().catch(() => ({}));
+      const reports = listBody.data?.reports || listBody.reports || [];
+      const fixture = reports.find((r: { reason?: string }) => r.reason === FIXTURE_REASON);
+      if (fixture && fixture.status !== "open") {
+        await page.request.patch(`${BACKEND_URL}/api/admin/reports/${fixture._id}/resolve`, {
+          headers: { Authorization: `Bearer ${token}` },
+          data: { status: "open", resolutionNote: "" }
+        });
+      }
     }
   });
 });

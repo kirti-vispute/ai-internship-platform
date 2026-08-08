@@ -1,7 +1,7 @@
 const request = require("supertest");
 const app = require("../../src/app");
 const User = require("../../src/modules/authentication/models/User");
-const { createUser, createAdmin, authHeader } = require("../helpers/factories");
+const { createUser, createAdmin, createCompanyWithProfile, authHeader } = require("../helpers/factories");
 
 describe("POST /api/auth/intern/login", () => {
   test("logs in with correct credentials and returns a token", async () => {
@@ -75,6 +75,31 @@ describe("POST /api/auth/admin/login", () => {
 
     expect(res.status).toBe(200);
     expect(res.body.data.adminRole).toBe("super_admin");
+  });
+});
+
+describe("POST /api/auth/company/login", () => {
+  // Mirrors the intern-login "success" case above -- the negative paths
+  // (wrong password / disabled account / unknown email) all run through the
+  // same loginByRole() as intern/admin login, already covered there; this
+  // only needs to prove the company-specific response fields are correct.
+  // Uses an HR account (not the createCompanyWithProfile default "owner") so
+  // companyAccountType and permissions are actually proven to be threaded
+  // through, not just left at their default value.
+  test("logs in with correct credentials and returns company role, companyAccountType, and permissions", async () => {
+    const { user } = await createCompanyWithProfile({
+      companyAccountType: "hr",
+      user: { email: "company.hr.login@test.com" }
+    });
+    const res = await request(app)
+      .post("/api/auth/company/login")
+      .send({ email: user.email, password: "Password123!" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toHaveProperty("accessToken");
+    expect(res.body.data.role).toBe("company");
+    expect(res.body.data.companyAccountType).toBe("hr");
+    expect(res.body.data.permissions).toEqual(expect.arrayContaining(["pipeline:update"]));
   });
 });
 

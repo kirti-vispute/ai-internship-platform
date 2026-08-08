@@ -31,7 +31,7 @@ export async function runInterviewChecks() {
       category: "functionality",
       name: "Interview WebRTC + chat",
       status:
-        shell.includes("useWebRtc") && shell.includes("useInterviewSocket") && shell.includes("result.message")
+        shell.includes("useInterviewMesh") && shell.includes("useInterviewSocket") && shell.includes("result.message")
           ? "PASS"
           : "FAIL",
       message: "Interview shell wires WebRTC, socket chat, and ACK message append"
