@@ -15,7 +15,7 @@
   "failedCount": 1,
   "warningCount": 3,
   "target": "frontend",
-  "durationMs": 4303,
+  "durationMs": 4670,
   "checks": [
     {
       "id": "func.tsc",

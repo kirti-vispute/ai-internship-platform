@@ -1,14 +1,16 @@
 import { HomepageBackground } from "@/components/home/HomepageBackground";
 import { Navbar } from "@/components/layout/navbar";
+import { Footer } from "@/components/layout/footer";
 import {
   HomepageAudience,
   HomepageCapabilities,
   HomepageCoachPreview,
   HomepageFinalCta,
   HomepageHero,
-  HomepageHowItWorks
+  HomepageStoryScroll
 } from "@/components/home/v2/homepage-sections";
 import "./homepage.css";
+import "./homepage-story.css";
 
 export default function HomePage() {
   return (
@@ -20,12 +22,14 @@ export default function HomePage() {
 
         <div className="hp-main">
           <HomepageHero />
-          <HomepageHowItWorks />
+          <HomepageStoryScroll />
           <HomepageCapabilities />
-          <HomepageAudience />
           <HomepageCoachPreview />
+          <HomepageAudience />
           <HomepageFinalCta />
         </div>
+
+        <Footer theme="dark" />
       </div>
     </main>
   );
