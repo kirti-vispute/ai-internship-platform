@@ -36,14 +36,24 @@ body:has(.internai-home) {
   box-shadow: inset 0 -1px 0 var(--hp-border);
 }
 
-/* The navbar's background is pinned dark above (it sits on the permanent starfield),
-   but its foreground (logo wordmark, links, logout/menu buttons) reads the app-wide
-   --ds-* tokens, which flip to light-appropriate (dark) colors in light appearance —
-   dark-on-dark against this fixed-dark header. Repin those tokens to the same fixed
-   --hp-* values the rest of the homepage already uses so text stays readable. Scoped
-   to light appearance only: in dark appearance --ds-* already resolves to the same
-   near-white/near-dark pairing --hp-* uses, so this rule never engages there. */
-:root[data-appearance="light"] .internai-home-content > header {
+/* Footer sits on the same permanent-dark starfield as the header — pin it the
+   same way so it reads as one continuous dark surface regardless of app-wide
+   theme, instead of the light-mode footer band next to a dark hero. */
+.internai-home-content > footer {
+  border-color: var(--hp-border) !important;
+  background: rgba(9, 10, 15, 0.82) !important;
+}
+
+/* The navbar's (and footer's) background is pinned dark above (they sit on the
+   permanent starfield), but their foreground (logo wordmark, links, logout/menu
+   buttons) reads the app-wide --ds-* tokens, which flip to light-appropriate
+   (dark) colors in light appearance — dark-on-dark against this fixed-dark
+   surface. Repin those tokens to the same fixed --hp-* values the rest of the
+   homepage already uses so text stays readable. Scoped to light appearance
+   only: in dark appearance --ds-* already resolves to the same near-white/
+   near-dark pairing --hp-* uses, so this rule never engages there. */
+:root[data-appearance="light"] .internai-home-content > header,
+:root[data-appearance="light"] .internai-home-content > footer {
   --ds-text: var(--hp-text);
   --ds-text-secondary: var(--hp-muted);
   --ds-muted: var(--hp-muted);
@@ -197,7 +207,7 @@ body:has(.internai-home) {
 
 @media (min-width: 1024px) {
   .hp-hero-inner {
-    grid-template-columns: 1.15fr 0.85fr;
+    grid-template-columns: 1.1fr 0.9fr;
     gap: 3rem;
     padding: 0 2.5rem;
   }
@@ -212,25 +222,33 @@ body:has(.internai-home) {
   .hp-hero-copy {
     max-width: 48rem;
   }
+
+  .hp-hero-inner {
+    gap: 3.5rem;
+  }
 }
 
 .hp-hero-eyebrow {
-  font-size: clamp(3rem, 5vw, 4rem);
-  font-weight: 700;
-  line-height: 1.05;
-  letter-spacing: -0.04em;
-  color: var(--hp-text);
-  text-shadow: 0 0 48px rgba(27, 39, 53, 0.75);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--hp-accent);
 }
 
 .hp-hero-headline {
-  margin-top: 1rem;
-  font-size: clamp(2rem, 4.2vw, 3.75rem);
+  margin-top: 0.75rem;
+  font-size: clamp(2.1rem, 4.6vw, 4rem);
   font-weight: 700;
-  line-height: 1.12;
-  letter-spacing: -0.035em;
+  line-height: 1.1;
+  letter-spacing: -0.04em;
   color: var(--hp-text);
   max-width: 52rem;
+}
+
+.hp-hero-headline-accent {
+  color: var(--hp-accent);
 }
 
 .hp-hero-lines {
@@ -295,9 +313,21 @@ body:has(.internai-home) {
 }
 
 .hp-hero-preview-wrap {
+  position: relative;
+  z-index: 0;
   width: 100%;
   max-width: 22rem;
   justify-self: center;
+}
+
+/* Ambient particle depth behind the card — decorative only, bled slightly
+   beyond the card's own box. `overflow-x-clip` on <main> keeps the bleed
+   from ever causing horizontal scroll. */
+.hp-hero-ambient-canvas {
+  position: absolute;
+  inset: -22%;
+  z-index: -1;
+  pointer-events: none;
 }
 
 /* —— AI Career Coach 3D preview —— */
@@ -314,6 +344,27 @@ body:has(.internai-home) {
   transform-style: preserve-3d;
   will-change: transform;
   transform: rotateX(0deg) rotateY(0deg);
+}
+
+/* Soft grounding shadow — static by default, nudged opposite the tilt
+   direction by the pointer-tilt loop so it reads as a fixed light source. */
+.hp-preview-3d-shadow {
+  position: absolute;
+  inset: 15%;
+  pointer-events: none;
+  z-index: -1;
+  transform: translate(0, 8px);
+  background: radial-gradient(ellipse at 50% 50%, rgba(0, 0, 0, 0.35) 0%, transparent 70%);
+  filter: blur(18px);
+  opacity: 0.5;
+  transition: opacity 0.4s ease, filter 0.4s ease;
+}
+
+/* Shadow softens and deepens on hover, as if the lifted card is catching
+   more ambient light — reinforces physical lift instead of just tilting. */
+.hp-preview-3d-scene:hover .hp-preview-3d-shadow {
+  opacity: 0.62;
+  filter: blur(22px);
 }
 
 .hp-preview-3d-glow {
@@ -334,6 +385,11 @@ body:has(.internai-home) {
   );
   filter: blur(30px);
   opacity: 0.78;
+  transition: opacity 0.4s ease;
+}
+
+.hp-preview-3d-scene:hover .hp-preview-3d-glow {
+  opacity: 0.92;
 }
 
 .hp-preview-3d-float {
@@ -349,22 +405,42 @@ body:has(.internai-home) {
   transform: translate3d(0, 0, 0);
   background: var(--hp-surface);
   isolation: isolate;
+  transition: box-shadow 0.4s ease, border-color 0.4s ease;
 }
 
 .hp-preview-3d-card:hover,
 .hp-preview-3d-card:focus-within {
   background: var(--hp-surface);
-  border-color: var(--hp-border);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  border-color: rgba(216, 232, 255, 0.35);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 18px 40px -20px rgba(0, 0, 0, 0.55);
+}
+
+/* Pointer-follow highlight — mimics a light source reflecting off the
+   card's surface. Opacity toggled by the tilt loop on pointer enter/leave;
+   position tracks the pointer via the same loop. Inert (opacity stays 0)
+   whenever that loop doesn't run, e.g. reduced motion or coarse pointer. */
+.hp-preview-3d-sheen {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  background: radial-gradient(
+    circle at var(--sheen-x, 50%) var(--sheen-y, 50%),
+    rgba(255, 255, 255, 0.12) 0%,
+    transparent 38%
+  );
 }
 
 @keyframes hp-preview-float {
   0%,
   100% {
-    transform: translate3d(0, 0, 0);
+    transform: translate3d(0, 0, 0) rotateZ(0deg);
   }
   50% {
-    transform: translate3d(0, -5px, 0);
+    transform: translate3d(0, -5px, 0) rotateZ(0.35deg);
   }
 }
 

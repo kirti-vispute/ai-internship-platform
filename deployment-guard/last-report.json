@@ -1,12 +1,7 @@
 {
   "buildStatus": "FAIL",
   "failedChecks": [
-    "ai.skill-gap-confidence: Skill gap panel renders confidence even for insufficient data",
-    "ai.resume-nan-guard: Resume dashboard avoids NaN confidence display",
-    "ai.hiring-engine: Hiring AI engine exports ranking and rejection modules",
-    "test.timer-ref: Timer uses refs and marks timeout auto-submit",
-    "test.dedupe-recovery: Result dedupe enabled; refresh recovery uses correct fullscreen flag",
-    "interview.webrtc-chat: Interview shell wires WebRTC, socket chat, and ACK message append"
+    "ai.hiring-engine: Hiring AI engine exports ranking and rejection modules"
   ],
   "warnings": [
     "ui.chat-loading-states: Chat workspace defines loading and error UI",
@@ -14,13 +9,13 @@
     "ui.dashboard-shells: Dashboard shells use consistent layout primitives"
   ],
   "performanceScore": 100,
-  "aiReliabilityScore": 63,
+  "aiReliabilityScore": 88,
   "uiStabilityScore": 70,
-  "passedCount": 29,
-  "failedCount": 6,
+  "passedCount": 34,
+  "failedCount": 1,
   "warningCount": 3,
   "target": "frontend",
-  "durationMs": 6168,
+  "durationMs": 4670,
   "checks": [
     {
       "id": "func.tsc",
@@ -90,17 +85,17 @@
       "id": "ai.skill-gap-confidence",
       "category": "ai",
       "name": "Skill gap confidence UI",
-      "status": "FAIL",
+      "status": "PASS",
       "message": "Skill gap panel renders confidence even for insufficient data",
-      "blocking": true
+      "blocking": false
     },
     {
       "id": "ai.resume-nan-guard",
       "category": "ai",
       "name": "Resume confidence NaN guard",
-      "status": "FAIL",
+      "status": "PASS",
       "message": "Resume dashboard avoids NaN confidence display",
-      "blocking": true
+      "blocking": false
     },
     {
       "id": "ai.hiring-engine",
@@ -122,17 +117,17 @@
       "id": "test.timer-ref",
       "category": "functionality",
       "name": "Aptitude timer stability",
-      "status": "FAIL",
+      "status": "PASS",
       "message": "Timer uses refs and marks timeout auto-submit",
-      "blocking": true
+      "blocking": false
     },
     {
       "id": "test.dedupe-recovery",
       "category": "functionality",
       "name": "Aptitude submit dedupe",
-      "status": "FAIL",
+      "status": "PASS",
       "message": "Result dedupe enabled; refresh recovery uses correct fullscreen flag",
-      "blocking": true
+      "blocking": false
     },
     {
       "id": "test.attempt-limits",
@@ -186,9 +181,9 @@
       "id": "interview.webrtc-chat",
       "category": "functionality",
       "name": "Interview WebRTC + chat",
-      "status": "FAIL",
+      "status": "PASS",
       "message": "Interview shell wires WebRTC, socket chat, and ACK message append",
-      "blocking": true
+      "blocking": false
     },
     {
       "id": "interview.api-auth",

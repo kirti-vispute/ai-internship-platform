@@ -3,7 +3,7 @@ import { makeCheck, readText } from "../lib/utils.mjs";
 export async function runTestEngineChecks() {
   const checks = [];
 
-  const examView = readText("frontend/components/dashboard/aptitude-exam-view.tsx");
+  const examView = readText("frontend/components/dashboard/intern/aptitude-exam-view.tsx");
   checks.push(
     makeCheck({
       id: "test.timer-ref",
@@ -14,7 +14,7 @@ export async function runTestEngineChecks() {
     })
   );
 
-  const hub = readText("frontend/components/dashboard/mock-aptitude-hub.tsx");
+  const hub = readText("frontend/components/dashboard/intern/mock-aptitude-hub.tsx");
   checks.push(
     makeCheck({
       id: "test.dedupe-recovery",

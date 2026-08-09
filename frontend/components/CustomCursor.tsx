@@ -40,6 +40,16 @@ export function CustomCursor() {
     let activeTiltElement: HTMLElement | null = null;
     let animationFrame = 0;
     let pointerFrame = 0;
+    /**
+     * The pointer's real position is unknown until it first moves, so `mouse`
+     * above starts at the viewport centre purely as a lerp origin. Painting the
+     * ring and dot there anyway put a blue circle with a glowing centre in the
+     * middle of the viewport on every page load — on the pinned story section,
+     * which fills the viewport, that read as a decorative floating node sitting
+     * in the composition rather than as a cursor. A cursor whose position is
+     * unknown should not be drawn at all.
+     */
+    let pointerSeen = false;
 
     let queuedX = mouse.x;
     let queuedY = mouse.y;
@@ -107,6 +117,19 @@ export function CustomCursor() {
     };
 
     const onPointerMove = (event: PointerEvent) => {
+      if (!pointerSeen) {
+        pointerSeen = true;
+        // Snap every follower to the pointer instead of easing. They are all
+        // still parked at the viewport centre, and easing from there would
+        // drag a visible streak across the page on the first mouse movement.
+        mouse.x = dotPos.x = ringPos.x = event.clientX;
+        mouse.y = dotPos.y = ringPos.y = event.clientY;
+        for (const pos of trailPos) {
+          pos.x = event.clientX;
+          pos.y = event.clientY;
+        }
+      }
+
       queuedX = event.clientX;
       queuedY = event.clientY;
       queuedTarget = event.target as HTMLElement | null;
@@ -160,9 +183,9 @@ export function CustomCursor() {
       }
 
       ring.style.transform = `translate3d(${ringPos.x}px, ${ringPos.y}px, 0) scale(${scale})`;
-      ring.style.opacity = String(ringOpacity);
+      ring.style.opacity = pointerSeen ? String(ringOpacity) : "0";
       ring.style.borderColor = ringColor;
-      dot.style.opacity = hoverState === "text" ? "0" : "1";
+      dot.style.opacity = !pointerSeen || hoverState === "text" ? "0" : "1";
 
       trailRefs.current.forEach((trail, index) => {
         if (!trail) return;
@@ -171,7 +194,7 @@ export function CustomCursor() {
         trailPos[index].x += (lead.x - trailPos[index].x) * followStrength;
         trailPos[index].y += (lead.y - trailPos[index].y) * followStrength;
         trail.style.transform = `translate3d(${trailPos[index].x}px, ${trailPos[index].y}px, 0) scale(${1 - index * 0.15})`;
-        trail.style.opacity = hoverState === "text" ? "0" : `${0.3 - index * 0.07}`;
+        trail.style.opacity = !pointerSeen || hoverState === "text" ? "0" : `${0.3 - index * 0.07}`;
       });
 
       animationFrame = window.requestAnimationFrame(animate);
@@ -215,7 +238,14 @@ export function CustomCursor() {
       />
       <div
         ref={dotRef}
-        className="pointer-events-none fixed left-0 top-0 z-[141] hidden h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[var(--ds-accent)] shadow-[0_0_18px_color-mix(in_srgb,var(--ds-accent)_92%,transparent)] sm:block"
+        // Fixed cool value, not var(--ds-accent): that token resolves to the
+        // warm #F57251 from theme-tokens.generated.css, whose
+        // :root[data-theme][data-appearance] selector outranks readability.css's
+        // bare :root override. The lagging dot then read as an unexplained
+        // orange particle against the landing page's cool palette. This
+        // component only mounts on "/" (see cursor-mount.tsx), so the literal
+        // is scoped to the landing page by construction.
+        className="pointer-events-none fixed left-0 top-0 z-[141] hidden h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#d8e8ff] shadow-[0_0_18px_color-mix(in_srgb,#d8e8ff_92%,transparent)] sm:block"
         aria-hidden="true"
       />
       {trailIndexes.map((index) => (

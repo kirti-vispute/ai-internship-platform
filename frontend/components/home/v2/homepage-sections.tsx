@@ -1,12 +1,16 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useRef } from "react";
 import { Briefcase, Check, FileUp, GraduationCap, LineChart, Target } from "lucide-react";
 import { ScrollReveal } from "@/components/animations/ScrollReveal";
 import { AiCareerCoachPreviewCard } from "@/components/home/v2/ai-career-coach-preview-card";
+import { HeroAmbientDepth } from "@/components/landing/Hero/HeroAmbientDepth";
 import { HpCoachPreviewCard } from "@/components/home/v2/hp-coach-preview-card";
+import { StoryScrollScene } from "@/components/landing/StoryScroll/StoryScrollScene";
 import { SmartAuthLink } from "@/components/navigation/smart-auth-link";
 import { BRAND_NAME, BRAND_TAGLINE } from "@/lib/brand";
+import { setupHeroScrollFx } from "@/lib/landing/hero-scroll-timeline";
 
 const REPLAY = { once: false as const };
 
@@ -46,8 +50,25 @@ function HpSection({
 }
 
 export function HomepageHero() {
+  const heroRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const hero = heroRef.current;
+    if (!hero) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    const card = hero.querySelector<HTMLElement>(".hp-preview-3d-scene");
+    const headline = hero.querySelector<HTMLElement>(".hp-hero-headline");
+    if (!card || !headline) return;
+
+    const glow = hero.querySelector<HTMLElement>(".hp-preview-3d-glow");
+    const ambient = hero.querySelector<HTMLElement>(".hp-hero-ambient-canvas");
+
+    return setupHeroScrollFx({ heroSection: hero, card, headline, glow, ambient });
+  }, []);
+
   return (
-    <section id="hero" className="hp-hero">
+    <section id="hero" className="hp-hero" ref={heroRef}>
       <div className="hp-hero-inner">
         <div className="hp-hero-copy">
           <ScrollReveal variant="soft-scale" distance={12} {...REPLAY}>
@@ -56,8 +77,8 @@ export function HomepageHero() {
 
           <ScrollReveal variant="fade-up" distance={14} delayMs={60} {...REPLAY}>
             <h1 className="hp-hero-headline">
-              The AI-Powered Platform Connecting Talented Interns with Forward-Thinking
-              Companies
+              The <span className="hp-hero-headline-accent">AI-Powered</span> Platform
+              Connecting Talented Interns with Forward-Thinking Companies
             </h1>
           </ScrollReveal>
 
@@ -93,6 +114,7 @@ export function HomepageHero() {
         </div>
 
         <ScrollReveal variant="slide-right" distance={16} delayMs={200} {...REPLAY} className="hp-hero-preview-wrap">
+          <HeroAmbientDepth />
           <AiCareerCoachPreviewCard />
         </ScrollReveal>
       </div>
@@ -106,30 +128,21 @@ const STEPS = [
   { num: "03", label: "Match Opportunities", icon: Target }
 ] as const;
 
-export function HomepageHowItWorks() {
+export function HomepageStoryScroll() {
   return (
-    <HpSection id="how-it-works" label="Process" title={`How ${BRAND_NAME} works`}>
-      <div className="hp-reveal-zone">
-        <ScrollReveal
-          variant="stagger-children"
-          className="hp-steps"
-          distance={8}
-          staggerMs={120}
-          threshold={0.12}
-          {...REPLAY}
-        >
-          {STEPS.map((step) => (
-            <div key={step.num} className="hp-step hp-surface hp-surface--interactive">
-              <span className="hp-step-num">{step.num}</span>
-              <div className="hp-step-icon">
-                <step.icon className="h-5 w-5" strokeWidth={1.5} aria-hidden />
-              </div>
-              <h3>{step.label}</h3>
+    <StoryScrollScene id="how-it-works" label="Process" title={`How ${BRAND_NAME} works`}>
+      <div className="hp-steps">
+        {STEPS.map((step) => (
+          <div key={step.num} className="hp-step hp-surface hp-surface--interactive">
+            <span className="hp-step-num">{step.num}</span>
+            <div className="hp-step-icon">
+              <step.icon className="h-5 w-5" strokeWidth={1.5} aria-hidden />
             </div>
-          ))}
-        </ScrollReveal>
+            <h3>{step.label}</h3>
+          </div>
+        ))}
       </div>
-    </HpSection>
+    </StoryScrollScene>
   );
 }
 

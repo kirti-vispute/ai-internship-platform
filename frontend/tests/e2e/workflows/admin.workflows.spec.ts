@@ -43,6 +43,43 @@ test.describe("Admin workflow: certification submit + review", () => {
     await adminSuperPage.getByRole("button", { name: "Approve", exact: true }).click();
     await expect(adminSuperPage.getByRole("row", { name: new RegExp(courseName) })).not.toBeVisible();
   });
+
+  // Verification Admin owns admin:certification:review (ROLE_PERMISSIONS,
+  // roles.js) -- every other test in this file exercises this action as
+  // Super Admin only, which never actually proves Verification Admin's own
+  // grant works. Same flow as the Super Admin test above, different fixture.
+  test("intern submits a certification, Verification Admin approves it", async ({ request, adminVerificationPage }) => {
+    const loginRes = await request.post(`${BACKEND_URL}/api/auth/intern/login`, {
+      data: { email: FIXTURE_CREDENTIALS.intern.email, password: FIXTURE_CREDENTIALS.intern.password }
+    });
+    const loginBody = await loginRes.json();
+    const internHeaders = { Authorization: `Bearer ${loginBody.data.accessToken || loginBody.data.token}` };
+
+    const courseName = `E2E Verification Admin Cert ${Date.now()}`;
+    const submitRes = await request.post(`${BACKEND_URL}/api/intern/certifications`, {
+      headers: internHeaders,
+      multipart: {
+        certificateFile: {
+          name: "e2e-cert.pdf",
+          mimeType: "application/pdf",
+          buffer: Buffer.from(`%PDF-1.4\n${courseName}\n%%EOF`)
+        },
+        courseName,
+        skillCategory: "Web Development",
+        provider: "E2E Test Provider",
+        completionDate: new Date().toISOString().slice(0, 10)
+      }
+    });
+    expect(submitRes.ok()).toBeTruthy();
+
+    await adminVerificationPage.goto("/dashboard/admin/certification-review");
+    const row = adminVerificationPage.getByRole("row", { name: new RegExp(courseName) });
+    await expect(row).toBeVisible({ timeout: 15000 });
+
+    await row.getByRole("button", { name: "Review", exact: true }).click();
+    await adminVerificationPage.getByRole("button", { name: "Approve", exact: true }).click();
+    await expect(adminVerificationPage.getByRole("row", { name: new RegExp(courseName) })).not.toBeVisible();
+  });
 });
 
 test.describe("Admin workflow: certification review edge cases", () => {

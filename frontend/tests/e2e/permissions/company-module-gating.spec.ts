@@ -21,6 +21,14 @@ test.describe("Company module gating: default state", () => {
     await companyOwnerPage.goto(`${COMPANY_CEO_BASE}/team/recruiters`);
     await new DashboardShellPage(companyOwnerPage).expectNoCrash();
   });
+
+  // CEO shares the executive tier with Owner (both get ROLE_PERMISSIONS.company
+  // in full, per User.js's pre-save hook) -- confirms that holds for a real CEO
+  // account too, not just Owner.
+  test("CEO/executive bypasses module gating entirely", async ({ companyCeoPage }) => {
+    await companyCeoPage.goto(`${COMPANY_CEO_BASE}/team/recruiters`);
+    await new DashboardShellPage(companyCeoPage).expectNoCrash();
+  });
 });
 
 test.describe("Company module gating: executive-tier prefix boundary (dashboard/company/layout.tsx)", () => {

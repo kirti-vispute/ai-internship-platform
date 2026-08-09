@@ -9,6 +9,7 @@ const asyncHandler = require("../../../shared/utils/asyncHandler");
 const AppError = require("../../../shared/utils/AppError");
 const { sendSuccess } = require("../../../shared/utils/api-response");
 const { getSkillGap, recommendInternships } = require("../../../services/ai.service");
+const { buildRoadmap } = require("../../../services/roadmap.service");
 const { computeApplicationRelevance } = require("../../../services/application-relevance.service");
 const { computeResumeScore } = require("../../../services/scorer.service");
 const { buildApplicationInsight } = require("../services/application-insight.service");
