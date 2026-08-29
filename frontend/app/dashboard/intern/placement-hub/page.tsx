@@ -17,27 +17,13 @@ import {
   PROFILE_UPDATED_EVENT
 } from "@/lib/intern-portal";
 import { mapApiInterviewsToRecords, type ScheduledInterviewRecord } from "@/lib/interview-workflow";
-import { buildWeaknessOptions, analyzeInternshipWeaknesses } from "@/lib/intern-weakness-analysis";
 import { recordProgressHistory } from "@/lib/weekly-progress-tracker";
-import { UpcomingInterviewsWidget } from "@/components/dashboard/intern/upcoming-interviews-widget";
-import { WeaknessAnalysisPanel } from "@/components/dashboard/intern/weakness-analysis-panel";
-import {
-  PlacementReadinessCard,
-  SkillGapCard,
-  getPlacementReadiness
-} from "@/components/dashboard/intern/dashboard-overview-cards";
-import { QuickActions } from "@/components/dashboard/intern/dashboard-overview-extras";
-import {
-  AchievementsSection,
-  PriorityRoadmapSection,
-  TodaysFocusSection
-} from "@/components/dashboard/intern/career-coach-dashboard";
+import { getPlacementReadiness } from "@/components/dashboard/intern/dashboard-overview-cards";
+import { PriorityRoadmapSection } from "@/components/dashboard/intern/career-coach-dashboard";
 import {
   CertificatesSection,
   MockTestProgressSection,
-  RecentApplicationsRail,
   RecommendedLearningSection,
-  ResumeAtsHealthRow,
   UpcomingDeadlinesSection,
   WeeklyStreakBanner
 } from "@/components/dashboard/intern/placement-hub-sections";
@@ -46,7 +32,6 @@ export default function PlacementHubPage() {
   const [profile, setProfile] = useState<InternProfile | null>(null);
   const [applications, setApplications] = useState<Application[]>([]);
   const [interviewRecords, setInterviewRecords] = useState<ScheduledInterviewRecord[]>([]);
-  const [missingSkills, setMissingSkills] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -97,12 +82,6 @@ export default function PlacementHubPage() {
       window.removeEventListener("internai-auth-change", syncProfile);
     };
   }, []);
-
-  const weaknessOptions = useMemo(() => buildWeaknessOptions([], applications), [applications]);
-  const topWeakness = useMemo(() => {
-    const analysis = analyzeInternshipWeaknesses(profile, weaknessOptions[0] ?? null);
-    return analysis?.weaknesses[0] ?? null;
-  }, [profile, weaknessOptions]);
 
   const profileCompletion = useMemo(() => {
     if (!profile) return 0;
@@ -159,41 +138,15 @@ export default function PlacementHubPage() {
         <>
           <WeeklyStreakBanner applications={applications} interviewRecords={interviewRecords} />
 
-          <div className="grid gap-4 lg:grid-cols-2">
-            <TodaysFocusSection profile={profile} analysis={profile?.resume?.analysis} topWeakness={topWeakness} missingSkills={missingSkills} />
-            <PlacementReadinessCard readiness={readiness} analysis={profile?.resume?.analysis} />
-          </div>
-
-          <ResumeAtsHealthRow resumeUploaded={Boolean(profile?.resumeUploaded)} resumeScore={resumeScore} atsScore={atsScore} />
-
-          <div className="grid gap-4 lg:grid-cols-2">
-            <SkillGapCard analysis={profile?.resume?.analysis} />
-            <RecommendedLearningSection analysis={profile?.resume?.analysis} />
-          </div>
-
-          <WeaknessAnalysisPanel profile={profile} options={weaknessOptions} loading={loading} error={error} onRetry={loadHub} />
+          <RecommendedLearningSection analysis={profile?.resume?.analysis} />
 
           <PriorityRoadmapSection profile={profile} analysis={profile?.resume?.analysis} />
 
-          <div className="grid gap-4 lg:grid-cols-2">
-            <UpcomingInterviewsWidget interviewRecords={interviewRecords} applications={applications} />
-            <UpcomingDeadlinesSection applications={applications} interviewRecords={interviewRecords} />
-          </div>
-
-          <RecentApplicationsRail applications={applications} />
+          <UpcomingDeadlinesSection applications={applications} interviewRecords={interviewRecords} />
 
           <MockTestProgressSection />
 
-          <AchievementsSection
-            profile={profile}
-            applications={applications}
-            interviewCount={interviewRecords.length}
-            profileCompletion={profileCompletion}
-          />
-
           <CertificatesSection />
-
-          <QuickActions />
         </>
       )}
     </div>

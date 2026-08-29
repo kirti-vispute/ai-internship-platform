@@ -3,7 +3,9 @@ export const BRAND_TAGLINE = "Connecting Skills to Success";
 export const BRAND_TAGLINE_ALT = "Connecting Skills to Success";
 export const BRAND_PORTAL_NAME = "InternAI Platform";
 export const BRAND_LOGO_PATH = "/brand/icon-mark.png";
+export const BRAND_LOGO_PATH_LIGHT = "/brand/icon-mark-light.png";
 export const BRAND_LOGO_FULL_PATH = "/brand/logo-full.png";
+export const BRAND_LOGO_FULL_PATH_LIGHT = "/brand/logo-full-light.png";
 export const BRAND_LOGO_FULL_TAGLINE_PATH = "/brand/logo-full-tagline.png";
 export const BRAND_SUPPORT_EMAIL = "support@internai.example";
 

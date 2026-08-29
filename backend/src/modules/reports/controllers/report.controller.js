@@ -2,6 +2,7 @@ const asyncHandler = require("../../../shared/utils/asyncHandler");
 const AppError = require("../../../shared/utils/AppError");
 const { REPORT_CODES } = require("../../../constants/report-types");
 const { generateEnterpriseReport } = require("../../../services/report-pdf.service");
+const { buildCandidatesWorkbook, buildInternshipsWorkbook, buildUsersWorkbook } = require("../services/report-excel.service");
 const {
   formatUserName,
   buildResumeAnalysisData,
@@ -71,4 +72,35 @@ exports.downloadAdminVerificationReport = asyncHandler(async (req, res) => {
   if (!companyId) throw new AppError("companyId is required", 400);
   const data = await buildVerificationReportData(companyId);
   await renderReport(res, REPORT_CODES.VER, formatUserName(req.user, req.user.email), data.subject, data);
+});
+
+function sendExcel(res, { buffer, filename }) {
+  res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+  res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+  res.send(buffer);
+}
+
+exports.downloadAdminCandidatesExcel = asyncHandler(async (req, res) => {
+  const buffer = await buildCandidatesWorkbook();
+  sendExcel(res, { buffer, filename: `InternAI-Internship-Candidates-${Date.now()}.xlsx` });
+});
+
+exports.downloadAdminInternshipsExcel = asyncHandler(async (req, res) => {
+  const buffer = await buildInternshipsWorkbook();
+  sendExcel(res, { buffer, filename: `InternAI-Internships-${Date.now()}.xlsx` });
+});
+
+exports.downloadAdminInternUsersExcel = asyncHandler(async (req, res) => {
+  const buffer = await buildUsersWorkbook({ role: "intern" });
+  sendExcel(res, { buffer, filename: `InternAI-Intern-Users-${Date.now()}.xlsx` });
+});
+
+exports.downloadAdminHrUsersExcel = asyncHandler(async (req, res) => {
+  const buffer = await buildUsersWorkbook({ role: "company", companyAccountType: "hr" });
+  sendExcel(res, { buffer, filename: `InternAI-HR-Users-${Date.now()}.xlsx` });
+});
+
+exports.downloadAdminCeoUsersExcel = asyncHandler(async (req, res) => {
+  const buffer = await buildUsersWorkbook({ role: "company", companyAccountType: "ceo" });
+  sendExcel(res, { buffer, filename: `InternAI-CEO-Users-${Date.now()}.xlsx` });
 });

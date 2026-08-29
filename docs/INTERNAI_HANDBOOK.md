@@ -40,7 +40,7 @@ Final Revision Sheet
 
 ## 1.1 What this is
 
-**InternAI (CareerSetu)** is an internship hiring platform connecting students, companies, and platform administrators, built around one idea: the resume is the interface between a student and a recruiter, and today that interface is opaque to both sides. The system makes it transparent — a student sees exactly why a resume scored what it scored; a recruiter sees an explainable, configurable ranking instead of a subjective pile of PDFs.
+**InternAI** is an internship hiring platform connecting students, companies, and platform administrators, built around one idea: the resume is the interface between a student and a recruiter, and today that interface is opaque to both sides. The system makes it transparent — a student sees exactly why a resume scored what it scored; a recruiter sees an explainable, configurable ranking instead of a subjective pile of PDFs.
 
 ## 1.2 Problem statement
 

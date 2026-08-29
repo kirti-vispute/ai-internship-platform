@@ -59,9 +59,19 @@ export function isInterviewPath(path: string): boolean {
   return path.startsWith("/interview/");
 }
 
+export function isInternshipListingPath(path: string): boolean {
+  return path.startsWith("/internships");
+}
+
 export function isPathAllowedForRole(path: string, role: AuthRole): boolean {
   if (isInterviewPath(path)) {
     return role === "intern" || role === "company";
+  }
+  // Public listing pages send interns here to log in before applying; honor
+  // that as a post-login redirect target so they land back on the exact
+  // internship instead of getting bounced to the dashboard.
+  if (isInternshipListingPath(path)) {
+    return role === "intern";
   }
   if (!path.startsWith("/dashboard/")) return false;
   if (role === "admin") return path.startsWith("/dashboard/admin");

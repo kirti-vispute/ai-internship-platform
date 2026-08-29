@@ -170,7 +170,7 @@ async function checkUrl(url) {
     const res = await fetch(url, {
       method: "GET",
       redirect: "follow",
-      headers: { "User-Agent": "Mozilla/5.0 (compatible; CareerSetu-CourseValidator/1.0)" }
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; InternAI-CourseValidator/1.0)" }
     });
     return res.status >= 200 && res.status < 400;
   } catch {

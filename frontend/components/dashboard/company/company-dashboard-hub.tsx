@@ -19,17 +19,14 @@ import {
 import { DashboardTabs, type DashboardTabItem } from "@/components/dashboard/shared/dashboard-tabs";
 import { DashboardOverviewStats } from "./dashboard-overview-stats";
 import { ApplicationsOverTimePanel } from "./applications-over-time-panel";
-import { InternshipPerformancePanel } from "./internship-performance-panel";
 import { HiringFunnelAnalyticsPanel } from "./hiring-funnel-analytics-panel";
 import { InterviewScheduleModal } from "./interview-schedule-modal";
 import { InterviewSchedulingPanel, type InterviewScheduleTarget } from "./interview-scheduling-panel";
 import { MatchedCandidatesPanel } from "./matched-candidates-panel";
-import { RoleHiringIntelligencePanel } from "./role-hiring-intelligence-panel";
 import { TodayHiringActivityPanel } from "./today-hiring-activity-panel";
 import { TodaysInterviewsPanel } from "./todays-interviews-panel";
 import { PriorityCandidatesPanel } from "./priority-candidates-panel";
 import { HiringInsightsSummary } from "./hiring-insights-summary";
-import { RecentActivityTimeline } from "./recent-activity-timeline";
 
 type SheetState =
   | { mode: "closed" }
@@ -92,8 +89,12 @@ export function CompanyDashboardHub({
         icon: Activity,
         content: (
           <>
+            <TodaysInterviewsPanel
+              applications={applications}
+              onViewProfile={onOpenProfile}
+              onScheduleInterview={(target) => setScheduleTarget(target)}
+            />
             <ApplicationsOverTimePanel applications={applications} />
-            <RecentActivityTimeline applications={applications} />
           </>
         )
       },
@@ -102,20 +103,28 @@ export function CompanyDashboardHub({
         label: "AI Matches",
         icon: Sparkles,
         content: (
-          <MatchedCandidatesPanel
-            matches={matches}
-            applications={applications}
-            internships={internships}
-            defaultLimit={10}
-            showViewAllLink
-            saving={saving}
-            isHrScoped={isHrScoped}
-            onOpenProfile={onOpenProfile}
-            onMessage={onMessage}
-            onShortlist={onShortlist}
-            onViewResume={onViewResume}
-            onScheduleInterview={(applicationId, candidateName) => setScheduleTarget({ applicationId, candidateName })}
-          />
+          <>
+            <PriorityCandidatesPanel
+              matches={matches}
+              applications={applications}
+              internships={internships}
+              onOpenProfile={onOpenProfile}
+            />
+            <MatchedCandidatesPanel
+              matches={matches}
+              applications={applications}
+              internships={internships}
+              defaultLimit={10}
+              showViewAllLink
+              saving={saving}
+              isHrScoped={isHrScoped}
+              onOpenProfile={onOpenProfile}
+              onMessage={onMessage}
+              onShortlist={onShortlist}
+              onViewResume={onViewResume}
+              onScheduleInterview={(applicationId, candidateName) => setScheduleTarget({ applicationId, candidateName })}
+            />
+          </>
         )
       }
     ];
@@ -145,17 +154,10 @@ export function CompanyDashboardHub({
       content: (
         <>
           <HiringInsightsSummary applications={applications} shortlistedCount={shortlistedCount} />
-          <RoleHiringIntelligencePanel
-            matches={matches}
-            applications={applications}
-            internships={internships}
-            onOpenProfile={onOpenProfile}
-          />
           <HiringFunnelAnalyticsPanel
             applications={applications}
             visibleStageKeys={isHrScoped ? undefined : ["shortlisted", "rejected"]}
           />
-          <InternshipPerformancePanel internships={internships} applications={applications} />
         </>
       )
     };
@@ -211,19 +213,6 @@ export function CompanyDashboardHub({
                 applications={applications}
                 variant="pipeline"
                 onStageClick={(stage) => setSheet({ mode: "stage", stage })}
-              />
-
-              <TodaysInterviewsPanel
-                applications={applications}
-                onViewProfile={onOpenProfile}
-                onScheduleInterview={(target) => setScheduleTarget(target)}
-              />
-
-              <PriorityCandidatesPanel
-                matches={matches}
-                applications={applications}
-                internships={internships}
-                onOpenProfile={onOpenProfile}
               />
 
               <DashboardTabs tabs={tabs} />

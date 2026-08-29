@@ -1,6 +1,6 @@
 import Link from "next/link";
-import Image from "next/image";
-import { BRAND_LOGO_PATH, BRAND_SUPPORT_EMAIL, BRAND_TAGLINE, BRAND_NAME } from "@/lib/brand";
+import { BRAND_SUPPORT_EMAIL, BRAND_TAGLINE, BRAND_NAME } from "@/lib/brand";
+import { BrandMark } from "@/components/brand/brand-mark";
 
 const FOOTER_LINKS = {
   company: [
@@ -27,7 +27,7 @@ export function Footer({ theme = "light" }: FooterProps) {
       <div className="container-shell grid gap-8 py-10 sm:grid-cols-2 lg:grid-cols-4">
         <div className="sm:col-span-2 lg:col-span-1">
           <div className="flex items-center gap-3">
-            <Image src={BRAND_LOGO_PATH} alt="" width={36} height={36} className="shrink-0 object-contain" aria-hidden />
+            <BrandMark size={36} alt="" aria-hidden />
             <div>
               <p className="text-lg font-bold text-[var(--ds-text)]">{BRAND_NAME}</p>
               <p className="mt-1 text-xs text-[var(--ds-muted)]">{BRAND_TAGLINE}</p>

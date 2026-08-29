@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 import { LayoutDashboard, LogOut, Menu, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { InternAILogo } from "@/components/brand/internai-logo";
+import { ThemeToggleSwitch } from "@/components/theme/theme-toggle-switch";
 import { AppIcon } from "@/components/icons/app-icon";
 import { getDashboardPathForRole, getProfilePathForRole } from "@/lib/auth-routes";
 import { logoutAuthSession } from "@/lib/api-client";
@@ -128,6 +129,9 @@ export function Navbar({ theme = "light" }: NavbarProps) {
         )}
 
         <div className="hidden items-center gap-2 md:flex">
+          <Link href="/internships" className={linkClass(pathname.startsWith("/internships"))}>
+            Internships &amp; Jobs
+          </Link>
           {isHome ? (
             <>
               {HOMEPAGE_SECTION_LINKS.map((link) => (
@@ -186,6 +190,7 @@ export function Navbar({ theme = "light" }: NavbarProps) {
         </div>
 
         <div className="flex items-center gap-2">
+          <ThemeToggleSwitch className="shrink-0" />
           {loggedIn && role && !isHome ? (
             <button
               type="button"
@@ -221,6 +226,15 @@ export function Navbar({ theme = "light" }: NavbarProps) {
       {mobileOpen && (
         <div id="navbar-mobile-menu" className="border-t border-[var(--ds-border)] bg-[var(--ds-navbar)] px-4 py-3 md:hidden">
           <ul className="space-y-1">
+            <li>
+              <Link
+                href="/internships"
+                onClick={() => setMobileOpen(false)}
+                className={mobileLinkClass(pathname.startsWith("/internships"))}
+              >
+                Internships &amp; Jobs
+              </Link>
+            </li>
             {isHome ? (
               <>
                 {HOMEPAGE_SECTION_LINKS.map((link) => (

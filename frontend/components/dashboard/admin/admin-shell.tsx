@@ -8,6 +8,7 @@ import {
   Bell,
   Building2,
   ClipboardList,
+  Download,
   Flag,
   LayoutGrid,
   Settings,
@@ -101,6 +102,9 @@ function buildSections(permissions: string[]): SidebarSection[] {
         { label: "Notifications", href: "/dashboard/admin/notifications", icon: <AppIcon icon={Bell} /> },
         ...(can(ADMIN_PERMISSIONS.MANAGE)
           ? [{ label: "AI Hiring Scoring", href: "/dashboard/admin/hiring-scoring", icon: <AppIcon icon={BarChart3} /> }]
+          : []),
+        ...(can(ADMIN_PERMISSIONS.MANAGE)
+          ? [{ label: "Data Exports", href: "/dashboard/admin/exports", icon: <AppIcon icon={Download} />, permission: ADMIN_PERMISSIONS.MANAGE }]
           : []),
         { label: "Settings", href: "/dashboard/admin/settings", icon: <AppIcon icon={Settings} /> }
       ]

@@ -37,7 +37,6 @@ import { QuickActions } from "@/components/dashboard/intern/dashboard-overview-e
 import { DashboardTabs, type DashboardTabItem } from "@/components/dashboard/shared/dashboard-tabs";
 import {
   CareerReadinessSection,
-  PriorityRoadmapSection,
   TodaysFocusSection
 } from "@/components/dashboard/intern/career-coach-dashboard";
 
@@ -67,10 +66,6 @@ const SkillGapCard = dynamic(
   () => import("@/components/dashboard/intern/dashboard-overview-cards").then((m) => m.SkillGapCard),
   { ssr: false, loading: () => <SkeletonCard /> }
 );
-const ActivityTimeline = dynamic(
-  () => import("@/components/dashboard/intern/dashboard-overview-extras").then((m) => m.ActivityTimeline),
-  { ssr: false, loading: () => <SkeletonList /> }
-);
 const DashboardCharts = dynamic(
   () => import("@/components/dashboard/intern/dashboard-overview-extras").then((m) => m.DashboardCharts),
   { ssr: false, loading: () => <SkeletonPage /> }
@@ -83,27 +78,10 @@ const StatisticsCards = dynamic(
   () => import("@/components/dashboard/intern/dashboard-overview-extras").then((m) => m.StatisticsCards),
   { ssr: false, loading: () => <SkeletonCard /> }
 );
-const CareerProgressHub = dynamic(
-  () => import("@/components/dashboard/intern/career-progress-hub").then((m) => m.CareerProgressHub),
-  { ssr: false, loading: () => <SkeletonCard /> }
-);
 const WeeklyAiInsights = dynamic(
   () => import("@/components/dashboard/intern/weekly-ai-insights").then((m) => m.WeeklyAiInsights),
   { ssr: false, loading: () => <SkeletonCard /> }
 );
-const ProgressChartsPanel = dynamic(
-  () => import("@/components/dashboard/intern/progress-charts-panel").then((m) => m.ProgressChartsPanel),
-  { ssr: false, loading: () => <SkeletonPage /> }
-);
-const AchievementsSection = dynamic(
-  () => import("@/components/dashboard/intern/career-coach-dashboard").then((m) => m.AchievementsSection),
-  { ssr: false, loading: () => <SkeletonCard /> }
-);
-const PlacementReadinessTiersSection = dynamic(
-  () => import("@/components/dashboard/intern/career-coach-dashboard").then((m) => m.PlacementReadinessTiersSection),
-  { ssr: false, loading: () => <SkeletonCard /> }
-);
-
 export default function InternDashboardOverviewPage() {
   const [profile, setProfile] = useState<InternProfile | null>(null);
   const [applications, setApplications] = useState<Application[]>([]);
@@ -260,8 +238,6 @@ export default function InternDashboardOverviewPage() {
               topWeakness={topWeakness}
               missingSkills={missingSkills}
             />
-
-            <PriorityRoadmapSection profile={profile} analysis={profile?.resume?.analysis} />
           </>
         )
       },
@@ -332,13 +308,6 @@ export default function InternDashboardOverviewPage() {
           <>
             <WeeklyAiInsights analysis={profile?.resume?.analysis} applications={applications} topWeakness={topWeakness} />
             <RecommendationsCard recommendations={recommendations} loading={recommendationsLoading} />
-
-            <ActivityTimeline
-              applications={applications}
-              interviewRecords={interviewRecords}
-              notifications={notifications}
-            />
-
             <RecentMessagesWidget role="intern" chatHref="/dashboard/intern/chat" />
           </>
         )
@@ -364,18 +333,7 @@ export default function InternDashboardOverviewPage() {
               savedCount={savedInternships.length}
             />
 
-            <PlacementReadinessTiersSection readiness={readiness} />
-
-            <CareerProgressHub profile={profile} analysis={profile?.resume?.analysis} readiness={readiness} />
-
-            <AchievementsSection
-              profile={profile}
-              applications={applications}
-              interviewCount={interviewCount}
-              profileCompletion={profileCompletion}
-            />
             <DashboardCharts applications={applications} analysis={profile?.resume?.analysis} />
-            <ProgressChartsPanel applications={applications} interviewRecords={interviewRecords} />
             <WeaknessAnalysisPanel
               profile={profile}
               options={weaknessOptions}

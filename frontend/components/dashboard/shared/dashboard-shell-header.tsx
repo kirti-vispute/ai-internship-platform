@@ -4,6 +4,7 @@ import { LogOut, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AppIcon } from "@/components/icons/app-icon";
 import { NotificationBell } from "@/components/dashboard/shared/notification-bell";
+import { ThemeToggleSwitch } from "@/components/theme/theme-toggle-switch";
 import { cn } from "@/lib/utils";
 
 type DashboardShellHeaderProps = {
@@ -79,6 +80,7 @@ export function DashboardShellHeader({
         </div>
 
         <div className="flex flex-wrap items-center justify-end gap-2">
+          <ThemeToggleSwitch />
           {bell}
           <Button type="button" variant="secondary" size="sm" onClick={onLogout}>
             <AppIcon icon={LogOut} size="xs" className="text-current" />

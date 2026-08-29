@@ -198,7 +198,7 @@ test.describe("Theme mechanism: invalid stored values are handled gracefully", (
     await expect(internPage.getByRole("button", { name: "Ocean Blue", exact: true })).toHaveAttribute("aria-pressed", "true");
   });
 
-  test("a corrupted appearance value in localStorage still resolves to a consistent dark-mode state", async ({ internPage }) => {
+  test("a corrupted appearance value in localStorage still resolves to a consistent light-mode state", async ({ internPage }) => {
     await internPage.goto("/dashboard/intern/profile");
     await pinServerThemeToDefaults(internPage);
     await internPage.evaluate(() => {
@@ -209,14 +209,14 @@ test.describe("Theme mechanism: invalid stored values are handled gracefully", (
     await expect(internPage.locator("body")).not.toContainText(/something went wrong/i);
 
     const applied = await readAppliedTheme(internPage);
-    // DEFAULT_APPEARANCE is "dark" -- this must be reflected in the actual
+    // DEFAULT_APPEARANCE is "light" -- this must be reflected in the actual
     // <html> "dark" class, not just in React's in-memory state, since several
     // components style off Tailwind's `dark:` variant rather than the
     // CSS-variable tokens.
-    expect(applied.appearance).toBe("dark");
-    expect(applied.isDarkClass).toBe(true);
+    expect(applied.appearance).toBe("light");
+    expect(applied.isDarkClass).toBe(false);
     await internPage.getByRole("button", { name: "Theme", exact: true }).click();
-    await expect(internPage.getByRole("button", { name: "Dark", exact: true })).toHaveAttribute("aria-pressed", "true");
+    await expect(internPage.getByRole("button", { name: "Light", exact: true })).toHaveAttribute("aria-pressed", "true");
   });
 });
 

@@ -76,6 +76,10 @@ const AdminHiringScoringPanel = dynamic(
   () => import("@/components/dashboard/admin/admin-hiring-scoring-panel").then((m) => m.AdminHiringScoringPanel),
   { ssr: false, loading: () => <Skeleton className="h-72 w-full" /> }
 );
+const AdminExportsPanel = dynamic(
+  () => import("@/components/dashboard/admin/admin-exports-panel").then((m) => m.AdminExportsPanel),
+  { ssr: false, loading: () => <Skeleton className="h-72 w-full" /> }
+);
 const ThemeSettingsPanel = dynamic(
   () => import("@/components/theme/theme-settings-panel").then((m) => m.ThemeSettingsPanel),
   { ssr: false, loading: () => <Skeleton className="h-48 w-full" /> }
@@ -93,7 +97,8 @@ export type AdminDashboardView =
   | "notifications"
   | "settings"
   | "hiring-scoring"
-  | "certification-review";
+  | "certification-review"
+  | "exports";
 
 const VIEW_META: Record<AdminDashboardView, { title: string; subtitle: string }> = {
   overview: { title: "Platform Overview", subtitle: "Live snapshot of platform health, users, and moderation." },
@@ -113,6 +118,10 @@ const VIEW_META: Record<AdminDashboardView, { title: string; subtitle: string }>
   "certification-review": {
     title: "Certification Review",
     subtitle: "Approve or reject intern course completion submissions."
+  },
+  exports: {
+    title: "Data Exports",
+    subtitle: "Download platform data as Excel spreadsheets."
   }
 };
 
@@ -1248,6 +1257,8 @@ function AdminDashboardInner({ view }: { view: AdminDashboardView }) {
       )}
 
       {view === "hiring-scoring" && hasAdminPermission(permissions, ADMIN_PERMISSIONS.MANAGE) && <AdminHiringScoringPanel />}
+
+      {view === "exports" && hasAdminPermission(permissions, ADMIN_PERMISSIONS.MANAGE) && <AdminExportsPanel />}
 
       {view === "settings" && (
         <Card title="Administrative Settings" subtitle="Safety controls and account policy preferences">

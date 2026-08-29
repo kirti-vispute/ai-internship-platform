@@ -61,6 +61,12 @@ router.get(
   reportController.downloadAdminVerificationReport
 );
 
+router.get("/reports/candidates.xlsx", allowPermissions("admin:manage"), reportController.downloadAdminCandidatesExcel);
+router.get("/reports/internships.xlsx", allowPermissions("admin:manage"), reportController.downloadAdminInternshipsExcel);
+router.get("/reports/users-intern.xlsx", allowPermissions("admin:manage"), reportController.downloadAdminInternUsersExcel);
+router.get("/reports/users-hr.xlsx", allowPermissions("admin:manage"), reportController.downloadAdminHrUsersExcel);
+router.get("/reports/users-ceo.xlsx", allowPermissions("admin:manage"), reportController.downloadAdminCeoUsersExcel);
+
 router.get("/hiring-scoring/templates", allowPermissions("admin:manage"), hiringScoringController.listTemplates);
 router.post("/hiring-scoring/templates", allowPermissions("admin:manage"), hiringScoringController.saveTemplate);
 router.put("/hiring-scoring/templates", allowPermissions("admin:manage"), hiringScoringController.saveTemplate);

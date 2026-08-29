@@ -2,23 +2,13 @@
 
 import { memo, useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import {
-  Award,
-  BadgeCheck,
-  BookOpen,
-  Calendar,
-  Clock3,
-  Flame,
-  GraduationCap,
-  ListChecks,
-  Sparkles
-} from "lucide-react";
+import { Award, BadgeCheck, BookOpen, Clock3, Flame, GraduationCap, Sparkles } from "lucide-react";
 import { ScrollReveal } from "@/components/animations/ScrollReveal";
 import { AppIcon } from "@/components/icons/app-icon";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/dashboard/shared/empty-state";
-import { ProgressRing, TrendAreaChart } from "@/components/dashboard/charts/analytics-charts";
+import { TrendAreaChart } from "@/components/dashboard/charts/analytics-charts";
 import { cn } from "@/lib/utils";
 import type { Application, ResumeAnalysis } from "@/lib/intern-portal";
 import type { ScheduledInterviewRecord } from "@/lib/interview-workflow";
@@ -112,84 +102,6 @@ export function WeeklyStreakBanner({
         </div>
       </div>
     </ScrollReveal>
-  );
-}
-
-/* ============================== Resume + ATS Health ============================== */
-
-function healthLabel(score: number): { label: string; colorVar: string } {
-  if (score >= 85) return { label: "Excellent", colorVar: "var(--ds-success)" };
-  if (score >= 70) return { label: "Strong", colorVar: "var(--ds-success)" };
-  if (score >= 55) return { label: "Good", colorVar: "var(--ds-warning)" };
-  if (score >= 40) return { label: "Developing", colorVar: "var(--ds-warning)" };
-  return { label: "Needs Work", colorVar: "var(--ds-danger)" };
-}
-
-export function ResumeAtsHealthRow({
-  resumeUploaded,
-  resumeScore,
-  atsScore
-}: {
-  resumeUploaded: boolean;
-  resumeScore: number;
-  atsScore: number;
-}) {
-  if (!resumeUploaded) {
-    return (
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className={cn(cardBase, "p-6")}>
-          <EmptyState
-            presetKey="resume"
-            title="Resume Health"
-            description="Upload your resume to unlock health scoring."
-            action={
-              <Button href="/dashboard/intern/resume" size="sm" variant="primary">
-                Upload Resume
-              </Button>
-            }
-          />
-        </div>
-        <div className={cn(cardBase, "p-6")}>
-          <EmptyState presetKey="resume" title="ATS Health" description="Upload your resume to unlock ATS scoring." />
-        </div>
-      </div>
-    );
-  }
-
-  const resumeHealth = healthLabel(resumeScore);
-  const atsHealth = healthLabel(atsScore);
-
-  return (
-    <div className="grid gap-4 sm:grid-cols-2">
-      <ScrollReveal variant="fade-up" distance={12}>
-        <div className={cn(cardBase, "flex items-center gap-5 p-6")}>
-          <ProgressRing value={resumeScore} sublabel="/ 100" colorVar={resumeHealth.colorVar} />
-          <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-wide text-[var(--ds-muted)]">Resume Health</p>
-            <p className="mt-1 text-lg font-bold" style={{ color: resumeHealth.colorVar }}>
-              {resumeHealth.label}
-            </p>
-            <Button href="/dashboard/intern/resume/score" type="button" size="sm" variant="secondary" className="mt-3">
-              View Report
-            </Button>
-          </div>
-        </div>
-      </ScrollReveal>
-      <ScrollReveal variant="fade-up" distance={12} delayMs={60}>
-        <div className={cn(cardBase, "flex items-center gap-5 p-6")}>
-          <ProgressRing value={atsScore} sublabel="/ 100" colorVar={atsHealth.colorVar} />
-          <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-wide text-[var(--ds-muted)]">ATS Health</p>
-            <p className="mt-1 text-lg font-bold" style={{ color: atsHealth.colorVar }}>
-              {atsHealth.label}
-            </p>
-            <Button href="/dashboard/intern/resume/score" type="button" size="sm" variant="secondary" className="mt-3">
-              Improve ATS Fit
-            </Button>
-          </div>
-        </div>
-      </ScrollReveal>
-    </div>
   );
 }
 
@@ -305,67 +217,6 @@ export function UpcomingDeadlinesSection({
               );
             })}
           </ul>
-        )}
-      </div>
-    </ScrollReveal>
-  );
-}
-
-/* ============================== Recent Applications Rail ============================== */
-
-export function RecentApplicationsRail({ applications }: { applications: Application[] }) {
-  const recent = applications.slice(0, 5);
-
-  return (
-    <ScrollReveal variant="fade-up" distance={12}>
-      <div className={cn(cardBase, "p-6")}>
-        <div className="mb-4 flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <AppIcon icon={ListChecks} size="sm" className="text-[var(--ds-accent)]" />
-            <h3 className="text-sm font-semibold text-[var(--ds-text)]">Recent Applications</h3>
-          </div>
-          <Button href="/dashboard/intern/applications" type="button" size="sm" variant="ghost">
-            View all
-          </Button>
-        </div>
-        {recent.length === 0 ? (
-          <EmptyState
-            title="No applications yet"
-            hint="Search internships and submit your first application."
-            presetKey="applications"
-            action={
-              <Button href="/dashboard/intern/internships/search" type="button" size="sm">
-                Search Internships
-              </Button>
-            }
-          />
-        ) : (
-          <ol className="space-y-4">
-            {recent.map((app, idx) => (
-              <li key={app._id} className="relative flex gap-3 pl-1">
-                <div className="flex flex-col items-center">
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--ds-surface-raised)] text-[var(--ds-accent)]">
-                    <AppIcon icon={Calendar} size="xs" className="text-current" />
-                  </span>
-                  {idx < recent.length - 1 ? <span className="mt-1 h-full w-px flex-1 bg-[var(--ds-border)]" /> : null}
-                </div>
-                <div className="min-w-0 pb-2">
-                  <p className="text-sm font-medium text-[var(--ds-text)]">
-                    {app.internship?.role || "Internship"}{" "}
-                    <span className="font-normal text-[var(--ds-muted)]">@ {app.internship?.company?.companyName || "Company"}</span>
-                  </p>
-                  <div className="mt-1 flex items-center gap-2">
-                    <span className="rounded-full bg-[var(--ds-accent)]/10 px-2 py-0.5 text-[11px] font-semibold capitalize text-[var(--ds-accent)]">
-                      {(app.status || "pending").replace(/_/g, " ")}
-                    </span>
-                    <span className="text-[11px] text-[var(--ds-muted)]">
-                      {app.appliedAt ? new Date(app.appliedAt).toLocaleDateString() : "—"}
-                    </span>
-                  </div>
-                </div>
-              </li>
-            ))}
-          </ol>
         )}
       </div>
     </ScrollReveal>

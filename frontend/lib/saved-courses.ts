@@ -4,7 +4,7 @@ import type { CourseRecommendation } from "@/lib/skill-course-recommendations";
 
 export type SavedCourse = CourseRecommendation & { skill: string; savedAt: string };
 
-const STORAGE_KEY = "careersetu_saved_courses";
+const STORAGE_KEY = "internai_saved_courses";
 
 function readStorage(): SavedCourse[] {
   if (typeof window === "undefined") return [];

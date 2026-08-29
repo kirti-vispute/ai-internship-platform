@@ -481,60 +481,78 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
         if (!isViewAllowed(companyContext.currentUser, view)) {
           return;
         }
-        if (WITH_INTERNSHIPS.has(view)) setInternships(await fetchCompanyInternships());
-        if (WITH_APPS.has(view)) setApps(await fetchCompanyApplications());
-        if (WITH_MATCHES.has(view)) setMatches(await fetchCompanyMatchedCandidates());
-        if (PERSONAL_PROFILE_VIEWS.has(view) && ["owner", "ceo"].includes(companyContext.currentUser?.companyAccountType || "")) {
-          setPersonalProfile(await fetchPersonalProfile());
+
+        // The rest of this view's data comes from several independent endpoints
+        // (internships, applications, matches, templates, recruiters, ...) --
+        // none of them depend on each other's response, only on companyContext
+        // above. Firing them with Promise.all instead of one `await` per line
+        // turns N sequential round trips into 1, which is most of what made
+        // switching dashboard views feel slow on real network latency.
+        const user = companyContext.currentUser;
+        const userRole = user?.companyAccountType || "";
+        const isAnalyticsView = ["team-recruiters", "analytics-company", "analytics-salary"].includes(view);
+        const tasks: Promise<void>[] = [];
+
+        if (WITH_INTERNSHIPS.has(view)) tasks.push(fetchCompanyInternships().then(setInternships));
+        if (WITH_APPS.has(view)) tasks.push(fetchCompanyApplications().then(setApps));
+        if (WITH_MATCHES.has(view)) tasks.push(fetchCompanyMatchedCandidates().then(setMatches));
+        if (PERSONAL_PROFILE_VIEWS.has(view) && ["owner", "ceo"].includes(userRole)) {
+          tasks.push(fetchPersonalProfile().then(setPersonalProfile));
         }
         if (WITH_MATCHES.has(view) || view === "overview" || HIRING_HUB_VIEWS.has(view)) {
-          try {
-            const templates = await fetchCompanyHiringScoringTemplates(true);
-            if (templates.length) hiringAIEngine.configureRoleTemplates(templates);
-          } catch {
-            /* defaults remain active */
-          }
+          tasks.push(
+            fetchCompanyHiringScoringTemplates(true)
+              .then((templates) => {
+                if (templates.length) hiringAIEngine.configureRoleTemplates(templates);
+              })
+              .catch(() => {
+                /* defaults remain active */
+              })
+          );
         }
-        if (["team-recruiters", "analytics-company", "analytics-salary"].includes(view)) {
-          const isExecutive = ["owner", "ceo"].includes(companyContext.currentUser?.companyAccountType || "");
-          const insights =
-            isExecutive && (view === "team-recruiters" || view === "analytics-company")
-              ? await fetchCompanyHrInsights(true)
-              : null;
-          setHrInsights(insights);
-          if (insights && view === "team-recruiters") {
-            setRecruiters(
-              insights.hrUsers.map((hr) => ({
-                _id: hr.id,
-                email: hr.email,
-                displayName: hr.name,
-                companyAccountType: "hr" as const,
-                isActive: hr.isActive
-              }))
-            );
-          }
-          setAnalytics(await fetchCompanyAnalytics());
+
+        if (isAnalyticsView) {
+          const isExecutive = ["owner", "ceo"].includes(userRole);
+          tasks.push(
+            (async () => {
+              const insights =
+                isExecutive && (view === "team-recruiters" || view === "analytics-company")
+                  ? await fetchCompanyHrInsights(true)
+                  : null;
+              setHrInsights(insights);
+              if (insights && view === "team-recruiters") {
+                setRecruiters(
+                  insights.hrUsers.map((hr) => ({
+                    _id: hr.id,
+                    email: hr.email,
+                    displayName: hr.name,
+                    companyAccountType: "hr" as const,
+                    isActive: hr.isActive
+                  }))
+                );
+              }
+            })()
+          );
+          tasks.push(fetchCompanyAnalytics().then(setAnalytics));
         } else {
           setHrInsights(null);
           setAnalytics(null);
         }
+
         if (view === "overview" || HIRING_HUB_VIEWS.has(view)) {
-          const user = companyContext.currentUser;
           const assignOk =
             (user?.permissions || []).includes("company:internship:assign") ||
-            ["owner", "ceo"].includes(user?.companyAccountType || "");
+            ["owner", "ceo"].includes(userRole);
           if (assignOk) {
-            try {
-              setRecruiters(await fetchCompanyRecruiters());
-            } catch {
-              setRecruiters([]);
-            }
+            tasks.push(fetchCompanyRecruiters().then(setRecruiters).catch(() => setRecruiters([])));
           } else if (view !== "team-recruiters") {
             setRecruiters([]);
           }
-        } else if (!["team-recruiters", "analytics-company", "analytics-salary"].includes(view)) {
+        } else if (!isAnalyticsView) {
           setRecruiters([]);
         }
+
+        await Promise.all(tasks);
       } catch (e) {
         setError((e as Error).message || "Failed to load company data.");
       } finally {

@@ -1,8 +1,8 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
-import { BRAND_LOGO_PATH, BRAND_NAME } from "@/lib/brand";
+import { BRAND_NAME } from "@/lib/brand";
+import { BrandMark } from "@/components/brand/brand-mark";
 import { cn } from "@/lib/utils";
 
 type InternAILogoProps = {
@@ -26,14 +26,7 @@ export function InternAILogo({
         className
       )}
     >
-      <Image
-        src={BRAND_LOGO_PATH}
-        alt={`${BRAND_NAME} logo`}
-        width={34}
-        height={34}
-        priority
-        className="shrink-0 object-contain"
-      />
+      <BrandMark size={34} priority />
       {showWordmark && (
         <span className="text-lg font-extrabold tracking-tight text-ink dark:text-slate-100">{BRAND_NAME}</span>
       )}

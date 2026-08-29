@@ -27,7 +27,7 @@ async function fetchStatus(url, method) {
       method,
       signal: controller.signal,
       redirect: "follow",
-      headers: { "User-Agent": "Mozilla/5.0 (compatible; CareerSetu-CourseValidator/1.0)" }
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; InternAI-CourseValidator/1.0)" }
     });
     return res.status;
   } catch {

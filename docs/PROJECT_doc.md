@@ -1,4 +1,4 @@
-# InternAI / CareerSetu — Project Bible
+# InternAI — Project Bible
 
 **Final Year Major Project · Complete Revision & Viva Defence Guide**
 

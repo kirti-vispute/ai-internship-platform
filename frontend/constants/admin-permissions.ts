@@ -38,6 +38,7 @@ export function canAccessAdminView(view: string, permissions: string[]): boolean
     case "certification-review":
       return hasAdminPermission(permissions, ADMIN_PERMISSIONS.CERTIFICATION_REVIEW);
     case "hiring-scoring":
+    case "exports":
       return hasAdminPermission(permissions, ADMIN_PERMISSIONS.MANAGE);
     default:
       return false;
