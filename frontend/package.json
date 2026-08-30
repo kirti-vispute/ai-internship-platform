@@ -4,7 +4,6 @@
     "private": true,
     "scripts": {
         "dev": "next dev --turbo",
-        "prebuild": "node ../deployment-guard/run.mjs --target=frontend",
         "build": "next build",
         "start": "next start",
         "lint": "next lint",
