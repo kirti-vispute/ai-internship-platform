@@ -3,7 +3,7 @@ services:
     name: internai-api
     env: node
     plan: free
-    buildCommand: node ../deployment-guard/run.mjs --target=backend && npm install
+    buildCommand: npm install
     startCommand: npm start
     rootDir: backend
     healthCheckPath: /health
