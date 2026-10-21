@@ -1,7 +1,6 @@
 "use client";
 
 import { AptitudeAttemptChart } from "@/components/dashboard/intern/aptitude-attempt-chart";
-import { AiConfidenceBadge } from "@/components/dashboard/shared/ai-confidence-badge";
 import { APTITUDE_SECTIONS } from "@/lib/data/aptitude-tests";
 import { AptitudeProgressCharts } from "@/components/dashboard/intern/aptitude-progress-charts";
 import { buildProgressData, getAttemptHistory, getAptitudeHistory } from "@/lib/aptitude-progress";
@@ -85,13 +84,6 @@ export function AptitudeResultView({ result, onBack, onRetake, canRetake = true 
           sub={`of ${formatDuration(result.timeAllowedSeconds)}`}
         />
       </div>
-
-      <AiConfidenceBadge
-        confidenceScore={result.aiValidation.confidenceScore}
-        validationStatus={result.aiValidation.validationStatus}
-        confidenceTier={result.aiValidation.confidenceTier}
-        explanationTrace={result.aiValidation.explanationTrace}
-      />
 
       <div className="rounded-xl border border-[var(--ds-border)] p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">

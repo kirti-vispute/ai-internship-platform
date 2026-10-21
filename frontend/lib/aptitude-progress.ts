@@ -6,9 +6,9 @@ import type { AptitudeSectionKey, AptitudeTestResult } from "@/lib/aptitude-test
 
 export const MAX_ATTEMPTS_PER_TEST = 3;
 
-const STORAGE_KEY_BASE = "careersetu_aptitude_progress";
-const SESSION_KEY = "careersetu_aptitude_session";
-const PENDING_SUBMIT_KEY = "careersetu_aptitude_pending_submit";
+const STORAGE_KEY_BASE = "internai_aptitude_progress";
+const SESSION_KEY = "internai_aptitude_session";
+const PENDING_SUBMIT_KEY = "internai_aptitude_pending_submit";
 const AUTH_EMAIL_KEY = "internai.auth.email";
 
 export type AptitudeProgressPoint = {

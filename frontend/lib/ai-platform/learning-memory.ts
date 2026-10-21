@@ -4,7 +4,7 @@ import type { LearningMemory } from "@/lib/ai-platform/types";
 import type { AptitudeTestResult } from "@/lib/aptitude-test-engine";
 import type { AptitudeSectionKey } from "@/lib/aptitude-test-engine";
 
-const STORAGE_KEY = "careersetu_ai_learning_memory";
+const STORAGE_KEY = "internai_ai_learning_memory";
 
 const EMPTY_MEMORY: LearningMemory = {
   weakConcepts: [],

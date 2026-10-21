@@ -6,7 +6,6 @@ import { AlertTriangle, ChevronDown, ChevronUp, Upload } from "lucide-react";
 import { ScrollReveal } from "@/components/animations/ScrollReveal";
 import { AppIcon } from "@/components/icons/app-icon";
 import { TARGET_ROLE_OPTIONS } from "@/lib/data/role-skill-profiles";
-import { AiConfidenceBadge } from "@/components/dashboard/shared/ai-confidence-badge";
 import { runSkillGapPipeline } from "@/lib/ai-platform/orchestrator";
 import {
   type ProgressBarItem,
@@ -329,16 +328,6 @@ export function SkillGapAnalysisPanel({
         <p className="mt-2 text-base leading-relaxed text-[var(--ds-text-secondary)]">
           Add skills or projects, then re-upload.
         </p>
-        {gap.aiValidation ? (
-          <div className="mt-6 flex justify-center">
-            <AiConfidenceBadge
-              confidenceScore={gap.aiValidation.confidenceScore}
-              validationStatus={gap.aiValidation.validationStatus}
-              confidenceTier={gap.aiValidation.confidenceTier}
-              explanationTrace={gap.aiValidation.explanationTrace}
-            />
-          </div>
-        ) : null}
       </div>
     );
   }
@@ -372,13 +361,6 @@ export function SkillGapAnalysisPanel({
           </select>
         )}
       </div>
-
-      <AiConfidenceBadge
-        confidenceScore={gap.aiValidation.confidenceScore}
-        validationStatus={gap.aiValidation.validationStatus}
-        confidenceTier={gap.aiValidation.confidenceTier}
-        explanationTrace={gap.aiValidation.explanationTrace}
-      />
 
       {gap.lowConfidenceAnalysis && (
         <div className="rounded-xl border border-[var(--ds-warning)] bg-[var(--ds-warning-bg)] px-4 py-3 text-sm text-[var(--ds-warning)]">

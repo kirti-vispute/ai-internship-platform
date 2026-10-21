@@ -21,7 +21,7 @@ import ffmpegPath from "ffmpeg-static";
 const here = path.dirname(fileURLToPath(import.meta.url));
 const frontend = path.resolve(here, "..");
 
-const SOURCE = path.resolve(frontend, "..", "InternAI_brand_intro-Video.mp4");
+const SOURCE = path.resolve(frontend, "..", "assets", "InternAI_brand_intro-Video.mp4");
 const OUT_DIR = path.resolve(frontend, "public", "story");
 const OUT_VIDEO = path.join(OUT_DIR, "internai-brand-intro.mp4");
 const OUT_POSTER = path.join(OUT_DIR, "internai-brand-intro-poster.jpg");

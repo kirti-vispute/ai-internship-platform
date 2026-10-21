@@ -1,5 +1,7 @@
 "use client";
 
+import { useSyncExternalStore } from "react";
+import { createPortal } from "react-dom";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { GitCompare, X } from "lucide-react";
 import type { CompanyApplication } from "@/lib/company-portal";
@@ -8,27 +10,35 @@ import { AppIcon } from "@/components/icons/app-icon";
 import { MAX_COMPARE_CANDIDATES, useCandidateCompare } from "./candidate-comparison-context";
 import { initialsFirstLast as initialsFor } from "@/components/dashboard/shared/avatar-initials";
 
+const subscribeNoop = () => () => undefined;
+
 type CandidateCompareBarProps = {
   applications: CompanyApplication[];
 };
 
 export function CandidateCompareBar({ applications }: CandidateCompareBarProps) {
-  const { selectedIds, remove, clear, openWorkspace } = useCandidateCompare();
+  const { selectedIds, remove, clear, openWorkspace, workspaceOpen } = useCandidateCompare();
   const reducedMotion = useReducedMotion();
+  // false on the server and during hydration, true on the client; avoids a portal hydration mismatch.
+  const canPortal = useSyncExternalStore(subscribeNoop, () => true, () => false);
 
   const selected = selectedIds
     .map((id) => applications.find((application) => application._id === id))
     .filter((application): application is CompanyApplication => Boolean(application));
 
-  return (
+  if (!canPortal) return null;
+
+  // Portal to <body>: <main> is its own stacking context (z-10), so an in-tree tray can never rise above
+  // the z-[90] modals (applications sheet) where candidates are picked.
+  return createPortal(
     <AnimatePresence>
-      {selected.length > 0 ? (
+      {selected.length > 0 && !workspaceOpen ? (
         <motion.div
           initial={reducedMotion ? { opacity: 0 } : { opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           exit={reducedMotion ? { opacity: 0 } : { opacity: 0, y: 24 }}
           transition={{ duration: reducedMotion ? 0.12 : 0.22, ease: [0.22, 1, 0.36, 1] }}
-          className="fixed inset-x-0 bottom-4 z-[70] mx-auto flex w-[min(94vw,640px)] flex-wrap items-center gap-3 rounded-2xl border border-[var(--ds-border-strong)] bg-[var(--ds-surface-raised)] px-4 py-3 shadow-2xl backdrop-blur-md sm:flex-nowrap"
+          className="fixed inset-x-0 bottom-4 z-[95] mx-auto flex w-[min(94vw,640px)] flex-wrap items-center gap-3 rounded-2xl border border-[var(--ds-border-strong)] bg-[var(--ds-surface-raised)] px-4 py-3 shadow-2xl backdrop-blur-md sm:flex-nowrap"
           role="region"
           aria-label="Candidate comparison tray"
           aria-live="polite"
@@ -71,6 +81,7 @@ export function CandidateCompareBar({ applications }: CandidateCompareBarProps) 
           </div>
         </motion.div>
       ) : null}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }

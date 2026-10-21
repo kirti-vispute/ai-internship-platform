@@ -36,8 +36,6 @@
     "next-env.d.ts"
   ],
   "exclude": [
-    "node_modules",
-    ".dead-code-archive-2026-07-05",
-    ".dead-code-archive-2026-07-17"
+    "node_modules"
   ]
 }

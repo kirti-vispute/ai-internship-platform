@@ -10,7 +10,6 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { ScrollReveal } from "@/components/animations/ScrollReveal";
-import { AiConfidenceBadge } from "@/components/dashboard/shared/ai-confidence-badge";
 import { SkillGapAnalysisPanel } from "@/components/dashboard/intern/skill-gap-analysis-panel";
 import { AppIcon } from "@/components/icons/app-icon";
 import type { InternProfile, InternshipListing, ResumeAnalysis } from "@/lib/intern-portal";
@@ -185,15 +184,6 @@ export function ResumeIntelligenceDashboard({ profile, analysis, onTargetRoleCha
 
   return (
     <div className="space-y-8">
-      {analysis?.aiValidation ? (
-        <AiConfidenceBadge
-          confidenceScore={analysis.aiValidation.confidenceScore}
-          validationStatus={analysis.aiValidation.validationStatus}
-          confidenceTier={analysis.aiValidation.confidenceTier}
-          explanationTrace={analysis.aiValidation.explanationTrace}
-        />
-      ) : null}
-
       {/* Header */}
       <div>
         <h2 className="text-lg font-bold tracking-tight text-[var(--ds-text)]">Resume Intelligence</h2>

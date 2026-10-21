@@ -2,7 +2,7 @@
   "name": "internai-platform",
   "private": true,
   "version": "1.0.0",
-  "description": "CareerSetu / InternAI internship platform",
+  "description": "InternAI internship platform",
   "scripts": {
     "deploy:guard": "node deployment-guard/run.mjs",
     "deploy:guard:frontend": "node deployment-guard/run.mjs --target=frontend",

@@ -92,6 +92,24 @@ type CompareEntry = {
   interviewStage: { roundType?: string; status?: string } | null;
 };
 
+function matchFromApplication(application: CompanyApplication): CompanyMatchedCandidate {
+  const intern = application.intern;
+  return {
+    internshipId: application.internship?._id ?? "",
+    internshipRole: application.internship?.role ?? "Role",
+    internshipLocation: application.internship?.location,
+    score: application.relevanceScore ?? application.matchScore ?? 0,
+    internProfile: {
+      _id: intern?._id,
+      fullName: intern?.fullName,
+      email: intern?.email,
+      mobile: intern?.mobile,
+      skills: intern?.skills,
+      resume: intern?.resume ? { score: intern.resume.score } : undefined
+    }
+  };
+}
+
 function buildEntry(ranked: RankedCandidate): CompareEntry {
   const { match, application, applicationId } = ranked;
   const intern = application?.intern;
@@ -232,10 +250,18 @@ export function CandidateComparisonWorkspace({
 }: CandidateComparisonWorkspaceProps) {
   const { selectedIds, workspaceOpen, closeWorkspace, remove } = useCandidateCompare();
 
-  const ranked = useMemo(
-    () => hiringAIEngine.rankAllCandidates({ matches, applications, internships }),
-    [matches, applications, internships]
-  );
+  // `matches` is only fetched on Overview / AI Matching. On Applicants, Shortlisted and Pipeline it is
+  // empty, so selected applications without a server match get a synthesized one and flow through the
+  // same scoring engine; otherwise the modal never opens (entries.length < 2).
+  const ranked = useMemo(() => {
+    const fromMatches = hiringAIEngine.rankAllCandidates({ matches, applications, internships });
+    const matchedApplicationIds = new Set(fromMatches.map((item) => item.applicationId));
+    const synthesized = applications
+      .filter((application) => selectedIds.includes(application._id) && !matchedApplicationIds.has(application._id))
+      .map(matchFromApplication);
+    if (synthesized.length === 0) return fromMatches;
+    return hiringAIEngine.rankAllCandidates({ matches: [...matches, ...synthesized], applications, internships });
+  }, [matches, applications, internships, selectedIds]);
 
   const entries = useMemo(() => {
     return selectedIds
