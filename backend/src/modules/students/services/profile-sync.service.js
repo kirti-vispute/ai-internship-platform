@@ -1,4 +1,5 @@
 const { normalizeSkillList, toDisplaySkillList } = require("../../../shared/utils/skill-normalizer");
+const { looksLikeContactInfoBlock } = require("../../../shared/utils/contact-info-detector");
 
 // Single source of truth for syncing a freshly-parsed resume into a
 // student's profile. Product rule (explicit): the LATEST uploaded resume is
@@ -84,8 +85,21 @@ function findPortfolioUrl(links = []) {
   return candidates.length === 1 ? candidates[0] : "";
 }
 
+// Defense-in-depth: the parser itself must never classify a contact-info
+// line as a project/experience entry (see resume-structured-parser's
+// classifyLineStrong/extractProjects/extractExperience), but persistence
+// re-checks anyway so a future extractor change can't silently reintroduce
+// the bug this guards against -- a candidate's email/phone/links ending up
+// duplicated into their own project list.
+function excludingContactBlocks(items, textFn) {
+  return (items || []).filter((item) => !looksLikeContactInfoBlock(textFn(item)));
+}
+
 function mergeParsedResumeIntoProfile(profile, parsed = {}) {
   if (!profile || !parsed) return profile;
+
+  const cleanProjects = excludingContactBlocks(parsed.projects, (item) => `${item.title || ""} ${item.description || ""}`);
+  const cleanExperience = excludingContactBlocks(parsed.experience, (item) => `${item.role || ""} ${item.company || ""} ${item.description || ""}`);
 
   // --- Scalars: overwrite whenever the parser found a valid value ---
   const nameConfidence = typeof parsed.fullNameConfidence === "number" ? parsed.fullNameConfidence : 0;
@@ -108,9 +122,9 @@ function mergeParsedResumeIntoProfile(profile, parsed = {}) {
   profile.skills = toDisplaySkillList(normalizeSkillList(parsed.skills || []));
   profile.softSkills = toDisplaySkillList(normalizeSkillList(parsed.softSkills || []));
   profile.education = dedupeStrings((parsed.education || []).map((item) => item.raw || "").filter(Boolean));
-  profile.projects = dedupeStrings((parsed.projects || []).map((item) => item.title || item.description || "").filter(Boolean));
+  profile.projects = dedupeStrings((cleanProjects || []).map((item) => item.title || item.description || "").filter(Boolean));
   profile.certifications = dedupeStrings((parsed.certifications || []).map((item) => item.name || item.raw || "").filter(Boolean));
-  profile.experience = dedupeStrings((parsed.experience || []).map((item) => item.description || item.role || "").filter(Boolean));
+  profile.experience = dedupeStrings((cleanExperience || []).map((item) => item.description || item.role || "").filter(Boolean));
   profile.achievements = dedupeStrings(parsed.achievements || []);
   profile.languages = dedupeStrings(parsed.languages || []);
   profile.links = dedupeStrings(parsed.links || []);
@@ -128,7 +142,7 @@ function mergeParsedResumeIntoProfile(profile, parsed = {}) {
 
   if (!profile.profileSections) profile.profileSections = {};
 
-  profile.profileSections.projects = (parsed.projects || [])
+  profile.profileSections.projects = (cleanProjects || [])
     .filter((item) => item.title)
     .map((item) => ({
       title: item.title || "",
@@ -137,7 +151,7 @@ function mergeParsedResumeIntoProfile(profile, parsed = {}) {
       demoLink: item.demoLink || item.githubLink || ""
     }));
 
-  profile.profileSections.experience = (parsed.experience || [])
+  profile.profileSections.experience = (cleanExperience || [])
     .filter((item) => item.role || item.company)
     .map((item) => ({
       role: item.role || "",

@@ -37,6 +37,7 @@ import {
   Users
 } from "lucide-react";
 import { useChatSocket } from "@/lib/use-chat-socket";
+import { buildAssetUrl } from "@/lib/intern-portal";
 import { SectionPanel } from "@/components/dashboard/shared/section-panel";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -1030,8 +1031,50 @@ export function CompanyDashboardPage({ view }: { view: CompanyDashboardView }) {
   }
 
   function exportCsv() {
-    const rows = [["candidate", "email", "internship", "status", "relevanceScore", "createdAt"]];
-    apps.forEach((a) => rows.push([a.intern?.fullName || "", a.intern?.email || "", a.internship?.role || "", a.status || "", String(a.relevanceScore ?? a.matchScore ?? 0), a.createdAt || ""]));
+    const joinList = (list?: string[]) => (list && list.length ? list.join("; ") : "");
+    const headers = [
+      "candidate",
+      "email",
+      "mobile",
+      "internship",
+      "status",
+      "relevanceScore",
+      "resumeScore",
+      "skills",
+      "education",
+      "experience",
+      "projects",
+      "certifications",
+      "achievements",
+      "languages",
+      "linkedinUrl",
+      "links",
+      "resumeFileUrl",
+      "createdAt"
+    ];
+    const rows = [headers];
+    apps.forEach((a) =>
+      rows.push([
+        a.intern?.fullName || "",
+        a.intern?.email || "",
+        a.intern?.mobile || "",
+        a.internship?.role || "",
+        a.status || "",
+        String(a.relevanceScore ?? a.matchScore ?? 0),
+        String(a.intern?.resume?.score ?? ""),
+        joinList(a.intern?.skills),
+        joinList(a.intern?.education),
+        joinList(a.intern?.experience),
+        joinList(a.intern?.projects),
+        joinList(a.intern?.certifications),
+        joinList(a.intern?.achievements),
+        joinList(a.intern?.languages),
+        a.intern?.linkedinUrl || "",
+        joinList(a.intern?.links),
+        a.attachedResumePath ? buildAssetUrl(a.attachedResumePath) : "",
+        a.createdAt || ""
+      ])
+    );
     const csv = rows
       .map((row) => row.map((item) => (item.includes(",") || item.includes("\n") || item.includes('"') ? `"${item.replace(/"/g, '""')}"` : item)).join(","))
       .join("\n");

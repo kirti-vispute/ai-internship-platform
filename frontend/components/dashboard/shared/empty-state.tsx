@@ -46,9 +46,9 @@ export function EmptyState({
   const body = description ?? hint;
 
   const paddingBySize = {
-    sm: "px-5 py-7",
-    md: "px-6 py-10",
-    lg: "px-8 py-14"
+    sm: "px-4 py-5",
+    md: "px-6 py-7",
+    lg: "px-8 py-10"
   }[size];
 
   return (
@@ -72,7 +72,7 @@ export function EmptyState({
         />
 
         <motion.div
-          className="relative mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl"
+          className="relative mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-xl"
           style={{
             background:
               "linear-gradient(135deg, var(--ds-primary)/15, var(--ds-accent)/10)",
@@ -82,7 +82,7 @@ export function EmptyState({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           transition={{ duration: 0.35, ease: "easeOut" }}
         >
-          <AppIcon icon={IconComponent} size="lg" className="text-[var(--ds-primary-text)]" />
+          <AppIcon icon={IconComponent} size="md" className="text-[var(--ds-primary-text)]" />
         </motion.div>
 
         <p className="relative text-sm font-semibold text-[var(--ds-text)]">{title}</p>

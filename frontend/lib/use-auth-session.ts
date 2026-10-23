@@ -21,7 +21,13 @@ export function useAuthSession(): AuthSessionState {
     };
   }, []);
 
-  const [session, setSession] = useState<AuthSessionState>(read);
+  // Initialize to the logged-out default, not `read()`: React re-runs a
+  // lazy useState initializer on the client's first render before
+  // hydration, so calling read() here would return the real localStorage
+  // session client-side while the server (no localStorage) rendered the
+  // logged-out markup -- a hydration mismatch. The real session is applied
+  // in the effect below, after hydration completes.
+  const [session, setSession] = useState<AuthSessionState>({ loggedIn: false, role: null, token: null, email: null });
 
   useEffect(() => {
     setSession(read());

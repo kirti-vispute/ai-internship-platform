@@ -74,15 +74,15 @@ export function CareerReadinessSection({
 
   return (
     <ScrollReveal variant="fade-up" distance={12} once>
-      <div className={cn(cardBase, "p-6")}>
+      <div className={cn(cardBase, "p-5")}>
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--ds-muted)]">Career Readiness</p>
-            <h3 className="mt-1 text-2xl font-bold tracking-tight" style={{ color: colorVar }}>
+            <h3 className="mt-1 text-xl font-bold tracking-tight" style={{ color: colorVar }}>
               {tier}
             </h3>
           </div>
-          <span className="shrink-0 text-3xl font-black tabular-nums text-[var(--ds-text)]">{readiness.score}</span>
+          <span className="shrink-0 text-2xl font-black tabular-nums text-[var(--ds-text)]">{readiness.score}</span>
         </div>
 
         <div className="relative mt-5 h-2.5 w-full overflow-hidden rounded-full bg-[var(--ds-surface-raised)]">
@@ -92,7 +92,7 @@ export function CareerReadinessSection({
           />
         </div>
 
-        <div className="mt-5 grid grid-cols-3 gap-3">
+        <div className="mt-4 grid grid-cols-3 gap-3">
           <div className="rounded-xl border border-[var(--ds-border)] bg-[var(--ds-surface-raised)] px-3 py-2.5">
             <p className="text-[11px] font-medium uppercase tracking-wide text-[var(--ds-muted)]">Resume Score</p>
             <p className="mt-0.5 text-lg font-bold tabular-nums text-[var(--ds-text)]">{resumeScore}<span className="text-xs font-medium text-[var(--ds-muted)]">/100</span></p>
@@ -176,7 +176,7 @@ export function TodaysFocusSection({
 
   return (
     <ScrollReveal variant="fade-up" distance={12} delayMs={60} once>
-      <div className={cn(cardBase, "p-6")}>
+      <div className={cn(cardBase, "p-5")}>
         <div className="mb-4 flex items-center gap-2">
           <AppIcon icon={Target} size="sm" className="text-[var(--ds-primary-text)]" />
           <h3 className="text-sm font-semibold text-[var(--ds-text)]">Today&apos;s Focus</h3>
@@ -320,7 +320,7 @@ export function PriorityRoadmapSection({
 
   return (
     <ScrollReveal variant="fade-up" distance={12} delayMs={140} once>
-      <div className={cn(cardBase, "p-6")}>
+      <div className={cn(cardBase, "p-5")}>
         <div className="mb-4 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <AppIcon icon={Award} size="sm" className="text-[var(--ds-accent)]" />
@@ -383,7 +383,7 @@ export function PlacementReadinessTiersSection({ readiness, loading }: { readine
 
   return (
     <ScrollReveal variant="fade-up" distance={12} delayMs={180} once>
-      <div className={cn(cardBase, "p-6")}>
+      <div className={cn(cardBase, "p-5")}>
         <div className="mb-4 flex items-center gap-2">
           <AppIcon icon={Trophy} size="sm" className="text-[var(--ds-success)]" />
           <h3 className="text-sm font-semibold text-[var(--ds-text)]">Ready For</h3>
@@ -457,7 +457,7 @@ export function AchievementsSection({
 
   return (
     <ScrollReveal variant="fade-up" distance={12} delayMs={220} once>
-      <div className={cn(cardBase, "p-6")}>
+      <div className={cn(cardBase, "p-5")}>
         <h3 className="mb-4 text-sm font-semibold text-[var(--ds-text)]">Achievements</h3>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
           {badges.map((badge) => (

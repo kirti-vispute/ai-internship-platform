@@ -44,16 +44,16 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!company) {
     return {
       title: "Company Profile",
-      description: "Company profile, open positions, and hiring stats on InternAI.",
+      description: "Company profile, open positions, and hiring stats on CareerSetu.",
       robots: { index: false, follow: false }
     };
   }
 
   const title = company.companyName || "Company";
-  const fullTitle = `${title} | InternAI`;
+  const fullTitle = `${title} | CareerSetu`;
   const description =
     company.description?.slice(0, 160) ||
-    `${company.companyName || "This company"}'s profile, open internship positions, and hiring stats on InternAI.`;
+    `${company.companyName || "This company"}'s profile, open internship positions, and hiring stats on CareerSetu.`;
 
   return {
     title,

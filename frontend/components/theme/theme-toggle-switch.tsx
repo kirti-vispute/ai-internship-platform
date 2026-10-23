@@ -6,7 +6,7 @@ import { DEFAULT_APPEARANCE } from "@/lib/theme/theme-config";
 import "./theme-toggle-switch.css";
 
 // "Switch" by Galahhad — https://uiverse.io/Galahhad/strong-squid-82 (MIT License)
-// Markup kept close to the original; only wired to InternAI's appearance state.
+// Markup kept close to the original; only wired to CareerSetu's appearance state.
 export function ThemeToggleSwitch({ className }: { className?: string }) {
   const { appearance, setAppearance } = useTheme();
 

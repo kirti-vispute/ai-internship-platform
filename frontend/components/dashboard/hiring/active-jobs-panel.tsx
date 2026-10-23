@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select } from "@/components/ui/select";
 import { Pagination } from "@/components/ui/pagination";
 import { countApplicationsForJob, getActiveInternships } from "./hiring-utils";
+import { ResumeZipDownloadButton } from "./resume-zip-download-button";
 
 const PAGE_SIZE = 6;
 
@@ -132,6 +133,7 @@ export function ActiveJobsPanel({
                     <Button type="button" size="sm" variant="secondary" onClick={() => onViewApplications(job._id, job.role)}>
                       View Applications
                     </Button>
+                    <ResumeZipDownloadButton internshipId={job._id} label="Download Resumes" size="sm" />
                     {canDelete && onDeleteInternship ? (
                       <Button type="button" size="sm" variant="secondary" disabled={saving} onClick={() => onDeleteInternship(job._id)}>
                         Delete Internship

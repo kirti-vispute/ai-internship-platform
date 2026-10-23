@@ -24,10 +24,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { username } = await params;
   const hero = await fetchPortfolioHero(username);
 
-  const fullTitle = `${hero?.name || username} | InternAI Portfolio`;
+  const fullTitle = `${hero?.name || username} | CareerSetu Portfolio`;
   const description = hero?.tagline
     ? hero.tagline.slice(0, 160)
-    : `Professional 3D portfolio for ${username} on InternAI.`;
+    : `Professional 3D portfolio for ${username} on CareerSetu.`;
 
   return {
     title: { absolute: fullTitle },

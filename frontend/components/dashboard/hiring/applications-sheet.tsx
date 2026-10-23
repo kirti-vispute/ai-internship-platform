@@ -10,6 +10,7 @@ import { Pagination } from "@/components/ui/pagination";
 import { usePagination } from "@/lib/use-pagination";
 import { normalizeToPipelineStage, PIPELINE_STAGE_TONE, type HiringPipelineStageKey } from "./hiring-utils";
 import { CandidateCompareToggle } from "@/components/dashboard/company/candidate-compare-toggle";
+import { ResumeZipDownloadButton } from "./resume-zip-download-button";
 
 const PAGE_SIZE = 12;
 
@@ -19,6 +20,10 @@ type ApplicationsSheetProps = {
   subtitle?: string;
   applications: CompanyApplication[];
   filterStage?: HiringPipelineStageKey | null;
+  /** Scopes the resume zip download to one internship. Omit for "all applications" views. */
+  internshipId?: string;
+  /** Shows the "Download Resumes (.zip)" footer action. Defaults to true. */
+  showDownload?: boolean;
   onClose: () => void;
   onViewProfile: (applicationId: string) => void;
 };
@@ -29,6 +34,8 @@ export function ApplicationsSheet({
   subtitle,
   applications,
   filterStage = null,
+  internshipId,
+  showDownload = true,
   onClose,
   onViewProfile
 }: ApplicationsSheetProps) {
@@ -44,7 +51,20 @@ export function ApplicationsSheet({
   }, [open, title, filterStage]);
 
   return (
-    <Modal open={open} onClose={onClose} title={title} subtitle={subtitle} icon={Users} size="lg" variant="drawer">
+    <Modal
+      open={open}
+      onClose={onClose}
+      title={title}
+      subtitle={subtitle}
+      icon={Users}
+      size="lg"
+      variant="drawer"
+      footer={
+        showDownload && filtered.length > 0 ? (
+          <ResumeZipDownloadButton internshipId={internshipId} />
+        ) : undefined
+      }
+    >
       {filtered.length === 0 ? (
         <p className="ds-caption py-8 text-center">No applications in this view.</p>
       ) : (

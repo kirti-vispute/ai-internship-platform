@@ -32,7 +32,7 @@ export default function manifest(): MetadataRoute.Manifest {
       {
         name: "Sign in",
         short_name: "Sign in",
-        description: "Sign in to your InternAI account",
+        description: "Sign in to your CareerSetu account",
         url: "/auth/intern",
         icons: [{ src: "/icons/icon-192.png", sizes: "192x192", type: "image/png" }]
       },

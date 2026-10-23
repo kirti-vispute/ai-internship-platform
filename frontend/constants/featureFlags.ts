@@ -9,5 +9,6 @@ export const FEATURE_FLAGS = Object.freeze({
   ENABLE_RECORDINGS: parseBool(process.env.NEXT_PUBLIC_ENABLE_RECORDINGS, false),
   ENABLE_CHAT: parseBool(process.env.NEXT_PUBLIC_ENABLE_CHAT, true),
   ENABLE_INTERVIEW_ROOMS: parseBool(process.env.NEXT_PUBLIC_ENABLE_INTERVIEW_ROOMS, true),
-  ENABLE_3D_PORTFOLIO: parseBool(process.env.NEXT_PUBLIC_ENABLE_3D_PORTFOLIO, true)
+  ENABLE_3D_PORTFOLIO: parseBool(process.env.NEXT_PUBLIC_ENABLE_3D_PORTFOLIO, true),
+  ENABLE_JOB_AGENT: parseBool(process.env.NEXT_PUBLIC_ENABLE_JOB_AGENT, true)
 });

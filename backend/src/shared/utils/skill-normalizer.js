@@ -206,6 +206,17 @@ for (const [alias, canonical] of Object.entries(SKILL_ALIAS_MAP)) {
  * is never pre-normalized the way skill lists are (e.g. "Node.js" vs the
  * canonical "nodejs").
  */
+/**
+ * The full set of canonical skill values this normalizer knows about (the
+ * distinct values of SKILL_ALIAS_MAP, e.g. "javascript", "react", "mongodb").
+ * Used as a lightweight keyword-extraction vocabulary for free text that
+ * has no structured skill list yet (e.g. an external job posting's title/
+ * description), via textMentionsSkill(text, canonicalSkillValue) below.
+ */
+function getCanonicalSkillVocabulary() {
+  return Object.keys(REVERSE_ALIAS_MAP);
+}
+
 function skillSurfaceForms(canonicalSkillValue) {
   const bases = new Set([canonicalSkillValue, ...(REVERSE_ALIAS_MAP[canonicalSkillValue] || [])]);
   const forms = new Set();
@@ -242,5 +253,6 @@ module.exports = {
   toDisplaySkill,
   toDisplaySkillList,
   skillSurfaceForms,
-  textMentionsSkill
+  textMentionsSkill,
+  getCanonicalSkillVocabulary
 };

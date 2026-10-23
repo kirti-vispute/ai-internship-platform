@@ -10,6 +10,7 @@ const { bootstrapPlatformServices } = require("./shared/infrastructure/bootstrap
 const { initChatSocket, getChatIo } = require("./shared/socket/chat.socket");
 const { initInterviewSocket } = require("./shared/socket/interview.socket");
 const interviewScheduler = require("./modules/interviews/services/interview-scheduler.service");
+const jobAgentScheduler = require("./modules/job-agent/services/job-agent-scheduler.service");
 const logger = require("./shared/logger");
 
 function assertRequiredEnv() {
@@ -74,6 +75,7 @@ async function startServer() {
   initChatSocket(server);
   initInterviewSocket();
   interviewScheduler.start();
+  jobAgentScheduler.start();
 
   server.listen(port, () => {
     logger.info(`[startup] Server running on port ${port}`);
@@ -100,6 +102,7 @@ async function shutdown(signal) {
 
   try {
     interviewScheduler.stop();
+    jobAgentScheduler.stop();
 
     const io = getChatIo();
     if (io) io.close();

@@ -1,0 +1,27 @@
+Running live integration check... 
+
+=== Environment ===
+GROQ_API_KEY present: true
+GROQ_API_KEY length: 56
+GROQ_MODEL: openai/gpt-oss-20b
+ADZUNA_APP_ID present: false
+ADZUNA_APP_KEY present: false
+
+=== Groq live call ===
+GROQ_RESULT: SUCCESS
+provider: groq | model: openai/gpt-oss-20b | content: "OK"
+
+=== Remotive live fetch ===
+REMOTIVE_RESULT: SUCCESS | skipped: false | reason: (none)
+jobs fetched: 10
+  - Software Engineer, AI Coding Tasks @ Askable
+  - Tech Lead Full-Stack Rails Engineer @ Mitre Media
+  - Remote Office Assistant @ Coalition Technologies
+
+=== Adzuna live fetch ===
+Adzuna credentialed: false
+ADZUNA_RESULT: SUCCESS | skipped: true | reason: missing_credentials
+jobs fetched: 0
+
+=== Done ===
+EXITCODE=0 

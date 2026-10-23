@@ -80,7 +80,7 @@ export function CompanyLogoMarquee() {
     <div
       className="company-marquee-mask relative flex w-full flex-col gap-5 py-2 sm:gap-6"
       role="list"
-      aria-label="Companies InternAI candidates have joined"
+      aria-label="Companies CareerSetu candidates have joined"
     >
       <MarqueeRow row={ROWS[0]} />
       <MarqueeRow row={ROWS[1]} />

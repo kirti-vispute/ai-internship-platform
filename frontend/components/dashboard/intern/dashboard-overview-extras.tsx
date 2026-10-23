@@ -62,7 +62,7 @@ export function toStatusGroup(status?: string): StatusGroup {
 
 function HoverCard({ className, children }: { className?: string; children: React.ReactNode }) {
   return (
-    <motion.div whileHover={{ y: -4 }} transition={{ duration: 0.2, ease: "easeOut" }} className={cn(cardBase, "p-6", className)}>
+    <motion.div whileHover={{ y: -4 }} transition={{ duration: 0.2, ease: "easeOut" }} className={cn(cardBase, "p-5", className)}>
       {children}
     </motion.div>
   );
@@ -227,7 +227,7 @@ export function QuickActions() {
 
   return (
     <ScrollReveal variant="fade-up" distance={12} once>
-      <div className={cn(cardBase, "p-6")}>
+      <div className={cn(cardBase, "p-5")}>
         <h3 className="mb-4 text-sm font-semibold text-[var(--ds-text)]">Quick Actions</h3>
         <div className="flex flex-wrap gap-2.5">
           {actions.map((action, index) => (
@@ -322,7 +322,7 @@ export function ActivityTimeline({
 
   return (
     <ScrollReveal variant="fade-up" distance={12} once>
-      <div className={cn(cardBase, "p-6")}>
+      <div className={cn(cardBase, "p-5")}>
         <h3 className="mb-4 text-sm font-semibold text-[var(--ds-text)]">Activity Timeline</h3>
         {events.length === 0 ? (
           <EmptyState
@@ -499,13 +499,13 @@ export function DashboardCharts({
   return (
     <div className="grid gap-4 lg:grid-cols-2">
       <ScrollReveal variant="fade-up" distance={12} once className="h-full">
-        <div className={cn(cardBase, "flex h-full flex-col p-6")}>
+        <div className={cn(cardBase, "flex h-full flex-col p-5")}>
           <h3 className="mb-4 text-sm font-semibold text-[var(--ds-text)]">Applications Timeline</h3>
           <ApplicationsTimelineChart applications={applications} />
         </div>
       </ScrollReveal>
       <ScrollReveal variant="fade-up" distance={12} delayMs={60} once className="h-full">
-        <div className={cn(cardBase, "flex h-full flex-col p-6")}>
+        <div className={cn(cardBase, "flex h-full flex-col p-5")}>
           <h3 className="mb-4 text-sm font-semibold text-[var(--ds-text)]">Skills Distribution</h3>
           <SkillsDistributionChart analysis={analysis} />
         </div>

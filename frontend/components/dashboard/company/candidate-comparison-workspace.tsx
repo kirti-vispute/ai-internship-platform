@@ -237,12 +237,59 @@ export function CandidateComparisonWorkspace({
     [matches, applications, internships]
   );
 
+  // Candidates only land in `ranked` if they have an AI-match record, which
+  // this dashboard only fetches on the Overview/AI-Matching views (and not at
+  // all when AI matching is disabled backend-side). Selecting any two
+  // applicants in the compare tray should still work everywhere else, so for
+  // a selected application with no match record we synthesize a minimal one
+  // from the application's own data and run it through the same scoring
+  // engine used for every other AI Match number on this dashboard, instead of
+  // silently dropping the candidate from `entries` (which was why the
+  // workspace modal never opened: `entries.length >= 2` was never reached).
   const entries = useMemo(() => {
     return selectedIds
-      .map((id) => ranked.find((item) => item.applicationId === id))
-      .filter((item): item is RankedCandidate => Boolean(item))
-      .map(buildEntry);
-  }, [selectedIds, ranked]);
+      .map((id) => {
+        const existing = ranked.find((item) => item.applicationId === id);
+        if (existing) return buildEntry(existing);
+
+        const application = applications.find((item) => item._id === id);
+        if (!application) return null;
+
+        const syntheticMatch: CompanyMatchedCandidate = {
+          internshipId: application.internship?._id || "",
+          internshipRole: application.internship?.role || "Role",
+          score: application.matchScore ?? application.relevanceScore ?? 0,
+          skillGap: { matched: [], missing: [], matchPercent: undefined },
+          internProfile: application.intern
+            ? {
+                _id: application.intern._id,
+                fullName: application.intern.fullName,
+                email: application.intern.email,
+                mobile: application.intern.mobile,
+                skills: application.intern.skills,
+                resume: application.intern.resume ? { score: application.intern.resume.score } : undefined
+              }
+            : undefined
+        };
+        const internship = internships.find((item) => item._id === application.internship?._id);
+        const evaluation = hiringAIEngine.evaluateCandidate(syntheticMatch, application, internship);
+        const fallbackRanked: RankedCandidate = {
+          applicationId: application._id,
+          internshipId: syntheticMatch.internshipId,
+          internProfileId: application.intern?._id ?? null,
+          match: syntheticMatch,
+          application,
+          matchScore: evaluation.overallScore,
+          rankingPosition: 0,
+          strengths: evaluation.strengths,
+          weaknesses: evaluation.weaknesses,
+          projectEvaluation: evaluation.projectEvaluation,
+          evaluation
+        };
+        return buildEntry(fallbackRanked);
+      })
+      .filter((item): item is CompareEntry => Boolean(item));
+  }, [selectedIds, ranked, applications, internships]);
 
   const highestMatch = maxIds(entries, (entry) => entry.aiMatchScore);
   const lowestMatch = minIds(entries, (entry) => entry.aiMatchScore);

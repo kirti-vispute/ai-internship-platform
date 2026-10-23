@@ -145,7 +145,7 @@ export function CompanyPublicProfilePage({ companyId }: Props) {
           <InfoRow icon={Calendar} label="Founded" value={profile.foundedYear ? String(profile.foundedYear) : ""} />
           <InfoRow
             icon={Calendar}
-            label="Joined InternAI"
+            label="Joined CareerSetu"
             value={profile.joinedAt ? new Date(profile.joinedAt).toLocaleDateString() : ""}
           />
         </div>

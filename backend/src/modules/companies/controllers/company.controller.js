@@ -23,6 +23,7 @@ const {
   canAssignRecruiters,
   buildListMeta,
   applicantsQueryForInternship,
+  applicationScopeFilter,
   resolveEffectiveSidebarModules,
   sanitizeApplicationFeedback,
   sanitizeApplicationListFeedback
@@ -35,6 +36,7 @@ const { buildCompanyAnalytics } = require("../../../services/company-analytics.s
 const { isEnabled } = require("../../../shared/config/feature-flags");
 const interviewRoomService = require("../../../services/interview-room.service");
 const { notifyInterviewScheduled, notifyInterviewUpdated } = require("../../../services/interview-workflow.service");
+const { buildApplicantResumeZipArchive } = require("../services/applicant-resume-zip.service");
 
 const VALID_ROUND_STATUSES = new Set(["scheduled", "completed", "cleared", "rejected", "cancelled", "no_show"]);
 
@@ -570,6 +572,76 @@ exports.getAllApplications = asyncHandler(async (req, res) => {
       }
     }
   });
+});
+
+function zipFilenameFor(label) {
+  const safeLabel = String(label || "Applicants").replace(/[^a-zA-Z0-9 _-]/g, "").replace(/\s+/g, "-");
+  return `CareerSetu-${safeLabel}-Resumes-${Date.now()}.zip`;
+}
+
+async function sendApplicantResumeZip(res, { applications, filenameLabel }) {
+  if (!applications.length) {
+    throw new AppError("No applicants found for this selection", 404);
+  }
+
+  const archive = buildApplicantResumeZipArchive(applications);
+  const pendingRemoteFetches = archive.pendingRemoteFetches;
+
+  res.setHeader("Content-Type", "application/zip");
+  res.setHeader("Content-Disposition", `attachment; filename="${zipFilenameFor(filenameLabel)}"`);
+
+  archive.on("error", (err) => {
+    // Headers are already sent by this point, so the best we can do is end
+    // the response rather than throwing into asyncHandler's error path.
+    // eslint-disable-next-line no-console
+    console.error("[applicant-resume-zip] archive error:", err);
+    res.destroy(err);
+  });
+
+  archive.pipe(res);
+  await pendingRemoteFetches;
+  await archive.finalize();
+}
+
+exports.downloadApplicantResumesForInternship = asyncHandler(async (req, res) => {
+  const company = await getCompanyProfileByUserId(req.user._id);
+  const internship = await companyQuery.findInternshipById(company._id, req.params.id, req.user);
+
+  const status = String(req.query.status || "").trim();
+  const query = applicantsQueryForInternship(internship._id, company._id, req.user);
+  if (status) query.status = status;
+
+  const applications = await Application.find(query)
+    .populate("intern", "fullName email mobile resume.filePath")
+    .populate("internship", "role")
+    .sort({ createdAt: -1 })
+    .lean();
+
+  await sendApplicantResumeZip(res, { applications, filenameLabel: internship.role });
+});
+
+// A zip export has to cover every matching applicant, not one page of
+// them, so this bypasses companyQuery.findAllApplications (hard-capped at
+// 100 rows for the dashboard list view) and queries directly. ZIP_EXPORT_MAX
+// is still a safety ceiling against an unbounded query on a very large
+// company, not a page size.
+const ZIP_EXPORT_MAX_APPLICATIONS = 2000;
+
+exports.downloadAllApplicantResumes = asyncHandler(async (req, res) => {
+  const company = await getCompanyProfileByUserId(req.user._id);
+  const status = String(req.query.status || "").trim();
+
+  const query = applicationScopeFilter(company._id, req.user);
+  if (status) query.status = status;
+
+  const applications = await Application.find(query)
+    .populate("intern", "fullName email mobile resume.filePath")
+    .populate("internship", "role")
+    .sort({ createdAt: -1 })
+    .limit(ZIP_EXPORT_MAX_APPLICATIONS)
+    .lean();
+
+  await sendApplicantResumeZip(res, { applications, filenameLabel: company.companyName || "All" });
 });
 
 exports.updateCandidateStage = asyncHandler(async (req, res) => {

@@ -5,19 +5,19 @@ import { BRAND_NAME } from "@/lib/brand";
 import { BrandMark } from "@/components/brand/brand-mark";
 import { cn } from "@/lib/utils";
 
-type InternAILogoProps = {
+type CareerSetuLogoProps = {
   href?: string | null;
   showWordmark?: boolean;
   className?: string;
   interactive?: boolean;
 };
 
-export function InternAILogo({
+export function CareerSetuLogo({
   href = "/",
   showWordmark = true,
   className,
   interactive = true
-}: InternAILogoProps) {
+}: CareerSetuLogoProps) {
   const content = (
     <span
       className={cn(

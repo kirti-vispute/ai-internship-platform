@@ -221,27 +221,33 @@ export function InternApplicationModal({ internship, resumePath, onClose, onSucc
                 </div>
               </section>
 
-              {error && <p role="alert" className="text-sm text-[var(--ds-danger)]">{error}</p>}
             </div>
           </div>
 
-          <footer className="flex items-center justify-between gap-3 border-t border-[var(--ds-border)] bg-[var(--ds-card)] px-5 py-4 md:px-6 ">
-            <Button type="button" variant="secondary" onClick={onClose} disabled={submitting} className="transition hover:-translate-y-0.5 active:translate-y-0">
-              Cancel
-            </Button>
-            <div className="flex items-center gap-2">
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => setShowInsights(true)}
-                className="gap-2 transition hover:-translate-y-0.5 active:translate-y-0"
-              >
-                <AppIcon icon={Sparkles} size="sm" className="text-current" />
-                AI Insights
+          <footer className="border-t border-[var(--ds-border)] bg-[var(--ds-card)] px-5 py-4 md:px-6">
+            {error && (
+              <p role="alert" className="mb-3 text-sm text-[var(--ds-danger)]">
+                {error}
+              </p>
+            )}
+            <div className="flex items-center justify-between gap-3">
+              <Button type="button" variant="secondary" onClick={onClose} disabled={submitting} className="transition hover:-translate-y-0.5 active:translate-y-0">
+                Cancel
               </Button>
-              <Button type="button" onClick={submitApplication} disabled={submitting} className="transition hover:-translate-y-0.5 active:translate-y-0">
-                {submitting ? "Applying..." : "Apply Now"}
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => setShowInsights(true)}
+                  className="gap-2 transition hover:-translate-y-0.5 active:translate-y-0"
+                >
+                  <AppIcon icon={Sparkles} size="sm" className="text-current" />
+                  AI Insights
+                </Button>
+                <Button type="button" onClick={submitApplication} disabled={submitting} className="transition hover:-translate-y-0.5 active:translate-y-0">
+                  {submitting ? "Applying..." : "Apply Now"}
+                </Button>
+              </div>
             </div>
           </footer>
         </div>

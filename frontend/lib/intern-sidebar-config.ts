@@ -4,6 +4,7 @@ import {
   Bell,
   BookOpen,
   Bookmark,
+  Bot,
   Calendar,
   ClipboardList,
   FileText,
@@ -71,6 +72,19 @@ const BASE_SECTIONS: InternSidebarSectionConfig[] = [
     title: "My Calendar",
     items: [{ label: "Personal Calendar", href: "/dashboard/intern/calendar", icon: Calendar }]
   },
+  ...(FEATURE_FLAGS.ENABLE_JOB_AGENT
+    ? [
+        {
+          title: "AI Job Agent",
+          collapsible: true,
+          items: [
+            { label: "Job Agent Dashboard", href: "/dashboard/intern/job-agent", icon: Bot },
+            { label: "Application Tracker", href: "/dashboard/intern/job-agent/tracker", icon: ClipboardList, navVariant: "muted" as const },
+            { label: "Agent Settings", href: "/dashboard/intern/job-agent/settings", icon: Sparkles, navVariant: "muted" as const }
+          ]
+        } satisfies InternSidebarSectionConfig
+      ]
+    : []),
   {
     title: "Learning",
     items: [

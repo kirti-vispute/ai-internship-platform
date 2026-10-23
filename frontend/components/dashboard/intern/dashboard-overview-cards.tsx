@@ -69,7 +69,7 @@ function HoverCard({ className, children }: { className?: string; children: Reac
     <motion.div
       whileHover={{ y: -4 }}
       transition={{ duration: 0.2, ease: "easeOut" }}
-      className={cn(cardBase, "p-6", className)}
+      className={cn(cardBase, "p-5", className)}
     >
       {children}
     </motion.div>
@@ -118,7 +118,7 @@ export function DashboardHero({
       <motion.div
         whileHover={{ y: -2 }}
         transition={{ duration: 0.2, ease: "easeOut" }}
-        className="rounded-2xl border border-[var(--ds-primary)]/30 bg-gradient-to-br from-[var(--ds-primary)]/10 via-[var(--ds-card)] to-[var(--ds-accent)]/10 p-6 shadow-[0_1px_2px_var(--ds-shadow),0_10px_28px_-14px_var(--ds-shadow)]"
+        className="rounded-2xl border border-[var(--ds-primary)]/30 bg-gradient-to-br from-[var(--ds-primary)]/10 via-[var(--ds-card)] to-[var(--ds-accent)]/10 p-5 shadow-[0_1px_2px_var(--ds-shadow),0_10px_28px_-14px_var(--ds-shadow)]"
       >
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-4">

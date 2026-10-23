@@ -9,7 +9,8 @@ const FEATURE_FLAGS = Object.freeze({
   ENABLE_RECORDINGS: toBool(process.env.ENABLE_RECORDINGS, false),
   ENABLE_CHAT: toBool(process.env.ENABLE_CHAT, true),
   ENABLE_INTERVIEW_ROOMS: toBool(process.env.ENABLE_INTERVIEW_ROOMS, true),
-  ENABLE_3D_PORTFOLIO: toBool(process.env.ENABLE_3D_PORTFOLIO, true)
+  ENABLE_3D_PORTFOLIO: toBool(process.env.ENABLE_3D_PORTFOLIO, true),
+  ENABLE_JOB_AGENT: toBool(process.env.ENABLE_JOB_AGENT, true)
 });
 
 function isEnabled(flagName) {

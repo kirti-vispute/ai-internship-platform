@@ -25,15 +25,15 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!internship) {
     return {
       title: "Internship",
-      description: "Browse open internships and jobs on InternAI.",
+      description: "Browse open internships and jobs on CareerSetu.",
       robots: { index: false, follow: false }
     };
   }
 
-  const title = `${internship.role || "Internship"} at ${internship.company?.companyName || "InternAI"}`;
+  const title = `${internship.role || "Internship"} at ${internship.company?.companyName || "CareerSetu"}`;
   return {
     title,
-    description: internship.description?.slice(0, 160) || `Apply to ${internship.role || "this role"} at ${internship.company?.companyName || "this company"} on InternAI.`
+    description: internship.description?.slice(0, 160) || `Apply to ${internship.role || "this role"} at ${internship.company?.companyName || "this company"} on CareerSetu.`
   };
 }
 

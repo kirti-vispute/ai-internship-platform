@@ -1,0 +1,2209 @@
+Running production build... 
+
+> ai-internship-platform-frontend@1.0.0 build
+> node scripts/run-next.cjs build
+
+   ▲ Next.js 15.5.21
+   - Environments: .env.local
+   - Experiments (use with caution):
+     · staleTimes
+     · optimizePackageImports
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully in 9.8s
+   Linting and checking validity of types ...
+
+./app/access-denied/page.tsx
+19:5  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\app\access-denied\page.tsx:19:5
+  17 |   useEffect(() => {
+  18 |     const session = getAuthSession();
+> 19 |     setLoggedIn(session.loggedIn);
+     |     ^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  20 |     setRole(session.role);
+  21 |   }, []);
+  22 |  react-hooks/set-state-in-effect
+
+./app/dashboard/company/layout.tsx
+31:7  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\app\dashboard\company\layout.tsx:31:7
+  29 |     const cached = peekCompanyProfile();
+  30 |     if (cached) {
+> 31 |       setWelcomeName(cached.profile?.companyName);
+     |       ^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  32 |       setCurrentUser(cached.currentUser);
+  33 |     }
+  34 |   }, []);  react-hooks/set-state-in-effect
+62:7  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\app\dashboard\company\layout.tsx:62:7
+  60 |
+  61 |     if (pathname.startsWith(COMPANY_HR_DASHBOARD_PATH)) {
+> 62 |       setBlockedExecutiveOnly(false);
+     |       ^^^^^^^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  63 |       if (executive) {
+  64 |         router.replace(`${COMPANY_CEO_DASHBOARD_PATH}${pathname.slice(COMPANY_HR_DASHBOARD_PATH.length)}`);
+  65 |       }  react-hooks/set-state-in-effect
+
+./app/dashboard/company/notifications/page.tsx
+29:7  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\app\dashboard\company\notifications\page.tsx:29:7
+  27 |     const cached = peekCompanyNotifications();
+  28 |     if (cached) {
+> 29 |       setNotifications(cached.notifications);
+     |       ^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  30 |       setUnreadCount(cached.unreadCount);
+  31 |       setLoading(false);
+  32 |     }  react-hooks/set-state-in-effect
+54:10  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\app\dashboard\company\notifications\page.tsx:54:10
+  52 |
+  53 |   useEffect(() => {
+> 54 |     void load(false);
+     |          ^^^^ Avoid calling setState() directly within an effect
+  55 |   }, []);
+  56 |
+  57 |   async function handleMarkRead(notificationId: string) {  react-hooks/set-state-in-effect
+
+./app/dashboard/intern/applications/page.tsx
+41:7  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\app\dashboard\intern\applications\page.tsx:41:7
+  39 |     const cached = peekInternApplications();
+  40 |     if (cached?.length) {
+> 41 |       setApplications(cached);
+     |       ^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  42 |       setLoading(false);
+  43 |     }
+  44 |   }, []);  react-hooks/set-state-in-effect
+
+./app/dashboard/intern/feedback/hr/page.tsx
+18:7  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\app\dashboard\intern\feedback\hr\page.tsx:18:7
+  16 |     const cached = peekInternApplications();
+  17 |     if (cached?.length) {
+> 18 |       setApplications(cached);
+     |       ^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  19 |       setLoading(false);
+  20 |     }
+  21 |   }, []);  react-hooks/set-state-in-effect
+
+./app/dashboard/intern/feedback/suggestions/page.tsx
+27:7  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\app\dashboard\intern\feedback\suggestions\page.tsx:27:7
+  25 |     const cached = peekInternProfile();
+  26 |     if (cached) {
+> 27 |       setProfile(cached);
+     |       ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  28 |       setLoading(false);
+  29 |     }
+  30 |   }, []);  react-hooks/set-state-in-effect
+
+./app/dashboard/intern/internships/recommended/page.tsx
+56:7  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\app\dashboard\intern\internships\recommended\page.tsx:56:7
+  54 |     const cached = peekInternProfile();
+  55 |     if (cached) {
+> 56 |       setProfile(cached);
+     |       ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  57 |       setLoading(false);
+  58 |     }
+  59 |     setFilters(loadPersistedRecommendedFilters());  react-hooks/set-state-in-effect
+
+./app/dashboard/intern/internships/saved/page.tsx
+39:30  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\app\dashboard\intern\internships\saved\page.tsx:39:30
+  37 |     const cachedSaved = peekSavedInternships();
+  38 |     const cachedApps = peekInternApplications();
+> 39 |     if (cachedSaved?.length) setSaved(cachedSaved);
+     |                              ^^^^^^^^ Avoid calling setState() directly within an effect
+  40 |     if (cachedApps?.length) setAppliedInternshipIds(appliedInternshipIdsFromApplications(cachedApps));
+  41 |     if (cachedSaved?.length || cachedApps?.length) setLoading(false);
+  42 |   }, []);  react-hooks/set-state-in-effect
+
+./app/dashboard/intern/internships/search/page.tsx
+55:24  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\app\dashboard\intern\internships\search\page.tsx:55:24
+  53 |     const cachedApps = peekInternApplications();
+  54 |     const cachedSaved = peekSavedInternships();
+> 55 |     if (cachedProfile) setProfile(cachedProfile);
+     |                        ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  56 |     if (cachedInternships?.length) setInternships(cachedInternships);
+  57 |     if (cachedApps?.length) setAppliedInternshipIds(appliedInternshipIdsFromApplications(cachedApps));
+  58 |     if (cachedSaved?.length) setSavedInternshipIds(new Set(cachedSaved.map((item) => String(item._id))));  react-hooks/set-state-in-effect
+
+./app/dashboard/intern/interviews/page.tsx
+28:7  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\app\dashboard\intern\interviews\page.tsx:28:7
+  26 |     const cachedApps = peekInternApplications();
+  27 |     if (cachedApps?.length) {
+> 28 |       setLoading(false);
+     |       ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  29 |     }
+  30 |   }, []);
+  31 |  react-hooks/set-state-in-effect
+52:10  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\app\dashboard\intern\interviews\page.tsx:52:10
+  50 |
+  51 |   useEffect(() => {
+> 52 |     void load(true);
+     |          ^^^^ Avoid calling setState() directly within an effect
+  53 |   }, [load]);
+  54 |
+  55 |   // HR scheduling/rescheduling/cancelling an interview pushes a socket  react-hooks/set-state-in-effect
+
+./app/dashboard/intern/job-agent/page.tsx
+75:5  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\app\dashboard\intern\job-agent\page.tsx:75:5
+  73 |
+  74 |   useEffect(() => {
+> 75 |     loadAll(1);
+     |     ^^^^^^^ Avoid calling setState() directly within an effect
+  76 |     // eslint-disable-next-line react-hooks/exhaustive-deps
+  77 |   }, []);
+  78 |  react-hooks/set-state-in-effect
+
+./app/dashboard/intern/job-agent/tracker/page.tsx
+64:5  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\app\dashboard\intern\job-agent\tracker\page.tsx:64:5
+  62 |
+  63 |   useEffect(() => {
+> 64 |     setLoading(true);
+     |     ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  65 |     load();
+  66 |     // eslint-disable-next-line react-hooks/exhaustive-deps
+  67 |   }, [statusFilter]);  react-hooks/set-state-in-effect
+
+./app/dashboard/intern/layout.tsx
+33:7  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\app\dashboard\intern\layout.tsx:33:7
+  31 |     const cached = peekInternProfile();
+  32 |     if (cached?.fullName) {
+> 33 |       setWelcomeName(cached.fullName);
+     |       ^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  34 |     }
+  35 |   }, []);
+  36 |  react-hooks/set-state-in-effect
+
+./app/dashboard/intern/notifications/page.tsx
+29:7  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\app\dashboard\intern\notifications\page.tsx:29:7
+  27 |     const cached = peekInternNotifications();
+  28 |     if (cached) {
+> 29 |       setNotifications(cached.notifications);
+     |       ^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  30 |       setUnreadCount(cached.unreadCount);
+  31 |       setLoading(false);
+  32 |     }  react-hooks/set-state-in-effect
+53:5  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\app\dashboard\intern\notifications\page.tsx:53:5
+  51 |
+  52 |   useEffect(() => {
+> 53 |     load(false);
+     |     ^^^^ Avoid calling setState() directly within an effect
+  54 |   }, []);
+  55 |
+  56 |   function openLink(item: InAppNotification) {  react-hooks/set-state-in-effect
+
+./app/dashboard/intern/page.tsx
+101:24  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\app\dashboard\intern\page.tsx:101:24
+   99 |     const cachedApps = peekInternApplications();
+  100 |     const cachedSaved = peekSavedInternships();
+> 101 |     if (cachedProfile) setProfile(cachedProfile);
+      |                        ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  102 |     if (cachedApps?.length) setApplications(cachedApps);
+  103 |     if (cachedSaved?.length) setSavedInternships(cachedSaved);
+  104 |     if (cachedProfile || cachedApps?.length) setLoading(false);  react-hooks/set-state-in-effect
+149:5  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\app\dashboard\intern\page.tsx:149:5
+  147 |
+  148 |   useEffect(() => {
+> 149 |     loadDashboard();
+      |     ^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  150 |   }, [loadDashboard]);
+  151 |
+  152 |   useEffect(() => {  react-hooks/set-state-in-effect
+
+./app/dashboard/intern/placement-hub/page.tsx
+41:24  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\app\dashboard\intern\placement-hub\page.tsx:41:24
+  39 |     const cachedProfile = peekInternProfile();
+  40 |     const cachedApps = peekInternApplications();
+> 41 |     if (cachedProfile) setProfile(cachedProfile);
+     |                        ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  42 |     if (cachedApps?.length) setApplications(cachedApps);
+  43 |     if (cachedProfile || cachedApps?.length) setLoading(false);
+  44 |   }, []);  react-hooks/set-state-in-effect
+71:5  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\app\dashboard\intern\placement-hub\page.tsx:71:5
+  69 |
+  70 |   useEffect(() => {
+> 71 |     loadHub();
+     |     ^^^^^^^ Avoid calling setState() directly within an effect
+  72 |   }, [loadHub]);
+  73 |
+  74 |   useEffect(() => {  react-hooks/set-state-in-effect
+
+./app/dashboard/intern/profile/edit/page.tsx
+71:7  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\app\dashboard\intern\profile\edit\page.tsx:71:7
+  69 |     const cached = peekInternProfile();
+  70 |     if (cached) {
+> 71 |       setProfile(cached);
+     |       ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  72 |       setLoading(false);
+  73 |     }
+  74 |   }, []);  react-hooks/set-state-in-effect
+
+./app/dashboard/intern/profile/page.tsx
+54:7  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\app\dashboard\intern\profile\page.tsx:54:7
+  52 |     const cached = peekInternProfile();
+  53 |     if (cached) {
+> 54 |       setProfile(cached);
+     |       ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  55 |       setLoading(false);
+  56 |     }
+  57 |   }, []);  react-hooks/set-state-in-effect
+155:37  Warning: Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `profile`, but the source dependencies were [parsed?.skills, profile?.skills]. Inferred less specific property than source.
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\app\dashboard\intern\profile\page.tsx:155:37
+  153 |   const technicalSkills = Array.from(new Set((profile?.skills || parsed?.skills || []).map((skill) => String(skill).trim()).filter(Boolean)));
+  154 |   const skillTags = Array.from(new Set((technicalSkills || []).map((skill) => String(skill).trim()).filter(Boolean))).slice(0, 20);
+> 155 |   const missingSkillHints = useMemo(() => {
+      |                                     ^^^^^^^
+> 156 |     // profile.skills is the accumulated union across every resume ever
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 157 |     // uploaded (see profile-sync.service.js), so it must take precedence
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 158 |     // over one resume's parsed list or this hint could wrongly flag a skill
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 159 |     // as "missing" that the student already has from an earlier upload.
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 160 |     const listed = new Set((profile?.skills?.length ? profile.skills : parsed?.skills || []).map((skill) => String(skill).toLowerCase()));
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 161 |     const commonTargets = ["react", "node.js", "sql", "docker", "communication", "problem solving"];
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 162 |     return commonTargets.filter((skill) => !listed.has(skill.toLowerCase())).slice(0, 5);
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 163 |   }, [parsed?.skills, profile?.skills]);
+      | ^^^^ Could not preserve existing manual memoization
+  164 |   const initials = (profile?.fullName || "I")
+  165 |     .split(" ")
+  166 |     .filter(Boolean)  react-hooks/preserve-manual-memoization
+
+./app/dashboard/intern/resume/score/page.tsx
+25:7  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\app\dashboard\intern\resume\score\page.tsx:25:7
+  23 |     const cached = peekInternProfile();
+  24 |     if (cached) {
+> 25 |       setProfile(cached);
+     |       ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  26 |       setLoading(false);
+  27 |     }
+  28 |   }, []);  react-hooks/set-state-in-effect
+70:5  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\app\dashboard\intern\resume\score\page.tsx:70:5
+  68 |
+  69 |   useEffect(() => {
+> 70 |     loadProfile(undefined, internshipId);
+     |     ^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  71 |     // Only re-run on mount / when the internship selection changes — targetRole changes are handled via the explicit callback below.
+  72 |     // eslint-disable-next-line react-hooks/exhaustive-deps
+  73 |   }, [internshipId]);  react-hooks/set-state-in-effect
+
+./app/dashboard/intern/skill-gap/page.tsx
+26:7  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\app\dashboard\intern\skill-gap\page.tsx:26:7
+  24 |     const cached = peekInternProfile();
+  25 |     if (cached) {
+> 26 |       setProfile(cached);
+     |       ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  27 |       setLoading(false);
+  28 |     }
+  29 |   }, []);  react-hooks/set-state-in-effect
+64:5  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\app\dashboard\intern\skill-gap\page.tsx:64:5
+  62 |
+  63 |   useEffect(() => {
+> 64 |     loadProfile();
+     |     ^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  65 |   }, [loadProfile]);
+  66 |
+  67 |   const handleInternshipChange = useCallback(  react-hooks/set-state-in-effect
+
+./app/dashboard/intern/track-progress/page.tsx
+45:24  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\app\dashboard\intern\track-progress\page.tsx:45:24
+  43 |     const cachedProfile = peekInternProfile();
+  44 |     const cachedApps = peekInternApplications();
+> 45 |     if (cachedProfile) setProfile(cachedProfile);
+     |                        ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  46 |     if (cachedApps?.length) setApplications(cachedApps);
+  47 |     if (cachedProfile || cachedApps?.length) setLoading(false);
+  48 |     setAptitudeRecords(getAptitudeHistory());  react-hooks/set-state-in-effect
+75:5  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\app\dashboard\intern\track-progress\page.tsx:75:5
+  73 |
+  74 |   useEffect(() => {
+> 75 |     loadAnalytics();
+     |     ^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  76 |   }, [loadAnalytics]);
+  77 |
+  78 |   const profileCompletion = useMemo(() => {  react-hooks/set-state-in-effect
+110:5  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\app\dashboard\intern\track-progress\page.tsx:110:5
+  108 |       readiness: readiness.score
+  109 |     });
+> 110 |     setProgressHistory(updated);
+      |     ^^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  111 |     // eslint-disable-next-line react-hooks/exhaustive-deps
+  112 |   }, [profile?._id, resumeScore, atsScore, applications.length, interviewRecords.length, profileCompletion, readiness.score]);
+  113 |  react-hooks/set-state-in-effect
+
+./app/error.tsx
+13:5  Warning: Unused eslint-disable directive (no problems were reported from 'no-console').
+20:7  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\app\error.tsx:20:7
+  18 |     const session = getAuthSession();
+  19 |     if (session.loggedIn && session.role) {
+> 20 |       setFallbackCta({ label: "Back to Dashboard", href: getDashboardPathForRole(session.role) });
+     |       ^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  21 |     }
+  22 |   }, []);
+  23 |  react-hooks/set-state-in-effect
+
+./app/global-error.tsx
+10:3  Warning: Unused eslint-disable directive (no problems were reported from 'no-console').
+
+./app/session-expired/page.tsx
+14:23  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\app\session-expired\page.tsx:14:23
+  12 |   useEffect(() => {
+  13 |     const session = getAuthSession();
+> 14 |     if (session.role) setSignInHref(getAuthPathForRole(session.role));
+     |                       ^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  15 |   }, []);
+  16 |
+  17 |   return (  react-hooks/set-state-in-effect
+
+./components/auth/auth-session-redirect.tsx
+25:5  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\auth\auth-session-redirect.tsx:25:5
+  23 |       return;
+  24 |     }
+> 25 |     setReady(true);
+     |     ^^^^^^^^ Avoid calling setState() directly within an effect
+  26 |   }, [expectedRole, router, searchParams]);
+  27 |
+  28 |   if (!ready) {  react-hooks/set-state-in-effect
+
+./components/auth/role-auth-form.tsx
+194:5  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\auth\role-auth-form.tsx:194:5
+  192 |
+  193 |   useEffect(() => {
+> 194 |     setOtp("");
+      |     ^^^^^^ Avoid calling setState() directly within an effect
+  195 |     setOtpSent(false);
+  196 |     setOtpVerified(false);
+  197 |     startOtpResendCountdown(0);  react-hooks/set-state-in-effect
+
+./components/calendar/calendar-day-detail-modal.tsx
+61:7  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\calendar\calendar-day-detail-modal.tsx:61:7
+  59 |   useEffect(() => {
+  60 |     if (!open) {
+> 61 |       setNoteDraft("");
+     |       ^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  62 |       setEditingNoteId(null);
+  63 |       setEditingNoteDraft("");
+  64 |       setEditingStickerId(null);  react-hooks/set-state-in-effect
+
+./components/company/company-public-profile-page.tsx
+50:5  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\company\company-public-profile-page.tsx:50:5
+  48 |   useEffect(() => {
+  49 |     let active = true;
+> 50 |     setLoading(true);
+     |     ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  51 |     setError(null);
+  52 |     fetchPublicCompanyProfile(companyId)
+  53 |       .then((data) => {  react-hooks/set-state-in-effect
+
+./components/dashboard/admin/admin-certification-review.tsx
+66:5  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\dashboard\admin\admin-certification-review.tsx:66:5
+  64 |
+  65 |   useEffect(() => {
+> 66 |     load();
+     |     ^^^^ Avoid calling setState() directly within an effect
+  67 |   }, [load]);
+  68 |
+  69 |   useEffect(() => {  react-hooks/set-state-in-effect
+
+./components/dashboard/admin/admin-dashboard-page.tsx
+262:5  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\dashboard\admin\admin-dashboard-page.tsx:262:5
+  260 |
+  261 |   useEffect(() => {
+> 262 |     loadData();
+      |     ^^^^^^^^ Avoid calling setState() directly within an effect
+  263 |   }, [loadData]);
+  264 |
+  265 |   useEffect(() => {  react-hooks/set-state-in-effect
+266:5  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\dashboard\admin\admin-dashboard-page.tsx:266:5
+  264 |
+  265 |   useEffect(() => {
+> 266 |     setCompanyPage(1);
+      |     ^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  267 |     setInternshipPage(1);
+  268 |     setReportPage(1);
+  269 |     setSelectedUserIds(new Set());  react-hooks/set-state-in-effect
+279:5  Warning: Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. This value was memoized in source but not in compilation output.
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\dashboard\admin\admin-dashboard-page.tsx:279:5
+  277 |
+  278 |   const handleVerify = useCallback(
+> 279 |     async (company: AdminCompany, status: "verified" | "rejected" | "suspended" | "pending", reason = "") => {
+      |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 280 |       if (!canVerifyCompanies) return;
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 281 |       setBusyId(company._id);
+      …
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 296 |       }
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 297 |     },
+      | ^^^^^^ Could not preserve existing memoization
+  298 |     [canVerifyCompanies, view, companySearch]
+  299 |   );
+  300 |  react-hooks/preserve-manual-memoization
+298:6  Warning: Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. This dependency may be mutated later, which could cause the value to change unexpectedly.
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\dashboard\admin\admin-dashboard-page.tsx:298:6
+  296 |       }
+  297 |     },
+> 298 |     [canVerifyCompanies, view, companySearch]
+      |      ^^^^^^^^^^^^^^^^^^ This dependency may be modified later
+  299 |   );
+  300 |
+  301 |   const handleResolve = useCallback(async (report: AdminReport) => {  react-hooks/preserve-manual-memoization
+315:44  Warning: Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. This value was memoized in source but not in compilation output.
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\dashboard\admin\admin-dashboard-page.tsx:315:44
+  313 |   }, [pushToast]);
+  314 |
+> 315 |   const handleUserActivation = useCallback(async (user: AdminUser, isActive: boolean) => {
+      |                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 316 |     if (!canUpdateUsers) return;
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 317 |     setBusyId(user._id);
+      …
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 328 |     }
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 329 |   }, [canUpdateUsers, userPage, search, roleFilter, statusFilter, pushToast]);
+      | ^^^^ Could not preserve existing memoization
+  330 |
+  331 |   const handleUserRole = useCallback(async (user: AdminUser, role: AdminUser["role"]) => {
+  332 |     if (!canUpdateUsers) return;  react-hooks/preserve-manual-memoization
+329:7  Warning: Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. This dependency may be mutated later, which could cause the value to change unexpectedly.
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\dashboard\admin\admin-dashboard-page.tsx:329:7
+  327 |       setBusyId(null);
+  328 |     }
+> 329 |   }, [canUpdateUsers, userPage, search, roleFilter, statusFilter, pushToast]);
+      |       ^^^^^^^^^^^^^^ This dependency may be modified later
+  330 |
+  331 |   const handleUserRole = useCallback(async (user: AdminUser, role: AdminUser["role"]) => {
+  332 |     if (!canUpdateUsers) return;  react-hooks/preserve-manual-memoization
+331:38  Warning: Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. This value was memoized in source but not in compilation output.
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\dashboard\admin\admin-dashboard-page.tsx:331:38
+  329 |   }, [canUpdateUsers, userPage, search, roleFilter, statusFilter, pushToast]);
+  330 |
+> 331 |   const handleUserRole = useCallback(async (user: AdminUser, role: AdminUser["role"]) => {
+      |                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 332 |     if (!canUpdateUsers) return;
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 333 |     setBusyId(user._id);
+      …
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 344 |     }
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 345 |   }, [canUpdateUsers, userPage, search, roleFilter, statusFilter, pushToast]);
+      | ^^^^ Could not preserve existing memoization
+  346 |
+  347 |   const handleAdminRoleChange = useCallback(async (user: AdminUser, nextAdminRole: AdminRole) => {
+  348 |     if (!canUpdateUsers) return;  react-hooks/preserve-manual-memoization
+345:7  Warning: Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. This dependency may be mutated later, which could cause the value to change unexpectedly.
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\dashboard\admin\admin-dashboard-page.tsx:345:7
+  343 |       setBusyId(null);
+  344 |     }
+> 345 |   }, [canUpdateUsers, userPage, search, roleFilter, statusFilter, pushToast]);
+      |       ^^^^^^^^^^^^^^ This dependency may be modified later
+  346 |
+  347 |   const handleAdminRoleChange = useCallback(async (user: AdminUser, nextAdminRole: AdminRole) => {
+  348 |     if (!canUpdateUsers) return;  react-hooks/preserve-manual-memoization
+347:45  Warning: Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. This value was memoized in source but not in compilation output.
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\dashboard\admin\admin-dashboard-page.tsx:347:45
+  345 |   }, [canUpdateUsers, userPage, search, roleFilter, statusFilter, pushToast]);
+  346 |
+> 347 |   const handleAdminRoleChange = useCallback(async (user: AdminUser, nextAdminRole: AdminRole) => {
+      |                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 348 |     if (!canUpdateUsers) return;
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 349 |     setBusyId(user._id);
+      …
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 360 |     }
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 361 |   }, [canUpdateUsers, userPage, search, roleFilter, statusFilter, pushToast]);
+      | ^^^^ Could not preserve existing memoization
+  362 |
+  363 |   const handleSoftDeleteUser = useCallback(async (user: AdminUser) => {
+  364 |     if (!canDeleteUsers) return;  react-hooks/preserve-manual-memoization
+361:7  Warning: Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. This dependency may be mutated later, which could cause the value to change unexpectedly.
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\dashboard\admin\admin-dashboard-page.tsx:361:7
+  359 |       setBusyId(null);
+  360 |     }
+> 361 |   }, [canUpdateUsers, userPage, search, roleFilter, statusFilter, pushToast]);
+      |       ^^^^^^^^^^^^^^ This dependency may be modified later
+  362 |
+  363 |   const handleSoftDeleteUser = useCallback(async (user: AdminUser) => {
+  364 |     if (!canDeleteUsers) return;  react-hooks/preserve-manual-memoization
+363:44  Warning: Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. This value was memoized in source but not in compilation output.
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\dashboard\admin\admin-dashboard-page.tsx:363:44
+  361 |   }, [canUpdateUsers, userPage, search, roleFilter, statusFilter, pushToast]);
+  362 |
+> 363 |   const handleSoftDeleteUser = useCallback(async (user: AdminUser) => {
+      |                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 364 |     if (!canDeleteUsers) return;
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 365 |     setBusyId(user._id);
+      …
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 376 |     }
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 377 |   }, [canDeleteUsers, userPage, search, roleFilter, statusFilter, pushToast]);
+      | ^^^^ Could not preserve existing memoization
+  378 |
+  379 |   const handleReportStatus = useCallback(async (report: AdminReport, status: "in_review" | "escalated" | "resolved" | "dismissed") => {
+  380 |     setBusyId(report._id);  react-hooks/preserve-manual-memoization
+377:7  Warning: Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. This dependency may be mutated later, which could cause the value to change unexpectedly.
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\dashboard\admin\admin-dashboard-page.tsx:377:7
+  375 |       setBusyId(null);
+  376 |     }
+> 377 |   }, [canDeleteUsers, userPage, search, roleFilter, statusFilter, pushToast]);
+      |       ^^^^^^^^^^^^^^ This dependency may be modified later
+  378 |
+  379 |   const handleReportStatus = useCallback(async (report: AdminReport, status: "in_review" | "escalated" | "resolved" | "dismissed") => {
+  380 |     setBusyId(report._id);  react-hooks/preserve-manual-memoization
+425:5  Warning: Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. This value was memoized in source but not in compilation output.
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\dashboard\admin\admin-dashboard-page.tsx:425:5
+  423 |
+  424 |   const handleBulkUserActivation = useCallback(
+> 425 |     async (isActive: boolean) => {
+      |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 426 |       if (!canUpdateUsers || selectedUserIds.size === 0) return;
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 427 |       setBulkBusy(true);
+      …
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 446 |       }
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 447 |     },
+      | ^^^^^^ Could not preserve existing memoization
+  448 |     [canUpdateUsers, selectedUserIds, users, userPage, debouncedSearch, roleFilter, statusFilter, pushToast]
+  449 |   );
+  450 |  react-hooks/preserve-manual-memoization
+448:6  Warning: Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. This dependency may be mutated later, which could cause the value to change unexpectedly.
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\dashboard\admin\admin-dashboard-page.tsx:448:6
+  446 |       }
+  447 |     },
+> 448 |     [canUpdateUsers, selectedUserIds, users, userPage, debouncedSearch, roleFilter, statusFilter, pushToast]
+      |      ^^^^^^^^^^^^^^ This dependency may be modified later
+  449 |   );
+  450 |
+  451 |   const openUserDetail = useCallback(async (userId: string) => {  react-hooks/preserve-manual-memoization
+
+./components/dashboard/admin/admin-hiring-scoring-panel.tsx
+63:5  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\dashboard\admin\admin-hiring-scoring-panel.tsx:63:5
+  61 |   useEffect(() => {
+  62 |     const sample = { skills: 82, tests: 76, projects: 79, experience: 68, resume: 74 };
+> 63 |     setPreviewScore(previewWeightedScore(sample, draft.weights, draft.enabled));
+     |     ^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  64 |   }, [draft]);
+  65 |
+  66 |   function selectTemplate(roleKey: string) {  react-hooks/set-state-in-effect
+
+./components/dashboard/chat/chat-panel.tsx
+217:5  Warning: Error: Cannot reassign variable after render completes
+
+Reassigning `lastDateKey` after render has completed can cause inconsistent behavior on subsequent renders. Consider using state instead.
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\dashboard\chat\chat-panel.tsx:217:5
+  215 |     const dateKey = first?.createdAt ? new Date(first.createdAt).toDateString() : "";
+  216 |     const showSeparator = Boolean(dateKey) && dateKey !== lastDateKey;
+> 217 |     lastDateKey = dateKey;
+      |     ^^^^^^^^^^^ Cannot reassign `lastDateKey` after render completes
+  218 |     return { group, showSeparator, dateLabel: formatDateSeparator(first?.createdAt) };
+  219 |   });
+  220 |  react-hooks/immutability
+
+./components/dashboard/chat/message-page.tsx
+80:3  Warning: Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\dashboard\chat\message-page.tsx:80:3
+  78 |
+  79 |   const selectedIdRef = useRef<string | null>(null);
+> 80 |   selectedIdRef.current = selectedId;
+     |   ^^^^^^^^^^^^^^^^^^^^^ Cannot update ref during render
+  81 |
+  82 |   const selectedConversation = useMemo(
+  83 |     () => conversations.find((item) => item._id === selectedId) || null,  react-hooks/refs
+182:7  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\dashboard\chat\message-page.tsx:182:7
+  180 |   useEffect(() => {
+  181 |     if (!FEATURE_FLAGS.ENABLE_CHAT) {
+> 182 |       setLoading(false);
+      |       ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  183 |       return undefined;
+  184 |     }
+  185 |  react-hooks/set-state-in-effect
+
+./components/dashboard/chat/recent-messages-widget.tsx
+62:10  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\dashboard\chat\recent-messages-widget.tsx:62:10
+  60 |
+  61 |   useEffect(() => {
+> 62 |     void load();
+     |          ^^^^ Avoid calling setState() directly within an effect
+  63 |   }, []);
+  64 |
+  65 |   if (!FEATURE_FLAGS.ENABLE_CHAT) return null;  react-hooks/set-state-in-effect
+
+./components/dashboard/company/company-dashboard-hub.tsx
+172:6  Warning: React Hook useMemo has a missing dependency: 'onUpdateInterviewRoundStatus'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./components/dashboard/company/company-dashboard-page.tsx
+458:7  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\dashboard\company\company-dashboard-page.tsx:458:7
+  456 |     const cachedProfile = peekCompanyProfile();
+  457 |     if (cachedProfile) {
+> 458 |       setProfile(cachedProfile.profile);
+      |       ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  459 |       setCurrentUser(cachedProfile.currentUser);
+  460 |       setLoading(false);
+  461 |     }  react-hooks/set-state-in-effect
+592:5  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\dashboard\company\company-dashboard-page.tsx:592:5
+  590 |   useEffect(() => {
+  591 |     if (!profile) return;
+> 592 |     setProfileForm({
+      |     ^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  593 |       companyName: profile.companyName || "",
+  594 |       contactName: profile.contactName || "",
+  595 |       phone: profile.phone || "",  react-hooks/set-state-in-effect
+611:5  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\dashboard\company\company-dashboard-page.tsx:611:5
+  609 |   useEffect(() => {
+  610 |     if (!personalProfile) return;
+> 611 |     setPersonalProfileForm({
+      |     ^^^^^^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  612 |       displayName: personalProfile.displayName || "",
+  613 |       phone: personalProfile.phone || "",
+  614 |       designation: personalProfile.designation || "",  react-hooks/set-state-in-effect
+632:7  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\dashboard\company\company-dashboard-page.tsx:632:7
+  630 |
+  631 |     if (!debouncedQuery) {
+> 632 |       setSearchResults([]);
+      |       ^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  633 |       setSearchError(null);
+  634 |       setSearchLoading(false);
+  635 |       return;  react-hooks/set-state-in-effect
+659:6  Warning: React Hook useEffect has a missing dependency: 'currentUser'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+767:7  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\dashboard\company\company-dashboard-page.tsx:767:7
+  765 |   useEffect(() => {
+  766 |     if (!PROFILE_MODAL_VIEWS.has(view)) {
+> 767 |       setApplicantDetailId(null);
+      |       ^^^^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  768 |     }
+  769 |   }, [view]);
+  770 |  react-hooks/set-state-in-effect
+772:42  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\dashboard\company\company-dashboard-page.tsx:772:42
+  770 |
+  771 |   useEffect(() => {
+> 772 |     if (applicantDetailId && !detailApp) setApplicantDetailId(null);
+      |                                          ^^^^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  773 |   }, [applicantDetailId, detailApp]);
+  774 |
+  775 |   const summary = useMemo(  react-hooks/set-state-in-effect
+
+./components/dashboard/company/interview-schedule-modal.tsx
+108:5  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\dashboard\company\interview-schedule-modal.tsx:108:5
+  106 |       ? (initialSlot?.roundType as InterviewType)
+  107 |       : "Technical Round";
+> 108 |     setRoundType(nextType);
+      |     ^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  109 |     setInterviewDate(initialSlot?.interviewDate || "");
+  110 |     setInterviewTime(initialSlot?.interviewTime || "");
+  111 |     const offline = initialSlot?.mode === "offline";  react-hooks/set-state-in-effect
+
+./components/dashboard/company/interviewer-combobox.tsx
+52:5  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\dashboard\company\interviewer-combobox.tsx:52:5
+  50 |
+  51 |   useEffect(() => {
+> 52 |     setHighlighted(0);
+     |     ^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  53 |   }, [value, open]);
+  54 |
+  55 |   function selectOption(name: string) {  react-hooks/set-state-in-effect
+
+./components/dashboard/company/resume-preview-modal.tsx
+62:5  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\dashboard\company\resume-preview-modal.tsx:62:5
+  60 |
+  61 |     let cancelled = false;
+> 62 |     setStatus("loading");
+     |     ^^^^^^^^^ Avoid calling setState() directly within an effect
+  63 |     setErrorMessage("");
+  64 |
+  65 |     fetchCompanyApplicationResume(applicationId)  react-hooks/set-state-in-effect
+
+./components/dashboard/company/technologies-input.tsx
+36:5  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\dashboard\company\technologies-input.tsx:36:5
+  34 |
+  35 |   useEffect(() => {
+> 36 |     setHighlighted(0);
+     |     ^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  37 |   }, [query, open]);
+  38 |
+  39 |   function addTechnology(raw: string) {  react-hooks/set-state-in-effect
+
+./components/dashboard/company/view-resume-modal.tsx
+29:5  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\dashboard\company\view-resume-modal.tsx:29:5
+  27 |
+  28 |     let cancelled = false;
+> 29 |     setStatus("loading");
+     |     ^^^^^^^^^ Avoid calling setState() directly within an effect
+  30 |     setErrorMessage("");
+  31 |
+  32 |     fetchCompanyApplicationResume(applicationId)  react-hooks/set-state-in-effect
+
+./components/dashboard/hiring/applications-sheet.tsx
+51:6  Warning: React Hook useEffect has a missing dependency: 'setPage'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./components/dashboard/hiring/shortlist-panel.tsx
+63:5  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\dashboard\hiring\shortlist-panel.tsx:63:5
+  61 |
+  62 |   useEffect(() => {
+> 63 |     setVisibleCount(INITIAL_VISIBLE);
+     |     ^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  64 |   }, [applications]);
+  65 |
+  66 |   const visible = shortlisted.slice(0, visibleCount);  react-hooks/set-state-in-effect
+
+./components/dashboard/intern/ai-insights-modal.tsx
+29:5  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\dashboard\intern\ai-insights-modal.tsx:29:5
+  27 |
+  28 |   useEffect(() => {
+> 29 |     setIsMounted(true);
+     |     ^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  30 |   }, []);
+  31 |
+  32 |   useEffect(() => {  react-hooks/set-state-in-effect
+45:5  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\dashboard\intern\ai-insights-modal.tsx:45:5
+  43 |
+  44 |     let cancelled = false;
+> 45 |     setStatus("loading");
+     |     ^^^^^^^^^ Avoid calling setState() directly within an effect
+  46 |     setErrorMessage("");
+  47 |
+  48 |     fetchApplicationAiInsights(internshipId)  react-hooks/set-state-in-effect
+
+./components/dashboard/intern/aptitude-exam-view.tsx
+127:78  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\dashboard\intern\aptitude-exam-view.tsx:127:78
+  125 |   useEffect(() => {
+  126 |     remainingSecondsRef.current = remainingSeconds;
+> 127 |     if (remainingSeconds < 300 && remainingSeconds > 0 && !lowTimeAnnounced) setLowTimeAnnounced(true);
+      |                                                                              ^^^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  128 |   }, [remainingSeconds, lowTimeAnnounced]);
+  129 |
+  130 |   useEffect(() => {  react-hooks/set-state-in-effect
+191:6  Warning: React Hook useCallback has missing dependencies: 'proctorRef' and 'test'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+
+./components/dashboard/intern/career-coach-dashboard.tsx
+254:5  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\dashboard\intern\career-coach-dashboard.tsx:254:5
+  252 |
+  253 |   useEffect(() => {
+> 254 |     setSnapshot(getWeeklyProgress(storageKey, metrics));
+      |     ^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  255 |     // eslint-disable-next-line react-hooks/exhaustive-deps
+  256 |   }, [storageKey, metrics.resumeScore, metrics.atsScore, metrics.applications, metrics.interviews, metrics.profileCompletion]);
+  257 |  react-hooks/set-state-in-effect
+
+./components/dashboard/intern/certifications-module.tsx
+101:5  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\dashboard\intern\certifications-module.tsx:101:5
+   99 |
+  100 |   useEffect(() => {
+> 101 |     load();
+      |     ^^^^ Avoid calling setState() directly within an effect
+  102 |   }, [load]);
+  103 |
+  104 |   useEffect(() => {  react-hooks/set-state-in-effect
+
+./components/dashboard/intern/course-card.tsx
+39:5  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\dashboard\intern\course-card.tsx:39:5
+  37 |   // read from localStorage after mount
+  38 |   useEffect(() => {
+> 39 |     setSaved(isCourseSaved(course.url));
+     |     ^^^^^^^^ Avoid calling setState() directly within an effect
+  40 |   }, [course.url]);
+  41 |
+  42 |   const handleSave = useCallback(  react-hooks/set-state-in-effect
+
+./components/dashboard/intern/intern-application-modal.tsx
+39:5  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\dashboard\intern\intern-application-modal.tsx:39:5
+  37 |
+  38 |   useEffect(() => {
+> 39 |     setIsMounted(true);
+     |     ^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  40 |     const previousOverflow = document.body.style.overflow;
+  41 |     document.body.style.overflow = "hidden";
+  42 |     return () => {  react-hooks/set-state-in-effect
+
+./components/dashboard/intern/intern-resume-panel.tsx
+117:5  Warning: Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `profile`, but the source dependencies were [profile?.resume?.filePath, profile?.updatedAt, profile?.resume?.score, technicalSkills.length, projects.length, education.length]. Inferred less specific property than source.
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\dashboard\intern\intern-resume-panel.tsx:117:5
+  115 |
+  116 |   const overviewStats = useMemo(
+> 117 |     () => [
+      |     ^^^^^^^
+> 118 |       { label: "Resume Name", value: profile?.resume?.filePath ? String(profile.resume.filePath).split(/[\\/]/).pop() || "Uploaded Resume" : "No resume" },
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 119 |       { label: "Last Updated", value: profile?.updatedAt ? new Date(profile.updatedAt).toLocaleDateString() : "-" },
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 120 |       { label: "Resume Score", value: `${profile?.resume?.score ?? 0}/100` },
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 121 |       { label: "Skills Count", value: String(technicalSkills.length) },
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 122 |       { label: "Projects Count", value: String(projects.length) },
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 123 |       { label: "Education Count", value: String(education.length) }
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 124 |     ],
+      | ^^^^^^ Could not preserve existing manual memoization
+  125 |     [profile?.resume?.filePath, profile?.updatedAt, profile?.resume?.score, technicalSkills.length, projects.length, education.length]
+  126 |   );
+  127 |   // Every bucket the backend parser can produce (resume-structured-parser.service.js  react-hooks/preserve-manual-memoization
+117:5  Warning: Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `profile`, but the source dependencies were [profile?.resume?.filePath, profile?.updatedAt, profile?.resume?.score, technicalSkills.length, projects.length, education.length]. Inferred less specific property than source.
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\dashboard\intern\intern-resume-panel.tsx:117:5
+  115 |
+  116 |   const overviewStats = useMemo(
+> 117 |     () => [
+      |     ^^^^^^^
+> 118 |       { label: "Resume Name", value: profile?.resume?.filePath ? String(profile.resume.filePath).split(/[\\/]/).pop() || "Uploaded Resume" : "No resume" },
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 119 |       { label: "Last Updated", value: profile?.updatedAt ? new Date(profile.updatedAt).toLocaleDateString() : "-" },
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 120 |       { label: "Resume Score", value: `${profile?.resume?.score ?? 0}/100` },
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 121 |       { label: "Skills Count", value: String(technicalSkills.length) },
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 122 |       { label: "Projects Count", value: String(projects.length) },
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 123 |       { label: "Education Count", value: String(education.length) }
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 124 |     ],
+      | ^^^^^^ Could not preserve existing manual memoization
+  125 |     [profile?.resume?.filePath, profile?.updatedAt, profile?.resume?.score, technicalSkills.length, projects.length, education.length]
+  126 |   );
+  127 |   // Every bucket the backend parser can produce (resume-structured-parser.service.js  react-hooks/preserve-manual-memoization
+
+./components/dashboard/intern/internship-picker.tsx
+60:6  Warning: React Hook useEffect has missing dependencies: 'onChange' and 'value'. Either include them or remove the dependency array. If 'onChange' changes too often, find the parent component that defines it and wrap that definition in useCallback.  react-hooks/exhaustive-deps
+
+./components/dashboard/intern/interview-calendar.tsx
+447:5  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\dashboard\intern\interview-calendar.tsx:447:5
+  445 |     const { from, to } = fetchRange;
+  446 |     let cancelled = false;
+> 447 |     setEntriesStatus("loading");
+      |     ^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  448 |
+  449 |     fetchCalendarEntries(from, to)
+  450 |       .then((entries) => {  react-hooks/set-state-in-effect
+655:71  Warning: Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\dashboard\intern\interview-calendar.tsx:655:71
+  653 |             <CalendarSkeleton />
+  654 |           ) : (
+> 655 |             <AnimatePresence mode="popLayout" initial={false} custom={directionRef.current}>
+      |                                                                       ^^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render
+  656 |               <motion.div
+  657 |                 key={`${cursor.getFullYear()}-${cursor.getMonth()}`}
+  658 |                 custom={directionRef.current}  react-hooks/refs
+658:25  Warning: Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\dashboard\intern\interview-calendar.tsx:658:25
+  656 |               <motion.div
+  657 |                 key={`${cursor.getFullYear()}-${cursor.getMonth()}`}
+> 658 |                 custom={directionRef.current}
+      |                         ^^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render
+  659 |                 variants={calendarSlideVariants}
+  660 |                 initial="enter"
+  661 |                 animate="center"  react-hooks/refs
+705:71  Warning: Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\dashboard\intern\interview-calendar.tsx:705:71
+  703 |             <CalendarSkeleton />
+  704 |           ) : (
+> 705 |             <AnimatePresence mode="popLayout" initial={false} custom={directionRef.current}>
+      |                                                                       ^^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render
+  706 |               <motion.div
+  707 |                 key={toLocalDateKey(weekStart)}
+  708 |                 custom={directionRef.current}  react-hooks/refs
+708:25  Warning: Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\dashboard\intern\interview-calendar.tsx:708:25
+  706 |               <motion.div
+  707 |                 key={toLocalDateKey(weekStart)}
+> 708 |                 custom={directionRef.current}
+      |                         ^^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render
+  709 |                 variants={calendarSlideVariants}
+  710 |                 initial="enter"
+  711 |                 animate="center"  react-hooks/refs
+
+./components/dashboard/intern/learning-courses-module.tsx
+65:21  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\dashboard\intern\learning-courses-module.tsx:65:21
+  63 |   const [savedTick, setSavedTick] = useState(0);
+  64 |
+> 65 |   useEffect(() => { setSavedCourses(getSavedCourses()); }, [savedTick]);
+     |                     ^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  66 |   useEffect(() => {
+  67 |     const handler = () => setSavedTick((k) => k + 1);
+  68 |     window.addEventListener("storage", handler);  react-hooks/set-state-in-effect
+71:42  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\dashboard\intern\learning-courses-module.tsx:71:42
+  69 |     return () => window.removeEventListener("storage", handler);
+  70 |   }, []);
+> 71 |   useEffect(() => { if (tab === "saved") setSavedTick((k) => k + 1); }, [tab]);
+     |                                          ^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  72 |   const refreshSaved = useCallback(() => setSavedTick((k) => k + 1), []);
+  73 |
+  74 |   const allCourses = useMemo<AllCourse[]>(() => getAllCourses() as AllCourse[], []);  react-hooks/set-state-in-effect
+
+./components/dashboard/intern/mock-aptitude-hub.tsx
+332:6  Warning: React Hook useMemo has an unnecessary dependency: 'result'. Either exclude it or remove the dependency array.  react-hooks/exhaustive-deps
+467:49  Warning: Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\dashboard\intern\mock-aptitude-hub.tsx:467:49
+  465 |               <div className="min-h-0 flex-1">
+  466 |                 <AptitudeExamView
+> 467 |                   key={`exam-${activeTest.id}-${sessionRef.current?.startTime ?? "new"}`}
+      |                                                 ^^^^^^^^^^^^^^^^^^ Cannot access ref value during render
+  468 |                   test={activeTest}
+  469 |                   initialSession={loadExamSession()}
+  470 |                   fullscreenMode  react-hooks/refs
+467:49  Warning: Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\dashboard\intern\mock-aptitude-hub.tsx:467:49
+  465 |               <div className="min-h-0 flex-1">
+  466 |                 <AptitudeExamView
+> 467 |                   key={`exam-${activeTest.id}-${sessionRef.current?.startTime ?? "new"}`}
+      |                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render
+  468 |                   test={activeTest}
+  469 |                   initialSession={loadExamSession()}
+  470 |                   fullscreenMode  react-hooks/refs
+467:49  Warning: Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\dashboard\intern\mock-aptitude-hub.tsx:467:49
+  465 |               <div className="min-h-0 flex-1">
+  466 |                 <AptitudeExamView
+> 467 |                   key={`exam-${activeTest.id}-${sessionRef.current?.startTime ?? "new"}`}
+      |                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render
+  468 |                   test={activeTest}
+  469 |                   initialSession={loadExamSession()}
+  470 |                   fullscreenMode  react-hooks/refs
+
+./components/dashboard/intern/placement-hub-sections.tsx
+203:77  Warning: Error: Cannot call impure function during render
+
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\dashboard\intern\placement-hub-sections.tsx:203:77
+  201 |           <ul className="space-y-2.5">
+  202 |             {items.map((item) => {
+> 203 |               const daysLeft = Math.max(0, Math.ceil((item.date.getTime() - Date.now()) / (24 * 60 * 60 * 1000)));
+      |                                                                             ^^^^^^^^^^ Cannot call impure function
+  204 |               return (
+  205 |                 <li
+  206 |                   key={item.id}  react-hooks/purity
+233:5  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\dashboard\intern\placement-hub-sections.tsx:233:5
+  231 |
+  232 |   useEffect(() => {
+> 233 |     setPoints(buildProgressData(getAptitudeHistory()));
+      |     ^^^^^^^^^ Avoid calling setState() directly within an effect
+  234 |     setReady(true);
+  235 |   }, []);
+  236 |  react-hooks/set-state-in-effect
+
+./components/dashboard/intern/weakness-analysis-panel.tsx
+150:23  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\dashboard\intern\weakness-analysis-panel.tsx:150:23
+  148 |   useEffect(() => {
+  149 |     if (options.length === 0) {
+> 150 |       if (selectedId) setSelectedId("");
+      |                       ^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  151 |       return;
+  152 |     }
+  153 |     if (!options.some((o) => o.id === selectedId)) {  react-hooks/set-state-in-effect
+
+./components/dashboard/interview/interview-details-modal.tsx
+58:7  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\dashboard\interview\interview-details-modal.tsx:58:7
+  56 |   useEffect(() => {
+  57 |     if (!open) {
+> 58 |       setCopied(false);
+     |       ^^^^^^^^^ Avoid calling setState() directly within an effect
+  59 |       setShowRescheduleForm(false);
+  60 |       setRescheduleReason("");
+  61 |       setRescheduleSent(false);  react-hooks/set-state-in-effect
+
+./components/dashboard/shared/company-public-card.tsx
+19:5  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\dashboard\shared\company-public-card.tsx:19:5
+  17 |   useEffect(() => {
+  18 |     let active = true;
+> 19 |     setLoading(true);
+     |     ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  20 |     fetchPublicCompanyProfile(companyId)
+  21 |       .then((data) => {
+  22 |         if (active) setProfile(data);  react-hooks/set-state-in-effect
+
+./components/dashboard/shared/dashboard-sidebar-nav.tsx
+148:25  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\dashboard\shared\dashboard-sidebar-nav.tsx:148:25
+  146 |
+  147 |   useEffect(() => {
+> 148 |     if (hasActiveChild) setOpen(true);
+      |                         ^^^^^^^ Avoid calling setState() directly within an effect
+  149 |   }, [hasActiveChild]);
+  150 |
+  151 |   const toggle = useCallback(() => setOpen((prev) => !prev), []);  react-hooks/set-state-in-effect
+228:5  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\dashboard\shared\dashboard-sidebar-nav.tsx:228:5
+  226 |
+  227 |   useEffect(() => {
+> 228 |     setPendingHref(null);
+      |     ^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  229 |   }, [pathname]);
+  230 |
+  231 |   const warmRoute = useCallback(  react-hooks/set-state-in-effect
+
+./components/dashboard/shared/notification-bell.tsx
+73:10  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\dashboard\shared\notification-bell.tsx:73:10
+  71 |   useEffect(() => {
+  72 |     if (!open) return;
+> 73 |     void loadPreview(false);
+     |          ^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  74 |   }, [loadPreview, open]);
+  75 |
+  76 |   useEffect(() => {  react-hooks/set-state-in-effect
+
+./components/dashboard/shared/skill-selector.tsx
+25:7  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\dashboard\shared\skill-selector.tsx:25:7
+  23 |     let active = true;
+  24 |     if (!debouncedQuery.trim()) {
+> 25 |       setOptions([]);
+     |       ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  26 |       setLoading(false);
+  27 |       return;
+  28 |     }  react-hooks/set-state-in-effect
+
+./components/errors/not-found-view.tsx
+14:43  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\errors\not-found-view.tsx:14:43
+  12 |   useEffect(() => {
+  13 |     const session = getAuthSession();
+> 14 |     if (session.loggedIn && session.role) setDashboardHref(getDashboardPathForRole(session.role));
+     |                                           ^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  15 |   }, []);
+  16 |
+  17 |   return (  react-hooks/set-state-in-effect
+
+./components/interview/interview-lobby.tsx
+129:10  Warning: Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\interview\interview-lobby.tsx:129:10
+  127 |         <p className="mt-1 text-sm text-[var(--ds-muted)]">{subtitle}</p>
+  128 |
+> 129 |         {compatibility.blocking.length > 0 ? (
+      |          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render
+  130 |           <div className="mt-4 flex items-start gap-2 rounded-xl border border-[var(--ds-danger)] bg-[var(--ds-danger-bg)] px-3 py-2 text-xs text-[var(--ds-danger)]">
+  131 |             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+  132 |             <p>  react-hooks/refs
+133:47  Warning: Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\interview\interview-lobby.tsx:133:47
+  131 |             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+  132 |             <p>
+> 133 |               Your browser does not support: {compatibility.blocking.map((c) => c.label).join(", ")}. Video calling may not
+      |                                               ^^^^^^^^^^^^^^^^^^^^^^ Passing a ref to a function may read its value during render
+  134 |               work. Try Chrome, Edge, or Firefox.
+  135 |             </p>
+  136 |           </div>  react-hooks/refs
+133:47  Warning: Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\interview\interview-lobby.tsx:133:47
+  131 |             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+  132 |             <p>
+> 133 |               Your browser does not support: {compatibility.blocking.map((c) => c.label).join(", ")}. Video calling may not
+      |                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^ Passing a ref to a function may read its value during render
+  134 |               work. Try Chrome, Edge, or Firefox.
+  135 |             </p>
+  136 |           </div>  react-hooks/refs
+138:10  Warning: Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\interview\interview-lobby.tsx:138:10
+  136 |           </div>
+  137 |         ) : null}
+> 138 |         {compatibility.warnings.length > 0 ? (
+      |          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render
+  139 |           <div className="mt-2 flex items-start gap-2 rounded-xl border border-[var(--ds-warning)] bg-[var(--ds-warning-bg)] px-3 py-2 text-xs text-[var(--ds-warning)]">
+  140 |             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+  141 |             <p>Not supported in this browser: {compatibility.warnings.map((c) => c.label).join(", ")}.</p>  react-hooks/refs
+141:48  Warning: Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\interview\interview-lobby.tsx:141:48
+  139 |           <div className="mt-2 flex items-start gap-2 rounded-xl border border-[var(--ds-warning)] bg-[var(--ds-warning-bg)] px-3 py-2 text-xs text-[var(--ds-warning)]">
+  140 |             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+> 141 |             <p>Not supported in this browser: {compatibility.warnings.map((c) => c.label).join(", ")}.</p>
+      |                                                ^^^^^^^^^^^^^^^^^^^^^^ Passing a ref to a function may read its value during render
+  142 |           </div>
+  143 |         ) : null}
+  144 |         {network && network.status !== "good" && network.status !== "unknown" ? (  react-hooks/refs
+141:48  Warning: Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\interview\interview-lobby.tsx:141:48
+  139 |           <div className="mt-2 flex items-start gap-2 rounded-xl border border-[var(--ds-warning)] bg-[var(--ds-warning-bg)] px-3 py-2 text-xs text-[var(--ds-warning)]">
+  140 |             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+> 141 |             <p>Not supported in this browser: {compatibility.warnings.map((c) => c.label).join(", ")}.</p>
+      |                                                ^^^^^^^^^^^^^^^^^^^^^^^^^^ Passing a ref to a function may read its value during render
+  142 |           </div>
+  143 |         ) : null}
+  144 |         {network && network.status !== "good" && network.status !== "unknown" ? (  react-hooks/refs
+198:18  Warning: Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\interview\interview-lobby.tsx:198:18
+  196 |               <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--ds-muted)]">Microphone level</p>
+  197 |               <div className="flex h-6 items-end gap-1">
+> 198 |                 {bars.map((index) => {
+      |                  ^^^^ Cannot access ref value during render
+  199 |                   const active = micLevel * bars.length > index;
+  200 |                   return (
+  201 |                     <span  react-hooks/refs
+198:18  Warning: Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\interview\interview-lobby.tsx:198:18
+  196 |               <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--ds-muted)]">Microphone level</p>
+  197 |               <div className="flex h-6 items-end gap-1">
+> 198 |                 {bars.map((index) => {
+      |                  ^^^^^^^^ Cannot access ref value during render
+  199 |                   const active = micLevel * bars.length > index;
+  200 |                   return (
+  201 |                     <span  react-hooks/refs
+198:27  Warning: Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\interview\interview-lobby.tsx:198:27
+  196 |               <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--ds-muted)]">Microphone level</p>
+  197 |               <div className="flex h-6 items-end gap-1">
+> 198 |                 {bars.map((index) => {
+      |                           ^^^^^^^^^^^^
+> 199 |                   const active = micLevel * bars.length > index;
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 200 |                   return (
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 201 |                     <span
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 202 |                       key={index}
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 203 |                       className={`w-full rounded-sm transition-colors ${active ? "bg-[var(--ds-success)]" : "bg-[var(--ds-surface-raised)]"}`}
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 204 |                       style={{ height: `${20 + index * 6}%` }}
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 205 |                     />
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 206 |                   );
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 207 |                 })}
+      | ^^^^^^^^^^^^^^^^^^ Cannot access ref value during render
+  208 |               </div>
+  209 |             </div>
+  210 |  react-hooks/refs
+
+./components/interview/interview-room-guard.tsx
+48:5  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\interview\interview-room-guard.tsx:48:5
+  46 |
+  47 |   useLayoutEffect(() => {
+> 48 |     applyAccess();
+     |     ^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  49 |   }, [applyAccess]);
+  50 |
+  51 |   useEffect(() => {  react-hooks/set-state-in-effect
+
+./components/interview/interview-room-shell.tsx
+166:7  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\interview\interview-room-shell.tsx:166:7
+  164 |   useEffect(() => {
+  165 |     if (!FEATURE_FLAGS.ENABLE_INTERVIEW_ROOMS) {
+> 166 |       setError("Interview rooms are disabled.");
+      |       ^^^^^^^^ Avoid calling setState() directly within an effect
+  167 |       setLoading(false);
+  168 |       return;
+  169 |     }  react-hooks/set-state-in-effect
+228:5  Warning: Unused eslint-disable directive (no problems were reported from 'react-hooks/exhaustive-deps').
+376:34  Warning: Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `payload.room.scheduledTime`, but the source dependencies were [companyName, payload?.room.scheduledTime]. Inferred different dependency than source.
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\interview\interview-room-shell.tsx:376:34
+  374 |   }
+  375 |
+> 376 |   const headerSubtitle = useMemo(() => {
+      |                                  ^^^^^^^
+> 377 |     if (!payload?.room.scheduledTime) return companyName;
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 378 |     return `${companyName} · ${new Date(payload.room.scheduledTime).toLocaleString()}`;
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 379 |   }, [companyName, payload?.room.scheduledTime]);
+      | ^^^^ Could not preserve existing manual memoization
+  380 |
+  381 |   const connectedPeerCount = webrtc.peers.filter((peer) => peer.connectionState === "connected").length;
+  382 |   const totalParticipants = webrtc.peers.length + 1;  react-hooks/preserve-manual-memoization
+
+./components/portfolio/portfolio-builder-hub.tsx
+51:10  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\portfolio\portfolio-builder-hub.tsx:51:10
+  49 |
+  50 |   useEffect(() => {
+> 51 |     void load();
+     |          ^^^^ Avoid calling setState() directly within an effect
+  52 |   }, [load]);
+  53 |
+  54 |   async function runAction(key: string, action: () => Promise<void>) {  react-hooks/set-state-in-effect
+
+./components/pwa/install-prompt.tsx
+59:19  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\pwa\install-prompt.tsx:59:19
+  57 |     // eligibility is typically already true within the first couple seconds.
+  58 |     let eligible = isIos() && !isStandalone();
+> 59 |     if (eligible) setMode("ios");
+     |                   ^^^^^^^ Avoid calling setState() directly within an effect
+  60 |     let shown = false;
+  61 |     let thresholdReached = false;
+  62 |     let activeMs = 0;  react-hooks/set-state-in-effect
+
+./components/theme/theme-toggle-switch.tsx
+23:19  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\theme\theme-toggle-switch.tsx:23:19
+  21 |   // the mismatch instead of just silencing the warning.
+  22 |   const [mounted, setMounted] = useState(false);
+> 23 |   useEffect(() => setMounted(true), []);
+     |                   ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  24 |   const isDark = mounted ? appearance === "dark" : DEFAULT_APPEARANCE === "dark";
+  25 |
+  26 |   return (  react-hooks/set-state-in-effect
+
+./components/ui/role-dashboard-guard.tsx
+57:5  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\components\ui\role-dashboard-guard.tsx:57:5
+  55 |
+  56 |   useLayoutEffect(() => {
+> 57 |     applyAccess();
+     |     ^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  58 |   }, [applyAccess]);
+  59 |
+  60 |   useEffect(() => {  react-hooks/set-state-in-effect
+
+./lib/use-aptitude-proctor.ts
+21:33  Warning: Error: Cannot call impure function during render
+
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\lib\use-aptitude-proctor.ts:21:33
+  19 |   const proctorRef = useRef(proctorLog);
+  20 |   const blurStartedAt = useRef<number | null>(null);
+> 21 |   const lastActivityAt = useRef(Date.now());
+     |                                 ^^^^^^^^^^ Cannot call impure function
+  22 |   const inactivityActive = useRef(false);
+  23 |
+  24 |   useEffect(() => {  react-hooks/purity
+
+./lib/use-auth-session.ts
+27:5  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\lib\use-auth-session.ts:27:5
+  25 |
+  26 |   useEffect(() => {
+> 27 |     setSession(read());
+     |     ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  28 |     const sync = () => setSession(read());
+  29 |     window.addEventListener("storage", sync);
+  30 |     window.addEventListener("internai-auth-change", sync);  react-hooks/set-state-in-effect
+
+./lib/use-chat-socket.ts
+18:3  Warning: Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\lib\use-chat-socket.ts:18:3
+  16 | export function useChatSocket(handlers: ChatSocketHandlers) {
+  17 |   const handlersRef = useRef(handlers);
+> 18 |   handlersRef.current = handlers;
+     |   ^^^^^^^^^^^^^^^^^^^ Cannot update ref during render
+  19 |
+  20 |   useEffect(() => {
+  21 |     if (!FEATURE_FLAGS.ENABLE_CHAT) return undefined;  react-hooks/refs
+
+./lib/use-interview-countdown.ts
+12:5  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\lib\use-interview-countdown.ts:12:5
+  10 |
+  11 |   useEffect(() => {
+> 12 |     setNow(Date.now());
+     |     ^^^^^^ Avoid calling setState() directly within an effect
+  13 |     const timer = window.setInterval(() => setNow(Date.now()), intervalMs);
+  14 |     return () => window.clearInterval(timer);
+  15 |   }, [intervalMs]);  react-hooks/set-state-in-effect
+
+./lib/use-interview-socket.ts
+32:3  Warning: Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\lib\use-interview-socket.ts:32:3
+  30 | export function useInterviewSocket(handlers: InterviewSocketHookHandlers) {
+  31 |   const handlersRef = useRef(handlers);
+> 32 |   handlersRef.current = handlers;
+     |   ^^^^^^^^^^^^^^^^^^^ Cannot update ref during render
+  33 |   const activeRoomRef = useRef<string | null>(null);
+  34 |
+  35 |   useEffect(() => {  react-hooks/refs
+
+./lib/use-notification-unread.ts
+36:7  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\lib\use-notification-unread.ts:36:7
+  34 |     const cached = role === "intern" ? peekInternNotifications() : peekCompanyNotifications();
+  35 |     if (cached) {
+> 36 |       setUnreadCount(cached.unreadCount);
+     |       ^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  37 |     }
+  38 |     void refresh(false);
+  39 |   }, [refresh, role]);  react-hooks/set-state-in-effect
+
+./lib/use-sidebar-collapsed.ts
+23:5  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\lib\use-sidebar-collapsed.ts:23:5
+  21 |   useLayoutEffect(() => {
+  22 |     const mql = window.matchMedia(DESKTOP_QUERY);
+> 23 |     setIsDesktop(mql.matches);
+     |     ^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  24 |     const onChange = (event: MediaQueryListEvent) => setIsDesktop(event.matches);
+  25 |     mql.addEventListener("change", onChange);
+  26 |     return () => mql.removeEventListener("change", onChange);  react-hooks/set-state-in-effect
+42:5  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\lib\use-sidebar-collapsed.ts:42:5
+  40 |
+  41 |   useLayoutEffect(() => {
+> 42 |     setCollapsed(window.localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "true");
+     |     ^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  43 |   }, []);
+  44 |
+  45 |   const toggle = useCallback(() => {  react-hooks/set-state-in-effect
+
+./lib/use-webrtc.ts
+428:7  Warning: Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Kirti\InternAiNew\INTERN_AI\frontend\lib\use-webrtc.ts:428:7
+  426 |   useEffect(() => {
+  427 |     if (!enabled) {
+> 428 |       resetMesh();
+      |       ^^^^^^^^^ Avoid calling setState() directly within an effect
+  429 |       return undefined;
+  430 |     }
+  431 |  react-hooks/set-state-in-effect
+449:48  Warning: The ref value 'localVideoRef.current' will likely have changed by the time this effect cleanup function runs. If this ref points to a node rendered by React, copy 'localVideoRef.current' to a variable inside the effect, and use that variable in the cleanup function.  react-hooks/exhaustive-deps
+
+info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/app/api-reference/config/eslint#disabling-rules
+   Collecting page data ...
+   Generating static pages (0/49) ...
+   Generating static pages (12/49) 
+   Generating static pages (24/49) 
+   Generating static pages (36/49) 
+ ✓ Generating static pages (49/49)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                                       Size  First Load JS
+┌ ƒ /                                          1.63 kB         123 kB
+├ ƒ /_not-found                                  148 B         104 kB
+├ ƒ /access-denied                               760 B         167 kB
+├ ƒ /auth                                        148 B         104 kB
+├ ƒ /auth/admin                                4.32 kB         125 kB
+├ ƒ /auth/company                                142 B         129 kB
+├ ƒ /auth/intern                                 142 B         129 kB
+├ ƒ /company/[companyId]                       9.64 kB         158 kB
+├ ƒ /dashboard/admin                             165 B         220 kB
+├ ƒ /dashboard/admin/[...view]                   165 B         220 kB
+├ ƒ /dashboard/company                           165 B         252 kB
+├ ƒ /dashboard/company/[...view]                 166 B         252 kB
+├ ƒ /dashboard/company/chat                    3.49 kB         191 kB
+├ ƒ /dashboard/company/notifications           6.56 kB         174 kB
+├ ƒ /dashboard/intern                          8.97 kB         196 kB
+├ ƒ /dashboard/intern/applications             10.2 kB         171 kB
+├ ƒ /dashboard/intern/calendar                 14.8 kB         167 kB
+├ ƒ /dashboard/intern/chat                     2.25 kB         184 kB
+├ ƒ /dashboard/intern/feedback/hr              9.16 kB         158 kB
+├ ƒ /dashboard/intern/feedback/suggestions     6.35 kB         150 kB
+├ ƒ /dashboard/intern/internships/recommended  5.95 kB         163 kB
+├ ƒ /dashboard/intern/internships/saved        10.2 kB         160 kB
+├ ƒ /dashboard/intern/internships/search       15.5 kB         165 kB
+├ ƒ /dashboard/intern/interviews               11.4 kB         179 kB
+├ ƒ /dashboard/intern/job-agent                4.91 kB         162 kB
+├ ƒ /dashboard/intern/job-agent/settings       2.52 kB         158 kB
+├ ƒ /dashboard/intern/job-agent/tracker         4.2 kB         162 kB
+├ ƒ /dashboard/intern/learning/certifications  9.87 kB         159 kB
+├ ƒ /dashboard/intern/learning/courses           15 kB         172 kB
+├ ƒ /dashboard/intern/learning/mock-aptitude   3.81 kB         147 kB
+├ ƒ /dashboard/intern/learning/mock-interview  4.39 kB         154 kB
+├ ƒ /dashboard/intern/learning/mock-technical  3.83 kB         147 kB
+├ ƒ /dashboard/intern/notifications            10.4 kB         172 kB
+├ ƒ /dashboard/intern/placement-hub            9.01 kB         193 kB
+├ ƒ /dashboard/intern/portfolio                  11 kB         163 kB
+├ ƒ /dashboard/intern/profile                    11 kB         164 kB
+├ ƒ /dashboard/intern/profile/edit             8.37 kB         165 kB
+├ ƒ /dashboard/intern/resume                   11.9 kB         165 kB
+├ ƒ /dashboard/intern/resume/score             4.22 kB         181 kB
+├ ƒ /dashboard/intern/skill-gap                1.35 kB         178 kB
+├ ƒ /dashboard/intern/support                  9.54 kB         160 kB
+├ ƒ /dashboard/intern/track-progress           7.59 kB         198 kB
+├ ○ /icon.png                                      0 B            0 B
+├ ƒ /internships                               4.54 kB         171 kB
+├ ƒ /internships/[id]                          6.74 kB         171 kB
+├ ƒ /interview/[roomId]                        19.4 kB         187 kB
+├ ○ /manifest.webmanifest                        148 B         104 kB
+├ ○ /opengraph-image                             148 B         104 kB
+├ ƒ /portfolio/[username]                      10.7 kB         118 kB
+├ ○ /robots.txt                                  148 B         104 kB
+├ ƒ /session-expired                             468 B         167 kB
+├ ○ /sitemap.xml                                 148 B         104 kB
+└ ○ /twitter-image                               148 B         104 kB
++ First Load JS shared by all                   104 kB
+  ├ chunks/1255-7e87c6fb7bfcccaa.js              46 kB
+  ├ chunks/4bd1b696-100b9d70ed4e49c1.js        54.2 kB
+  └ other shared chunks (total)                3.28 kB
+
+
+ƒ Middleware                                   34.6 kB
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
+EXITCODE=0 

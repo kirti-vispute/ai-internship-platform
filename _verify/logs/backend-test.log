@@ -1,0 +1,128 @@
+Running backend Jest suite... 
+CWD: D:\Kirti\InternAiNew\INTERN_AI\backend 
+
+> ai-internship-platform-backend@1.0.0 test
+> jest --runInBand
+
+  console.info
+    [INFO] [cache] invalidated student profile scope for 6ada3712ded26a79981e673f
+
+      at emit (src/shared/logger/index.js:7:19)
+
+  console.error
+    [ERROR] Email not sent: EMAIL_USER/EMAIL_PASS are not configured {
+      to: 'pipeline.intern@test.com',
+      subject: 'Application Status Updated'
+    }
+
+      4 |   if (LEVELS[level] > current) return;
+      5 |   const fn = level === "debug" ? "log" : level;
+    > 6 |   if (meta !== undefined) console[fn](`[${level.toUpperCase()}]`, message, meta);
+        |                                      ^
+      7 |   else console[fn](`[${level.toUpperCase()}]`, message);
+      8 | }
+      9 | module.exports = {
+
+      at emit (src/shared/logger/index.js:6:38)
+      at Object.emit [as error] (src/shared/logger/index.js:10:23)
+      at error (src/shared/services/mailer.service.js:10:12)
+      at sendEmail (src/modules/notifications/services/notification-queue.service.js:8:9)
+      at Immediate.processJob [as _onImmediate] (src/modules/notifications/services/notification-queue.service.js:18:13)
+
+  console.error
+    [notifications] failed to send email to pipeline.intern@test.com (application_status_changed): Email service is not configured: set EMAIL_USER and EMAIL_PASS (Gmail address + App Password) in backend/.env to send email via Gmail SMTP.
+
+      20 |       // Queue failures should not crash API requests, but a silently dropped
+      21 |       // email (e.g. bad SMTP creds) should at least be visible in the logs.
+    > 22 |       console.error(`[notifications] failed to send email to ${job.to} (${job.type}):`, err.message);
+         |               ^
+      23 |     }
+      24 |   }
+      25 |   processing = false;
+
+      at Immediate.error (src/modules/notifications/services/notification-queue.service.js:22:15)
+
+  console.error
+    [ERROR] Email not sent: EMAIL_USER/EMAIL_PASS are not configured {
+      to: 'pipeline.intern@test.com',
+      subject: 'Application Status Updated'
+    }
+
+      4 |   if (LEVELS[level] > current) return;
+      5 |   const fn = level === "debug" ? "log" : level;
+    > 6 |   if (meta !== undefined) console[fn](`[${level.toUpperCase()}]`, message, meta);
+        |                                      ^
+      7 |   else console[fn](`[${level.toUpperCase()}]`, message);
+      8 | }
+      9 | module.exports = {
+
+      at emit (src/shared/logger/index.js:6:38)
+      at Object.emit [as error] (src/shared/logger/index.js:10:23)
+      at error (src/shared/services/mailer.service.js:10:12)
+      at sendEmail (src/modules/notifications/services/notification-queue.service.js:8:9)
+      at Immediate.processJob [as _onImmediate] (src/modules/notifications/services/notification-queue.service.js:18:13)
+
+  console.error
+    [notifications] failed to send email to pipeline.intern@test.com (application_status_changed): Email service is not configured: set EMAIL_USER and EMAIL_PASS (Gmail address + App Password) in backend/.env to send email via Gmail SMTP.
+
+      20 |       // Queue failures should not crash API requests, but a silently dropped
+      21 |       // email (e.g. bad SMTP creds) should at least be visible in the logs.
+    > 22 |       console.error(`[notifications] failed to send email to ${job.to} (${job.type}):`, err.message);
+         |               ^
+      23 |     }
+      24 |   }
+      25 |   processing = false;
+
+      at Immediate.error (src/modules/notifications/services/notification-queue.service.js:22:15)
+
+  console.info
+    [INFO] [cache] invalidated calendar for 6ada371a35e8231b612fe631
+
+      at emit (src/shared/logger/index.js:7:19)
+
+  console.info
+    [INFO] [cache] invalidated calendar for 6ada371a35e8231b612fe667
+
+      at emit (src/shared/logger/index.js:7:19)
+
+  console.info
+    [INFO] [cache] invalidated calendar for 6ada371a35e8231b612fe6d1
+
+      at emit (src/shared/logger/index.js:7:19)
+
+  console.info
+    [INFO] [cache] invalidated calendar for 6ada371a35e8231b612fe6d5
+
+      at emit (src/shared/logger/index.js:7:19)
+
+  console.info
+    [INFO] [cache] invalidated calendar for 6ada371a35e8231b612fe6f6
+
+      at emit (src/shared/logger/index.js:7:19)
+
+  console.info
+    [INFO] [cache] invalidated calendar for 6ada371a35e8231b612fe6f6
+
+      at emit (src/shared/logger/index.js:7:19)
+
+  console.info
+    [INFO] [cache] invalidated calendar for 6ada371a35e8231b612fe715
+
+      at emit (src/shared/logger/index.js:7:19)
+
+  console.info
+    [INFO] [cache] invalidated calendar for 6ada371a35e8231b612fe737
+
+      at emit (src/shared/logger/index.js:7:19)
+
+  console.info
+    [INFO] [cache] invalidated calendar for 6ada371a35e8231b612fe737
+
+      at emit (src/shared/logger/index.js:7:19)
+
+Test Suites: 22 passed, 22 total
+Tests:       188 passed, 188 total
+Snapshots:   0 total
+Time:        19.332 s, estimated 22 s
+Ran all test suites in 3 projects.
+EXITCODE=0 

@@ -98,7 +98,7 @@ app.use(
     // it (it's not on the CORS-safelisted response header list), so
     // reports-portal.ts's response.headers.get("X-Report-Number") is always
     // null and every downloaded report PDF silently falls back to the same
-    // generic "InternAI-Report.pdf" filename.
+    // generic "CareerSetu-Report.pdf" filename.
     exposedHeaders: ["X-Report-Number"]
   })
 );

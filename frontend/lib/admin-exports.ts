@@ -33,7 +33,7 @@ export async function downloadAdminExcelExport(key: AdminExcelExportKey) {
   }
 
   const blob = await response.blob();
-  const filename = filenameFromDisposition(response.headers.get("Content-Disposition"), `InternAI-${key}.xlsx`);
+  const filename = filenameFromDisposition(response.headers.get("Content-Disposition"), `CareerSetu-${key}.xlsx`);
 
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");

@@ -17,7 +17,8 @@ const MODULE_REGISTRY = Object.freeze([
   { module: "chat", domain: "chat", path: "/chat", description: "Realtime messaging", get router() { return require("../modules/chat/routes/chat.routes.js"); } },
   { module: "portfolio", domain: "portfolio", path: "/portfolios", description: "3D portfolios", get router() { return require("../modules/portfolio/routes/portfolio.routes.js"); } },
   { module: "skills", domain: "skills", path: "/skills", description: "Skill taxonomy", get router() { return require("../modules/skills/routes/skill.routes.js"); } },
-  { module: "candidates", domain: "candidates", path: "/candidates", description: "Recruiter candidate search", get router() { return require("../modules/candidates/routes/candidate.routes.js"); } }
+  { module: "candidates", domain: "candidates", path: "/candidates", description: "Recruiter candidate search", get router() { return require("../modules/candidates/routes/candidate.routes.js"); } },
+  { module: "job-agent", domain: "job-agent", path: "/job-agent", description: "AI Job Agent: discovery, matching, monitoring, application assistant", get router() { return require("../modules/job-agent/routes/job-agent.routes.js"); } }
 ]);
 
 function mountModularApi(app, prefix = "/api") {

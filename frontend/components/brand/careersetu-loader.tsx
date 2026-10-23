@@ -4,19 +4,19 @@ import { useEffect, useState } from "react";
 import { AnimatedLogo } from "@/components/brand/animated-logo";
 import { BRAND_NAME, LOADING_MESSAGES } from "@/lib/brand";
 
-type InternAILoaderProps = {
+type CareerSetuLoaderProps = {
   message?: string;
   rotateMessages?: boolean;
   className?: string;
   compact?: boolean;
 };
 
-export function InternAILoader({
+export function CareerSetuLoader({
   message,
   rotateMessages = true,
   className = "",
   compact = false
-}: InternAILoaderProps) {
+}: CareerSetuLoaderProps) {
   const [index, setIndex] = useState(0);
 
   useEffect(() => {

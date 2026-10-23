@@ -65,7 +65,7 @@ body:has(.internai-home) {
   scroll-margin-top: 4.5rem;
 }
 
-/* InternAI homepage — embedded interface wall (background unchanged) */
+/* CareerSetu homepage — embedded interface wall (background unchanged) */
 .internai-home {
   --internai-bg: var(--ds-bg, #05060a);
   --internai-surface: var(--ds-surface, #0b1220);

@@ -15,11 +15,11 @@ function formatDateTime(value?: string) {
 }
 
 function AdminRecentActivityPanelInner({ logs }: { logs: AdminActivityLog[] }) {
-  const recent = logs.slice(0, 8);
+  const recent = logs.slice(0, 6);
 
   return (
     <ScrollReveal variant="fade-up" distance={12}>
-      <div className="ds-card p-6">
+      <div className="ds-card p-5">
         <div className="mb-4 flex items-center gap-2">
           <AppIcon icon={Activity} size="sm" className="text-[var(--ds-primary-text)]" />
           <h3 className="ds-h3">Recent Platform Activity</h3>
@@ -28,11 +28,11 @@ function AdminRecentActivityPanelInner({ logs }: { logs: AdminActivityLog[] }) {
         {recent.length === 0 ? (
           <EmptyState title="No activity recorded yet" hint="Administrative and hiring actions will appear here." presetKey="activity" />
         ) : (
-          <ul className="space-y-2">
+          <ul className="divide-y divide-[var(--ds-border)]">
             {recent.map((log) => (
               <li
                 key={log._id}
-                className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[var(--ds-border)] bg-[var(--ds-card)] px-3 py-2.5"
+                className="flex flex-wrap items-center justify-between gap-2 py-2.5 first:pt-0 last:pb-0"
               >
                 <div className="min-w-0">
                   <p className="text-sm font-semibold capitalize text-[var(--ds-text)]">

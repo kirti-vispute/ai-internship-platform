@@ -79,7 +79,7 @@ const VARIANTS: Record<ErrorVariant, VariantConfig> = {
     icon: WifiOff,
     iconClassName: "text-[var(--ds-warning)]",
     title: "Network Error",
-    description: "Can't reach InternAI servers. Check your internet connection and try again.",
+    description: "Can't reach CareerSetu servers. Check your internet connection and try again.",
     retryLabel: "Retry",
     showRetryByDefault: true
   },

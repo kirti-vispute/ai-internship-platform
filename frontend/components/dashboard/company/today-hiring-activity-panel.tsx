@@ -63,54 +63,62 @@ export function TodayHiringActivityPanel({ applications }: TodayHiringActivityPa
       <CompanyDashboardPanelCard className="bg-gradient-to-br from-[var(--ds-shadow)] via-transparent to-[var(--ds-primary)]/10">
         <div className={companyDashboardStyles.metricGridFive}>
           <CompanyDashboardMetricTile
-            label="Candidates Applied Today"
+            label="Applied Today"
+            hint={
+              <span className="flex items-start gap-1.5">
+                <AppIcon icon={Users} size="xs" className="mt-0.5 shrink-0" />
+                Fresh pipeline intake
+              </span>
+            }
             value={metrics.candidatesAppliedToday}
             className="company-dashboard-kpi-accent"
           />
           <CompanyDashboardMetricTile
-            label="Interviews Scheduled Today"
+            label="Interviews Today"
+            hint={
+              <span className="flex items-start gap-1.5">
+                <AppIcon icon={CalendarClock} size="xs" className="mt-0.5 shrink-0" />
+                Live interview load
+              </span>
+            }
             value={metrics.interviewsToday}
             className="company-dashboard-kpi-accent"
           />
           <CompanyDashboardMetricTile
             label="Pending Reviews"
+            hint={
+              <span className="flex items-start gap-1.5">
+                <AppIcon icon={ClipboardList} size="xs" className="mt-0.5 shrink-0" />
+                Screening backlog
+              </span>
+            }
             value={metrics.pendingReviews}
             className="company-dashboard-kpi-accent"
           />
           <CompanyDashboardMetricTile
             label="Offers Pending"
+            hint={
+              <span className="flex items-start gap-1.5">
+                <AppIcon icon={Gift} size="xs" className="mt-0.5 shrink-0" />
+                Awaiting candidate response
+              </span>
+            }
             value={metrics.offersPending}
             className="company-dashboard-kpi-accent"
           />
           <CompanyDashboardMetricTile
             label="Hiring Progress"
+            hint={
+              <span className="flex items-start gap-1.5">
+                <AppIcon icon={TrendingUp} size="xs" className="mt-0.5 shrink-0" />
+                Share of pipeline past Applied
+              </span>
+            }
             value={`${metrics.hiringProgress}%`}
             className="company-dashboard-kpi-accent"
           />
         </div>
 
-        <div className="mt-4 grid gap-2 text-xs text-[var(--ds-muted)] sm:grid-cols-2 lg:grid-cols-5">
-          <p className="inline-flex items-center gap-1.5">
-            <AppIcon icon={Users} size="xs" />
-            Fresh pipeline intake
-          </p>
-          <p className="inline-flex items-center gap-1.5">
-            <AppIcon icon={CalendarClock} size="xs" />
-            Live interview load
-          </p>
-          <p className="inline-flex items-center gap-1.5">
-            <AppIcon icon={ClipboardList} size="xs" />
-            Screening backlog
-          </p>
-          <p className="inline-flex items-center gap-1.5">
-            <AppIcon icon={Gift} size="xs" />
-            Awaiting candidate response
-          </p>
-          <p className="inline-flex items-center gap-1.5">
-            <AppIcon icon={TrendingUp} size="xs" />
-            Share of pipeline past Applied
-          </p>
-        </div>
       </CompanyDashboardPanelCard>
     </CompanyDashboardSection>
   );

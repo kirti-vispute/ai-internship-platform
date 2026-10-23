@@ -519,9 +519,14 @@ function AdminDashboardInner({ view }: { view: AdminDashboardView }) {
           <h1 className="text-2xl font-black tracking-tight text-[var(--ds-text)]">{meta.title}</h1>
           <p className="mt-1 text-sm text-[var(--ds-muted)]">{meta.subtitle}</p>
         </div>
-        <Button size="sm" variant="secondary" onClick={() => loadData(true)} disabled={loading}>
-          Refresh
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          {view === "overview" ? (
+            <ReportDownloadButton reportKey="platform-statistics" label="Download Platform Statistics PDF" />
+          ) : null}
+          <Button size="sm" variant="secondary" onClick={() => loadData(true)} disabled={loading}>
+            Refresh
+          </Button>
+        </div>
       </div>
 
       {error && (
@@ -531,10 +536,7 @@ function AdminDashboardInner({ view }: { view: AdminDashboardView }) {
       )}
 
       {view === "overview" && (
-        <div className="space-y-6">
-          <div className="flex flex-wrap items-center justify-end gap-2">
-            <ReportDownloadButton reportKey="platform-statistics" label="Download Platform Statistics PDF" />
-          </div>
+        <div className="space-y-5">
           {loading ? (
             <div role="status" aria-live="polite" aria-label="Loading platform statistics" className="space-y-4">
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -566,7 +568,7 @@ function AdminDashboardInner({ view }: { view: AdminDashboardView }) {
                 <SummaryStatCard title="Reports" value={stats.openReports} hint={`${reports.length} total reports`} icon={Flag} />
               </div>
 
-              <div className="mt-6">
+              <div className="mt-5">
                 <AdminGrowthCharts users={users} companies={companies} internships={internships} />
               </div>
 

@@ -104,9 +104,9 @@ export default function HomePage() {
       <section id="trusted-by" className="overflow-x-hidden py-16 sm:py-20">
         <div className="container-shell text-center">
           <p className={sectionLabel}>Trusted network</p>
-          <h2 className={sectionTitle}>Where InternAI candidates land</h2>
+          <h2 className={sectionTitle}>Where CareerSetu candidates land</h2>
           <p className="mx-auto mt-3 max-w-xl text-sm text-[var(--ds-muted)]">
-            InternAI connects interns with opportunities at leading companies worldwide.
+            CareerSetu connects interns with opportunities at leading companies worldwide.
           </p>
         </div>
 

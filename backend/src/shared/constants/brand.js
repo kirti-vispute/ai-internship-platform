@@ -1,7 +1,7 @@
-const BRAND_NAME = "InternAI";
+const BRAND_NAME = "CareerSetu";
 const BRAND_TAGLINE = "Connecting Skills to Success";
-const PORTAL_NAME = "InternAI Platform";
-const BRAND_SUPPORT_EMAIL = "support@internai.example";
+const PORTAL_NAME = "CareerSetu Platform";
+const BRAND_SUPPORT_EMAIL = "support@careersetu.example";
 
 module.exports = {
   BRAND_NAME,

@@ -759,6 +759,51 @@ export async function fetchCompanyApplicationResume(applicationId: string) {
   return { blob, contentType, lastModified };
 }
 
+/**
+ * Downloads a zip of applicant resumes (plus an applicants.csv manifest)
+ * and triggers a browser save. Pass `internshipId` to scope the download to
+ * one job's applicants, or omit it to download every applicant across the
+ * company (subject to the same HR recruiter-scoping as the dashboard list).
+ */
+export async function downloadApplicantResumesZip(options: { internshipId?: string; status?: string } = {}) {
+  const session = getAuthSession();
+  const token = session.token;
+  if (!token) {
+    throw new Error("Please sign in to download resumes.");
+  }
+
+  const path = options.internshipId
+    ? `/api/company/internships/${options.internshipId}/applicants/resumes`
+    : "/api/company/applications/resumes";
+  const query = options.status ? `?status=${encodeURIComponent(options.status)}` : "";
+
+  const response = await fetch(`${API_BASE_URL}${path}${query}`, {
+    method: "GET",
+    headers: { Authorization: `Bearer ${token}` }
+  });
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error((data as { message?: string }).message || "Failed to download resumes.");
+  }
+
+  const blob = await response.blob();
+  const disposition = response.headers.get("content-disposition") || "";
+  const filenameMatch = disposition.match(/filename="?([^";]+)"?/i);
+  const filename = filenameMatch?.[1] || `CareerSetu-Applicant-Resumes-${Date.now()}.zip`;
+
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
+
+  return { filename };
+}
+
 export async function fetchMatchedCandidatesForInternship(internship: CompanyInternship, force = false) {
   return withCache(`company:matched:${internship._id}`, force, async () => {
     const response = await apiRequest<{

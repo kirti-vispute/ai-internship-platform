@@ -1,5 +1,5 @@
 /**
- * InternAI readability & contrast audit
+ * CareerSetu readability & contrast audit
  * Boosts visibility on starfield background — does not change layout or background.
  */
 
@@ -390,6 +390,13 @@
   --ds-btn-fg-on-brand: #ffffff;
   --ds-btn-fg-ghost: #d1d9e3;
   --ds-btn-fg-ghost-hover: #f3f4f6;
+}
+
+/* Ghost/transparent buttons assume a dark starfield backdrop above; in light
+   appearance they instead sit on light card surfaces, so flip to dark text. */
+:root[data-appearance="light"] {
+  --ds-btn-fg-ghost: var(--ds-btn-fg-on-light);
+  --ds-btn-fg-ghost-hover: var(--ds-btn-fg-on-light-hover);
 }
 
 /* True light fills only (bg-primary-* is not remapped to dark surface) */

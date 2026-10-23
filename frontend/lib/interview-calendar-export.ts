@@ -80,7 +80,7 @@ export function buildInterviewIcsContent(event: InterviewCalendarEvent) {
   const lines = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//InternAI//Interview Calendar//EN",
+    "PRODID:-//CareerSetu//Interview Calendar//EN",
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
     "BEGIN:VEVENT",

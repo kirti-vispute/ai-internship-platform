@@ -4,7 +4,7 @@ import { AuthPageShell } from "@/components/layout/auth-page-shell";
 
 export const metadata: Metadata = {
   title: "Admin Login",
-  description: "Administrator sign-in for InternAI.",
+  description: "Administrator sign-in for CareerSetu.",
   robots: { index: false, follow: true }
 };
 

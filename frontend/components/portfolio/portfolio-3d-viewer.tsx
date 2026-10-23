@@ -406,7 +406,7 @@ export function Portfolio3DViewer({ content, theme = "midnight", slug, showResum
           </FloatingCard>
         </section>
 
-        {!compact ? <p className="portfolio-footer-note">Built with InternAI · portfolio/{slug}</p> : null}
+        {!compact ? <p className="portfolio-footer-note">Built with CareerSetu · portfolio/{slug}</p> : null}
       </div>
     </div>
   );

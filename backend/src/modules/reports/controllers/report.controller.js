@@ -82,25 +82,25 @@ function sendExcel(res, { buffer, filename }) {
 
 exports.downloadAdminCandidatesExcel = asyncHandler(async (req, res) => {
   const buffer = await buildCandidatesWorkbook();
-  sendExcel(res, { buffer, filename: `InternAI-Internship-Candidates-${Date.now()}.xlsx` });
+  sendExcel(res, { buffer, filename: `CareerSetu-Internship-Candidates-${Date.now()}.xlsx` });
 });
 
 exports.downloadAdminInternshipsExcel = asyncHandler(async (req, res) => {
   const buffer = await buildInternshipsWorkbook();
-  sendExcel(res, { buffer, filename: `InternAI-Internships-${Date.now()}.xlsx` });
+  sendExcel(res, { buffer, filename: `CareerSetu-Internships-${Date.now()}.xlsx` });
 });
 
 exports.downloadAdminInternUsersExcel = asyncHandler(async (req, res) => {
   const buffer = await buildUsersWorkbook({ role: "intern" });
-  sendExcel(res, { buffer, filename: `InternAI-Intern-Users-${Date.now()}.xlsx` });
+  sendExcel(res, { buffer, filename: `CareerSetu-Intern-Users-${Date.now()}.xlsx` });
 });
 
 exports.downloadAdminHrUsersExcel = asyncHandler(async (req, res) => {
   const buffer = await buildUsersWorkbook({ role: "company", companyAccountType: "hr" });
-  sendExcel(res, { buffer, filename: `InternAI-HR-Users-${Date.now()}.xlsx` });
+  sendExcel(res, { buffer, filename: `CareerSetu-HR-Users-${Date.now()}.xlsx` });
 });
 
 exports.downloadAdminCeoUsersExcel = asyncHandler(async (req, res) => {
   const buffer = await buildUsersWorkbook({ role: "company", companyAccountType: "ceo" });
-  sendExcel(res, { buffer, filename: `InternAI-CEO-Users-${Date.now()}.xlsx` });
+  sendExcel(res, { buffer, filename: `CareerSetu-CEO-Users-${Date.now()}.xlsx` });
 });

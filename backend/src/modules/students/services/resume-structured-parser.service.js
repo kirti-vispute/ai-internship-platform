@@ -1,6 +1,6 @@
+const { looksLikeContactInfoBlock, EMAIL_REGEX, PHONE_REGEX } = require("../../../shared/utils/contact-info-detector");
+
 const YEAR_REGEX = /\b(?:19|20)\d{2}\b/g;
-const EMAIL_REGEX = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-z]{2,}/i;
-const PHONE_REGEX = /(?:\+?\d{1,3}[\s-]?)?(?:\(?\d{3,5}\)?[\s-]?)?\d[\d\s-]{7,13}\d/;
 const URL_REGEX = /https?:\/\/[^\s)]+|www\.[^\s)]+|(?:linkedin\.com|github\.com)\/[^\s)]+/gi;
 
 const SECTION_RULES = [
@@ -264,11 +264,26 @@ function classifyLineStrong(line = "") {
   if (/^languages?\s*:/i.test(line)) return "additional";
   if (/award|winner|rank|achievement|finalist|hackathon|scholar|medal|honor|1st place|2nd place|3rd place|competition/i.test(line)) return "achievements";
 
+  // A header-block contact line (email + phone + github/linkedin, e.g.
+  // "name@example.com | +91 ... | github.com/x | linkedin.com/in/x") must
+  // never be classified as a project, no matter how it's formatted -- a
+  // real bug previously let exactly this happen: the old check below only
+  // stripped the URL portion before measuring "substance", so the line's
+  // own email and phone number (never stripped) were counted as real
+  // project description text. Checked FIRST, before the more permissive
+  // link-bearing-project check that follows.
+  if (looksLikeContactInfoBlock(line)) return "additional";
+
   // A bare contact-info link (e.g. a lone "github.com/username" line near the
   // header) is not a project -- only treat link-bearing lines as project
   // content when there is real descriptive text alongside the link.
   if (/demo\s*link|github\.com|portfolio|behance|dribbble|linkedin\.com/i.test(line)) {
-    const withoutLink = line.replace(URL_REGEX, "").replace(/demo\s*link|portfolio|behance|dribbble/i, "").trim();
+    const withoutLink = line
+      .replace(URL_REGEX, "")
+      .replace(new RegExp(EMAIL_REGEX.source, "gi"), "")
+      .replace(new RegExp(PHONE_REGEX.source, "g"), "")
+      .replace(/demo\s*link|portfolio|behance|dribbble/i, "")
+      .trim();
     if (withoutLink.length > 8) return "projects";
   }
   if (/tech\s*stack|technologies?\s*:/i.test(line)) return "skills";
@@ -606,7 +621,20 @@ function splitBlocks(lines = []) {
     // github.com/..." must NOT be mistaken for a new title just because it
     // happens to start with a capitalized word after the mid-sentence period.
     const looksLikeMidSentenceContinuation = /[.!?]\s+\S/.test(line);
+    // A "<Project Name> (<link>)" header is an unambiguous new-project
+    // boundary regardless of the line's total length -- a trailing
+    // "demo: <url>" annotation inside the same parens easily pushes a real
+    // project-header line past the generic short-title length cap below.
+    // Real bug this fixes: "Expense Tracker (github.com/x, demo:
+    // y.vercel.app)" failed the generic title check (too long once the
+    // demo-link annotation was included, and its internal comma/colon also
+    // weren't in that check's character class), so the parser treated it
+    // as a continuation of the PREVIOUS project's description instead of
+    // starting a new one -- silently concatenating two separate projects
+    // into a single entry.
+    const looksLikeProjectHeaderWithLink = /^[A-Z][A-Za-z0-9 '&-]{1,40}\s*\([\w.-]+\.[a-z]{2,}\/[^)]*\)/.test(line);
     const startNew =
+      looksLikeProjectHeaderWithLink ||
       (/^[A-Z][A-Za-z0-9 '&()+.#/-]{2,70}$/.test(line) &&
         !PROJECT_ACTION_REGEX.test(line) &&
         !/tech stack|demo link/i.test(line) &&
@@ -639,6 +667,7 @@ function extractTechStack(text = "") {
 // never a project on its own -- guards the "additional"/"profiles" bucket
 // where a lone github/portfolio link commonly lives.
 function hasSubstanceBeyondLink(line = "") {
+  if (looksLikeContactInfoBlock(line)) return false;
   return line.replace(URL_REGEX, "").trim().length > 8;
 }
 
@@ -646,7 +675,7 @@ function extractProjects(sections = {}) {
   const projectLines = [
     ...(sections.projects || []),
     ...((sections.additional || []).filter((line) => /demo\s*link|github\.com|deployed|developed|built|model|simulator|prediction/i.test(line) && hasSubstanceBeyondLink(line))),
-    ...((sections.education || []).filter((line) => /demo\s*link|deployed|developed|built|trained|model|simulator|prediction/i.test(line)))
+    ...((sections.education || []).filter((line) => /demo\s*link|deployed|developed|built|trained|model|simulator|prediction/i.test(line) && !looksLikeContactInfoBlock(line)))
   ];
 
   if (projectLines.length === 0) return [];
@@ -663,7 +692,16 @@ function extractProjects(sections = {}) {
         title = titleCandidate || `Project ${index + 1}`;
       }
 
-      const links = (combined.match(/https?:\/\/[^\s)]+|www\.[^\s)]+/gi) || []).map((link) => (link.startsWith("http") ? link : `https://${link}`));
+      // Also catches a bare domain+path with no "http(s)://" or "www."
+      // prefix (e.g. "github.com/user/repo", "my-app.vercel.app") -- a real
+      // gap found during development: resumes commonly write links this
+      // way, and the old scheme-only pattern left them embedded in the
+      // title/description text with no link ever promoted to
+      // githubLink/demoLink, so downstream consumers (resume/cover-letter
+      // rendering) couldn't display them as a clean, clickable, de-duplicated
+      // link separate from the title.
+      const links = (combined.match(/https?:\/\/[^\s),]+|www\.[^\s),]+|(?:[a-z0-9-]+\.)+[a-z]{2,}\/[^\s),]+/gi) || [])
+        .map((link) => (link.startsWith("http") ? link : `https://${link}`));
       const githubLink = links.find((link) => /github\.com/i.test(link)) || "";
       const demoLink = links.find((link) => !/github\.com/i.test(link)) || githubLink || "";
 
@@ -679,6 +717,7 @@ function extractProjects(sections = {}) {
       };
     })
     .filter((item) => item.title || item.description)
+    .filter((item) => !looksLikeContactInfoBlock(`${item.title} ${item.description}`))
     .filter((item, idx, arr) => arr.findIndex((cmp) => cmp.title === item.title) === idx);
 }
 
@@ -828,7 +867,8 @@ function extractExperience(sections = {}) {
         description: text
       };
     })
-    .filter((item) => item.role || item.company || item.description);
+    .filter((item) => item.role || item.company || item.description)
+    .filter((item) => !looksLikeContactInfoBlock(`${item.role} ${item.company} ${item.description}`));
 }
 
 function extractAchievementsAndLanguages(sections = {}) {
@@ -935,5 +975,6 @@ module.exports = {
   structuredResumeParse,
   canonicalSkill,
   displaySkill,
+  categorizeSkills,
   parserDebugSnapshot
 };

@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { useRouter, usePathname } from "next/navigation";
 import type { CompanyApplication, CompanyInternship, CompanyMatchedCandidate } from "@/lib/company-portal";
 import type { InterviewScheduleSlot } from "@/lib/ai-hiring";
 import {
@@ -11,6 +11,7 @@ import {
 } from "@/components/dashboard/company/company-dashboard-layout";
 import { InterviewScheduleModal } from "@/components/dashboard/company/interview-schedule-modal";
 import { ActiveJobsPanel } from "./active-jobs-panel";
+import { ApplicationsListPanel } from "./applications-list-panel";
 import { ApplicationsSheet } from "./applications-sheet";
 import { HiringPipelineKanban } from "./hiring-pipeline-kanban";
 import { PipelineOverview } from "./pipeline-overview";
@@ -25,11 +26,10 @@ type RecruiterOption = {
   companyAccountType: "hr" | "ceo";
 };
 
-type SheetState =
-  | { mode: "closed" }
-  | { mode: "all" }
-  | { mode: "job"; internshipId: string; role: string }
-  | { mode: "interviews" };
+// Each focus now renders exactly one panel below — no more every hiring page
+// (Active/Applicants/Shortlisted/Pipeline) stacking the same three sections
+// and just auto-scrolling to a different one.
+type SheetState = { mode: "closed" } | { mode: "job"; internshipId: string; role: string } | { mode: "interviews" };
 
 type ScheduleTarget = {
   applicationId: string;
@@ -55,6 +55,25 @@ type HiringSectionProps = {
   onMoveStage?: (applicationId: string, status: string, note?: string) => Promise<void>;
 };
 
+const HIRING_PAGE_COPY: Record<HiringSectionFocus, { title: string; subtitle: string }> = {
+  jobs: {
+    title: "Active Internships",
+    subtitle: "Manage roles, pipeline, and shortlisted talent."
+  },
+  applications: {
+    title: "Applicants",
+    subtitle: "Every candidate who has applied, across every role."
+  },
+  shortlist: {
+    title: "Shortlisted",
+    subtitle: "Candidates ready for the next hiring stage. Schedule interviews to move them forward."
+  },
+  pipeline: {
+    title: "Hiring Pipeline",
+    subtitle: "Drag candidates between stages, or select several for bulk actions."
+  }
+};
+
 export function HiringSection({
   internships,
   applications,
@@ -74,109 +93,95 @@ export function HiringSection({
   onMoveStage
 }: HiringSectionProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const [sheet, setSheet] = useState<SheetState>({ mode: "closed" });
   const [scheduleTarget, setScheduleTarget] = useState<ScheduleTarget | null>(null);
 
-  useEffect(() => {
-    const sectionId =
-      focus === "pipeline"
-        ? "hiring-pipeline-extended"
-        : focus === "shortlist"
-          ? "hiring-shortlist"
-          : focus === "applications"
-            ? "hiring-actions"
-            : "hiring-active-jobs";
-    const node = document.getElementById(sectionId);
-    if (node) {
-      window.requestAnimationFrame(() => node.scrollIntoView({ behavior: "smooth", block: "start" }));
-    }
-    if (focus === "applications") {
-      setSheet({ mode: "all" });
-    }
-  }, [focus]);
-
-  const sheetApplications = useMemo(() => {
-    if (sheet.mode === "job") {
-      return applications.filter((application) => application.internship?._id === sheet.internshipId);
-    }
-    return applications;
-  }, [applications, sheet]);
-
-  const sheetTitle =
+  const sheetApplications =
     sheet.mode === "job"
-      ? `Applications · ${sheet.role}`
-      : sheet.mode === "interviews"
-        ? "Schedule Interviews"
-        : "All Applications";
+      ? applications.filter((application) => application.internship?._id === sheet.internshipId)
+      : applications;
 
-  const sheetSubtitle =
-    sheet.mode === "interviews"
-      ? "Candidates currently in the interview stage."
-      : sheet.mode === "all"
-        ? "Browse every application across active roles."
-        : undefined;
+  const sheetTitle = sheet.mode === "job" ? `Applications · ${sheet.role}` : "Schedule Interviews";
+  const sheetSubtitle = sheet.mode === "interviews" ? "Candidates currently in the interview stage." : undefined;
+
+  const pageCopy = HIRING_PAGE_COPY[focus];
+
+  // "Review Candidates" in Quick Actions now takes you to the dedicated
+  // Applicants page (keeping its own role-aware URL prefix: /company,
+  // /dashboard/companyCEO or /dashboard/companyHR) instead of popping a
+  // modal over whatever page you happened to be on.
+  function goToApplicants() {
+    const current = pathname || "";
+    router.push(current.replace(/\/hiring\/[^/]+\/?$/, "/hiring/applicants"));
+  }
+
+  function renderMain() {
+    if (focus === "applications") {
+      return <ApplicationsListPanel applications={applications} onViewProfile={onViewProfile} />;
+    }
+    if (focus === "shortlist") {
+      return (
+        <ShortlistPanel
+          applications={applications}
+          matches={matches}
+          internships={internships}
+          saving={saving}
+          onViewProfile={onViewProfile}
+          onMessage={() => router.push("/dashboard/company/chat")}
+          onViewResume={(applicationId) => onViewResume?.(applicationId)}
+          onScheduleInterview={(applicationId, candidateName) => setScheduleTarget({ applicationId, candidateName })}
+        />
+      );
+    }
+    if (focus === "pipeline") {
+      return onMoveStage ? (
+        <HiringPipelineKanban
+          applications={applications}
+          matches={matches}
+          internships={internships}
+          saving={saving}
+          onMoveStage={onMoveStage}
+          onOpenProfile={onViewProfile}
+          onViewResume={(applicationId) => onViewResume?.(applicationId)}
+          onScheduleInterview={(applicationId, candidateName) => setScheduleTarget({ applicationId, candidateName })}
+        />
+      ) : (
+        <PipelineOverview applications={applications} variant="extended" />
+      );
+    }
+    return (
+      <ActiveJobsPanel
+        internships={internships}
+        applications={applications}
+        canAssign={canAssign}
+        canDelete={!isHrScoped}
+        saving={saving}
+        recruiters={recruiters}
+        selectedRecruiterByInternship={selectedRecruiterByInternship}
+        onRecruiterChange={onRecruiterChange}
+        onAssignRecruiter={onAssignInternship}
+        onDeleteInternship={onDeleteInternship}
+        onViewApplications={(internshipId, role) => setSheet({ mode: "job", internshipId, role })}
+      />
+    );
+  }
 
   return (
     <>
       <div className={companyDashboardStyles.pageStack}>
         <CompanyDashboardPageIntro
-          title="Hiring"
-          subtitle={
-            isHrScoped ? "Your assigned recruitment workspace." : "Manage roles, pipeline, and shortlisted talent."
-          }
+          title={pageCopy.title}
+          subtitle={isHrScoped && focus === "jobs" ? "Your assigned recruitment workspace." : pageCopy.subtitle}
         />
 
         <CompanyDashboardMainGrid
-          main={
-            <>
-              <ActiveJobsPanel
-                internships={internships}
-                applications={applications}
-                canAssign={canAssign}
-                canDelete={!isHrScoped}
-                saving={saving}
-                recruiters={recruiters}
-                selectedRecruiterByInternship={selectedRecruiterByInternship}
-                onRecruiterChange={onRecruiterChange}
-                onAssignRecruiter={onAssignInternship}
-                onDeleteInternship={onDeleteInternship}
-                onViewApplications={(internshipId, role) => setSheet({ mode: "job", internshipId, role })}
-              />
-              {focus === "pipeline" && onMoveStage ? (
-                <HiringPipelineKanban
-                  applications={applications}
-                  matches={matches}
-                  internships={internships}
-                  saving={saving}
-                  onMoveStage={onMoveStage}
-                  onOpenProfile={onViewProfile}
-                  onViewResume={(applicationId) => onViewResume?.(applicationId)}
-                  onScheduleInterview={(applicationId, candidateName) =>
-                    setScheduleTarget({ applicationId, candidateName })
-                  }
-                />
-              ) : (
-                <PipelineOverview applications={applications} variant="extended" />
-              )}
-              <ShortlistPanel
-                applications={applications}
-                matches={matches}
-                internships={internships}
-                saving={saving}
-                onViewProfile={onViewProfile}
-                onMessage={(application) => router.push("/dashboard/company/chat")}
-                onViewResume={(applicationId) => onViewResume?.(applicationId)}
-                onScheduleInterview={(applicationId, candidateName) =>
-                  setScheduleTarget({ applicationId, candidateName })
-                }
-              />
-            </>
-          }
+          main={renderMain()}
           sidebar={
             <QuickActionsPanel
               canPostJob={!isHrScoped}
               isExecutive={!isHrScoped}
-              onViewAllApplications={() => setSheet({ mode: "all" })}
+              onViewAllApplications={goToApplicants}
               onScheduleInterviews={() => setSheet({ mode: "interviews" })}
             />
           }
@@ -189,6 +194,8 @@ export function HiringSection({
         subtitle={sheetSubtitle}
         applications={sheetApplications}
         filterStage={sheet.mode === "interviews" ? "interview" : null}
+        internshipId={sheet.mode === "job" ? sheet.internshipId : undefined}
+        showDownload={sheet.mode === "job"}
         onClose={() => setSheet({ mode: "closed" })}
         onViewProfile={onViewProfile}
       />

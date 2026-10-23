@@ -14,7 +14,8 @@ const NOTIFICATION_TYPES = Object.freeze({
   FEEDBACK_ADDED: "feedback_added",
   PROFILE_REMINDER: "profile_reminder",
   OTP: "otp",
-  CHAT_MESSAGE: "chat_message"
+  CHAT_MESSAGE: "chat_message",
+  JOB_AGENT_NEW_MATCH: "job_agent_new_match"
 });
 
 module.exports = { NOTIFICATION_TYPES };

@@ -8,7 +8,7 @@ const { createAdmin, authHeader } = require("../helpers/factories");
 // (reports-portal.ts reads it to name the downloaded PDF) was being sent by
 // every report-download route but never exposed, so response.headers.get(
 // "X-Report-Number") was always null and every downloaded report silently
-// fell back to the same generic "InternAI-Report.pdf" filename. Fixed by
+// fell back to the same generic "CareerSetu-Report.pdf" filename. Fixed by
 // adding exposedHeaders to the cors() config in app.js.
 describe("Report downloads expose X-Report-Number across origins", () => {
   test("platform-statistics response declares X-Report-Number in Access-Control-Expose-Headers", async () => {

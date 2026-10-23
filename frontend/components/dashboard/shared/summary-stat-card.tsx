@@ -51,7 +51,7 @@ export function SummaryStatCard({ title, value, suffix, hint, icon, tone, trend 
           {icon ? (
             <span
               className={cn(
-                "flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition-transform duration-200 group-hover:scale-105",
+                "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-transform duration-200 group-hover:scale-105",
                 tone ? TONE_CLASSES[tone] : "ds-stat-icon"
               )}
             >

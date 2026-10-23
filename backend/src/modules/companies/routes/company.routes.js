@@ -62,6 +62,12 @@ router.get(
   companyController.getApplicantsForInternship
 );
 router.get(
+  "/internships/:id/applicants/resumes",
+  validateObjectId("id"),
+  requireSidebarModule(SIDEBAR_MODULE_KEYS.APPLICATIONS),
+  companyController.downloadApplicantResumesForInternship
+);
+router.get(
   "/internships/:id/matched-candidates",
   validateObjectId("id"),
   requireSidebarModule(SIDEBAR_MODULE_KEYS.AI_INSIGHTS),
@@ -71,6 +77,11 @@ router.get(
   "/applications",
   requireSidebarModule(SIDEBAR_MODULE_KEYS.APPLICATIONS),
   companyController.getAllApplications
+);
+router.get(
+  "/applications/resumes",
+  requireSidebarModule(SIDEBAR_MODULE_KEYS.APPLICATIONS),
+  companyController.downloadAllApplicantResumes
 );
 router.get(
   "/interns/:internProfileId/portfolio",

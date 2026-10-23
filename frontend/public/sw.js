@@ -1,5 +1,5 @@
 /*
- * InternAI service worker — hand-written, standards-based (Cache API + Fetch).
+ * CareerSetu service worker — hand-written, standards-based (Cache API + Fetch).
  * No build-tool coupling.
  *
  * Cache version is derived from the registration URL query (`/sw.js?v=<ver>`),
@@ -208,9 +208,9 @@ self.addEventListener("push", (event) => {
   try {
     payload = event.data.json();
   } catch {
-    payload = { title: "InternAI", body: event.data.text() };
+    payload = { title: "CareerSetu", body: event.data.text() };
   }
-  const title = payload.title || "InternAI";
+  const title = payload.title || "CareerSetu";
   const options = {
     body: payload.body || "",
     icon: "/icons/icon-192.png",

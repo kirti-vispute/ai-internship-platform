@@ -207,30 +207,32 @@ export default function InternDashboardOverviewPage() {
           <>
             <QuickActions />
 
-            <SectionPanel title="Recent Notifications" subtitle="Latest updates from applications and recruiters.">
-              {notifications.length === 0 ? (
-                <BrandedEmptyState preset={BRANDED_EMPTY_STATES.notifications} presetKey="notifications" />
-              ) : (
-                <>
-                  <ul className="space-y-2">
-                    {notifications.slice(0, 3).map((item) => (
-                      <li key={item._id} className="surface-subtle px-4 py-3">
-                        <p className="text-sm font-semibold text-[var(--ds-text)]">{item.title}</p>
-                        {item.message ? <p className="mt-0.5 text-xs text-[var(--ds-text-secondary)]">{item.message}</p> : null}
-                        <p className="mt-1 text-[11px] text-[var(--ds-muted)]">{new Date(item.createdAt).toLocaleString()}</p>
-                      </li>
-                    ))}
-                  </ul>
-                  <div className="pt-3">
-                    <Button href="/dashboard/intern/notifications" type="button" size="sm" variant="secondary">
-                      View all
-                    </Button>
-                  </div>
-                </>
-              )}
-            </SectionPanel>
+            <div className="dashboard-split">
+              <CareerReadinessSection readiness={readiness} analysis={profile?.resume?.analysis} profile={profile} />
 
-            <CareerReadinessSection readiness={readiness} analysis={profile?.resume?.analysis} profile={profile} />
+              <SectionPanel title="Recent Notifications" subtitle="Latest updates from applications and recruiters.">
+                {notifications.length === 0 ? (
+                  <BrandedEmptyState preset={BRANDED_EMPTY_STATES.notifications} presetKey="notifications" />
+                ) : (
+                  <>
+                    <ul className="space-y-2">
+                      {notifications.slice(0, 3).map((item) => (
+                        <li key={item._id} className="surface-subtle px-4 py-3">
+                          <p className="text-sm font-semibold text-[var(--ds-text)]">{item.title}</p>
+                          {item.message ? <p className="mt-0.5 text-xs text-[var(--ds-text-secondary)]">{item.message}</p> : null}
+                          <p className="mt-1 text-[11px] text-[var(--ds-muted)]">{new Date(item.createdAt).toLocaleString()}</p>
+                        </li>
+                      ))}
+                    </ul>
+                    <div className="pt-3">
+                      <Button href="/dashboard/intern/notifications" type="button" size="sm" variant="secondary">
+                        View all
+                      </Button>
+                    </div>
+                  </>
+                )}
+              </SectionPanel>
+            </div>
 
             <TodaysFocusSection
               profile={profile}

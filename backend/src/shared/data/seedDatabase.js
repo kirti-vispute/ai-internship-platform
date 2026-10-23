@@ -1,3 +1,5 @@
+const fs = require("fs");
+const path = require("path");
 const User = require("../../models/User");
 const InternProfile = require("../../models/InternProfile");
 const CompanyProfile = require("../../models/CompanyProfile");
@@ -6,7 +8,10 @@ const Application = require("../../models/Application");
 const ReportedCompany = require("../../models/ReportedCompany");
 const { hashPassword } = require("../utils/password");
 const seedData = require("./seedData");
-const { calculateResumeScore } = require("../../services/ai.service");
+const { computeResumeScore } = require("../../services/scorer.service");
+const { buildSimplePdf } = require("../utils/simple-pdf");
+
+const SEED_RESUME_DIR = path.join(__dirname, "../../modules/uploads/resumes");
 
 async function resetCollections() {
   await Promise.all([
@@ -44,20 +49,81 @@ async function seedDatabase({ reset = false } = {}) {
 
 const SEED_RESUME_PATH = "uploads/resumes/seed-resume.pdf";
 
+function buildSeedSummary(profileSeed) {
+  const skills = profileSeed.skills || [];
+  return (
+    `Aspiring software engineer with hands-on project experience in ${skills.slice(0, 3).join(", ")} and a` +
+    " strong foundation in core computer science concepts, seeking an internship to apply and grow those skills."
+  );
+}
+
+function buildSeedResumeLines(profileSeed) {
+  const skills = profileSeed.skills || [];
+  const education = profileSeed.education || [];
+  const projects = profileSeed.projects || [];
+  const certifications = profileSeed.certifications || [];
+
+  const lines = [
+    profileSeed.fullName.toUpperCase(),
+    `${profileSeed.mobile} | ${profileSeed.email}`,
+    "",
+    buildSeedSummary(profileSeed),
+    ""
+  ];
+
+  if (skills.length) {
+    lines.push("TECHNICAL SKILLS", skills.join(", "), "");
+  }
+
+  if (projects.length) {
+    lines.push("PROJECTS");
+    projects.forEach((project) => lines.push(`- ${project}`));
+    lines.push("");
+  }
+
+  if (certifications.length) {
+    lines.push("CERTIFICATIONS");
+    certifications.forEach((cert) => lines.push(`- ${cert}`));
+    lines.push("");
+  }
+
+  if (education.length) {
+    lines.push("EDUCATION");
+    education.forEach((entry) => lines.push(entry));
+  }
+
+  return lines;
+}
+
+  fs.mkdirSync(SEED_RESUME_DIR, { recursive: true });
+
   const internProfilesByEmail = {};
   for (const profileSeed of seedData.internProfiles) {
     const user = usersByEmail[profileSeed.email];
+    const lines = buildSeedResumeLines(profileSeed);
+    const resumeText = lines.join("\n");
+    const slug = profileSeed.email.replace(/[^a-z0-9]+/gi, "-").toLowerCase();
+    const resumeFileName = `seed-${slug}.pdf`;
+    fs.writeFileSync(path.join(SEED_RESUME_DIR, resumeFileName), buildSimplePdf(lines));
+    const resumeFilePath = `uploads/resumes/${resumeFileName}`;
+
     const profile = await InternProfile.create({
       user: user._id,
+      summary: buildSeedSummary(profileSeed),
       ...profileSeed,
       resume: {
-        filePath: SEED_RESUME_PATH,
-        text: "Demo resume for seeded intern profile.",
+        filePath: resumeFilePath,
+        text: resumeText,
         score: 0
       }
     });
 
-    profile.resume.score = calculateResumeScore(profile);
+    const result = await computeResumeScore({ profile, resumeText });
+    profile.resume.score = result.resumeScore;
+    profile.resume.scoreSource = result.scoreSource;
+    profile.resume.predictedCategory = result.predictedCategory || "";
+    profile.resume.confidence = typeof result.confidence === "number" ? result.confidence : null;
+    profile.resume.analysis = result.analysis || null;
     await profile.save();
 
     internProfilesByEmail[profile.email] = profile;

@@ -1,4 +1,4 @@
-/* InternAI platform design system — mirrors homepage.css tokens (homepage unchanged) */
+/* CareerSetu platform design system — mirrors homepage.css tokens (homepage unchanged) */
 
 /* Color tokens (--ds-bg, --ds-surface, --ds-text, --ds-primary, --ds-accent, etc.)
    are theme-driven and defined in theme-tokens.generated.css — see
@@ -767,4 +767,120 @@ body:has(.internai-platform) {
 .internai-platform .interview-countdown-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 10px 24px rgba(79, 70, 229, 0.12);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Dashboard density — calmer spacing, flatter nesting, sized sections
+   Applies to intern, company and admin dashboards.
+   ═══════════════════════════════════════════════════════════════ */
+:root {
+  --ds-gap-section: 1.25rem;
+}
+
+/* Lighter elevation for top-level cards so stacked sections don't feel heavy */
+.internai-platform .ds-card,
+.internai-platform .company-dashboard-panel-card,
+.internai-platform .company-dashboard-item-card {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 1px 2px rgba(0, 0, 0, 0.08), 0 6px 18px -12px rgba(0, 0, 0, 0.28);
+}
+
+.internai-platform .ds-card:hover,
+.internai-platform .company-dashboard-item-card:hover {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 2px 4px rgba(0, 0, 0, 0.1), 0 10px 24px -14px rgba(0, 0, 0, 0.34);
+}
+
+/* Cards nested inside cards: flat, tighter, no hover lift — removes "box in a box" clutter */
+.internai-platform :is(.ds-card, .company-dashboard-panel-card, .company-dashboard-item-card)
+  :is(.ds-card, .surface-subtle, .surface-muted, .company-dashboard-panel-card, .company-dashboard-item-card) {
+  box-shadow: none;
+}
+
+.internai-platform :is(.ds-card, .company-dashboard-panel-card, .company-dashboard-item-card)
+  :is(.ds-card, .company-dashboard-panel-card, .company-dashboard-item-card) {
+  padding: 0.875rem 1rem;
+}
+
+.internai-platform :is(.ds-card, .company-dashboard-panel-card, .company-dashboard-item-card)
+  :is(.ds-card, .company-dashboard-item-card):hover {
+  transform: none;
+  box-shadow: none;
+}
+
+/* Section headings: one step below the page <h1>, tighter spacing */
+.internai-platform .company-dashboard-section-header {
+  margin-bottom: 0.75rem;
+}
+
+.internai-platform .company-dashboard-section-header .ds-h2 {
+  font-size: 1.125rem;
+  letter-spacing: -0.02em;
+}
+
+.internai-platform .company-dashboard-section-header .ds-caption {
+  font-size: 0.8125rem;
+  margin-top: 0.125rem;
+}
+
+/* Metric tiles: compact, labels stay on one or two lines */
+.internai-platform .company-dashboard-metric-tile {
+  padding: 0.75rem 0.875rem;
+  box-shadow: none;
+}
+
+.internai-platform .company-dashboard-metric-tile .ds-label {
+  letter-spacing: 0.08em;
+  font-size: 0.6875rem;
+}
+
+.internai-platform .company-dashboard-metric-tile .ds-stat-value {
+  font-size: 1.5rem;
+  line-height: 1.15;
+}
+
+/* 5-up metric grids flex to their item count (e.g. 6 pipeline stages) instead of orphaning a tile */
+@media (min-width: 1024px) {
+  .internai-platform .company-dashboard-metric-grid--5 {
+    grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));
+  }
+}
+
+/* Stat cards: smaller value + icon so KPI rows read as a strip, not a wall */
+.internai-platform .ds-stat-card {
+  padding: 1rem 1.125rem;
+}
+
+.internai-platform .ds-stat-card .ds-stat-value {
+  margin-top: 0.375rem;
+  font-size: 1.5rem;
+  line-height: 1.15;
+}
+
+/* Overview two-up grid used by dashboards for side-by-side sections */
+.internai-platform .dashboard-split {
+  display: grid;
+  gap: var(--ds-gap-section);
+  align-items: start;
+}
+
+@media (min-width: 1280px) {
+  .internai-platform .dashboard-split {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .internai-platform .dashboard-split > .dashboard-split__full {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Company sidebar: space stacked widgets, slightly tighter column gap */
+.internai-platform .company-dashboard-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-gap-section);
+}
+
+@media (min-width: 1024px) {
+  .internai-platform .company-dashboard-grid {
+    gap: 1.5rem;
+  }
 }

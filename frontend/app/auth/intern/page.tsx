@@ -4,7 +4,7 @@ import { AuthPageShell } from "@/components/layout/auth-page-shell";
 
 export const metadata: Metadata = {
   title: "Student Login & Sign Up",
-  description: "Sign in or create a student account on InternAI to find and apply for internships.",
+  description: "Sign in or create a student account on CareerSetu to find and apply for internships.",
   robots: { index: false, follow: true }
 };
 

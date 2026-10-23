@@ -193,7 +193,7 @@ export function ServiceWorkerManager() {
           </span>
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold text-[var(--ds-text)]">New version available</p>
-            <p className="text-xs text-[var(--ds-muted)]">Refresh to get the latest InternAI.</p>
+            <p className="text-xs text-[var(--ds-muted)]">Refresh to get the latest CareerSetu.</p>
           </div>
           <button
             type="button"

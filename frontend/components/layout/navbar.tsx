@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { LayoutDashboard, LogOut, Menu, User } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { InternAILogo } from "@/components/brand/internai-logo";
+import { CareerSetuLogo } from "@/components/brand/careersetu-logo";
 import { ThemeToggleSwitch } from "@/components/theme/theme-toggle-switch";
 import { AppIcon } from "@/components/icons/app-icon";
 import { getDashboardPathForRole, getProfilePathForRole } from "@/lib/auth-routes";
@@ -125,7 +125,7 @@ export function Navbar({ theme = "light" }: NavbarProps) {
         {isAuthPage ? (
           <span className="inline-block h-[34px] w-[34px] shrink-0" aria-hidden />
         ) : (
-          <InternAILogo href="/" />
+          <CareerSetuLogo href="/" />
         )}
 
         <div className="hidden items-center gap-2 md:flex">

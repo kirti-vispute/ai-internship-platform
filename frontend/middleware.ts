@@ -20,6 +20,7 @@ const { httpOrigin, wsOrigin } = resolveApiOrigins();
 
 export function middleware(request: NextRequest) {
   const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
+  const devScriptPolicy = process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : "";
 
   const connectSrc = ["'self'", httpOrigin, wsOrigin].filter(Boolean).join(" ");
   const imgSrc = ["'self'", "data:", "blob:", httpOrigin].filter(Boolean).join(" ");
@@ -31,13 +32,13 @@ export function middleware(request: NextRequest) {
   // script-src free of 'unsafe-inline' despite Next's inline RSC bootstrap.
   const cspHeader = `
     default-src 'self';
-    script-src 'self' 'nonce-${nonce}' 'strict-dynamic';
+    script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${devScriptPolicy};
     style-src 'self' 'unsafe-inline';
     img-src ${imgSrc};
     font-src 'self' data:;
     connect-src ${connectSrc};
     media-src 'self' blob:;
-    frame-src 'self';
+    frame-src 'self' blob:;
     object-src 'none';
     base-uri 'self';
     form-action 'self';

@@ -72,7 +72,10 @@ async function findAllApplications(companyId, user, { page = 1, limit = 100, sta
 
   const [applications, total] = await Promise.all([
     Application.find(query)
-      .populate("intern", "fullName email mobile skills resume.score education projects summary")
+      .populate(
+        "intern",
+        "fullName email mobile skills resume.score resume.analysis.categoryScores education projects summary certifications experience achievements languages links linkedinUrl"
+      )
       .populate("internship", "role location department assignedRecruiter")
       .sort({ createdAt: -1 })
       .skip(skip)

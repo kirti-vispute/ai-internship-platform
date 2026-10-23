@@ -339,7 +339,7 @@ export function CompanyVerificationView({
   const cta = VERIFICATION_CTA[status] || VERIFICATION_CTA.pending;
   const VERIFICATION_COPY: Record<CompanyProfile["verificationStatus"], string> = {
     verified: "Your company is verified. Candidates can see the verified badge on your listings and profile.",
-    pending: "Your company is awaiting review by the InternAI team. This usually takes 1-2 business days.",
+    pending: "Your company is awaiting review by the CareerSetu team. This usually takes 1-2 business days.",
     rejected: "Your verification request was rejected. Update your company profile details and contact support.",
     suspended: "Your company account has been suspended. Contact support to resolve this."
   };

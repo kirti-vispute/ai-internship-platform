@@ -66,7 +66,7 @@ export function DashboardTabs({ tabs, defaultKey }: DashboardTabsProps) {
         id={activeTab ? panelId(activeTab.key) : undefined}
         aria-labelledby={activeTab ? tabId(activeTab.key) : undefined}
         tabIndex={0}
-        className="space-y-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ds-focus-ring)]"
+        className="space-y-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ds-focus-ring)]"
       >
         {activeTab?.content}
       </div>

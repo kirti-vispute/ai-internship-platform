@@ -4,6 +4,7 @@ import { BarChart3, Calendar, CalendarClock, FilePlus2, MessageSquare, UsersRoun
 import { CompanyDashboardPanelCard, CompanyDashboardSection } from "@/components/dashboard/company/company-dashboard-layout";
 import { Button } from "@/components/ui/button";
 import { AppIcon } from "@/components/icons/app-icon";
+import { ResumeZipDownloadButton } from "./resume-zip-download-button";
 
 type QuickActionsPanelProps = {
   canPostJob: boolean;
@@ -35,6 +36,12 @@ export function QuickActionsPanel({ canPostJob, isExecutive, onViewAllApplicatio
             <AppIcon icon={Users} size="sm" />
             Review Candidates
           </Button>
+          <ResumeZipDownloadButton
+            label="Download All Resumes"
+            variant="secondary"
+            size="sm"
+            className="w-full justify-start"
+          />
           <Button href="/dashboard/company/chat" size="sm" variant="secondary" className="w-full justify-start">
             <AppIcon icon={MessageSquare} size="sm" />
             Messages

@@ -157,7 +157,7 @@ export function InstallPrompt() {
       {visible ? (
         <motion.div
           role="dialog"
-          aria-label="Install InternAI"
+          aria-label="Install CareerSetu"
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 16 }}
@@ -168,7 +168,7 @@ export function InstallPrompt() {
             <AppIcon icon={mode === "ios" ? Share : Download} size="sm" className="text-current" />
           </span>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-[var(--ds-text)]">Install InternAI</p>
+            <p className="text-sm font-semibold text-[var(--ds-text)]">Install CareerSetu</p>
             {mode === "ios" ? (
               <p className="mt-0.5 text-xs leading-relaxed text-[var(--ds-muted)]">
                 Tap the Share icon, then choose <span className="font-medium text-[var(--ds-text)]">Add to Home Screen</span>.

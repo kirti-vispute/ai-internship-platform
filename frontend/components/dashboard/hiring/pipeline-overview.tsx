@@ -106,9 +106,7 @@ export function PipelineOverview({ applications, variant = "standard", onStageCl
           >
             {stages.map((stage, index) => {
               const value = stageCounts[stage.key as keyof typeof stageCounts] || 0;
-              const previous =
-                index === 0 ? total : stageCounts[stages[index - 1].key as keyof typeof stageCounts] || 0;
-              const conversion = index === 0 ? 100 : previous > 0 ? Math.round((value / previous) * 100) : 0;
+              const conversion = index === 0 ? 100 : Math.round((value / total) * 100);
               const tile = (
                 <CompanyDashboardMetricTile
                   label={stage.label}
