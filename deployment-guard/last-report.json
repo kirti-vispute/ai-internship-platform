@@ -1,21 +1,15 @@
 {
-  "buildStatus": "FAIL",
-  "failedChecks": [
-    "ai.hiring-engine: Hiring AI engine exports ranking and rejection modules"
-  ],
-  "warnings": [
-    "ui.chat-loading-states: Chat workspace defines loading and error UI",
-    "ui.interview-responsive: Interview room uses collapsible sidebar and responsive grid",
-    "ui.dashboard-shells: Dashboard shells use consistent layout primitives"
-  ],
+  "buildStatus": "PASS",
+  "failedChecks": [],
+  "warnings": [],
   "performanceScore": 100,
-  "aiReliabilityScore": 88,
-  "uiStabilityScore": 70,
-  "passedCount": 34,
-  "failedCount": 1,
-  "warningCount": 3,
-  "target": "frontend",
-  "durationMs": 4670,
+  "aiReliabilityScore": 100,
+  "uiStabilityScore": 100,
+  "passedCount": 41,
+  "failedCount": 0,
+  "warningCount": 0,
+  "target": "all",
+  "durationMs": 4486,
   "checks": [
     {
       "id": "func.tsc",
@@ -39,6 +33,14 @@
       "name": "Branded empty-state CTAs",
       "status": "PASS",
       "message": "No known dead CTAs in brand presets",
+      "blocking": false
+    },
+    {
+      "id": "func.backend-load",
+      "category": "functionality",
+      "name": "Backend bootstrap",
+      "status": "PASS",
+      "message": "Backend app module loads",
       "blocking": false
     },
     {
@@ -101,9 +103,9 @@
       "id": "ai.hiring-engine",
       "category": "ai",
       "name": "Hiring intelligence engine",
-      "status": "FAIL",
+      "status": "PASS",
       "message": "Hiring AI engine exports ranking and rejection modules",
-      "blocking": true
+      "blocking": false
     },
     {
       "id": "ai.platform-insufficient",
@@ -253,7 +255,7 @@
       "id": "ui.chat-loading-states",
       "category": "ui",
       "name": "Chat loading/error states",
-      "status": "WARN",
+      "status": "PASS",
       "message": "Chat workspace defines loading and error UI",
       "blocking": false
     },
@@ -261,7 +263,7 @@
       "id": "ui.interview-responsive",
       "category": "ui",
       "name": "Interview responsive layout",
-      "status": "WARN",
+      "status": "PASS",
       "message": "Interview room uses collapsible sidebar and responsive grid",
       "blocking": false
     },
@@ -269,7 +271,7 @@
       "id": "ui.dashboard-shells",
       "category": "ui",
       "name": "Dashboard shell structure",
-      "status": "WARN",
+      "status": "PASS",
       "message": "Dashboard shells use consistent layout primitives",
       "blocking": false
     },
@@ -319,6 +321,22 @@
       "name": "Chat API auth",
       "status": "PASS",
       "message": "Chat REST routes require authentication",
+      "blocking": false
+    },
+    {
+      "id": "sec.rate-limit",
+      "category": "security",
+      "name": "API rate limiting",
+      "status": "PASS",
+      "message": "Express rate limiter mounted on /api",
+      "blocking": false
+    },
+    {
+      "id": "sec.env-secrets",
+      "category": "security",
+      "name": "Production secrets template",
+      "status": "PASS",
+      "message": ".env.example documents JWT secrets placeholder",
       "blocking": false
     },
     {

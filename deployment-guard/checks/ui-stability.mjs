@@ -3,7 +3,13 @@ import { makeCheck, readText } from "../lib/utils.mjs";
 export async function runUiChecks() {
   const checks = [];
 
-  const chatWorkspace = readText("frontend/components/dashboard/chat-workspace.tsx");
+  // Chat UI was split into message-page.tsx (loading/error state) and
+  // chat-panel.tsx (EmptyState) during a refactor; chat-workspace.tsx never
+  // existed under that name, so checking it alone always warned.
+  const chatWorkspace = [
+    readText("frontend/components/dashboard/chat/message-page.tsx"),
+    readText("frontend/components/dashboard/chat/chat-panel.tsx")
+  ].join("\n");
   checks.push(
     makeCheck({
       id: "ui.chat-loading-states",
@@ -24,16 +30,25 @@ export async function runUiChecks() {
       id: "ui.interview-responsive",
       category: "ui",
       name: "Interview responsive layout",
+      // The actual layout uses an auto-fit CSS grid (adapts to any peer
+      // count without a hardcoded breakpoint) rather than a fixed
+      // `lg:grid-cols-2` class -- check for the responsive mechanism, not
+      // one specific class name.
       status:
-        interviewShell.includes("sidebarOpen") && interviewShell.includes("lg:grid-cols-2") ? "PASS" : "WARN",
+        interviewShell.includes("sidebarOpen") &&
+        (interviewShell.includes("lg:grid-cols-2") || interviewShell.includes("auto-fit"))
+          ? "PASS"
+          : "WARN",
       message: "Interview room uses collapsible sidebar and responsive grid",
       blocking: false
     })
   );
 
+  // Shells live under per-role subdirectories, not flat in components/dashboard/.
   const shells = [
-    readText("frontend/components/dashboard/intern-shell.tsx"),
-    readText("frontend/components/dashboard/company-shell.tsx")
+    readText("frontend/components/dashboard/intern/intern-shell.tsx"),
+    readText("frontend/components/dashboard/company/company-shell.tsx"),
+    readText("frontend/components/dashboard/admin/admin-shell.tsx")
   ].join("\n");
 
   checks.push(

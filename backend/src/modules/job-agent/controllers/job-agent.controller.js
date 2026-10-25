@@ -12,6 +12,7 @@ const { computeSkillMatch } = require("../../../shared/utils/compute-skill-match
 const { JOB_AGENT_STATUS } = require("../models/JobAgentApplication");
 const { WORK_MODES, EXPERIENCE_LEVELS } = require("../models/JobAgentPreference");
 const JobProviderHealth = require("../models/JobProviderHealth");
+const { sanitizeHttpUrl } = require("../../../shared/utils/url-validator");
 
 // Providers with no legitimate self-serve public API today (see each
 // provider file's own doc comment for the investigation). Surfaced here so
@@ -92,11 +93,19 @@ const upsertPreferences = asyncHandler(async (req, res) => {
   }
 
   const update = { internProfile: profile._id };
-  if (desiredRoles !== undefined) update.desiredRoles = Array.isArray(desiredRoles) ? desiredRoles.map(String) : [];
-  if (locations !== undefined) update.locations = Array.isArray(locations) ? locations.map(String) : [];
+  if (desiredRoles !== undefined) {
+    update.desiredRoles = Array.isArray(desiredRoles)
+      ? desiredRoles.slice(0, 50).map((r) => String(r).trim().slice(0, 100)).filter(Boolean)
+      : [];
+  }
+  if (locations !== undefined) {
+    update.locations = Array.isArray(locations)
+      ? locations.slice(0, 50).map((l) => String(l).trim().slice(0, 100)).filter(Boolean)
+      : [];
+  }
   if (workMode !== undefined) update.workMode = workMode;
   if (minSalary !== undefined) update.minSalary = minSalary;
-  if (salaryCurrency !== undefined) update.salaryCurrency = salaryCurrency;
+  if (salaryCurrency !== undefined) update.salaryCurrency = String(salaryCurrency || "").slice(0, 10);
   if (experienceLevel !== undefined) update.experienceLevel = experienceLevel;
   if (notificationFrequency !== undefined) update.notificationFrequency = notificationFrequency;
   if (enabled !== undefined) update.enabled = Boolean(enabled);
@@ -113,7 +122,7 @@ const upsertPreferences = asyncHandler(async (req, res) => {
 const pauseAgent = asyncHandler(async (req, res) => {
   const preference = await JobAgentPreference.findOneAndUpdate(
     { user: req.user._id },
-    { $set: { enabled: false, pausedAt: new Date(), pausedReason: String(req.body?.reason || "") } },
+    { $set: { enabled: false, pausedAt: new Date(), pausedReason: String(req.body?.reason || "").slice(0, 500) } },
     { new: true }
   );
   if (!preference) {
@@ -247,6 +256,11 @@ const trackJob = asyncHandler(async (req, res) => {
     return sendSuccess(res, { message: "This job is already tracked.", data: { application: existing } });
   }
 
+  const cleanSnapshot = snapshot && typeof snapshot === "object" ? { ...snapshot } : {};
+  if (cleanSnapshot.applyUrl) {
+    cleanSnapshot.applyUrl = sanitizeHttpUrl(cleanSnapshot.applyUrl);
+  }
+
   const application = await JobAgentApplication.create({
     user: req.user._id,
     internProfile: profile._id,
@@ -254,7 +268,7 @@ const trackJob = asyncHandler(async (req, res) => {
     jobRef,
     internshipId: internshipId || null,
     externalJobId: externalJobId || null,
-    snapshot: snapshot || {},
+    snapshot: cleanSnapshot,
     fitScore: typeof fitScore === "number" ? fitScore : null,
     status: status || "saved"
   });
@@ -281,7 +295,7 @@ const updateApplication = asyncHandler(async (req, res) => {
     application.status = status;
   }
   if (notes !== undefined) {
-    application.notes = String(notes);
+    application.notes = String(notes).slice(0, 2000);
   }
 
   await application.save();
@@ -332,14 +346,14 @@ const updateMaterials = asyncHandler(async (req, res) => {
 
   if (typeof tailoredResumeContent === "string") {
     application.tailoredResume = {
-      content: tailoredResumeContent,
+      content: tailoredResumeContent.slice(0, 50000),
       source: "user-edited",
       generatedAt: application.tailoredResume?.generatedAt || new Date()
     };
   }
   if (typeof coverLetterContent === "string") {
     application.coverLetter = {
-      content: coverLetterContent,
+      content: coverLetterContent.slice(0, 50000),
       source: "user-edited",
       generatedAt: application.coverLetter?.generatedAt || new Date()
     };

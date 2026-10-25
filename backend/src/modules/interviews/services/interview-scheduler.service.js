@@ -3,6 +3,7 @@ const Application = require("../../../models/Application");
 const { LATE_JOIN_HOURS } = require("./interview-room.service");
 const { sweepAllInterviewReminders, notifyInterviewNoShow } = require("./interview-workflow.service");
 const { withVersionRetry } = require("../../../shared/utils/with-version-retry");
+const { withSchedulerLock } = require("../../../shared/infrastructure/scheduler-lock");
 
 const SWEEP_INTERVAL_MS = Number(process.env.INTERVIEW_SWEEP_INTERVAL_MS) || 5 * 60 * 1000;
 
@@ -60,9 +61,15 @@ async function runSweep() {
   }
 }
 
+function runSweepLocked() {
+  // See job-agent-scheduler.service.js's withSchedulerLock use -- same
+  // reasoning: only one instance should run this sweep per tick.
+  return withSchedulerLock("interview-sweep", Math.max(SWEEP_INTERVAL_MS - 5000, 5000), runSweep);
+}
+
 function start() {
   if (timer) return;
-  timer = setInterval(runSweep, SWEEP_INTERVAL_MS);
+  timer = setInterval(runSweepLocked, SWEEP_INTERVAL_MS);
   timer.unref?.();
 }
 

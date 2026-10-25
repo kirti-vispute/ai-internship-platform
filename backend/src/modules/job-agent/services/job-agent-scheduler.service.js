@@ -7,6 +7,7 @@ const { NOTIFICATION_TYPES } = require("../../notifications/constants/notificati
 const { createInAppNotification } = require("../../notifications/services/in-app-notification.service");
 const { discoverExternalJobs } = require("./job-discovery.service");
 const { getUnifiedJobFeed } = require("./job-feed.service");
+const { withSchedulerLock } = require("../../../shared/infrastructure/scheduler-lock");
 
 /**
  * Proactive Job Monitoring scheduler (spec 2D). Mirrors the existing
@@ -157,7 +158,10 @@ async function runSweep() {
 }
 
 function runSweepSafely() {
-  runSweep().catch((error) => {
+  // Lock TTL is shorter than the sweep interval so a lock left behind by a
+  // crashed instance self-expires well before the next tick -- if multiple
+  // instances share this MongoDB, only one of them actually runs the sweep.
+  withSchedulerLock("job-agent-sweep", Math.max(SWEEP_INTERVAL_MS - 5000, 5000), runSweep).catch((error) => {
     // eslint-disable-next-line no-console
     console.error("[job-agent] sweep error:", error.message);
   });

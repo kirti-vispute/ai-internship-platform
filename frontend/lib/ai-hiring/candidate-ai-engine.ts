@@ -434,11 +434,21 @@ const hiringAIEngineCore = {
       map.set(item.internshipId, item);
     });
     return map;
+  },
+
+  generateRejectionReason(rankedOrEvaluation?: { evaluation?: { weaknesses?: string[] }; weaknesses?: string[] }): string {
+    const weaknesses = rankedOrEvaluation?.evaluation?.weaknesses || rankedOrEvaluation?.weaknesses || [];
+    if (weaknesses.length > 0) {
+      return `Candidate was not selected due to key areas for improvement: ${weaknesses.join("; ")}.`;
+    }
+    return "Candidate profile did not meet the role's current required skill or experience threshold.";
   }
 };
 
 export const hiringAIEngine = hiringAIEngineCore;
 export const candidateAIEngine = hiringAIEngineCore;
+export const rankCandidates = hiringAIEngineCore.rankCandidates;
+export const generateRejectionReason = hiringAIEngineCore.generateRejectionReason;
 
 export type {
   RankedCandidate,

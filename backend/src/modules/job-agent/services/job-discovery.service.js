@@ -17,6 +17,7 @@ const {
   getCanonicalSkillVocabulary,
   textMentionsSkill
 } = require("../../../shared/utils/skill-normalizer");
+const { isSafeHttpUrl } = require("../../../shared/utils/url-validator");
 
 /**
  * Orchestrates every job-data provider behind one clean interface:
@@ -57,6 +58,10 @@ function extractSkillsFromText(text) {
 }
 
 async function upsertListing(normalizedJob) {
+  if (!isSafeHttpUrl(normalizedJob.applyUrl)) {
+    throw new Error(`Invalid or unsafe applyUrl protocol: ${normalizedJob.applyUrl}`);
+  }
+
   const searchableText = [
     normalizedJob.title,
     normalizedJob.category,

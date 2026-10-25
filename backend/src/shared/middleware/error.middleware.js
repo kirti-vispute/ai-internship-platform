@@ -9,11 +9,21 @@ function errorMiddleware(err, req, res, next) {
   let statusCode = err.statusCode || 500;
   let message = err.message || "Internal server error";
 
-  if (err.name === "MulterError") {
+  if (err.name === "CastError") {
+    statusCode = 400;
+    message = `Invalid format for field '${err.path || "id"}'`;
+  } else if (err.name === "ValidationError") {
+    statusCode = 400;
+    message = err.message;
+  } else if (err.name === "MulterError") {
     statusCode = 400;
     message = err.code === "LIMIT_FILE_SIZE" ? "Uploaded file exceeds the maximum allowed size." : err.message;
   } else if (String(message).toLowerCase().includes("unsupported file format")) {
     statusCode = 400;
+  }
+
+  if (process.env.NODE_ENV === "production" && statusCode >= 500 && !err.isOperational) {
+    message = "Internal server error";
   }
 
   if (process.env.NODE_ENV !== "test") {

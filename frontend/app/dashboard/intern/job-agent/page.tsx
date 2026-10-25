@@ -21,6 +21,7 @@ import {
   fetchJobAgentFeed,
   fetchJobAgentProviderHealth,
   fetchJobAgentStatus,
+  isSafeExternalUrl,
   pauseJobAgent,
   resumeJobAgent,
   trackJobAgentJob
@@ -464,7 +465,7 @@ export default function JobAgentDashboardPage() {
                     <Button type="button" size="sm" variant="secondary" onClick={() => handleSaveJob(job)} disabled={savingJobId === job.id}>
                       Save to Tracker
                     </Button>
-                    {job.applyUrl ? (
+                    {isSafeExternalUrl(job.applyUrl) ? (
                       <a
                         href={job.applyUrl}
                         target="_blank"

@@ -18,6 +18,7 @@ import {
   deleteJobAgentApplication,
   fetchJobAgentApplications,
   generateJobAgentMaterials,
+  isSafeExternalUrl,
   updateJobAgentApplication,
   updateJobAgentMaterials
 } from "@/lib/job-agent-portal";
@@ -246,7 +247,7 @@ export default function JobAgentTrackerPage() {
                     the primary status control by a divider so the card
                     doesn't read as one undifferentiated row of buttons. */}
                 <div className="mt-3 flex flex-wrap items-center gap-x-1 gap-y-2 border-t border-[var(--ds-border)] pt-2.5">
-                  {application.snapshot?.applyUrl && (
+                  {isSafeExternalUrl(application.snapshot?.applyUrl) && (
                     <a
                       href={application.snapshot.applyUrl}
                       target="_blank"

@@ -43,6 +43,5 @@ export default async function globalSetup() {
   for (const path of paths) {
     await warm(path);
   }
-  // eslint-disable-next-line no-console
   console.log(`[global-setup] pre-warmed ${paths.length} routes in ${((Date.now() - started) / 1000).toFixed(1)}s`);
 }

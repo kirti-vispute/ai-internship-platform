@@ -8,6 +8,9 @@ backend/node_modules/
 out/
 frontend/.next/
 backend/uploads/
+backend/src/modules/uploads/certificates/
+backend/src/modules/uploads/company-logos/
+backend/src/modules/uploads/resumes/
 
 # Env files
 .env
@@ -16,6 +19,10 @@ frontend/.env
 frontend/.env.*
 backend/.env
 backend/.env.*
+# ...but keep the committed templates
+!.env.example
+!frontend/.env.example
+!backend/.env.example
 
 # Logs
 npm-debug.log*

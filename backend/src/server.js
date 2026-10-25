@@ -32,6 +32,16 @@ function assertRequiredEnv() {
         "unless it is one of the hardcoded localhost defaults."
     );
   }
+
+  // Not fatal: uploads still work on local disk, but most PaaS hosts (Render
+  // included) wipe the filesystem on every deploy/restart -- every uploaded
+  // resume/certificate/logo would silently vanish without this surfaced loudly.
+  if (process.env.NODE_ENV === "production" && String(process.env.STORAGE_PROVIDER || "local") !== "cloudinary") {
+    logger.warn(
+      "[startup] STORAGE_PROVIDER is not 'cloudinary' in production. Uploaded files are being " +
+        "written to local disk, which most hosts (including Render) wipe on every deploy or restart."
+    );
+  }
 }
 
 function resolvePort() {
