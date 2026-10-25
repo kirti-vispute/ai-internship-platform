@@ -367,7 +367,7 @@ function scoreEligibility(internProfile) {
   return { score: 100, concerns };
 }
 
-function buildExplanation({ skillMatch, prefResult, roleResult, isExternal }) {
+function buildExplanation({ skillMatch, prefResult, roleResult }) {
   const parts = [];
 
   // Role relevance is the dominant signal, so when it's a clear mismatch it
@@ -383,7 +383,7 @@ function buildExplanation({ skillMatch, prefResult, roleResult, isExternal }) {
   }
 
   if (skillMatch.normalizedRequiredSkills.length === 0) {
-    parts.push("This listing doesn't specify required skills, so the skill match couldn't be scored strictly.");
+    parts.push("Skill match is an estimate because this listing has limited skill details.");
   } else if (skillMatch.missingRequiredSkills.length === 0) {
     parts.push(`Matches all ${skillMatch.normalizedRequiredSkills.length} required skills (${skillMatch.matchedRequiredSkills.join(", ")}).`);
   } else {
@@ -399,10 +399,6 @@ function buildExplanation({ skillMatch, prefResult, roleResult, isExternal }) {
     parts.push(`Matches your saved ${prefNotes.join(", ")} preference${prefNotes.length > 1 ? "s" : ""}.`);
   }
 
-  if (isExternal) {
-    parts.push("Skills for this external listing were inferred from the posting text and are approximate, not independently verified.");
-  }
-
   return parts.join(" ");
 }
 
@@ -413,11 +409,9 @@ function buildExplanation({ skillMatch, prefResult, roleResult, isExternal }) {
  * ExternalJobListing docs map extractedSkills -> skillsRequired (see
  * job-feed.service.js), internal Internship docs already have this shape.
  *
- * `isExternal` controls only the explanation text (the approximate-skills
- * disclaimer); it never changes the arithmetic, so external and internal
- * listings are scored on a genuinely comparable scale.
+ * External and internal listings are scored on a genuinely comparable scale.
  */
-function buildJobFitScore({ internProfile, preference, job, isExternal = false }) {
+function buildJobFitScore({ internProfile, preference, job }) {
   const internSkills = getInternSkills(internProfile);
   const skillMatch = computeSkillMatch(internSkills, job.skillsRequired || [], job.prioritySkills || []);
   const prefResult = scorePreferenceMatch(preference, job);
@@ -480,7 +474,7 @@ function buildJobFitScore({ internProfile, preference, job, isExternal = false }
     missingPreferredSkills: skillMatch.missingPreferredSkills,
     preferenceMatch: prefResult.matched,
     eligibilityConcerns,
-    explanation: buildExplanation({ skillMatch, prefResult, roleResult, isExternal }),
+    explanation: buildExplanation({ skillMatch, prefResult, roleResult }),
     breakdown: {
       roleRelevanceScore: roleResult.score,
       requiredScore,

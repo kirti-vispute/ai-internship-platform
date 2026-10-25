@@ -60,12 +60,13 @@ describe("buildJobFitScore", () => {
     expect(result.eligibilityConcerns.some((c) => c.toLowerCase().includes("experienced candidates"))).toBe(true);
   });
 
-  test("external listings get an explicit approximate-skills disclaimer in the explanation; internal ones do not", () => {
-    const job = { title: "Developer", description: "", workMode: "remote", location: "", skillsRequired: ["javascript"], prioritySkills: [] };
-    const external = buildJobFitScore({ internProfile, preference: null, job, isExternal: true });
-    const internal = buildJobFitScore({ internProfile, preference: null, job, isExternal: false });
-    expect(external.explanation).toMatch(/approximate/i);
-    expect(internal.explanation).not.toMatch(/approximate/i);
+  test("a concise skill-match-is-an-estimate note appears only when the listing has no required skills", () => {
+    const jobWithSkills = { title: "Developer", description: "", workMode: "remote", location: "", skillsRequired: ["javascript"], prioritySkills: [] };
+    const jobWithoutSkills = { title: "Developer", description: "", workMode: "remote", location: "", skillsRequired: [], prioritySkills: [] };
+    const withSkills = buildJobFitScore({ internProfile, preference: null, job: jobWithSkills });
+    const withoutSkills = buildJobFitScore({ internProfile, preference: null, job: jobWithoutSkills });
+    expect(withoutSkills.explanation).toMatch(/estimate/i);
+    expect(withSkills.explanation).not.toMatch(/estimate/i);
   });
 
   test("an empty education array on the profile is flagged as an eligibility concern rather than silently assumed", () => {

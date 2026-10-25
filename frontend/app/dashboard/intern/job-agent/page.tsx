@@ -43,30 +43,6 @@ function postingAgeLabel(postedAt: string | null): string | null {
   return `Posted ${days} days ago`;
 }
 
-function providerHealthTone(status: JobProviderHealth["status"]): BadgeTone {
-  if (status === "ok") return "success";
-  if (status === "partial") return "warning";
-  if (status === "failed") return "danger";
-  return "neutral";
-}
-
-function providerHealthLabel(provider: JobProviderHealth): string {
-  switch (provider.status) {
-    case "ok":
-      return provider.lastSuccessAt ? `Synced ${new Date(provider.lastSuccessAt).toLocaleString()}` : "Synced";
-    case "partial":
-      return "Partially synced";
-    case "failed":
-      return "Sync failed";
-    case "needs_credentials":
-      return "Needs credentials";
-    case "no_legitimate_api":
-      return "Requires partnership";
-    default:
-      return "Not yet synced";
-  }
-}
-
 // A sweep older than this is surfaced as a gentle "may be stale" hint
 // rather than silently presenting last-run matches as if they were fresh.
 const STALE_SWEEP_MS = 24 * 60 * 60 * 1000;
@@ -95,7 +71,6 @@ export default function JobAgentDashboardPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalJobs, setTotalJobs] = useState(0);
   const [providers, setProviders] = useState<JobProviderHealth[]>([]);
-  const [sourcesExpanded, setSourcesExpanded] = useState(false);
   const [expandedConcernId, setExpandedConcernId] = useState<string | null>(null);
   const PAGE_SIZE = 25;
 
@@ -213,15 +188,7 @@ export default function JobAgentDashboardPage() {
 
   const needsProfile = error?.includes("PROFILE_REQUIRED") || error?.toLowerCase().includes("complete your careersetu profile");
 
-  const providerSummary = providers.reduce(
-    (acc, p) => {
-      if (p.status === "ok" || p.status === "partial") acc.active += 1;
-      else if (p.status === "needs_credentials") acc.needsSetup += 1;
-      else acc.unavailable += 1;
-      return acc;
-    },
-    { active: 0, needsSetup: 0, unavailable: 0 }
-  );
+  const activeSourceCount = providers.filter((p) => p.status === "ok" || p.status === "partial").length;
 
   const lastSweepIsStale = isSweepStale(status?.lastSweepAt ?? null);
 
@@ -278,41 +245,9 @@ export default function JobAgentDashboardPage() {
       </SectionPanel>
 
       {providers.length > 0 && (
-        <SectionPanel title="Job Sources" subtitle="Which sources are feeding your matches.">
-          <button
-            type="button"
-            onClick={() => setSourcesExpanded((v) => !v)}
-            className="flex w-full items-center justify-between gap-2 rounded-lg border border-[var(--ds-border)] bg-[var(--ds-surface-raised)] px-3 py-2 text-left text-xs font-medium text-[var(--ds-text-secondary)] transition hover:border-[var(--ds-border-strong)]"
-            aria-expanded={sourcesExpanded}
-          >
-            <span>
-              <span className="text-[var(--ds-success)]">{providerSummary.active} syncing</span>
-              {" · "}
-              <span className="text-[var(--ds-muted)]">{providerSummary.needsSetup} need setup</span>
-              {" · "}
-              <span className="text-[var(--ds-muted)]">{providerSummary.unavailable} unavailable</span>
-            </span>
-            <AppIcon icon={sourcesExpanded ? ChevronUp : ChevronDown} size="sm" />
-          </button>
-          {sourcesExpanded && (
-            <div className="mt-2 grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-3">
-              {providers.map((provider) => (
-                <div
-                  key={provider.source}
-                  title={providerHealthLabel(provider)}
-                  className="flex items-center justify-between gap-1.5 rounded-lg border border-[var(--ds-border)] px-2.5 py-1.5 text-xs"
-                >
-                  <span className="shrink-0 font-medium text-[var(--ds-text)]">
-                    {JOB_AGENT_SOURCE_LABELS[provider.source as keyof typeof JOB_AGENT_SOURCE_LABELS] || provider.source}
-                  </span>
-                  <Badge tone={providerHealthTone(provider.status)} className="shrink-0">
-                    {providerHealthLabel(provider)}
-                  </Badge>
-                </div>
-              ))}
-            </div>
-          )}
-        </SectionPanel>
+        <p className="text-xs text-[var(--ds-muted)]">
+          Job sources syncing <span className="font-medium text-[var(--ds-text-secondary)]">({activeSourceCount} active)</span>
+        </p>
       )}
 
       <SectionPanel title="Recommended Jobs" subtitle="Ranked by fit score across CareerSetu internships and external listings.">
@@ -378,7 +313,7 @@ export default function JobAgentDashboardPage() {
             title="No matching jobs yet"
             description={
               sourceFilter
-                ? `No current matches from ${JOB_AGENT_SOURCE_LABELS[sourceFilter as keyof typeof JOB_AGENT_SOURCE_LABELS] || sourceFilter}. Try "All sources", or check the Job Sources panel above for its sync status.`
+                ? `No current matches from ${JOB_AGENT_SOURCE_LABELS[sourceFilter as keyof typeof JOB_AGENT_SOURCE_LABELS] || sourceFilter}. Try "All sources" instead.`
                 : "New jobs are discovered automatically. Check back soon, or widen your filters."
             }
           />

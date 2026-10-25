@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { LogOut, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AppIcon } from "@/components/icons/app-icon";
@@ -21,6 +22,7 @@ type DashboardShellHeaderProps = {
   notificationRole?: "intern" | "company";
   notificationUnreadCount?: number;
   onNotificationUnreadCountChange?: (count: number) => void;
+  showJobAgentButton?: boolean;
 };
 
 export function DashboardShellHeader({
@@ -35,7 +37,8 @@ export function DashboardShellHeader({
   notificationHref,
   notificationRole = "intern",
   notificationUnreadCount = 0,
-  onNotificationUnreadCountChange
+  onNotificationUnreadCountChange,
+  showJobAgentButton = false
 }: DashboardShellHeaderProps) {
   const bell =
     notificationHref && onNotificationUnreadCountChange ? (
@@ -80,6 +83,16 @@ export function DashboardShellHeader({
         </div>
 
         <div className="flex flex-wrap items-center justify-end gap-2">
+          {showJobAgentButton && (
+            <Link
+              href="/dashboard/intern/job-agent"
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-gradient-to-r from-[var(--ds-primary)] to-[var(--ds-accent)] px-3 py-1.5 text-xs font-bold text-white shadow-sm transition hover:scale-105 hover:shadow-md sm:px-4 sm:text-sm"
+            >
+              <span aria-hidden>✦</span>
+              <span className="hidden sm:inline">AI Job Agent</span>
+              <span className="sm:hidden">Job Agent</span>
+            </Link>
+          )}
           <ThemeToggleSwitch />
           {bell}
           <Button type="button" variant="secondary" size="sm" onClick={onLogout}>

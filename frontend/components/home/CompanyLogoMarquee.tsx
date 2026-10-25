@@ -34,10 +34,11 @@ type Row = {
   durationSeconds: number;
 };
 
+// Two rows, 10 logos each: wide enough per row that the looped duplicate set
+// doesn't become visible alongside the original on typical desktop widths.
 const ROWS: Row[] = [
-  { companies: COMPANIES.slice(0, 7), direction: "normal", durationSeconds: 42 },
-  { companies: COMPANIES.slice(7, 14), direction: "reverse", durationSeconds: 34 },
-  { companies: COMPANIES.slice(14, 20), direction: "normal", durationSeconds: 50 }
+  { companies: COMPANIES.slice(0, 10), direction: "normal", durationSeconds: 46 },
+  { companies: COMPANIES.slice(10, 20), direction: "reverse", durationSeconds: 46 }
 ];
 
 function LogoItem({ company, decorative }: { company: CompanyLogo; decorative: boolean }) {
@@ -84,7 +85,6 @@ export function CompanyLogoMarquee() {
     >
       <MarqueeRow row={ROWS[0]} />
       <MarqueeRow row={ROWS[1]} />
-      <MarqueeRow row={ROWS[2]} className="hidden sm:block" />
     </div>
   );
 }

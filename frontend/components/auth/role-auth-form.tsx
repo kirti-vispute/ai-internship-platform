@@ -156,11 +156,13 @@ export function RoleAuthForm({ role }: { role: AuthRole }) {
   const [otpVerified, setOtpVerified] = useState(false);
   const [otpSending, setOtpSending] = useState(false);
   const [otpVerifying, setOtpVerifying] = useState(false);
+  const [displayedOtp, setDisplayedOtp] = useState<string | null>(null);
   const { secondsLeft: otpResendSeconds, startCountdown: startOtpResendCountdown, canProceed: canResendOtp } =
     useCountdown(0);
   const [resetOtpMode, setResetOtpMode] = useState(false);
   const [resetOtpSent, setResetOtpSent] = useState(false);
   const [resetOtp, setResetOtp] = useState("");
+  const [resetDisplayedOtp, setResetDisplayedOtp] = useState<string | null>(null);
   const [resetOtpSending, setResetOtpSending] = useState(false);
   const [resetOtpVerifying, setResetOtpVerifying] = useState(false);
   const {
@@ -194,6 +196,7 @@ export function RoleAuthForm({ role }: { role: AuthRole }) {
     setOtp("");
     setOtpSent(false);
     setOtpVerified(false);
+    setDisplayedOtp(null);
     startOtpResendCountdown(0);
   }, [internData.email, startOtpResendCountdown]);
 
@@ -207,7 +210,7 @@ export function RoleAuthForm({ role }: { role: AuthRole }) {
       try {
         setOtpSending(true);
         setFeedback(null);
-        const response = await apiRequest<{ message: string; retryAfterSeconds?: number }>(
+        const response = await apiRequest<{ message: string; retryAfterSeconds?: number; otp?: string }>(
           "/api/auth/intern/send-otp",
           {
             method: "POST",
@@ -217,8 +220,9 @@ export function RoleAuthForm({ role }: { role: AuthRole }) {
         setOtpSent(true);
         setOtpVerified(false);
         setOtp("");
+        setDisplayedOtp(response.otp ?? null);
         startOtpResendCountdown(response.retryAfterSeconds ?? OTP_RESEND_DEFAULT_SECONDS);
-        const message = isResend ? "OTP resent to your email." : "OTP sent to your email.";
+        const message = isResend ? "New OTP generated." : "OTP generated.";
         setFeedback({ type: "success", message });
       } catch (error) {
         if (error instanceof ApiRequestError && error.details?.retryAfterSeconds) {
@@ -252,6 +256,7 @@ export function RoleAuthForm({ role }: { role: AuthRole }) {
           body: JSON.stringify({ email: internData.email.trim().toLowerCase(), otp: otpCode })
         });
         setOtpVerified(true);
+        setDisplayedOtp(null);
         setFeedback({ type: "success", message: response.message || "Email verified. Complete signup now." });
       } catch (error) {
         setOtpVerified(false);
@@ -273,7 +278,7 @@ export function RoleAuthForm({ role }: { role: AuthRole }) {
       try {
         setResetOtpSending(true);
         setFeedback(null);
-        const response = await apiRequest<{ message: string; retryAfterSeconds?: number }>(
+        const response = await apiRequest<{ message: string; retryAfterSeconds?: number; otp?: string }>(
           "/api/auth/password/send-otp",
           {
             method: "POST",
@@ -282,8 +287,9 @@ export function RoleAuthForm({ role }: { role: AuthRole }) {
         );
         setResetOtpSent(true);
         setResetOtp("");
+        setResetDisplayedOtp(response.otp ?? null);
         startResetResendCountdown(response.retryAfterSeconds ?? OTP_RESEND_DEFAULT_SECONDS);
-        const message = response.message || (isResend ? "Password reset OTP resent." : "Password reset OTP sent.");
+        const message = response.message || (isResend ? "New password reset OTP generated." : "Password reset OTP generated.");
         setFeedback({ type: "success", message });
       } catch (error) {
         if (error instanceof ApiRequestError && error.details?.retryAfterSeconds) {
@@ -326,6 +332,7 @@ export function RoleAuthForm({ role }: { role: AuthRole }) {
       setResetOtpMode(false);
       setResetOtpSent(false);
       setResetOtp("");
+      setResetDisplayedOtp(null);
       setNewPassword("");
     } catch (error) {
       setFeedback({ type: "error", message: (error as Error).message });
@@ -729,6 +736,11 @@ export function RoleAuthForm({ role }: { role: AuthRole }) {
                 </Button>
               ) : (
                 <>
+                  {resetDisplayedOtp && (
+                    <p className="rounded-lg bg-[var(--ds-surface-raised)] px-3 py-2 text-sm font-semibold tracking-widest text-[var(--ds-text)]">
+                      Your OTP: <span className="font-mono">{resetDisplayedOtp}</span>
+                    </p>
+                  )}
                   <OTPInput
                     value={resetOtp}
                     onChange={setResetOtp}
@@ -837,6 +849,11 @@ export function RoleAuthForm({ role }: { role: AuthRole }) {
                   </Button>
                 ) : (
                   <div className="space-y-3">
+                    {displayedOtp && (
+                      <p className="rounded-lg bg-[var(--ds-surface-raised)] px-3 py-2 text-sm font-semibold tracking-widest text-[var(--ds-text)]">
+                        Your OTP: <span className="font-mono">{displayedOtp}</span>
+                      </p>
+                    )}
                     <OTPInput
                       value={otp}
                       onChange={setOtp}

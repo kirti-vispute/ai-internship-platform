@@ -61,7 +61,7 @@ export default function HomePage() {
     <main id="main-content" tabIndex={-1} className="min-h-screen bg-[var(--ds-bg)] text-[var(--ds-text)] focus:outline-none">
       <Navbar />
 
-      <section id="hero" className="container-shell relative overflow-hidden py-20 sm:py-28">
+      <section id="hero" className="container-shell relative overflow-hidden py-8 sm:py-12">
         <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
           <div
             className="absolute left-1/2 top-0 h-[26rem] w-[26rem] -translate-x-[65%] -translate-y-1/3 rounded-full blur-3xl"
@@ -90,7 +90,7 @@ export default function HomePage() {
             </Link>
           </div>
 
-          <ul className="mt-10 flex flex-wrap items-center justify-center gap-x-6 gap-y-3" aria-label="Platform highlights">
+          <ul className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-3" aria-label="Platform highlights">
             {TRUST_ITEMS.map((item) => (
               <li key={item} className="flex items-center gap-1.5 text-sm text-[var(--ds-muted)]">
                 <Check className="h-4 w-4 text-[var(--ds-primary)]" strokeWidth={2.5} aria-hidden />
@@ -101,7 +101,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section id="trusted-by" className="overflow-x-hidden py-16 sm:py-20">
+      <section id="trusted-by" className="overflow-x-hidden py-6 sm:py-10">
         <div className="container-shell text-center">
           <p className={sectionLabel}>Trusted network</p>
           <h2 className={sectionTitle}>Where CareerSetu candidates land</h2>
@@ -110,18 +110,18 @@ export default function HomePage() {
           </p>
         </div>
 
-        <div className="mt-10">
+        <div className="mt-6">
           <CompanyLogoMarquee />
         </div>
       </section>
 
-      <section id="how-it-works" className="container-shell py-20 sm:py-28">
+      <section id="how-it-works" className="container-shell py-10 sm:py-14">
         <div className="text-center">
           <p className={sectionLabel}>Process</p>
           <h2 className={sectionTitle}>How {BRAND_NAME} works</h2>
         </div>
 
-        <div className="mt-12 grid gap-6 sm:grid-cols-3">
+        <div className="mt-10 grid gap-6 sm:grid-cols-3">
           {STEPS.map((step) => (
             <div key={step.num} className={card}>
               <span className="text-sm font-semibold text-[var(--ds-muted)]">{step.num}</span>
@@ -135,13 +135,13 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section id="capabilities" className="container-shell py-20 sm:py-28">
+      <section id="capabilities" className="container-shell py-10 sm:py-14">
         <div className="text-center">
           <p className={sectionLabel}>Platform</p>
           <h2 className={sectionTitle}>Platform capabilities</h2>
         </div>
 
-        <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {CAPABILITIES.map((cap) => (
             <div key={cap.title} className={card}>
               <IconChip icon={cap.icon} accent={cap.accent} />
@@ -152,13 +152,13 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section id="audience" className="container-shell py-20 sm:py-28">
+      <section id="audience" className="container-shell py-10 sm:py-14">
         <div className="text-center">
           <p className={sectionLabel}>For everyone</p>
           <h2 className={sectionTitle}>For students &amp; companies</h2>
         </div>
 
-        <div className="mt-12 grid gap-6 lg:grid-cols-2">
+        <div className="mt-10 grid gap-6 lg:grid-cols-2">
           <div className={card}>
             <div className="flex items-center gap-3">
               <IconChip icon={GraduationCap} size="sm" />
@@ -191,7 +191,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="container-shell py-20 sm:py-28">
+      <section className="container-shell py-10 sm:py-14">
         <div className="mx-auto max-w-2xl text-center">
           <h2 className={sectionTitle}>Ready to accelerate your career?</h2>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">

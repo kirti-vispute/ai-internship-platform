@@ -12,7 +12,6 @@ const {
   signRefreshToken,
   verifyRefreshToken
 } = require("../../../shared/utils/jwt");
-const { sendOtpEmail } = require("../../../services/otp.service");
 const otpVerification = require("../services/otp-verification.service");
 const { VALIDATION_RULES } = require("../../../constants/validation-rules");
 const { logActivity } = require("../../../services/activity-log.service");
@@ -97,10 +96,14 @@ function validateEmail(email) {
   return otpVerification.validateEmail(email);
 }
 
-function buildOtpSendResponse(res, { message }) {
+// OTP is returned directly in this response (never emailed) so the caller's own
+// UI can display it immediately. This never exposes another user's OTP: it is
+// only ever returned to the request that just generated it, for the email that
+// request named, and a fresh OTP invalidates the previous one for that email.
+function buildOtpSendResponse(res, { message, otp }) {
   return sendSuccess(res, {
     message,
-    data: { retryAfterSeconds: otpVerification.RESEND_COOLDOWN_SECONDS }
+    data: { retryAfterSeconds: otpVerification.RESEND_COOLDOWN_SECONDS, otp }
   });
 }
 
@@ -110,8 +113,7 @@ exports.sendInternOtp = asyncHandler(async (req, res) => {
     purpose: "intern_signup",
     checkRegistered: true
   });
-  await sendOtpEmail({ to: result.email, otp: result.otp });
-  buildOtpSendResponse(res, { message: "OTP sent successfully" });
+  buildOtpSendResponse(res, { message: "OTP generated successfully", otp: result.otp });
 });
 
 exports.verifyInternOtp = asyncHandler(async (req, res) => {
@@ -400,8 +402,7 @@ exports.sendPasswordResetOtp = asyncHandler(async (req, res) => {
     purpose: "password_reset",
     checkRegistered: false
   });
-  await sendOtpEmail({ to: result.email, otp: result.otp });
-  buildOtpSendResponse(res, { message: "Password reset OTP sent" });
+  buildOtpSendResponse(res, { message: "Password reset OTP generated", otp: result.otp });
 });
 
 exports.resetPasswordWithOtp = asyncHandler(async (req, res) => {

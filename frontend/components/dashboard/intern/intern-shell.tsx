@@ -122,6 +122,7 @@ const InternShellHeader = memo(function InternShellHeader({
       onLogout={onLogout}
       notificationHref="/dashboard/intern/notifications"
       notificationRole="intern"
+      showJobAgentButton
       notificationUnreadCount={notificationUnread}
       onNotificationUnreadCountChange={onNotificationUnreadChange}
     />

@@ -197,7 +197,7 @@ async function getUnifiedJobFeed({ internProfile, preference, filters = {}, page
   jobs = jobs.filter((job) => matchesFilters(job, filters));
 
   const scored = jobs.map((job) => {
-    const fit = buildJobFitScore({ internProfile, preference, job, isExternal: !job.isInternal });
+    const fit = buildJobFitScore({ internProfile, preference, job });
     return { ...job, ...fit };
   });
 

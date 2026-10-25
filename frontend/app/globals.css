@@ -669,8 +669,8 @@ body:has(.internai-home) {
 }
 
 .company-marquee-mask {
-  -webkit-mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
-  mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, black 3%, black 97%, transparent);
+  mask-image: linear-gradient(to right, transparent, black 3%, black 97%, transparent);
 }
 
 .company-marquee-track {
